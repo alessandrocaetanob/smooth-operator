@@ -21,9 +21,56 @@ services:
       - "5000:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=smoothoperator;Username=postgres;Password=postgres
+      - ConnectionStrings__Redis=redis:6379
+      - Guacd__Host=guacd
+      - Guacd__Port=4822
+      - ENCRYPTION_KEY=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef # 64 hex chars = 32 bytes
+      - APP_URL=http://localhost:4200
+      - FRONTEND_URL=http://localhost:4200
+    depends_on:
+      - postgres
+      - redis
+      - guacd
     restart: unless-stopped
     networks:
       - smooth-operator-net
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=smoothoperator
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - smooth-operator-net
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - smooth-operator-net
+
+  guacd:
+    image: guacamole/guacd:latest
+    ports:
+      - "4822:4822"
+    restart: unless-stopped
+    networks:
+      - smooth-operator-net
+
+volumes:
+  postgres_data:
+  redis_data:
 
 networks:
   smooth-operator-net:
