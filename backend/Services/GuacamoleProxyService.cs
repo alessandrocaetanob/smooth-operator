@@ -8,9 +8,11 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System.Security.Claims;
 using Backend.Data;
+using Backend.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using StackExchange.Redis;
+using System.Linq;
 
 namespace Backend.Services
 {
@@ -41,29 +43,93 @@ namespace Backend.Services
 
         public async Task HandleWebSocketAsync(WebSocket webSocket, Guid connectionId, ClaimsPrincipal user)
         {
-            var userId = user.FindFirstValue(ClaimTypes.NameIdentifier) ?? "anonymous";
+            var email = user.FindFirstValue(ClaimTypes.Email)
+                        ?? user.FindFirstValue("preferred_username")
+                        ?? user.FindFirstValue("upn");
             var sessionId = Guid.NewGuid().ToString();
+            var ipAddress = string.Empty;
 
             using var scope = _scopeFactory.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
+            // Find user in database
+            var dbUser = await dbContext.Users.FirstOrDefaultAsync(u => u.Email == email);
+            if (dbUser == null || !dbUser.IsActive)
+            {
+                _logger.LogWarning($"User {email} not found or inactive. Connection denied.");
+                await webSocket.CloseAsync(WebSocketCloseStatus.PolicyViolation, "User not authorized", CancellationToken.None);
+                return;
+            }
+
             var connection = await dbContext.Connections
                 .Include(c => c.Host)
                 .Include(c => c.Credential)
+                .Include(c => c.Users)
                 .FirstOrDefaultAsync(c => c.Id == connectionId);
 
             if (connection == null || connection.Host == null)
             {
                 _logger.LogWarning($"Connection {connectionId} not found or has no host.");
+
+                // Audit log - failed connection attempt
+                dbContext.AuditLogs.Add(new AuditLog
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = dbUser.Id,
+                    Action = "connection.failed",
+                    ResourceType = "Connection",
+                    ResourceId = connectionId.ToString(),
+                    Details = "{\"reason\":\"connection_not_found\"}",
+                    IpAddress = ipAddress
+                });
+                await dbContext.SaveChangesAsync();
+
                 await webSocket.CloseAsync(WebSocketCloseStatus.InvalidMessageType, "Connection not found", CancellationToken.None);
                 return;
             }
+
+            // Check if user has permission to access this connection
+            var hasAccess = connection.Users.Any(u => u.Id == dbUser.Id);
+            if (!hasAccess)
+            {
+                _logger.LogWarning($"User {email} does not have access to connection {connectionId}.");
+
+                // Audit log - unauthorized access attempt
+                dbContext.AuditLogs.Add(new AuditLog
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = dbUser.Id,
+                    Action = "connection.unauthorized",
+                    ResourceType = "Connection",
+                    ResourceId = connectionId.ToString(),
+                    Details = $"{{\"host\":\"{connection.Host.Name}\"}}",
+                    IpAddress = ipAddress
+                });
+                await dbContext.SaveChangesAsync();
+
+                await webSocket.CloseAsync(WebSocketCloseStatus.PolicyViolation, "Access denied", CancellationToken.None);
+                return;
+            }
+
+            // Audit log - connection started
+            var auditLog = new AuditLog
+            {
+                Id = Guid.NewGuid(),
+                UserId = dbUser.Id,
+                Action = "connection.started",
+                ResourceType = "Connection",
+                ResourceId = connectionId.ToString(),
+                Details = $"{{\"host\":\"{connection.Host.Name}\",\"protocol\":\"{connection.Protocol}\",\"sessionId\":\"{sessionId}\"}}",
+                IpAddress = ipAddress
+            };
+            dbContext.AuditLogs.Add(auditLog);
+            await dbContext.SaveChangesAsync();
 
             // Register session in Redis
             var db = _redis.GetDatabase();
             await db.HashSetAsync($"session:{sessionId}", new HashEntry[]
             {
-                new HashEntry("UserId", userId),
+                new HashEntry("UserId", dbUser.Id.ToString()),
                 new HashEntry("ConnectionId", connectionId.ToString()),
                 new HashEntry("StartTime", DateTime.UtcNow.ToString("O"))
             });
@@ -71,6 +137,7 @@ namespace Backend.Services
             await db.KeyExpireAsync($"session:{sessionId}", TimeSpan.FromHours(24));
 
             using var tcpClient = new TcpClient();
+            var connectionSuccessful = false;
             try
             {
                 await tcpClient.ConnectAsync(_guacdHost, _guacdPort);
@@ -118,6 +185,7 @@ namespace Backend.Services
                 );
 
                 await SendGuacMessage(networkStream, connectCmd);
+                connectionSuccessful = true;
 
                 // Start bidirectional proxy
                 var receiveTask = ProxyGuacdToWebSocket(networkStream, webSocket);
@@ -125,14 +193,61 @@ namespace Backend.Services
 
                 await Task.WhenAny(receiveTask, sendTask);
             }
+            catch (SocketException ex)
+            {
+                _logger.LogError(ex, $"Network error connecting to guacd for connection {connectionId}");
+
+                // Audit log - connection error
+                dbContext.AuditLogs.Add(new AuditLog
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = dbUser.Id,
+                    Action = "connection.error",
+                    ResourceType = "Connection",
+                    ResourceId = connectionId.ToString(),
+                    Details = $"{{\"error\":\"network_error\",\"message\":\"{ex.Message}\"}}",
+                    IpAddress = ipAddress
+                });
+                await dbContext.SaveChangesAsync();
+            }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error during Guacamole session.");
+                _logger.LogError(ex, $"Error during Guacamole session for connection {connectionId}");
+
+                // Audit log - connection error
+                dbContext.AuditLogs.Add(new AuditLog
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = dbUser.Id,
+                    Action = "connection.error",
+                    ResourceType = "Connection",
+                    ResourceId = connectionId.ToString(),
+                    Details = $"{{\"error\":\"session_error\",\"message\":\"{ex.Message}\"}}",
+                    IpAddress = ipAddress
+                });
+                await dbContext.SaveChangesAsync();
             }
             finally
             {
                 // Cleanup Redis
+                var endTime = DateTime.UtcNow;
                 await db.KeyDeleteAsync($"session:{sessionId}");
+
+                // Audit log - connection ended
+                if (connectionSuccessful)
+                {
+                    dbContext.AuditLogs.Add(new AuditLog
+                    {
+                        Id = Guid.NewGuid(),
+                        UserId = dbUser.Id,
+                        Action = "connection.ended",
+                        ResourceType = "Connection",
+                        ResourceId = connectionId.ToString(),
+                        Details = $"{{\"sessionId\":\"{sessionId}\",\"endTime\":\"{endTime:O}\"}}",
+                        IpAddress = ipAddress
+                    });
+                    await dbContext.SaveChangesAsync();
+                }
 
                 if (webSocket.State == WebSocketState.Open)
                 {

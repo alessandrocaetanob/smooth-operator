@@ -1,9 +1,11 @@
 {
   "version": 2,
-  "dgSpecHash": "ywNF9l71BEM=",
+  "dgSpecHash": "Cb/DWOTWQRc=",
   "success": true,
   "projectFilePath": "/home/runner/work/smooth-operator/smooth-operator/backend/Backend.csproj",
   "expectedPackageFiles": [
+    "/home/runner/.nuget/packages/aspnetcore.healthchecks.npgsql/9.0.0/aspnetcore.healthchecks.npgsql.9.0.0.nupkg.sha512",
+    "/home/runner/.nuget/packages/aspnetcore.healthchecks.redis/9.0.0/aspnetcore.healthchecks.redis.9.0.0.nupkg.sha512",
     "/home/runner/.nuget/packages/azure.core/1.38.0/azure.core.1.38.0.nupkg.sha512",
     "/home/runner/.nuget/packages/azure.identity/1.11.4/azure.identity.1.11.4.nupkg.sha512",
     "/home/runner/.nuget/packages/azure.security.keyvault.certificates/4.6.0/azure.security.keyvault.certificates.4.6.0.nupkg.sha512",

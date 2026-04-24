@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Backend.Data;
+using Backend.DTOs;
 using Backend.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -22,13 +24,19 @@ namespace Backend.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Backend.Models.Host>>> GetHosts()
+        public async Task<ActionResult<IEnumerable<HostDto>>> GetHosts()
         {
-            return await _context.Hosts.ToListAsync();
+            var hosts = await _context.Hosts.ToListAsync();
+            return Ok(hosts.Select(h => new HostDto
+            {
+                Id = h.Id,
+                Name = h.Name,
+                Address = h.Address
+            }));
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<Backend.Models.Host>> GetHost(Guid id)
+        public async Task<ActionResult<HostDto>> GetHost(Guid id)
         {
             var host = await _context.Hosts.FindAsync(id);
 
@@ -37,28 +45,56 @@ namespace Backend.Controllers
                 return NotFound();
             }
 
-            return host;
+            return new HostDto
+            {
+                Id = host.Id,
+                Name = host.Name,
+                Address = host.Address
+            };
         }
 
         [HttpPost]
-        public async Task<ActionResult<Backend.Models.Host>> CreateHost(Backend.Models.Host host)
+        public async Task<ActionResult<HostDto>> CreateHost([FromBody] CreateHostDto dto)
         {
-            host.Id = Guid.NewGuid();
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var host = new Backend.Models.Host
+            {
+                Id = Guid.NewGuid(),
+                Name = dto.Name,
+                Address = dto.Address
+            };
+
             _context.Hosts.Add(host);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetHost), new { id = host.Id }, host);
+            return CreatedAtAction(nameof(GetHost), new { id = host.Id }, new HostDto
+            {
+                Id = host.Id,
+                Name = host.Name,
+                Address = host.Address
+            });
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateHost(Guid id, Backend.Models.Host host)
+        public async Task<IActionResult> UpdateHost(Guid id, [FromBody] CreateHostDto dto)
         {
-            if (id != host.Id)
+            if (!ModelState.IsValid)
             {
-                return BadRequest();
+                return BadRequest(ModelState);
             }
 
-            _context.Entry(host).State = EntityState.Modified;
+            var host = await _context.Hosts.FindAsync(id);
+            if (host == null)
+            {
+                return NotFound();
+            }
+
+            host.Name = dto.Name;
+            host.Address = dto.Address;
 
             try
             {

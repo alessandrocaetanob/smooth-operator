@@ -12,7 +12,7 @@ namespace Backend.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    // [Authorize] // Temporarily disabled for easier testing of WS proxy
+    [Authorize]
     public class GuacamoleController : ControllerBase
     {
         private readonly GuacamoleProxyService _proxyService;

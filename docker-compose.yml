@@ -25,7 +25,7 @@ services:
       - ConnectionStrings__Redis=redis:6379
       - Guacd__Host=guacd
       - Guacd__Port=4822
-      - ENCRYPTION_KEY=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef # 64 hex chars = 32 bytes
+      - ENCRYPTION_KEY=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef # WARNING: FOR DEVELOPMENT ONLY! Use Azure Key Vault or secure secrets management in production
       - APP_URL=http://localhost:4200
       - FRONTEND_URL=http://localhost:4200
     depends_on:
