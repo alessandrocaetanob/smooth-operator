@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -71,7 +72,8 @@ namespace Backend.Controllers
                     Action = "user.provisioned",
                     ResourceType = "User",
                     ResourceId = user.Id.ToString(),
-                    Details = "{\"provider\":\"entra_id\"}"
+                    Details = "{\"provider\":\"entra_id\"}",
+                    IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? ""
                 });
 
                 await _context.SaveChangesAsync();
@@ -104,6 +106,11 @@ namespace Backend.Controllers
         [Authorize] // In a real scenario, check if the current user is an Admin
         public async Task<IActionResult> InviteUser([FromBody] InviteUserRequest request)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
             if (string.IsNullOrWhiteSpace(request.Email))
             {
                 return BadRequest("Email is required.");
@@ -118,7 +125,7 @@ namespace Backend.Controllers
             var user = new User
             {
                 Id = Guid.NewGuid(),
-                Email = request.Email,
+                Email = request.Email.Trim().ToLowerInvariant(),
                 Name = request.Email, // Placeholder until they set up
                 IsActive = true
             };
@@ -131,17 +138,19 @@ namespace Backend.Controllers
             var inviteLink = $"{frontendUrl.TrimEnd('/')}/setup-account?id={user.Id}";
 
             // Add Audit Log
-            var adminIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            Guid? adminId = Guid.TryParse(adminIdString, out var parsedId) ? parsedId : null;
+            var adminEmail = User.FindFirstValue(ClaimTypes.Email)
+                           ?? User.FindFirstValue("preferred_username");
+            var adminUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == adminEmail);
 
             _context.AuditLogs.Add(new AuditLog
             {
                 Id = Guid.NewGuid(),
-                UserId = adminId, // The admin who invited
+                UserId = adminUser?.Id, // The admin who invited
                 Action = "user.invited",
                 ResourceType = "User",
                 ResourceId = user.Id.ToString(),
-                Details = $"{{\"email\":\"{request.Email}\"}}"
+                Details = $"{{\"email\":\"{request.Email}\"}}",
+                IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? ""
             });
 
             await _context.SaveChangesAsync();
@@ -158,6 +167,9 @@ namespace Backend.Controllers
 
     public class InviteUserRequest
     {
+        [Required(ErrorMessage = "Email is required")]
+        [EmailAddress(ErrorMessage = "Invalid email format")]
+        [StringLength(255, ErrorMessage = "Email cannot exceed 255 characters")]
         public string Email { get; set; } = string.Empty;
     }
 }

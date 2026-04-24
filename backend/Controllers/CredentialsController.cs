@@ -1,7 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using System.Threading.Tasks;
 using Backend.Data;
+using Backend.DTOs;
 using Backend.Models;
 using Backend.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -25,21 +28,27 @@ namespace Backend.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<object>>> GetCredentials()
+        public async Task<ActionResult<IEnumerable<CredentialDto>>> GetCredentials()
         {
             // Do not return the encrypted secret in lists
             var credentials = await _context.Credentials.ToListAsync();
-            var result = new List<object>();
-            foreach (var cred in credentials)
+            return Ok(credentials.Select(c => new CredentialDto
             {
-                result.Add(new { cred.Id, cred.Name, cred.Username, cred.CredentialType });
-            }
-            return Ok(result);
+                Id = c.Id,
+                Name = c.Name,
+                Username = c.Username,
+                CredentialType = c.CredentialType
+            }));
         }
 
         [HttpPost]
-        public async Task<ActionResult<Credential>> CreateCredential([FromBody] CreateCredentialDto dto)
+        public async Task<ActionResult<CredentialDto>> CreateCredential([FromBody] CreateCredentialDto dto)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
             var credential = new Credential
             {
                 Id = Guid.NewGuid(),
@@ -54,17 +63,74 @@ namespace Backend.Controllers
 
             // Return without secret
             return CreatedAtAction(nameof(GetCredentials), new { id = credential.Id },
-                new { credential.Id, credential.Name, credential.Username, credential.CredentialType });
+                new CredentialDto
+                {
+                    Id = credential.Id,
+                    Name = credential.Name,
+                    Username = credential.Username,
+                    CredentialType = credential.CredentialType
+                });
         }
 
-        // Additional endpoints (Update, Delete) omitted for brevity but follow the same pattern
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateCredential(Guid id, [FromBody] CreateCredentialDto dto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var credential = await _context.Credentials.FindAsync(id);
+            if (credential == null)
+            {
+                return NotFound();
+            }
+
+            credential.Name = dto.Name;
+            credential.Username = dto.Username;
+            credential.CredentialType = dto.CredentialType;
+
+            // Only update secret if provided
+            if (!string.IsNullOrEmpty(dto.Secret))
+            {
+                credential.EncryptedSecret = _encryptionService.Encrypt(dto.Secret);
+            }
+
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteCredential(Guid id)
+        {
+            var credential = await _context.Credentials.FindAsync(id);
+            if (credential == null)
+            {
+                return NotFound();
+            }
+
+            _context.Credentials.Remove(credential);
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
     }
 
     public class CreateCredentialDto
     {
+        [Required(ErrorMessage = "Name is required")]
+        [StringLength(100, MinimumLength = 1, ErrorMessage = "Name must be between 1 and 100 characters")]
         public string Name { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Username is required")]
+        [StringLength(255, ErrorMessage = "Username cannot exceed 255 characters")]
         public string Username { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Secret is required")]
+        [StringLength(4096, MinimumLength = 1, ErrorMessage = "Secret must be between 1 and 4096 characters")]
         public string Secret { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Credential type is required")]
+        [RegularExpression("^(password|private_key|api_token)$", ErrorMessage = "Credential type must be one of: password, private_key, api_token")]
         public string CredentialType { get; set; } = "password";
     }
 }
