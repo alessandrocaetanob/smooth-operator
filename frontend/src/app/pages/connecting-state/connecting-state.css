@@ -1,0 +1,12 @@
+.glow-pulse {
+    box-shadow: 0 0 15px rgba(37, 99, 235, 0.5); /* blue-600 */
+    animation: pulse-glow 2s infinite alternate;
+}
+@keyframes pulse-glow {
+    from { box-shadow: 0 0 10px rgba(37, 99, 235, 0.3); }
+    to { box-shadow: 0 0 20px rgba(37, 99, 235, 0.7); }
+}
+.progress-bar-fill {
+    background: linear-gradient(90deg, #1d4ed8, #3b82f6); /* blue-700 to blue-500 */
+    width: 65%;
+}

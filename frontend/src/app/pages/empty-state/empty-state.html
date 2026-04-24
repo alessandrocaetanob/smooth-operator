@@ -1,0 +1,24 @@
+<!-- Main Content Canvas -->
+<main class="flex-1 ml-0 md:ml-64 mt-16 flex items-center justify-center p-6 relative h-[calc(100vh-4rem)]">
+<!-- Subtle background texture/gradient for depth -->
+<div class="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary-fixed/5 via-background to-background pointer-events-none"></div>
+<!-- Glassmorphism Empty State Card -->
+<div class="relative z-10 w-full max-w-lg bg-surface-container/40 backdrop-blur-xl border border-white/10 rounded-xl p-12 flex flex-col items-center text-center shadow-2xl shadow-black/50">
+<!-- Hexagonal Icon Wrapper for Tech Feel -->
+<div class="relative w-24 h-24 mb-8 flex items-center justify-center">
+<div class="absolute inset-0 bg-primary-container/20 rotate-45 rounded-xl border border-primary-container/30 blur-sm"></div>
+<div class="absolute inset-1 bg-surface-container rotate-45 rounded-xl border border-outline-variant/50"></div>
+<span class="material-symbols-outlined text-[48px] text-primary relative z-10 drop-shadow-[0_0_8px_rgba(179,197,255,0.5)]" style="font-variation-settings: 'wght' 300;">
+                    security
+                </span>
+</div>
+<h1 class="font-h2 text-h2 text-on-surface mb-4">Your Vault is Empty</h1>
+<p class="font-body-md text-body-md text-on-surface-variant mb-10 max-w-sm">
+                It looks like you haven't been assigned to any server teams yet. Contact your administrator to request access.
+            </p>
+<button class="bg-primary-container text-on-primary-container font-label-caps text-label-caps px-8 py-3.5 rounded hover:bg-primary-fixed-variant transition-colors shadow-[0_0_16px_rgba(0,102,255,0.4)] hover:shadow-[0_0_24px_rgba(0,102,255,0.6)] flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">key</span>
+                Request Access
+            </button>
+</div>
+</main>

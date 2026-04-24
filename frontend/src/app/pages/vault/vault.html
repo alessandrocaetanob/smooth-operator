@@ -1,0 +1,177 @@
+<!-- Main Canvas -->
+<main class="flex-1 overflow-y-auto p-gutter lg:p-margin relative z-10 w-full h-full min-h-screen pt-24 md:pl-64">
+<!-- Decorative Background Element -->
+<div class="absolute inset-0 z-0 pointer-events-none overflow-hidden opacity-30">
+<div class="absolute top-[-10%] right-[-5%] w-96 h-96 bg-primary-container/20 rounded-full blur-[100px]"></div>
+<div class="absolute bottom-[-10%] left-[-5%] w-96 h-96 bg-secondary-fixed-dim/10 rounded-full blur-[100px]"></div>
+</div>
+<div class="relative z-10 max-w-[1440px] mx-auto">
+<!-- Page Header & Controls -->
+<div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
+<div>
+<h1 class="font-h1 text-h1 text-on-surface mb-2">The Vault</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Manage and connect to secure infrastructure.</p>
+</div>
+<div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+<!-- Search Filter (Content Area Specific) -->
+<div class="relative group flex-1 sm:w-64">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-outline group-focus-within:text-secondary-fixed-dim transition-colors" data-icon="search">search</span>
+<input class="w-full bg-surface-container border border-outline-variant focus:border-secondary-fixed-dim text-on-surface py-2 pl-10 pr-3 rounded-md outline-none transition-all input-glow placeholder:text-outline font-body-sm text-body-sm" placeholder="Find servers..." type="text"/>
+</div>
+<!-- Protocol Filter Dropdown -->
+<div class="relative">
+<select class="appearance-none bg-surface-container border border-outline-variant text-on-surface py-2 pl-4 pr-10 rounded-md outline-none focus:border-secondary-fixed-dim input-glow font-body-sm text-body-sm cursor-pointer w-full sm:w-auto">
+<option value="all">All Protocols</option>
+<option value="ssh">SSH (Terminal)</option>
+<option value="rdp">RDP (Windows)</option>
+<option value="vnc">VNC</option>
+</select>
+<span class="absolute right-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-outline pointer-events-none" data-icon="expand_more">expand_more</span>
+</div>
+</div>
+</div>
+<!-- Server Grid (Bento/Card Style) -->
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+<!-- Server Card 1: Online Linux -->
+<div class="glass-card rounded-lg p-5 flex flex-col group relative overflow-hidden transition-all hover:-translate-y-1 duration-300">
+<div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-tertiary to-transparent opacity-50"></div>
+<div class="flex justify-between items-start mb-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-surface-container-high flex items-center justify-center border border-white/5">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="terminal">terminal</span>
+</div>
+<div>
+<h3 class="font-h3 text-h3 text-on-surface text-lg">Production-Web-01</h3>
+<p class="font-mono text-mono text-xs text-outline font-mono">10.0.12.45 • Ubuntu 22.04</p>
+</div>
+</div>
+<div class="flex items-center gap-1.5 px-2 py-1 rounded-full bg-tertiary-container/20 border border-tertiary/20">
+<div class="w-2 h-2 rounded-full bg-tertiary status-pulse"></div>
+<span class="font-label-caps text-label-caps text-tertiary text-[10px]">ONLINE</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4 mb-6">
+<div class="bg-surface-container p-2 rounded border border-white/5">
+<div class="text-[10px] text-outline uppercase tracking-wider mb-1">CPU Load</div>
+<div class="font-mono text-mono text-sm text-on-surface">12%</div>
+</div>
+<div class="bg-surface-container p-2 rounded border border-white/5">
+<div class="text-[10px] text-outline uppercase tracking-wider mb-1">Uptime</div>
+<div class="font-mono text-mono text-sm text-on-surface">45d 12h</div>
+</div>
+</div>
+<div class="mt-auto">
+<button class="w-full flex justify-center items-center gap-2 bg-primary-container hover:bg-primary-container/90 text-on-primary-container py-2 rounded border border-primary-container transition-all duration-200 electric-glow font-body-sm text-body-sm font-semibold">
+<span class="material-symbols-outlined text-sm" data-icon="bolt" data-weight="fill" style="font-variation-settings: 'FILL' 1;">bolt</span>
+                                Connect via SSH
+                            </button>
+</div>
+</div>
+<!-- Server Card 2: Busy Windows -->
+<div class="glass-card rounded-lg p-5 flex flex-col group relative overflow-hidden transition-all hover:-translate-y-1 duration-300">
+<div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-500 to-transparent opacity-50"></div>
+<div class="flex justify-between items-start mb-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-surface-container-high flex items-center justify-center border border-white/5">
+<span class="material-symbols-outlined text-blue-400" data-icon="desktop_windows">desktop_windows</span>
+</div>
+<div>
+<h3 class="font-h3 text-h3 text-on-surface text-lg">Database-Primary</h3>
+<p class="font-mono text-mono text-xs text-outline font-mono">10.0.8.22 • Win Server 2022</p>
+</div>
+</div>
+<div class="flex items-center gap-1.5 px-2 py-1 rounded-full bg-yellow-500/10 border border-yellow-500/20">
+<div class="w-2 h-2 rounded-full bg-yellow-500"></div>
+<span class="font-label-caps text-label-caps text-yellow-500 text-[10px]">BUSY</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4 mb-6">
+<div class="bg-surface-container p-2 rounded border border-yellow-500/20">
+<div class="text-[10px] text-outline uppercase tracking-wider mb-1">CPU Load</div>
+<div class="font-mono text-mono text-sm text-yellow-500">89%</div>
+</div>
+<div class="bg-surface-container p-2 rounded border border-white/5">
+<div class="text-[10px] text-outline uppercase tracking-wider mb-1">Uptime</div>
+<div class="font-mono text-mono text-sm text-on-surface">12d 4h</div>
+</div>
+</div>
+<div class="mt-auto">
+<button class="w-full flex justify-center items-center gap-2 bg-transparent hover:bg-white/5 text-blue-400 py-2 rounded border border-blue-500/50 transition-all duration-200 hover:border-blue-400 hover:shadow-[0_0_8px_rgba(0,102,255,0.3)] font-body-sm text-body-sm font-semibold">
+<span class="material-symbols-outlined text-sm" data-icon="login">login</span>
+                                Connect via RDP
+                            </button>
+</div>
+</div>
+<!-- Server Card 3: Offline Linux -->
+<div class="glass-card rounded-lg p-5 flex flex-col group relative overflow-hidden transition-all hover:-translate-y-1 duration-300 opacity-75 grayscale-[30%]">
+<div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-error to-transparent opacity-50"></div>
+<div class="flex justify-between items-start mb-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-surface-container-high flex items-center justify-center border border-white/5">
+<span class="material-symbols-outlined text-outline" data-icon="terminal">terminal</span>
+</div>
+<div>
+<h3 class="font-h3 text-h3 text-on-surface text-lg">Staging-Cache-02</h3>
+<p class="font-mono text-mono text-xs text-outline font-mono">10.0.22.15 • Redis Node</p>
+</div>
+</div>
+<div class="flex items-center gap-1.5 px-2 py-1 rounded-full bg-error-container/30 border border-error/20">
+<div class="w-2 h-2 rounded-full bg-error"></div>
+<span class="font-label-caps text-label-caps text-error text-[10px]">OFFLINE</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4 mb-6 opacity-50">
+<div class="bg-surface-container p-2 rounded border border-white/5">
+<div class="text-[10px] text-outline uppercase tracking-wider mb-1">CPU Load</div>
+<div class="font-mono text-mono text-sm text-on-surface">--</div>
+</div>
+<div class="bg-surface-container p-2 rounded border border-white/5">
+<div class="text-[10px] text-outline uppercase tracking-wider mb-1">Uptime</div>
+<div class="font-mono text-mono text-sm text-on-surface">--</div>
+</div>
+</div>
+<div class="mt-auto">
+<button class="w-full flex justify-center items-center gap-2 bg-surface-container text-outline py-2 rounded border border-white/10 cursor-not-allowed font-body-sm text-body-sm" disabled="">
+<span class="material-symbols-outlined text-sm" data-icon="power_off">power_off</span>
+                                Unavailable
+                            </button>
+</div>
+</div>
+<!-- Server Card 4: Online Windows -->
+<div class="glass-card rounded-lg p-5 flex flex-col group relative overflow-hidden transition-all hover:-translate-y-1 duration-300">
+<div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-tertiary to-transparent opacity-50"></div>
+<div class="flex justify-between items-start mb-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-surface-container-high flex items-center justify-center border border-white/5">
+<span class="material-symbols-outlined text-blue-400" data-icon="desktop_windows">desktop_windows</span>
+</div>
+<div>
+<h3 class="font-h3 text-h3 text-on-surface text-lg">Auth-DC-01</h3>
+<p class="font-mono text-mono text-xs text-outline font-mono">10.0.1.10 • Win Server 2022</p>
+</div>
+</div>
+<div class="flex items-center gap-1.5 px-2 py-1 rounded-full bg-tertiary-container/20 border border-tertiary/20">
+<div class="w-2 h-2 rounded-full bg-tertiary status-pulse"></div>
+<span class="font-label-caps text-label-caps text-tertiary text-[10px]">ONLINE</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4 mb-6">
+<div class="bg-surface-container p-2 rounded border border-white/5">
+<div class="text-[10px] text-outline uppercase tracking-wider mb-1">CPU Load</div>
+<div class="font-mono text-mono text-sm text-on-surface">24%</div>
+</div>
+<div class="bg-surface-container p-2 rounded border border-white/5">
+<div class="text-[10px] text-outline uppercase tracking-wider mb-1">Uptime</div>
+<div class="font-mono text-mono text-sm text-on-surface">180d 2h</div>
+</div>
+</div>
+<div class="mt-auto">
+<button class="w-full flex justify-center items-center gap-2 bg-primary-container hover:bg-primary-container/90 text-on-primary-container py-2 rounded border border-primary-container transition-all duration-200 electric-glow font-body-sm text-body-sm font-semibold">
+<span class="material-symbols-outlined text-sm" data-icon="login" data-weight="fill" style="font-variation-settings: 'FILL' 1;">login</span>
+                                Connect via RDP
+                            </button>
+</div>
+</div>
+</div>
+</div>
+</main>

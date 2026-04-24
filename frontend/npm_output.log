@@ -1,0 +1,6 @@
+
+> frontend@0.0.0 start
+> ng serve
+
+An unhandled exception occurred: Port 4200 is already in use. Use '--port' to specify a different port.
+See "/tmp/ng-kbDl4P/angular-errors.log" for further details.
