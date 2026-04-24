@@ -3876,25 +3876,24 @@
     ]
   },
   "packageFolders": {
-    "/home/jules/.nuget/packages/": {}
+    "/home/runner/.nuget/packages/": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/app/backend/Backend.csproj",
+      "projectUniqueName": "/home/runner/work/smooth-operator/smooth-operator/backend/Backend.csproj",
       "projectName": "Backend",
-      "projectPath": "/app/backend/Backend.csproj",
-      "packagesPath": "/home/jules/.nuget/packages/",
-      "outputPath": "/app/backend/obj/",
+      "projectPath": "/home/runner/work/smooth-operator/smooth-operator/backend/Backend.csproj",
+      "packagesPath": "/home/runner/.nuget/packages/",
+      "outputPath": "/home/runner/work/smooth-operator/smooth-operator/backend/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "/home/jules/.nuget/NuGet/NuGet.Config"
+        "/home/runner/.nuget/NuGet/NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net10.0"
       ],
       "sources": {
-        "/usr/lib/dotnet/library-packs": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
@@ -3913,7 +3912,7 @@
         "auditLevel": "low",
         "auditMode": "all"
       },
-      "SdkAnalysisLevel": "10.0.100"
+      "SdkAnalysisLevel": "10.0.200"
     },
     "frameworks": {
       "net10.0": {
@@ -3969,7 +3968,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "/usr/lib/dotnet/sdk/10.0.103/PortableRuntimeIdentifierGraph.json",
+        "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/10.0.201/PortableRuntimeIdentifierGraph.json",
         "packagesToPrune": {
           "Microsoft.AspNetCore": "(,10.0.32767]",
           "Microsoft.AspNetCore.Antiforgery": "(,10.0.32767]",
