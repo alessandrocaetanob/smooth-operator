@@ -1,0 +1,56 @@
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Node.js and NPM
+node_modules/
+npm-debug.log
+yarn-error.log
+package-lock.json
+yarn.lock
+
+# Angular
+/frontend/dist/
+/frontend/tmp/
+/frontend/out-tsc/
+/frontend/bazel-out/
+/frontend/.angular/
+
+# .NET and C#
+/backend/bin/
+/backend/obj/
+/backend/TestResults/
+*.user
+*.suo
+*.userosprefs
+*.sln.docstates
+*.dll
+*.exe
+*.pdb
+*.mdb
+*.ilk
+*.cache
+*.log
+
+# Editor directories and files
+.idea
+.vscode/
+*.swp
+*.swo
+*.swn
+*~
+.project
+.buildpath
+.settings/
+
+# Environment Variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local

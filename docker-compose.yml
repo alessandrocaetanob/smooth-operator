@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "4200:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - smooth-operator-net
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "5000:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    restart: unless-stopped
+    networks:
+      - smooth-operator-net
+
+networks:
+  smooth-operator-net:
+    driver: bridge
