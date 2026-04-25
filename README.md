@@ -31,7 +31,7 @@ graph TD
 ### Component Breakdown
 
 *   **Frontend:** Built with **Angular v17+** and **Tailwind CSS**. It employs modern "glassmorphism" styling and dark-mode aesthetics. The core connection streaming relies on the `guacamole-common-js` library rendering to an HTML5 `<canvas>`.
-*   **Backend:** A **C# .NET 8/9 REST API**. Handles authentication verification, role/team authorization, and establishes the crucial WebSocket tunnels between the Angular frontend and the connection engine.
+*   **Backend:** A **C# .NET 10 LTS REST API**. Handles authentication verification, role/team authorization, and establishes the crucial WebSocket tunnels between the Angular frontend and the connection engine.
 *   **Connection Engine:** An isolated **Apache Guacamole (`guacd`)** daemon written in C/C++. It translates generic remote desktop protocols (RDP, VNC, SSH) into a proprietary protocol that can be streamed over WebSockets.
 *   **Database:** Persisted using **Supabase (PostgreSQL)**. Manages user identities, team structures, server configurations, and audit logging.
 *   **Secrets Management:** **Azure Key Vault** stores connection strings, SSH private keys, and RDP passwords, accessed securely via Azure Managed Identities.
@@ -44,7 +44,7 @@ graph TD
 ### Prerequisites
 *   [Docker Desktop](https://www.docker.com/products/docker-desktop/) or Docker Engine + Docker Compose
 *   [Node.js v22+](https://nodejs.org/)
-*   [.NET 8.0 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)
+*   [.NET 10.0 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/10.0)
 
 ### Running Locally with Docker Compose
 

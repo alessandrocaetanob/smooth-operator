@@ -1,0 +1,47 @@
+# Build artifacts
+bin
+obj
+out
+publish
+*.user
+*.suo
+
+# Test / coverage
+[Tt]est[Rr]esult*
+coverage
+*.coverage
+*.coveragexml
+
+# IDE / OS
+.vs
+.vscode
+.idea
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose*.yml
+
+# NuGet
+*.nupkg
+.nuget
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+appsettings.*.local.json
+secrets.json
+
+# Logs
+*.log
+logs

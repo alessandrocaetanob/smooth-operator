@@ -1,0 +1,121 @@
+<div>
+  <div class="mb-6">
+    <h2 class="text-lg font-semibold text-slate-100">Email (SMTP)</h2>
+    <p class="text-sm text-slate-400 mt-1">
+      Configure an SMTP relay (SendGrid, AWS SES, internal server, …) so the system can send invitation and password-reset emails.
+      When unset, invitation links must be shared manually.
+    </p>
+  </div>
+
+  @if (current()?.configured) {
+    <div class="mb-4 p-3 border border-emerald-500/40 bg-emerald-500/10 rounded text-sm text-emerald-300 flex items-center gap-2">
+      <span class="material-symbols-outlined text-base">check_circle</span>
+      SMTP relay is configured{{ current()?.enabled ? ' and enabled.' : ' but disabled.' }}
+    </div>
+  } @else {
+    <div class="mb-4 p-3 border border-amber-500/40 bg-amber-500/10 rounded text-sm text-amber-300 flex items-center gap-2">
+      <span class="material-symbols-outlined text-base">warning</span>
+      No SMTP relay configured. Invitation links will need to be shared manually.
+    </div>
+  }
+
+  @if (message()) {
+    <div class="mb-4 p-3 border border-emerald-500/40 bg-emerald-500/10 rounded text-sm text-emerald-300">
+      {{ message() }}
+    </div>
+  }
+  @if (error()) {
+    <div class="mb-4 p-3 border border-red-500/40 bg-red-500/10 rounded text-sm text-red-300">
+      {{ error() }}
+    </div>
+  }
+
+  <form (ngSubmit)="save()" class="space-y-4 max-w-2xl">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <div class="md:col-span-2">
+        <label class="block text-xs uppercase tracking-widest text-slate-400 mb-1">Host</label>
+        <input type="text" [ngModel]="host()" (ngModelChange)="host.set($event)" name="host"
+          placeholder="smtp.sendgrid.net" required
+          class="w-full bg-slate-900 border border-white/10 focus:border-blue-500 text-sm text-slate-200 rounded px-3 py-2 outline-none" />
+      </div>
+      <div>
+        <label class="block text-xs uppercase tracking-widest text-slate-400 mb-1">Port</label>
+        <input type="number" min="1" max="65535" [ngModel]="port()" (ngModelChange)="port.set($event)" name="port" required
+          class="w-full bg-slate-900 border border-white/10 focus:border-blue-500 text-sm text-slate-200 rounded px-3 py-2 outline-none" />
+      </div>
+    </div>
+
+    <div class="flex items-center gap-6">
+      <label class="flex items-center gap-2 text-sm text-slate-300">
+        <input type="checkbox" [ngModel]="useSsl()" (ngModelChange)="useSsl.set($event)" name="useSsl" />
+        Use SSL/TLS
+      </label>
+      <label class="flex items-center gap-2 text-sm text-slate-300">
+        <input type="checkbox" [ngModel]="enabled()" (ngModelChange)="enabled.set($event)" name="enabled" />
+        Enabled
+      </label>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs uppercase tracking-widest text-slate-400 mb-1">Username</label>
+        <input type="text" [ngModel]="username()" (ngModelChange)="username.set($event)" name="username"
+          placeholder="apikey or SMTP user"
+          class="w-full bg-slate-900 border border-white/10 focus:border-blue-500 text-sm text-slate-200 rounded px-3 py-2 outline-none" />
+      </div>
+      <div>
+        <label class="block text-xs uppercase tracking-widest text-slate-400 mb-1">
+          Password
+          @if (current()?.hasPassword) {
+            <span class="ml-2 normal-case tracking-normal text-[10px] text-slate-500">(leave blank to keep)</span>
+          }
+        </label>
+        <input type="password" [ngModel]="password()" (ngModelChange)="password.set($event)" name="password"
+          [placeholder]="current()?.hasPassword ? '••••••••' : 'SMTP password / API key'" [disabled]="clearPassword()"
+          class="w-full bg-slate-900 border border-white/10 focus:border-blue-500 text-sm text-slate-200 rounded px-3 py-2 outline-none disabled:opacity-50" />
+        @if (current()?.hasPassword) {
+          <label class="flex items-center gap-2 text-xs text-slate-400 mt-1">
+            <input type="checkbox" [ngModel]="clearPassword()" (ngModelChange)="clearPassword.set($event)" name="clearPassword" />
+            Clear stored password
+          </label>
+        }
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs uppercase tracking-widest text-slate-400 mb-1">From address</label>
+        <input type="email" [ngModel]="fromAddress()" (ngModelChange)="fromAddress.set($event)" name="fromAddress"
+          placeholder="no-reply@example.com" required
+          class="w-full bg-slate-900 border border-white/10 focus:border-blue-500 text-sm text-slate-200 rounded px-3 py-2 outline-none" />
+      </div>
+      <div>
+        <label class="block text-xs uppercase tracking-widest text-slate-400 mb-1">From name</label>
+        <input type="text" [ngModel]="fromName()" (ngModelChange)="fromName.set($event)" name="fromName"
+          placeholder="Smooth Operator"
+          class="w-full bg-slate-900 border border-white/10 focus:border-blue-500 text-sm text-slate-200 rounded px-3 py-2 outline-none" />
+      </div>
+    </div>
+
+    <div class="flex justify-end">
+      <button type="submit" [disabled]="busy()"
+        class="px-4 py-2 text-xs font-bold uppercase tracking-widest text-white bg-blue-600 hover:bg-blue-500 rounded disabled:opacity-50">
+        {{ busy() ? 'Saving…' : 'Save SMTP settings' }}
+      </button>
+    </div>
+  </form>
+
+  <div class="mt-10 pt-6 border-t border-white/10 max-w-2xl">
+    <h3 class="text-sm font-semibold text-slate-100 uppercase tracking-widest mb-3">Send test email</h3>
+    <p class="text-xs text-slate-400 mb-3">Sends a test message using the currently saved settings.</p>
+    <div class="flex gap-2">
+      <input type="email" [ngModel]="testTo()" (ngModelChange)="testTo.set($event)" name="testTo"
+        placeholder="recipient@example.com"
+        class="flex-1 bg-slate-900 border border-white/10 focus:border-blue-500 text-sm text-slate-200 rounded px-3 py-2 outline-none" />
+      <button type="button" (click)="sendTest()" [disabled]="testBusy() || !current()?.configured"
+        class="px-4 py-2 text-xs font-bold uppercase tracking-widest text-white bg-slate-700 hover:bg-slate-600 rounded disabled:opacity-50">
+        {{ testBusy() ? 'Sending…' : 'Send test' }}
+      </button>
+    </div>
+  </div>
+</div>
