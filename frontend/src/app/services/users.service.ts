@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
-import { Observable, tap } from 'rxjs';
+import { Observable, tap, map } from 'rxjs';
 import { pickOr } from './json-utils';
 
 export interface AppUser {
@@ -12,6 +12,13 @@ export interface AppUser {
   hasPassword: boolean;
   createdAt: string;
   roles: string[];
+}
+
+export interface InviteResult {
+  message: string;
+  inviteUrl: string;
+  emailSent: boolean;
+  emailError?: string | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -38,8 +45,15 @@ export class UsersService {
     return this.http.delete<void>(`/api/users/${id}`);
   }
 
-  invite(payload: { email: string; name: string; password?: string }): Observable<any> {
-    return this.http.post<any>('/api/auth/invite', payload);
+  invite(payload: { email: string; name?: string; password?: string }): Observable<InviteResult> {
+    return this.http.post<any>('/api/auth/invite', payload).pipe(
+      map((raw) => ({
+        message: pickOr(raw, '', 'message', 'Message'),
+        inviteUrl: pickOr(raw, '', 'inviteUrl', 'InviteUrl'),
+        emailSent: pickOr(raw, false, 'emailSent', 'EmailSent'),
+        emailError: pickOr(raw, null as string | null, 'emailError', 'EmailError'),
+      })),
+    );
   }
 
   private normalize(raw: any): AppUser {

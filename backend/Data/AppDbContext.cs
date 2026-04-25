@@ -15,6 +15,8 @@ namespace Backend.Data
         public DbSet<Credential> Credentials { get; set; } = null!;
         public DbSet<Connection> Connections { get; set; } = null!;
         public DbSet<AuditLog> AuditLogs { get; set; } = null!;
+        public DbSet<Invitation> Invitations { get; set; } = null!;
+        public DbSet<SmtpSettings> SmtpSettings { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -49,6 +51,17 @@ namespace Backend.Data
 
             modelBuilder.Entity<User>()
                 .HasIndex(u => u.Email)
+                .IsUnique();
+
+            // Invitation -> User (cascade so invites die with the user).
+            modelBuilder.Entity<Invitation>()
+                .HasOne(i => i.User)
+                .WithMany()
+                .HasForeignKey(i => i.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Invitation>()
+                .HasIndex(i => i.TokenHash)
                 .IsUnique();
         }
     }

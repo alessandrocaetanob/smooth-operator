@@ -21,12 +21,21 @@ namespace Backend.Controllers
         private readonly AppDbContext _context;
         private readonly IConfiguration _configuration;
         private readonly ITokenService _tokenService;
+        private readonly IInviteService _inviteService;
+        private readonly IEmailService _emailService;
 
-        public AuthController(AppDbContext context, IConfiguration configuration, ITokenService tokenService)
+        public AuthController(
+            AppDbContext context,
+            IConfiguration configuration,
+            ITokenService tokenService,
+            IInviteService inviteService,
+            IEmailService emailService)
         {
             _context = context;
             _configuration = configuration;
             _tokenService = tokenService;
+            _inviteService = inviteService;
+            _emailService = emailService;
         }
 
         // Lets the frontend discover which login methods are enabled and whether
@@ -319,16 +328,26 @@ namespace Backend.Controllers
                 Id = Guid.NewGuid(),
                 Email = email,
                 Name = request.Email,
-                IsActive = true
+                IsActive = false
             };
             _context.Users.Add(user);
-
-            var frontendUrl = _configuration["FRONTEND_URL"] ?? _configuration["APP_URL"] ?? "http://localhost:4200";
-            var inviteLink = $"{frontendUrl.TrimEnd('/')}/setup-account?id={user.Id}";
+            await _context.SaveChangesAsync();
 
             var adminEmail = User.FindFirstValue(ClaimTypes.Email)
                            ?? User.FindFirstValue("preferred_username");
             var adminUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == adminEmail);
+
+            var (_, _, inviteUrl) = await _inviteService.CreateAsync(
+                user.Id, InviteService.TypeUserInvite, TimeSpan.FromHours(72), adminUser?.Id);
+
+            var emailSent = false;
+            string? emailError = null;
+            if (await _emailService.IsConfiguredAsync())
+            {
+                var result = await _emailService.SendInviteAsync(user.Email, user.Name, inviteUrl);
+                emailSent = result.Success;
+                emailError = result.Error;
+            }
 
             _context.AuditLogs.Add(new AuditLog
             {
@@ -337,13 +356,38 @@ namespace Backend.Controllers
                 Action = "user.invited",
                 ResourceType = "User",
                 ResourceId = user.Id.ToString(),
-                Details = $"{{\"email\":\"{request.Email}\"}}",
+                Details = System.Text.Json.JsonSerializer.Serialize(new { email = user.Email, emailSent }),
                 IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? ""
             });
-
             await _context.SaveChangesAsync();
 
-            return Ok(new { Message = "User invited successfully.", InviteLink = inviteLink });
+            return Ok(new
+            {
+                Message = "User invited successfully.",
+                InviteUrl = inviteUrl,
+                EmailSent = emailSent,
+                EmailError = emailError
+            });
+        }
+
+        [HttpPost("forgot-password")]
+        [AllowAnonymous]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var email = request.Email.Trim().ToLowerInvariant();
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+
+            // Always succeed to avoid email enumeration. Only attempt send when SMTP is configured and user exists.
+            if (user != null && await _emailService.IsConfiguredAsync())
+            {
+                var (_, _, resetUrl) = await _inviteService.CreateAsync(
+                    user.Id, InviteService.TypePasswordReset, TimeSpan.FromHours(2), null);
+                await _emailService.SendPasswordResetAsync(user.Email, user.Name, resetUrl);
+            }
+
+            return Ok(new { Message = "If the account exists, a reset link has been sent." });
         }
 
         private AuthResponse BuildAuthResponse(User user) => new()
