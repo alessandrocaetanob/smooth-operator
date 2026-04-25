@@ -8,6 +8,7 @@ namespace Backend.Models
         public Guid Id { get; set; }
         public string Email { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
+        public string? PasswordHash { get; set; }
         public string? EntraObjectId { get; set; }
         public bool IsActive { get; set; } = true;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

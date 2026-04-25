@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   frontend:
     build:
@@ -26,6 +24,13 @@ services:
       - Guacd__Host=guacd
       - Guacd__Port=4822
       - ENCRYPTION_KEY=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef # WARNING: FOR DEVELOPMENT ONLY! Use Azure Key Vault or secure secrets management in production
+      - Jwt__Key=7e589cea4a11cdcc9c35a1cf55e9cbe2bf793a59d1c7c106e218749b6c2308ad # WARNING: FOR DEVELOPMENT ONLY! Replace with a strong random secret in production
+      - Jwt__Issuer=smooth-operator
+      - Jwt__Audience=smooth-operator-api
+      # Optional: enable Entra ID by setting AzureAd__ClientId and AzureAd__TenantId (and AzureAd__Instance/Domain as needed).
+      # - AzureAd__Instance=https://login.microsoftonline.com/
+      # - AzureAd__TenantId=<your-tenant-id>
+      # - AzureAd__ClientId=<your-client-id>
       - APP_URL=http://localhost:4200
       - FRONTEND_URL=http://localhost:4200
     depends_on:

@@ -4,7 +4,9 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Backend.Data;
+using Backend.DTOs;
 using Backend.Models;
+using Backend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -18,18 +20,127 @@ namespace Backend.Controllers
     {
         private readonly AppDbContext _context;
         private readonly IConfiguration _configuration;
+        private readonly ITokenService _tokenService;
 
-        public AuthController(AppDbContext context, IConfiguration configuration)
+        public AuthController(AppDbContext context, IConfiguration configuration, ITokenService tokenService)
         {
             _context = context;
             _configuration = configuration;
+            _tokenService = tokenService;
         }
 
-        [HttpPost("login")]
-        [Authorize]
-        public async Task<IActionResult> Login()
+        // Lets the frontend discover which login methods are enabled.
+        [HttpGet("providers")]
+        [AllowAnonymous]
+        public IActionResult GetProviders()
         {
-            // For Entra ID, object ID is typically in the "http://schemas.microsoft.com/identity/claims/objectidentifier" or "oid" claim
+            var entraSection = _configuration.GetSection("AzureAd");
+            var entraEnabled = !string.IsNullOrWhiteSpace(entraSection["ClientId"])
+                               && !string.IsNullOrWhiteSpace(entraSection["TenantId"]);
+
+            return Ok(new { Local = true, EntraId = entraEnabled });
+        }
+
+        // Local user registration. Always available – the application is the
+        // source of truth for users; external IdPs are opt-in.
+        [HttpPost("register")]
+        [AllowAnonymous]
+        public async Task<IActionResult> Register([FromBody] RegisterRequest request)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var email = request.Email.Trim().ToLowerInvariant();
+
+            if (await _context.Users.AnyAsync(u => u.Email == email))
+            {
+                return Conflict(new { message = "A user with this email already exists." });
+            }
+
+            var user = new User
+            {
+                Id = Guid.NewGuid(),
+                Email = email,
+                Name = request.Name.Trim(),
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password, workFactor: 12),
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.Users.Add(user);
+            _context.AuditLogs.Add(new AuditLog
+            {
+                Id = Guid.NewGuid(),
+                UserId = user.Id,
+                Action = "user.registered",
+                ResourceType = "User",
+                ResourceId = user.Id.ToString(),
+                Details = "{\"provider\":\"local\"}",
+                IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? ""
+            });
+            await _context.SaveChangesAsync();
+
+            return Ok(BuildAuthResponse(user));
+        }
+
+        // Local username + password login. Returns a JWT signed by this server.
+        [HttpPost("login")]
+        [AllowAnonymous]
+        public async Task<IActionResult> Login([FromBody] LoginRequest request)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var email = request.Email.Trim().ToLowerInvariant();
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+
+            const string invalid = "Invalid email or password.";
+
+            if (user == null || string.IsNullOrEmpty(user.PasswordHash))
+            {
+                return Unauthorized(new { message = invalid });
+            }
+
+            if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+            {
+                _context.AuditLogs.Add(new AuditLog
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = user.Id,
+                    Action = "user.login_failed",
+                    ResourceType = "User",
+                    ResourceId = user.Id.ToString(),
+                    Details = "{\"provider\":\"local\"}",
+                    IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? ""
+                });
+                await _context.SaveChangesAsync();
+                return Unauthorized(new { message = invalid });
+            }
+
+            if (!user.IsActive)
+            {
+                return StatusCode(403, new { message = "User account is disabled." });
+            }
+
+            _context.AuditLogs.Add(new AuditLog
+            {
+                Id = Guid.NewGuid(),
+                UserId = user.Id,
+                Action = "user.login",
+                ResourceType = "User",
+                ResourceId = user.Id.ToString(),
+                Details = "{\"provider\":\"local\"}",
+                IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? ""
+            });
+            await _context.SaveChangesAsync();
+
+            return Ok(BuildAuthResponse(user));
+        }
+
+        // Exchanges an Entra ID bearer token for an application JWT, JIT-provisioning
+        // the user if needed. Only usable when Entra ID is configured.
+        [HttpPost("login/entra")]
+        [Authorize(AuthenticationSchemes = "EntraId")]
+        public async Task<IActionResult> LoginWithEntra()
+        {
             var objectId = User.FindFirstValue("http://schemas.microsoft.com/identity/claims/objectidentifier")
                            ?? User.FindFirstValue("oid");
 
@@ -45,13 +156,13 @@ namespace Backend.Controllers
                 return BadRequest("Could not determine user email from token.");
             }
 
-            // Check if user exists
+            email = email.Trim().ToLowerInvariant();
+
             var user = await _context.Users.FirstOrDefaultAsync(u =>
                 (objectId != null && u.EntraObjectId == objectId) || u.Email == email);
 
             if (user == null)
             {
-                // JIT Provisioning
                 user = new User
                 {
                     Id = Guid.NewGuid(),
@@ -61,10 +172,7 @@ namespace Backend.Controllers
                     IsActive = true,
                     CreatedAt = DateTime.UtcNow
                 };
-
                 _context.Users.Add(user);
-
-                // Add Audit Log
                 _context.AuditLogs.Add(new AuditLog
                 {
                     Id = Guid.NewGuid(),
@@ -75,12 +183,10 @@ namespace Backend.Controllers
                     Details = "{\"provider\":\"entra_id\"}",
                     IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? ""
                 });
-
                 await _context.SaveChangesAsync();
             }
             else if (objectId != null && user.EntraObjectId != objectId)
             {
-                // Link Entra ID if it was manually created before
                 user.EntraObjectId = objectId;
                 if (string.IsNullOrEmpty(user.Name) && !string.IsNullOrEmpty(name))
                 {
@@ -91,14 +197,32 @@ namespace Backend.Controllers
 
             if (!user.IsActive)
             {
-                return Forbid("User account is disabled.");
+                return StatusCode(403, new { message = "User account is disabled." });
             }
 
-            return Ok(new
+            return Ok(BuildAuthResponse(user));
+        }
+
+        [HttpGet("me")]
+        [Authorize]
+        public async Task<IActionResult> Me()
+        {
+            var idClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(idClaim, out var userId))
+            {
+                return Unauthorized();
+            }
+
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null) return NotFound();
+
+            return Ok(new UserInfo
             {
                 Id = user.Id,
                 Email = user.Email,
-                Name = user.Name
+                Name = user.Name,
+                HasPassword = !string.IsNullOrEmpty(user.PasswordHash),
+                LinkedToEntra = !string.IsNullOrEmpty(user.EntraObjectId)
             });
         }
 
@@ -106,18 +230,10 @@ namespace Backend.Controllers
         [Authorize] // In a real scenario, check if the current user is an Admin
         public async Task<IActionResult> InviteUser([FromBody] InviteUserRequest request)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+            if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            if (string.IsNullOrWhiteSpace(request.Email))
-            {
-                return BadRequest("Email is required.");
-            }
-
-            var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
-            if (existingUser != null)
+            var email = request.Email.Trim().ToLowerInvariant();
+            if (await _context.Users.AnyAsync(u => u.Email == email))
             {
                 return Conflict("User already exists.");
             }
@@ -125,19 +241,15 @@ namespace Backend.Controllers
             var user = new User
             {
                 Id = Guid.NewGuid(),
-                Email = request.Email.Trim().ToLowerInvariant(),
-                Name = request.Email, // Placeholder until they set up
+                Email = email,
+                Name = request.Email,
                 IsActive = true
             };
-
             _context.Users.Add(user);
 
-            // In a real application, you would generate a secure, time-limited token here
-            // For now, we'll just generate the link using their new User ID
             var frontendUrl = _configuration["FRONTEND_URL"] ?? _configuration["APP_URL"] ?? "http://localhost:4200";
             var inviteLink = $"{frontendUrl.TrimEnd('/')}/setup-account?id={user.Id}";
 
-            // Add Audit Log
             var adminEmail = User.FindFirstValue(ClaimTypes.Email)
                            ?? User.FindFirstValue("preferred_username");
             var adminUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == adminEmail);
@@ -145,7 +257,7 @@ namespace Backend.Controllers
             _context.AuditLogs.Add(new AuditLog
             {
                 Id = Guid.NewGuid(),
-                UserId = adminUser?.Id, // The admin who invited
+                UserId = adminUser?.Id,
                 Action = "user.invited",
                 ResourceType = "User",
                 ResourceId = user.Id.ToString(),
@@ -155,14 +267,22 @@ namespace Backend.Controllers
 
             await _context.SaveChangesAsync();
 
-            // Typically you would send an email here instead of returning the link directly,
-            // but returning it for the admin to copy works for now.
-            return Ok(new
-            {
-                Message = "User invited successfully.",
-                InviteLink = inviteLink
-            });
+            return Ok(new { Message = "User invited successfully.", InviteLink = inviteLink });
         }
+
+        private AuthResponse BuildAuthResponse(User user) => new()
+        {
+            Token = _tokenService.CreateToken(user),
+            ExpiresAt = DateTime.UtcNow.Add(_tokenService.TokenLifetime),
+            User = new UserInfo
+            {
+                Id = user.Id,
+                Email = user.Email,
+                Name = user.Name,
+                HasPassword = !string.IsNullOrEmpty(user.PasswordHash),
+                LinkedToEntra = !string.IsNullOrEmpty(user.EntraObjectId)
+            }
+        };
     }
 
     public class InviteUserRequest
