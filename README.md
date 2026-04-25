@@ -95,3 +95,25 @@ dotnet run
 *   **Styling:** Tailwind CSS integrated directly into Angular components.
 *   **Icons:** Google Material Symbols (Outlined).
 *   **Testing:** Playwright for frontend E2E and visual verification.
+
+---
+
+## 🔒 CI/CD & Code Quality
+
+This project uses automated GitHub Actions workflows for:
+
+*   **Security Scanning:** CodeQL analysis for vulnerability detection, dependency scanning, and container security
+*   **Code Quality:** Automated linting, formatting checks, and build validation for both frontend and backend
+*   **PR Validation:** Comprehensive checks ensuring code quality and security standards before merge
+
+📖 **Documentation:**
+- [Full Workflows Documentation](.github/workflows/README.md)
+- [Quick Reference Guide](.github/workflows/QUICKREF.md)
+
+**Key Features:**
+- 🔐 CodeQL security analysis (C# + TypeScript)
+- 📦 Dependency vulnerability scanning
+- 🐳 Docker image security scanning
+- ✨ Code formatting validation
+- ✅ Automated testing
+- 🚦 PR quality gates
