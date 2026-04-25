@@ -50,11 +50,18 @@ export class AuthService {
 
   loadSetupStatus(): Observable<SetupStatus> {
     return this.http.get<any>('/api/auth/setup-status').pipe(
-      tap((raw) => this._setup.set(this.normalizeStatus(raw))),
+      tap((raw) => {
+        if (!raw || typeof raw !== 'object') {
+          throw new Error('Invalid setup-status response');
+        }
+        this._setup.set(this.normalizeStatus(raw));
+      }),
       catchError(() => {
-        // Backend unreachable – assume defaults so the UI still renders.
+        // Backend unreachable or returned a non-JSON payload (e.g. SPA HTML
+        // when the API proxy is misconfigured). Assume setup is required so
+        // the operator can finish bootstrap instead of being stuck on login.
         const fallback: SetupStatus = {
-          requiresSetup: false,
+          requiresSetup: true,
           providers: { local: true, entraId: false },
         };
         this._setup.set(fallback);
