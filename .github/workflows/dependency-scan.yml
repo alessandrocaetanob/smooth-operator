@@ -1,0 +1,89 @@
+name: "Dependency Security Scan"
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'backend/**/*.csproj'
+      - 'frontend/package*.json'
+      - '.github/workflows/dependency-scan.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'backend/**/*.csproj'
+      - 'frontend/package*.json'
+      - '.github/workflows/dependency-scan.yml'
+  schedule:
+    # Run at 3:00 AM UTC every day
+    - cron: '0 3 * * *'
+
+jobs:
+  scan-frontend-dependencies:
+    name: Scan Frontend Dependencies
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+
+    - name: Install dependencies
+      working-directory: frontend
+      run: npm ci
+
+    - name: Run npm audit
+      working-directory: frontend
+      run: |
+        npm audit --audit-level=moderate || true
+        npm audit --audit-level=moderate --json > npm-audit-report.json || true
+
+    - name: Upload npm audit report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: npm-audit-report
+        path: frontend/npm-audit-report.json
+        retention-days: 30
+
+  scan-backend-dependencies:
+    name: Scan Backend Dependencies
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '10.0.x'
+
+    - name: Restore dependencies
+      run: dotnet restore backend/Backend.csproj
+
+    - name: List outdated packages
+      run: dotnet list backend/Backend.csproj package --outdated
+      continue-on-error: true
+
+    - name: Check for vulnerable packages
+      run: dotnet list backend/Backend.csproj package --vulnerable --include-transitive
+      continue-on-error: true
+
+  dependency-review:
+    name: Dependency Review (PR only)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Dependency Review
+      uses: actions/dependency-review-action@v4
+      with:
+        fail-on-severity: moderate
+        deny-licenses: GPL-2.0, GPL-3.0
