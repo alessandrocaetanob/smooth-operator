@@ -2,6 +2,22 @@
 
 This directory contains automated workflows for code quality, security scanning, and CI/CD processes.
 
+## ▶️ Manual Workflow Triggers
+
+All workflows support **manual triggering** via `workflow_dispatch`. To manually run a workflow:
+
+1. Navigate to **Actions** tab in GitHub
+2. Select the workflow you want to run from the left sidebar
+3. Click **"Run workflow"** button (top right)
+4. Select the branch to run against
+5. Click **"Run workflow"** to start
+
+This is useful for:
+- Running security scans on-demand
+- Testing workflow changes
+- Re-running scans after fixing issues
+- Manual verification before releases
+
 ## 🔐 Security Workflows
 
 ### CodeQL Analysis (`codeql-analysis.yml`)
@@ -11,6 +27,7 @@ This directory contains automated workflows for code quality, security scanning,
 - Push to `main` or `develop` branches
 - Pull requests to `main` or `develop`
 - Scheduled: Every Monday at 2:30 AM UTC
+- **Manual trigger**: On-demand via workflow_dispatch
 
 **What it scans:**
 - **C# Backend**: Security vulnerabilities, code quality issues, SQL injection, authentication flaws
@@ -25,6 +42,7 @@ This directory contains automated workflows for code quality, security scanning,
 - Push to `main` or `develop` (when dependency files change)
 - Pull requests (when dependency files change)
 - Scheduled: Daily at 3:00 AM UTC
+- **Manual trigger**: On-demand via workflow_dispatch
 
 **What it checks:**
 - **Frontend**: npm audit for JavaScript package vulnerabilities
@@ -39,6 +57,7 @@ This directory contains automated workflows for code quality, security scanning,
 - Push to `main` or `develop` (when Docker files change)
 - Pull requests (when Docker files change)
 - Scheduled: Every Monday at 4:00 AM UTC
+- **Manual trigger**: On-demand via workflow_dispatch
 
 **What it scans:**
 - Dockerfile best practices with Hadolint
@@ -53,6 +72,7 @@ This directory contains automated workflows for code quality, security scanning,
 **When it runs:**
 - Push to `main` or `develop` (when frontend code changes)
 - Pull requests (when frontend code changes)
+- **Manual trigger**: On-demand via workflow_dispatch
 
 **Checks performed:**
 - **Prettier formatting**: Validates consistent code formatting
@@ -66,6 +86,7 @@ This directory contains automated workflows for code quality, security scanning,
 **When it runs:**
 - Push to `main` or `develop` (when backend code changes)
 - Pull requests (when backend code changes)
+- **Manual trigger**: On-demand via workflow_dispatch
 
 **Checks performed:**
 - **.NET analyzers**: Enforces code style and quality rules

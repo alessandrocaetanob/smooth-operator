@@ -16,6 +16,7 @@ on:
   schedule:
     # Run at 4:00 AM UTC every Monday
     - cron: '0 4 * * 1'
+  workflow_dispatch:
 
 jobs:
   scan-dockerfiles:

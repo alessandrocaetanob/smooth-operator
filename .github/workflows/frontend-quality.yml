@@ -11,6 +11,7 @@ on:
     paths:
       - 'frontend/**'
       - '.github/workflows/frontend-quality.yml'
+  workflow_dispatch:
 
 jobs:
   lint-and-format:

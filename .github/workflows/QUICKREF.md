@@ -1,14 +1,21 @@
 # Quick Reference: CI/CD Workflows
 
+## ▶️ Running Workflows Manually
+
+All workflows can be triggered manually from the GitHub interface:
+
+1. Go to **Actions** tab → Select workflow → Click **"Run workflow"**
+2. Choose branch → Click **"Run workflow"** to start
+
 ## 🚦 Workflow Status Summary
 
 | Workflow | Triggers | Purpose |
 |----------|----------|---------|
-| **CodeQL Analysis** | Push, PR, Weekly schedule | Security vulnerability scanning |
-| **Frontend Quality** | Push/PR (frontend changes) | Linting, formatting, build, tests |
-| **Backend Quality** | Push/PR (backend changes) | .NET analyzers, formatting, tests |
-| **Dependency Scan** | Push/PR (dependency files), Daily | Vulnerable dependency detection |
-| **Docker Security** | Push/PR (Docker files), Weekly | Container security scanning |
+| **CodeQL Analysis** | Push, PR, Weekly schedule, **Manual** | Security vulnerability scanning |
+| **Frontend Quality** | Push/PR (frontend changes), **Manual** | Linting, formatting, build, tests |
+| **Backend Quality** | Push/PR (backend changes), **Manual** | .NET analyzers, formatting, tests |
+| **Dependency Scan** | Push/PR (dependency files), Daily, **Manual** | Vulnerable dependency detection |
+| **Docker Security** | Push/PR (Docker files), Weekly, **Manual** | Container security scanning |
 | **PR Checks** | All Pull Requests | Comprehensive PR validation gate |
 
 ## 🔍 What Gets Scanned
