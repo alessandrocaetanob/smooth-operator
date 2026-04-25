@@ -1,0 +1,91 @@
+name: "Backend Code Quality"
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-quality.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-quality.yml'
+  workflow_dispatch:
+
+jobs:
+  build-and-analyze:
+    name: Build and Analyze .NET Backend
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore backend/Backend.csproj
+
+      - name: Build with analyzers
+        run: |
+          dotnet build backend/Backend.csproj \
+            --configuration Release \
+            --no-restore \
+            /p:TreatWarningsAsErrors=false \
+            /p:EnforceCodeStyleInBuild=true \
+            /p:AnalysisLevel=latest
+
+      - name: Run .NET format check
+        run: dotnet format backend/Backend.csproj --verify-no-changes --verbosity diagnostic
+
+  test:
+    name: Run Backend Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore test dependencies
+        run: |
+          mapfile -t test_projects < <(find backend -type f -name '*Tests*.csproj' | sort)
+
+          if [ ${#test_projects[@]} -eq 0 ]; then
+            echo "No test projects found under backend/, skipping test restore"
+            exit 0
+          fi
+
+          for project in "${test_projects[@]}"; do
+            dotnet restore "$project"
+          done
+
+      - name: Build
+        run: |
+          if [ -f backend/Backend.csproj ]; then
+            dotnet build backend/Backend.csproj --configuration Release --no-restore
+          else
+            echo "backend/Backend.csproj not found, skipping backend build"
+          fi
+
+      - name: Run tests
+        run: |
+          mapfile -t test_projects < <(find backend -type f -name '*Tests*.csproj' | sort)
+
+          if [ ${#test_projects[@]} -eq 0 ]; then
+            echo "No test projects found under backend/, skipping test execution"
+            exit 0
+          fi
+
+          for project in "${test_projects[@]}"; do
+            echo "Running tests for $project"
+            dotnet test "$project" --configuration Release --no-build --verbosity normal
+          done
