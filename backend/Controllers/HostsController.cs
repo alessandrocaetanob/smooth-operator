@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Backend.Data;
 using Backend.DTOs;
 using Backend.Models;
+using Backend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -17,10 +18,12 @@ namespace Backend.Controllers
     public class HostsController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private readonly IAuditService _audit;
 
-        public HostsController(AppDbContext context)
+        public HostsController(AppDbContext context, IAuditService audit)
         {
             _context = context;
+            _audit = audit;
         }
 
         [HttpGet]
@@ -70,6 +73,7 @@ namespace Backend.Controllers
 
             _context.Hosts.Add(host);
             await _context.SaveChangesAsync();
+            await _audit.WriteAsync("host.created", "Host", host.Id.ToString(), new { host.Name, host.Address });
 
             return CreatedAtAction(nameof(GetHost), new { id = host.Id }, new HostDto
             {
@@ -112,6 +116,7 @@ namespace Backend.Controllers
                 }
             }
 
+            await _audit.WriteAsync("host.updated", "Host", id.ToString(), new { host.Name, host.Address });
             return NoContent();
         }
 
@@ -126,7 +131,7 @@ namespace Backend.Controllers
 
             _context.Hosts.Remove(host);
             await _context.SaveChangesAsync();
-
+            await _audit.WriteAsync("host.deleted", "Host", id.ToString(), new { host.Name });
             return NoContent();
         }
 

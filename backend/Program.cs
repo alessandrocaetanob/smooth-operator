@@ -17,6 +17,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddSingleton<IEncryptionService, EncryptionService>();
 builder.Services.AddSingleton<GuacamoleProxyService>();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IAuditService, AuditService>();
 
 // Local JWT (HS256) is the default authentication scheme so the app works without
 // any external identity provider. Entra ID (or any other OIDC provider) is opt-in

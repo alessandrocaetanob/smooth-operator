@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Backend.Data;
 using Backend.DTOs;
 using Backend.Models;
+using Backend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -17,60 +18,58 @@ namespace Backend.Controllers
     public class ConnectionsController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private readonly IAuditService _audit;
 
-        public ConnectionsController(AppDbContext context)
+        public ConnectionsController(AppDbContext context, IAuditService audit)
         {
             _context = context;
+            _audit = audit;
         }
 
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<object>>> GetConnections()
+        private static ConnectionDto Project(Connection c) => new()
         {
-            // Includes basic related info but excludes credentials
+            Id = c.Id,
+            Name = c.Name,
+            Protocol = c.Protocol,
+            HostId = c.HostId,
+            CredentialId = c.CredentialId,
+            ConnectionGroupId = c.ConnectionGroupId,
+            Settings = c.Settings,
+            Host = c.Host == null ? null : new HostDto
+            {
+                Id = c.Host.Id,
+                Name = c.Host.Name,
+                Address = c.Host.Address
+            },
+            ConnectionGroup = c.ConnectionGroup == null ? null : new ConnectionGroupDto
+            {
+                Id = c.ConnectionGroup.Id,
+                Name = c.ConnectionGroup.Name
+            }
+        };
+
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<ConnectionDto>>> GetConnections()
+        {
             var connections = await _context.Connections
                 .Include(c => c.Host)
                 .Include(c => c.ConnectionGroup)
+                .OrderBy(c => c.Name)
                 .ToListAsync();
 
-            // Return without credential information
-            return Ok(connections.Select(c => new
-            {
-                c.Id,
-                c.Name,
-                c.Protocol,
-                c.HostId,
-                c.ConnectionGroupId,
-                c.Settings,
-                Host = c.Host != null ? new { c.Host.Id, c.Host.Name, c.Host.Address } : null,
-                ConnectionGroup = c.ConnectionGroup != null ? new { c.ConnectionGroup.Id, c.ConnectionGroup.Name } : null
-            }));
+            return Ok(connections.Select(Project));
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<object>> GetConnection(Guid id)
+        public async Task<ActionResult<ConnectionDto>> GetConnection(Guid id)
         {
             var connection = await _context.Connections
                 .Include(c => c.Host)
                 .Include(c => c.ConnectionGroup)
                 .FirstOrDefaultAsync(c => c.Id == id);
 
-            if (connection == null)
-            {
-                return NotFound();
-            }
-
-            // Return without credential information
-            return Ok(new
-            {
-                connection.Id,
-                connection.Name,
-                connection.Protocol,
-                connection.HostId,
-                connection.ConnectionGroupId,
-                connection.Settings,
-                Host = connection.Host != null ? new { connection.Host.Id, connection.Host.Name, connection.Host.Address } : null,
-                ConnectionGroup = connection.ConnectionGroup != null ? new { connection.ConnectionGroup.Id, connection.ConnectionGroup.Name } : null
-            });
+            if (connection == null) return NotFound();
+            return Ok(Project(connection));
         }
 
         [HttpPost]
@@ -94,6 +93,8 @@ namespace Backend.Controllers
 
             _context.Connections.Add(connection);
             await _context.SaveChangesAsync();
+            await _audit.WriteAsync("connection.created", "Connection", connection.Id.ToString(),
+                new { connection.Name, connection.Protocol, connection.HostId });
 
             return CreatedAtAction(nameof(GetConnection), new { id = connection.Id }, new ConnectionDto
             {
@@ -144,6 +145,8 @@ namespace Backend.Controllers
                 }
             }
 
+            await _audit.WriteAsync("connection.updated", "Connection", id.ToString(),
+                new { connection.Name, connection.Protocol });
             return NoContent();
         }
 
@@ -158,7 +161,8 @@ namespace Backend.Controllers
 
             _context.Connections.Remove(connection);
             await _context.SaveChangesAsync();
-
+            await _audit.WriteAsync("connection.deleted", "Connection", id.ToString(),
+                new { connection.Name });
             return NoContent();
         }
 

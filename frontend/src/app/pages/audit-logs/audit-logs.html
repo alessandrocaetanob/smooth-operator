@@ -1,167 +1,139 @@
-<!-- Main Content Area -->
-<div class="flex-1 flex flex-col md:ml-64 min-h-screen pt-16">
-<!-- Canvas -->
-<main class="flex-1 p-6 md:p-8 lg:p-margin max-w-container-max mx-auto w-full">
-<!-- Page Header -->
-<div class="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
-<div>
-<h2 class="font-h2 text-h2 text-on-surface mb-1">Audit Logs</h2>
-<p class="font-body-md text-body-md text-on-surface-variant">Comprehensive traceability for all vault and server interactions.</p>
-</div>
-<div class="flex gap-3">
-<button class="glass-panel px-4 py-2 rounded text-on-surface hover:bg-white/5 border border-outline-variant font-label-caps text-label-caps flex items-center gap-2 transition-colors">
-<span class="material-symbols-outlined text-[18px]">download</span>
-                        Export CSV
-                    </button>
-</div>
-</div>
-<!-- Filters Area -->
-<div class="glass-panel rounded-lg p-4 mb-6 flex flex-col md:flex-row gap-4 items-center">
-<div class="w-full md:w-auto flex-1 relative">
-<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-[18px]">person</span>
-<input class="w-full bg-surface-container border border-outline-variant rounded text-on-surface font-body-sm text-body-sm pl-9 pr-4 py-2 focus:outline-none focus:border-secondary-fixed-dim focus:ring-0 transition-colors placeholder-slate-500" placeholder="Filter by Operator..." type="text"/>
-</div>
-<div class="w-full md:w-auto flex-1 relative">
-<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-[18px]">dns</span>
-<input class="w-full bg-surface-container border border-outline-variant rounded text-on-surface font-body-sm text-body-sm pl-9 pr-4 py-2 focus:outline-none focus:border-secondary-fixed-dim focus:ring-0 transition-colors placeholder-slate-500" placeholder="Target Server..." type="text"/>
-</div>
-<div class="w-full md:w-auto flex-1 relative">
-<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-[18px]">calendar_today</span>
-<input class="w-full bg-surface-container border border-outline-variant rounded text-on-surface font-body-sm text-body-sm pl-9 pr-4 py-2 focus:outline-none focus:border-secondary-fixed-dim focus:ring-0 transition-colors placeholder-slate-500 cursor-pointer" placeholder="Last 7 Days" readonly="" type="text"/>
-</div>
-<button class="w-full md:w-auto bg-surface-container-high hover:bg-surface-variant border border-outline-variant text-on-surface px-4 py-2 rounded font-label-caps text-label-caps flex items-center justify-center gap-2 transition-colors">
-<span class="material-symbols-outlined text-[18px]">filter_list</span>
-                    More Filters
-                </button>
-</div>
-<!-- Data Table -->
-<div class="glass-panel rounded-lg overflow-hidden">
-<div class="overflow-x-auto">
-<table class="w-full text-left border-collapse font-inter">
-<thead>
-<tr class="bg-surface-container-low/50 border-b border-outline-variant/50 font-label-caps text-label-caps text-on-surface-variant">
-<th class="py-4 px-6 font-semibold">Operator</th>
-<th class="py-4 px-6 font-semibold">Action</th>
-<th class="py-4 px-6 font-semibold">Target Server</th>
-<th class="py-4 px-6 font-semibold">Timestamp (UTC)</th>
-<th class="py-4 px-6 font-semibold text-right">Duration</th>
-</tr>
-</thead>
-<tbody class="font-body-sm text-body-sm text-on-surface divide-y divide-outline-variant/30">
-<!-- Row 1 -->
-<tr class="hover:bg-surface-container-high/40 transition-colors group">
-<td class="py-3 px-6 flex items-center gap-3">
-<div class="w-8 h-8 rounded-full bg-primary-container/20 border border-primary-container/50 flex items-center justify-center text-primary-fixed font-bold text-xs">J.D.</div>
-<div>
-<div class="font-medium text-on-surface group-hover:text-primary-fixed-dim transition-colors">John Doe</div>
-<div class="text-xs text-on-surface-variant">jdoe@smoothop.dev</div>
-</div>
-</td>
-<td class="py-3 px-6">
-<div class="flex items-center gap-2">
-<span class="material-symbols-outlined text-tertiary text-[18px]">login</span>
-<span class="bg-tertiary-container/20 text-tertiary px-2 py-0.5 rounded border border-tertiary/20 text-xs">Connected</span>
-</div>
-</td>
-<td class="py-3 px-6 font-mono text-mono text-secondary-fixed">prod-db-eu-west-1a</td>
-<td class="py-3 px-6 text-on-surface-variant">2023-10-27 14:32:01</td>
-<td class="py-3 px-6 text-right font-mono text-mono">--</td>
-</tr>
-<!-- Row 2 -->
-<tr class="hover:bg-surface-container-high/40 transition-colors group">
-<td class="py-3 px-6 flex items-center gap-3">
-<div class="w-8 h-8 rounded-full bg-surface-variant border border-outline-variant flex items-center justify-center text-on-surface-variant font-bold text-xs">A.S.</div>
-<div>
-<div class="font-medium text-on-surface group-hover:text-primary-fixed-dim transition-colors">Alice Smith</div>
-<div class="text-xs text-on-surface-variant">asmith@smoothop.dev</div>
-</div>
-</td>
-<td class="py-3 px-6">
-<div class="flex items-center gap-2">
-<span class="material-symbols-outlined text-error text-[18px]">logout</span>
-<span class="bg-surface-variant text-on-surface-variant px-2 py-0.5 rounded border border-outline-variant/50 text-xs">Disconnected</span>
-</div>
-</td>
-<td class="py-3 px-6 font-mono text-mono text-secondary-fixed">staging-app-02</td>
-<td class="py-3 px-6 text-on-surface-variant">2023-10-27 14:15:45</td>
-<td class="py-3 px-6 text-right font-mono text-mono">01h 45m</td>
-</tr>
-<!-- Row 3 -->
-<tr class="hover:bg-surface-container-high/40 transition-colors group">
-<td class="py-3 px-6 flex items-center gap-3">
-<div class="w-8 h-8 rounded-full bg-primary-container/20 border border-primary-container/50 flex items-center justify-center text-primary-fixed font-bold text-xs">M.J.</div>
-<div>
-<div class="font-medium text-on-surface group-hover:text-primary-fixed-dim transition-colors">Mike Johnson</div>
-<div class="text-xs text-on-surface-variant">mjohnson@smoothop.dev</div>
-</div>
-</td>
-<td class="py-3 px-6">
-<div class="flex items-center gap-2">
-<span class="material-symbols-outlined text-secondary-container text-[18px]">settings_ethernet</span>
-<span class="bg-secondary-container/10 text-secondary-container px-2 py-0.5 rounded border border-secondary-container/20 text-xs">Modified Config</span>
-</div>
-</td>
-<td class="py-3 px-6 font-mono text-mono text-secondary-fixed">core-router-us-east</td>
-<td class="py-3 px-6 text-on-surface-variant">2023-10-27 13:50:12</td>
-<td class="py-3 px-6 text-right font-mono text-mono">--</td>
-</tr>
-<!-- Row 4 -->
-<tr class="hover:bg-surface-container-high/40 transition-colors group">
-<td class="py-3 px-6 flex items-center gap-3">
-<div class="w-8 h-8 rounded-full bg-error-container/20 border border-error/50 flex items-center justify-center text-error font-bold text-xs">SYS</div>
-<div>
-<div class="font-medium text-on-surface group-hover:text-primary-fixed-dim transition-colors">System Service</div>
-<div class="text-xs text-on-surface-variant">automated_task</div>
-</div>
-</td>
-<td class="py-3 px-6">
-<div class="flex items-center gap-2">
-<span class="material-symbols-outlined text-error text-[18px]">warning</span>
-<span class="bg-error-container/20 text-error px-2 py-0.5 rounded border border-error/20 text-xs">Auth Failed</span>
-</div>
-</td>
-<td class="py-3 px-6 font-mono text-mono text-secondary-fixed">legacy-auth-gw</td>
-<td class="py-3 px-6 text-on-surface-variant">2023-10-27 13:45:00</td>
-<td class="py-3 px-6 text-right font-mono text-mono">--</td>
-</tr>
-<!-- Row 5 -->
-<tr class="hover:bg-surface-container-high/40 transition-colors group">
-<td class="py-3 px-6 flex items-center gap-3">
-<div class="w-8 h-8 rounded-full bg-primary-container/20 border border-primary-container/50 flex items-center justify-center text-primary-fixed font-bold text-xs">J.D.</div>
-<div>
-<div class="font-medium text-on-surface group-hover:text-primary-fixed-dim transition-colors">John Doe</div>
-<div class="text-xs text-on-surface-variant">jdoe@smoothop.dev</div>
-</div>
-</td>
-<td class="py-3 px-6">
-<div class="flex items-center gap-2">
-<span class="material-symbols-outlined text-tertiary text-[18px]">login</span>
-<span class="bg-tertiary-container/20 text-tertiary px-2 py-0.5 rounded border border-tertiary/20 text-xs">Connected</span>
-</div>
-</td>
-<td class="py-3 px-6 font-mono text-mono text-secondary-fixed">prod-db-eu-west-1a</td>
-<td class="py-3 px-6 text-on-surface-variant">2023-10-27 11:20:00</td>
-<td class="py-3 px-6 text-right font-mono text-mono">--</td>
-</tr>
-</tbody>
-</table>
-</div>
-<!-- Pagination -->
-<div class="bg-surface-container-low/30 border-t border-outline-variant/50 p-4 flex items-center justify-between font-inter">
-<span class="text-body-sm font-body-sm text-on-surface-variant">Showing 1 to 5 of 2,491 entries</span>
-<div class="flex gap-1">
-<button class="p-2 rounded hover:bg-white/5 text-on-surface-variant hover:text-on-surface transition-colors disabled:opacity-50" disabled="">
-<span class="material-symbols-outlined text-[18px]">chevron_left</span>
-</button>
-<button class="w-8 h-8 rounded bg-primary-container/20 text-primary-fixed border border-primary-container/50 font-body-sm text-body-sm flex items-center justify-center">1</button>
-<button class="w-8 h-8 rounded hover:bg-white/5 text-on-surface-variant hover:text-on-surface border border-transparent font-body-sm text-body-sm flex items-center justify-center transition-colors">2</button>
-<button class="w-8 h-8 rounded hover:bg-white/5 text-on-surface-variant hover:text-on-surface border border-transparent font-body-sm text-body-sm flex items-center justify-center transition-colors">3</button>
-<span class="w-8 h-8 flex items-center justify-center text-on-surface-variant">...</span>
-<button class="p-2 rounded hover:bg-white/5 text-on-surface-variant hover:text-on-surface transition-colors">
-<span class="material-symbols-outlined text-[18px]">chevron_right</span>
-</button>
-</div>
-</div>
-</div>
-</main>
+<div class="p-6 md:p-8">
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-100 tracking-tight">Audit Logs</h1>
+      <p class="text-sm text-slate-400 mt-1">Every authentication and resource change is recorded.</p>
+    </div>
+    <div class="flex items-center gap-2">
+      <button
+        (click)="exportCsv()"
+        class="flex items-center gap-2 px-3 py-2 text-xs font-bold uppercase tracking-widest text-slate-200 bg-white/5 hover:bg-white/10 rounded-md transition"
+      >
+        <span class="material-symbols-outlined text-base">download</span>
+        Export CSV
+      </button>
+    </div>
+  </div>
+
+  <form
+    (ngSubmit)="search()"
+    class="grid grid-cols-1 md:grid-cols-5 gap-3 mb-4 p-4 border border-white/10 rounded-lg bg-slate-950/60"
+  >
+    <input
+      type="text"
+      placeholder="User (email/name)"
+      [ngModel]="user()"
+      (ngModelChange)="user.set($event)"
+      name="user"
+      class="bg-slate-900 border border-white/10 focus:border-blue-500 text-sm text-slate-200 rounded px-3 py-2 outline-none"
+    />
+    <input
+      type="text"
+      placeholder="Action (e.g. user.login)"
+      [ngModel]="action()"
+      (ngModelChange)="action.set($event)"
+      name="action"
+      class="bg-slate-900 border border-white/10 focus:border-blue-500 text-sm text-slate-200 rounded px-3 py-2 outline-none"
+    />
+    <input
+      type="text"
+      placeholder="Resource type"
+      [ngModel]="resourceType()"
+      (ngModelChange)="resourceType.set($event)"
+      name="resourceType"
+      class="bg-slate-900 border border-white/10 focus:border-blue-500 text-sm text-slate-200 rounded px-3 py-2 outline-none"
+    />
+    <input
+      type="date"
+      [ngModel]="from()"
+      (ngModelChange)="from.set($event)"
+      name="from"
+      class="bg-slate-900 border border-white/10 focus:border-blue-500 text-sm text-slate-200 rounded px-3 py-2 outline-none"
+    />
+    <input
+      type="date"
+      [ngModel]="to()"
+      (ngModelChange)="to.set($event)"
+      name="to"
+      class="bg-slate-900 border border-white/10 focus:border-blue-500 text-sm text-slate-200 rounded px-3 py-2 outline-none"
+    />
+    <div class="md:col-span-5 flex justify-end gap-2">
+      <button
+        type="button"
+        (click)="reset()"
+        class="px-3 py-2 text-xs font-medium uppercase tracking-widest text-slate-300 hover:bg-white/5 rounded"
+      >
+        Reset
+      </button>
+      <button
+        type="submit"
+        class="px-4 py-2 text-xs font-bold uppercase tracking-widest text-white bg-blue-600 hover:bg-blue-500 rounded"
+      >
+        Search
+      </button>
+    </div>
+  </form>
+
+  <div class="border border-white/10 rounded-lg bg-slate-950/60 overflow-hidden">
+    <table class="w-full text-sm">
+      <thead class="bg-white/5 text-[11px] uppercase tracking-widest text-slate-400">
+        <tr>
+          <th class="text-left px-4 py-3 font-medium">Timestamp</th>
+          <th class="text-left px-4 py-3 font-medium">User</th>
+          <th class="text-left px-4 py-3 font-medium">Action</th>
+          <th class="text-left px-4 py-3 font-medium">Resource</th>
+          <th class="text-left px-4 py-3 font-medium">IP</th>
+          <th class="text-left px-4 py-3 font-medium">Details</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (l of result().items; track l.id) {
+          <tr class="border-t border-white/5 hover:bg-white/5">
+            <td class="px-4 py-3 text-slate-300 whitespace-nowrap">{{ l.timestamp | date: 'short' }}</td>
+            <td class="px-4 py-3 text-slate-300">
+              {{ l.userEmail || (l.userId ? l.userId : '—') }}
+            </td>
+            <td class="px-4 py-3 text-slate-200 font-medium">{{ l.action }}</td>
+            <td class="px-4 py-3 text-slate-300">
+              <span class="text-xs uppercase tracking-widest text-slate-500">{{ l.resourceType }}</span>
+              <span class="ml-2 text-xs text-slate-400">{{ l.resourceId }}</span>
+            </td>
+            <td class="px-4 py-3 text-slate-400">{{ l.ipAddress }}</td>
+            <td class="px-4 py-3 text-slate-400 max-w-md truncate" [title]="l.details">
+              {{ l.details }}
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="6" class="px-4 py-8 text-center text-slate-500">
+              {{ loading() ? 'Loading…' : 'No log entries match the current filters.' }}
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <div class="flex items-center justify-between mt-4 text-xs text-slate-400">
+    <div>
+      Showing page {{ result().page }} of {{ result().totalPages || 1 }} —
+      {{ result().totalItems }} total
+    </div>
+    <div class="flex items-center gap-2">
+      <button
+        (click)="goToPage(result().page - 1)"
+        [disabled]="result().page <= 1"
+        class="px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded disabled:opacity-30"
+      >
+        Prev
+      </button>
+      <button
+        (click)="goToPage(result().page + 1)"
+        [disabled]="result().page >= result().totalPages"
+        class="px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded disabled:opacity-30"
+      >
+        Next
+      </button>
+    </div>
+  </div>
 </div>

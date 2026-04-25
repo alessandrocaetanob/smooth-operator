@@ -20,11 +20,13 @@ namespace Backend.Controllers
     {
         private readonly AppDbContext _context;
         private readonly IEncryptionService _encryptionService;
+        private readonly IAuditService _audit;
 
-        public CredentialsController(AppDbContext context, IEncryptionService encryptionService)
+        public CredentialsController(AppDbContext context, IEncryptionService encryptionService, IAuditService audit)
         {
             _context = context;
             _encryptionService = encryptionService;
+            _audit = audit;
         }
 
         [HttpGet]
@@ -60,6 +62,8 @@ namespace Backend.Controllers
 
             _context.Credentials.Add(credential);
             await _context.SaveChangesAsync();
+            await _audit.WriteAsync("credential.created", "Credential", credential.Id.ToString(),
+                new { credential.Name, credential.Username, credential.CredentialType });
 
             // Return without secret
             return CreatedAtAction(nameof(GetCredentials), new { id = credential.Id },
@@ -91,12 +95,16 @@ namespace Backend.Controllers
             credential.CredentialType = dto.CredentialType;
 
             // Only update secret if provided
+            var secretRotated = false;
             if (!string.IsNullOrEmpty(dto.Secret))
             {
                 credential.EncryptedSecret = _encryptionService.Encrypt(dto.Secret);
+                secretRotated = true;
             }
 
             await _context.SaveChangesAsync();
+            await _audit.WriteAsync("credential.updated", "Credential", credential.Id.ToString(),
+                new { credential.Name, credential.Username, credential.CredentialType, secretRotated });
             return NoContent();
         }
 
@@ -111,6 +119,8 @@ namespace Backend.Controllers
 
             _context.Credentials.Remove(credential);
             await _context.SaveChangesAsync();
+            await _audit.WriteAsync("credential.deleted", "Credential", id.ToString(),
+                new { credential.Name });
             return NoContent();
         }
     }

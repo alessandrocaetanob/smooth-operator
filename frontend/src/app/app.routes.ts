@@ -8,6 +8,8 @@ import { ConnectingState } from './pages/connecting-state/connecting-state';
 import { ActiveSession } from './pages/active-session/active-session';
 import { AuditLogs } from './pages/audit-logs/audit-logs';
 import { SearchResults } from './pages/search-results/search-results';
+import { Connections } from './pages/connections/connections';
+import { Credentials } from './pages/credentials/credentials';
 import { Layout } from './shared/layout/layout';
 import { rootRedirectGuard, loginGuard, setupGuard, authGuard } from './services/auth.guards';
 
@@ -23,6 +25,8 @@ export const routes: Routes = [
     children: [
       { path: 'administration', component: Administration },
       { path: 'vault', component: Vault },
+      { path: 'connections', component: Connections },
+      { path: 'credentials', component: Credentials },
       { path: 'empty', component: EmptyState },
       { path: 'audit-logs', component: AuditLogs },
       { path: 'search', component: SearchResults },
