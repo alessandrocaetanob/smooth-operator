@@ -12,51 +12,51 @@ jobs:
     if: github.event.pull_request.draft == false
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    - name: Check PR title
-      run: |
-        PR_TITLE="${{ github.event.pull_request.title }}"
-        if [[ ! "$PR_TITLE" =~ ^(feat|fix|docs|style|refactor|perf|test|chore|ci|build|revert)(\(.+\))?: ]]; then
-          echo "❌ PR title must follow conventional commits format:"
-          echo "   type(scope?): description"
-          echo "   Types: feat, fix, docs, style, refactor, perf, test, chore, ci, build, revert"
-          echo "   Example: feat(backend): add user authentication"
-          exit 1
-        fi
-        echo "✅ PR title follows conventional commits format"
+      - name: Check PR title
+        run: |
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          if [[ ! "$PR_TITLE" =~ ^(feat|fix|docs|style|refactor|perf|test|chore|ci|build|revert)(\(.+\))?: ]]; then
+            echo "❌ PR title must follow conventional commits format:"
+            echo "   type(scope?): description"
+            echo "   Types: feat, fix, docs, style, refactor, perf, test, chore, ci, build, revert"
+            echo "   Example: feat(backend): add user authentication"
+            exit 1
+          fi
+          echo "✅ PR title follows conventional commits format"
 
-    - name: Check PR description
-      run: |
-        if [ -z "${{ github.event.pull_request.body }}" ]; then
-          echo "❌ PR description is empty. Please provide a description."
-          exit 1
-        fi
-        echo "✅ PR has a description"
+      - name: Check PR description
+        run: |
+          if [ -z "${{ github.event.pull_request.body }}" ]; then
+            echo "❌ PR description is empty. Please provide a description."
+            exit 1
+          fi
+          echo "✅ PR has a description"
 
-    - name: Check changed files
-      id: changed-files
-      uses: tj-actions/changed-files@v45
-      with:
-        files_yaml: |
-          backend:
-            - 'backend/**'
-          frontend:
-            - 'frontend/**'
-          docker:
-            - 'docker-compose.yml'
-            - '**/Dockerfile'
-          workflows:
-            - '.github/workflows/**'
+      - name: Check changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v45
+        with:
+          files_yaml: |
+            backend:
+              - 'backend/**'
+            frontend:
+              - 'frontend/**'
+            docker:
+              - 'docker-compose.yml'
+              - '**/Dockerfile'
+            workflows:
+              - '.github/workflows/**'
 
-    - name: Set job outputs
-      id: changes
-      run: |
-        echo "backend=${{ steps.changed-files.outputs.backend_any_changed }}" >> $GITHUB_OUTPUT
-        echo "frontend=${{ steps.changed-files.outputs.frontend_any_changed }}" >> $GITHUB_OUTPUT
+      - name: Set job outputs
+        id: changes
+        run: |
+          echo "backend=${{ steps.changed-files.outputs.backend_any_changed }}" >> $GITHUB_OUTPUT
+          echo "frontend=${{ steps.changed-files.outputs.frontend_any_changed }}" >> $GITHUB_OUTPUT
 
     outputs:
       backend-changed: ${{ steps.changed-files.outputs.backend_any_changed }}
@@ -69,28 +69,28 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: '10.0.x'
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
 
-    - name: Restore dependencies
-      run: dotnet restore backend/Backend.csproj
+      - name: Restore dependencies
+        run: dotnet restore backend/Backend.csproj
 
-    - name: Build with analyzers
-      run: |
-        dotnet build backend/Backend.csproj \
-          --configuration Release \
-          --no-restore \
-          /p:TreatWarningsAsErrors=false \
-          /p:EnforceCodeStyleInBuild=true \
-          /p:AnalysisLevel=latest
+      - name: Build with analyzers
+        run: |
+          dotnet build backend/Backend.csproj \
+            --configuration Release \
+            --no-restore \
+            /p:TreatWarningsAsErrors=false \
+            /p:EnforceCodeStyleInBuild=true \
+            /p:AnalysisLevel=latest
 
-    - name: Check for vulnerable packages
-      run: dotnet list backend/Backend.csproj package --vulnerable --include-transitive
+      - name: Check for vulnerable packages
+        run: dotnet list backend/Backend.csproj package --vulnerable --include-transitive
 
   frontend-checks:
     name: Frontend Quality & Security
@@ -99,62 +99,63 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '22'
-        cache: 'npm'
-        cache-dependency-path: frontend/package-lock.json
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
 
-    - name: Install dependencies
-      working-directory: frontend
-      run: npm ci
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
 
-    - name: Check formatting
-      working-directory: frontend
-      run: npx prettier --check "src/**/*.{ts,html,css,scss,json}"
+      - name: Check formatting
+        working-directory: frontend
+        run: npx prettier --check "src/**/*.{ts,html,css,scss,json}"
 
-    - name: Build
-      working-directory: frontend
-      run: npm run build
+      - name: Build
+        working-directory: frontend
+        run: npm run build
 
-    - name: Run tests
-      working-directory: frontend
-      run: npm test
+      - name: Run tests
+        working-directory: frontend
+        run: npm test
 
-    - name: Security audit
-      working-directory: frontend
-      run: npm audit --audit-level=moderate
+      - name: Security audit
+        working-directory: frontend
+        run: npm audit --audit-level=moderate
 
   security-scan:
     name: Security Scanning
     runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
     permissions:
       actions: read
       contents: read
       security-events: write
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Run Trivy vulnerability scanner
-      uses: aquasecurity/trivy-action@master
-      with:
-        scan-type: 'fs'
-        scan-ref: '.'
-        format: 'sarif'
-        output: 'trivy-results.sarif'
-        severity: 'CRITICAL,HIGH'
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
 
-    - name: Upload Trivy results to GitHub Security
-      uses: github/codeql-action/upload-sarif@v3
-      if: always()
-      with:
-        sarif_file: 'trivy-results.sarif'
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
 
   all-checks-pass:
     name: All Checks Passed
@@ -163,13 +164,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Check all job statuses
-      run: |
-        if [[ "${{ needs.pr-validation.result }}" == "failure" ]] || \
-           [[ "${{ needs.backend-checks.result }}" == "failure" ]] || \
-           [[ "${{ needs.frontend-checks.result }}" == "failure" ]] || \
-           [[ "${{ needs.security-scan.result }}" == "failure" ]]; then
-          echo "❌ One or more checks failed"
-          exit 1
-        fi
-        echo "✅ All checks passed"
+      - name: Check all job statuses
+        run: |
+          if [[ "${{ needs.pr-validation.result }}" == "failure" ]] || \
+             [[ "${{ needs.backend-checks.result }}" == "failure" ]] || \
+             [[ "${{ needs.frontend-checks.result }}" == "failure" ]] || \
+             [[ "${{ needs.security-scan.result }}" == "failure" ]]; then
+            echo "❌ One or more checks failed"
+            exit 1
+          fi
+          echo "✅ All checks passed"
