@@ -29,22 +29,98 @@ namespace Backend.Controllers
             _tokenService = tokenService;
         }
 
-        // Lets the frontend discover which login methods are enabled.
+        // Lets the frontend discover which login methods are enabled and whether
+        // the application still needs first-time setup (no users yet).
+        [HttpGet("setup-status")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetSetupStatus()
+        {
+            var hasUsers = await _context.Users.AnyAsync();
+            return Ok(new
+            {
+                RequiresSetup = !hasUsers,
+                Providers = new
+                {
+                    Local = true,
+                    EntraId = IsEntraEnabled()
+                }
+            });
+        }
+
+        // Backwards-compatible alias used by older clients.
         [HttpGet("providers")]
         [AllowAnonymous]
         public IActionResult GetProviders()
+            => Ok(new { Local = true, EntraId = IsEntraEnabled() });
+
+        private bool IsEntraEnabled()
         {
             var entraSection = _configuration.GetSection("AzureAd");
-            var entraEnabled = !string.IsNullOrWhiteSpace(entraSection["ClientId"])
-                               && !string.IsNullOrWhiteSpace(entraSection["TenantId"]);
-
-            return Ok(new { Local = true, EntraId = entraEnabled });
+            return !string.IsNullOrWhiteSpace(entraSection["ClientId"])
+                && !string.IsNullOrWhiteSpace(entraSection["TenantId"]);
         }
 
-        // Local user registration. Always available – the application is the
-        // source of truth for users; external IdPs are opt-in.
-        [HttpPost("register")]
+        // First-time bootstrap: creates the very first (root/owner) user.
+        // Only succeeds while the Users table is empty so this endpoint can never
+        // be used for self-signup once the application has been initialised.
+        [HttpPost("setup")]
         [AllowAnonymous]
+        public async Task<IActionResult> Setup([FromBody] RegisterRequest request)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            if (await _context.Users.AnyAsync())
+            {
+                return Conflict(new { message = "Setup has already been completed." });
+            }
+
+            var email = request.Email.Trim().ToLowerInvariant();
+
+            var user = new User
+            {
+                Id = Guid.NewGuid(),
+                Email = email,
+                Name = request.Name.Trim(),
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password, workFactor: 12),
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            // Ensure an Owner role exists and link it to the bootstrap user.
+            var ownerRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "Owner");
+            if (ownerRole == null)
+            {
+                ownerRole = new Role
+                {
+                    Id = Guid.NewGuid(),
+                    Name = "Owner",
+                    Description = "Full administrative control over the application."
+                };
+                _context.Roles.Add(ownerRole);
+            }
+            user.Roles.Add(ownerRole);
+
+            _context.Users.Add(user);
+            _context.AuditLogs.Add(new AuditLog
+            {
+                Id = Guid.NewGuid(),
+                UserId = user.Id,
+                Action = "user.bootstrap",
+                ResourceType = "User",
+                ResourceId = user.Id.ToString(),
+                Details = "{\"provider\":\"local\",\"role\":\"Owner\"}",
+                IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? ""
+            });
+            await _context.SaveChangesAsync();
+
+            return Ok(BuildAuthResponse(user));
+        }
+
+        // Local user registration. Restricted to authenticated callers – the
+        // application is the source of truth for users and additional accounts
+        // are created via invite or by an existing administrator.
+        [HttpPost("register")]
+        [Authorize]
         public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
