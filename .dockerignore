@@ -1,0 +1,13 @@
+# Root-level safety net for any future top-level docker builds.
+**/node_modules
+**/bin
+**/obj
+**/dist
+**/.angular
+.git
+.vs
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+*.log
