@@ -221,16 +221,18 @@
   --color-on-error:                  rgb(var(--color-on-error));
   --color-on-error-container:        rgb(var(--color-on-error-container));
 
-  /* Spacing (Tailwind v4 keeps default 0.25rem step; these are extras) */
-  --spacing-xs:             0.25rem;
-  --spacing-sm:             0.5rem;
-  --spacing-md:             1rem;
-  --spacing-lg:             1.5rem;
-  --spacing-xl:             2.5rem;
-  --spacing-margin:         2rem;
-  --spacing-gutter:         1.5rem;
-  --spacing-unit:           8px;
-  --spacing-container-max:  1440px;
+  /* Spacing — prefixed with `app-` to avoid colliding with Tailwind v4's
+     built-in size scale (e.g. unprefixed `--spacing-md` would hijack
+     `max-w-md`, `min-w-md`, etc., shrinking them to 1rem). */
+  --spacing-app-xs:         0.25rem;
+  --spacing-app-sm:         0.5rem;
+  --spacing-app-md:         1rem;
+  --spacing-app-lg:         1.5rem;
+  --spacing-app-xl:         2.5rem;
+  --spacing-app-margin:     2rem;
+  --spacing-app-gutter:     1.5rem;
+  --spacing-app-unit:       8px;
+  --spacing-app-container-max: 1440px;
 
   /* Border radius */
   --radius-DEFAULT: 0.25rem;
