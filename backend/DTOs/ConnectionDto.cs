@@ -89,5 +89,6 @@ namespace Backend.DTOs
         public string Name { get; set; } = string.Empty;
         public string Username { get; set; } = string.Empty;
         public string CredentialType { get; set; } = "password";
+        public string? PublicKey { get; set; }
     }
 }

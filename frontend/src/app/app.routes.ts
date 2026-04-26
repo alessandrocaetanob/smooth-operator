@@ -13,6 +13,7 @@ import { ActiveSession } from './pages/active-session/active-session';
 import { AuditLogs } from './pages/audit-logs/audit-logs';
 import { SearchResults } from './pages/search-results/search-results';
 import { Connections } from './pages/connections/connections';
+import { Hosts } from './pages/hosts/hosts';
 import { Credentials } from './pages/credentials/credentials';
 import { Settings } from './pages/settings/settings';
 import { Email } from './pages/settings/email/email';
@@ -41,6 +42,7 @@ export const routes: Routes = [
       { path: 'vault', component: Vault },
       { path: 'my-access', component: MyAccess },
       { path: 'connections', component: Connections, canActivate: [connectionManagerGuard] },
+      { path: 'hosts', component: Hosts, canActivate: [connectionManagerGuard] },
       { path: 'credentials', component: Credentials, canActivate: [connectionManagerGuard] },
       { path: 'empty', component: EmptyState },
       { path: 'search', component: SearchResults },

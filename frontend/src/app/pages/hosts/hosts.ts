@@ -1,0 +1,154 @@
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { HostsService, AppHost, CreateHostPayload } from '../../services/hosts.service';
+import { AuthService } from '../../services/auth.service';
+import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog.service';
+import { ToastService } from '../../shared/toast/toast.service';
+
+interface FormState {
+  id: string | null;
+  name: string;
+  address: string;
+}
+
+const EMPTY_FORM: FormState = {
+  id: null,
+  name: '',
+  address: '',
+};
+
+@Component({
+  selector: 'app-hosts',
+  imports: [FormsModule],
+  templateUrl: './hosts.html',
+  styleUrl: './hosts.css',
+})
+export class Hosts implements OnInit {
+  private readonly svc = inject(HostsService);
+  private readonly auth = inject(AuthService);
+  private readonly confirmSvc = inject(ConfirmDialogService);
+  private readonly toastSvc = inject(ToastService);
+
+  readonly hosts = this.svc.list;
+  readonly canManageConnections = this.auth.canManageConnections;
+  readonly loading = signal(false);
+  readonly errorMessage = signal<string | null>(null);
+  readonly showForm = signal(false);
+  readonly form = signal<FormState>({ ...EMPTY_FORM });
+  readonly busy = signal(false);
+
+  ngOnInit(): void {
+    this.refresh();
+  }
+
+  refresh(): void {
+    this.loading.set(true);
+    this.errorMessage.set(null);
+    this.svc.reload().subscribe({
+      next: () => this.loading.set(false),
+      error: (err) => {
+        this.loading.set(false);
+        this.errorMessage.set(this.toMessage(err) || 'Failed to load.');
+      },
+    });
+  }
+
+  newHost(): void {
+    if (!this.canManageConnections()) return;
+    this.form.set({ ...EMPTY_FORM });
+    this.showForm.set(true);
+  }
+
+  edit(h: AppHost): void {
+    if (!this.canManageConnections()) return;
+    this.form.set({
+      id: h.id,
+      name: h.name,
+      address: h.address,
+    });
+    this.showForm.set(true);
+  }
+
+  cancel(): void {
+    this.showForm.set(false);
+    this.form.set({ ...EMPTY_FORM });
+  }
+
+  patch<K extends keyof FormState>(key: K, value: FormState[K]): void {
+    this.form.update((f) => ({ ...f, [key]: value }));
+  }
+
+  save(): void {
+    if (!this.canManageConnections()) return;
+    if (this.busy()) return;
+    const f = this.form();
+    if (!f.name.trim() || !f.address.trim()) {
+      this.errorMessage.set('Name and address are required.');
+      return;
+    }
+    this.busy.set(true);
+    this.errorMessage.set(null);
+
+    const payload: CreateHostPayload = {
+      name: f.name.trim(),
+      address: f.address.trim(),
+    };
+
+    if (f.id) {
+      this.svc.update(f.id, payload).subscribe({
+        next: () => this.done(),
+        error: (err) => this.fail(err),
+      });
+    } else {
+      this.svc.create(payload).subscribe({
+        next: () => this.done(),
+        error: (err) => this.fail(err),
+      });
+    }
+  }
+
+  async remove(h: AppHost): Promise<void> {
+    if (!this.canManageConnections()) return;
+    const ok = await this.confirmSvc.ask({
+      title: 'Delete host',
+      message: `Delete host "${h.name}"? Connections using this host will break. This cannot be undone.`,
+      confirmLabel: 'Delete',
+      tone: 'danger',
+    });
+    if (!ok) return;
+    this.errorMessage.set(null);
+    this.svc.remove(h.id).subscribe({
+      next: () => {
+        this.toastSvc.success(`Host "${h.name}" deleted.`);
+        this.refresh();
+      },
+      error: (err) => {
+        const msg = this.toMessage(err) || 'Delete failed.';
+        this.errorMessage.set(msg);
+        this.toastSvc.error(msg);
+      },
+    });
+  }
+
+  trackById(_: number, h: AppHost): string {
+    return h.id;
+  }
+
+  private done(): void {
+    this.busy.set(false);
+    this.toastSvc.success('Host saved.');
+    this.cancel();
+    this.refresh();
+  }
+
+  private fail(err: any): void {
+    this.busy.set(false);
+    const msg = this.toMessage(err) || 'Save failed.';
+    this.errorMessage.set(msg);
+    this.toastSvc.error(msg);
+  }
+
+  private toMessage(err: any): string | null {
+    return err?.error?.message ?? err?.error?.Message ?? err?.message ?? null;
+  }
+}
