@@ -56,11 +56,12 @@ namespace Backend.Controllers
             var profile = await _access.GetCurrentProfileAsync(User);
             if (profile == null) return Unauthorized();
 
+            // c.Users is only used by ApplyConnectionScope's Any(...) check, which EF
+            // translates to a SQL EXISTS — no need to eager-load the full collection.
             var scopedQuery = _access.ApplyConnectionScope(
                 _context.Connections
                     .Include(c => c.Host)
-                    .Include(c => c.ConnectionGroup)
-                    .Include(c => c.Users),
+                    .Include(c => c.ConnectionGroup),
                 profile);
 
             var connections = await scopedQuery
@@ -79,8 +80,7 @@ namespace Backend.Controllers
             var connection = await _access.ApplyConnectionScope(
                     _context.Connections
                         .Include(c => c.Host)
-                        .Include(c => c.ConnectionGroup)
-                        .Include(c => c.Users),
+                        .Include(c => c.ConnectionGroup),
                     profile)
                 .FirstOrDefaultAsync(c => c.Id == id);
 

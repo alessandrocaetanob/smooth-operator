@@ -36,7 +36,15 @@ namespace Backend.Services
             => !string.IsNullOrWhiteSpace(roleName)
                && Defaults.Any(r => string.Equals(r, roleName, StringComparison.OrdinalIgnoreCase));
 
+        /// <summary>
+        /// Returns the canonical casing for a known role name, or the original input
+        /// unchanged when the value is not a known role. Callers are responsible for
+        /// guarding with <see cref="IsKnown"/> before relying on the result; this method
+        /// intentionally does not throw so an unvalidated bad input cannot crash the
+        /// request pipeline with a 500.
+        /// </summary>
         public static string Normalize(string roleName)
-            => Defaults.First(r => string.Equals(r, roleName, StringComparison.OrdinalIgnoreCase));
+            => Defaults.FirstOrDefault(r => string.Equals(r, roleName, StringComparison.OrdinalIgnoreCase))
+               ?? roleName;
     }
 }

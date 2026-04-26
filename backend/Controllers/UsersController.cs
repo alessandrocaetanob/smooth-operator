@@ -248,9 +248,28 @@ namespace Backend.Controllers
             return NoContent();
         }
 
+        // Allow any authenticated user to query their OWN effective vaults; only
+        // Owner/Admin may query someone else's. Without [AllowAnonymous] the
+        // controller-level [Authorize(Roles = OwnerOrAdmin)] would 403 a regular
+        // user calling this for themselves (e.g. the My Access page).
+        [AllowAnonymous]
         [HttpGet("{id}/effective-vaults")]
         public async Task<ActionResult<UserEffectiveVaultsDto>> GetEffectiveVaults(Guid id)
         {
+            if (User?.Identity?.IsAuthenticated != true)
+            {
+                return Unauthorized();
+            }
+
+            var isOwnerOrAdmin = User.IsInRole(AppRoles.Owner) || User.IsInRole(AppRoles.Admin);
+            var idClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var isSelf = Guid.TryParse(idClaim, out var meId) && meId == id;
+
+            if (!isSelf && !isOwnerOrAdmin)
+            {
+                return Forbid();
+            }
+
             var user = await _context.Users
                 .AsNoTracking()
                 .Where(u => u.Id == id)

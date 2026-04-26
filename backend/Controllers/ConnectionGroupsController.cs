@@ -190,13 +190,29 @@ namespace Backend.Controllers
 
             if (vault == null) return NotFound();
 
+            var requestedUserIds = (dto.UserIds ?? new List<Guid>()).Distinct().ToList();
+            var requestedGroupIds = (dto.GroupIds ?? new List<Guid>()).Distinct().ToList();
+
             var users = await _context.Users
-                .Where(u => dto.UserIds.Contains(u.Id))
+                .Where(u => requestedUserIds.Contains(u.Id))
                 .ToListAsync();
 
             var groups = await _context.UserGroups
-                .Where(g => dto.GroupIds.Contains(g.Id))
+                .Where(g => requestedGroupIds.Contains(g.Id))
                 .ToListAsync();
+
+            var missingUserIds = requestedUserIds.Except(users.Select(u => u.Id)).ToList();
+            var missingGroupIds = requestedGroupIds.Except(groups.Select(g => g.Id)).ToList();
+
+            if (missingUserIds.Count > 0 || missingGroupIds.Count > 0)
+            {
+                return BadRequest(new
+                {
+                    message = "One or more assignment IDs are invalid.",
+                    missingUserIds,
+                    missingGroupIds
+                });
+            }
 
             vault.Users.Clear();
             foreach (var u in users) vault.Users.Add(u);

@@ -358,13 +358,18 @@ namespace Backend.Controllers
                 return Conflict("User already exists.");
             }
 
-            var requestedRole = string.IsNullOrWhiteSpace(request.Role)
-                ? AppRoles.User
-                : AppRoles.Normalize(request.Role!);
-
-            if (!AppRoles.IsKnown(requestedRole))
+            string requestedRole;
+            if (string.IsNullOrWhiteSpace(request.Role))
             {
-                return BadRequest(new { message = $"Unknown role \"{request.Role}\"." });
+                requestedRole = AppRoles.User;
+            }
+            else
+            {
+                if (!AppRoles.IsKnown(request.Role))
+                {
+                    return BadRequest(new { message = $"Unknown role \"{request.Role}\"." });
+                }
+                requestedRole = AppRoles.Normalize(request.Role!);
             }
 
             if (string.Equals(requestedRole, AppRoles.Owner, StringComparison.OrdinalIgnoreCase))

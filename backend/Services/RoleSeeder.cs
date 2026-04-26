@@ -76,6 +76,10 @@ namespace Backend.Services
 
                 if (bootstrapUser != null)
                 {
+                    // Single-role policy: replace any roles assigned earlier in this
+                    // seeding run (e.g. the default User role just added above) so the
+                    // bootstrap user ends up with exactly one role.
+                    bootstrapUser.Roles.Clear();
                     bootstrapUser.Roles.Add(ownerRole);
                     logger.LogWarning("No owner found. Assigned {RoleName} role to {Email}.",
                         AppRoles.Owner, bootstrapUser.Email);
