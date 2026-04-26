@@ -33,23 +33,23 @@
     <ul class="space-y-1">
       <li class="group">
         <a
-          routerLink="/vault"
-          routerLinkActive="bg-blue-600/10 text-blue-400 border-r-2 border-blue-500"
-          [routerLinkActiveOptions]="{ exact: false }"
-          class="flex items-center gap-3 text-slate-500 px-4 py-3 hover:bg-white/5 hover:text-slate-200 transition-all"
-        >
-          <span class="material-symbols-outlined">dashboard</span>
-          <span>The Vault</span>
-        </a>
-      </li>
-      <li class="group">
-        <a
           routerLink="/my-access"
           routerLinkActive="bg-blue-600/10 text-blue-400 border-r-2 border-blue-500"
           class="flex items-center gap-3 text-slate-500 px-4 py-3 hover:bg-white/5 hover:text-slate-200 transition-all"
         >
           <span class="material-symbols-outlined">verified_user</span>
           <span>My Access</span>
+        </a>
+      </li>
+      <li class="group">
+        <a
+          routerLink="/vault"
+          routerLinkActive="bg-blue-600/10 text-blue-400 border-r-2 border-blue-500"
+          [routerLinkActiveOptions]="{ exact: false }"
+          class="flex items-center gap-3 text-slate-500 px-4 py-3 hover:bg-white/5 hover:text-slate-200 transition-all"
+        >
+          <span class="material-symbols-outlined">dashboard</span>
+          <span>My Vaults</span>
         </a>
       </li>
       @if (canManageConnections()) {

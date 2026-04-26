@@ -1,11 +1,12 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { Mascot } from '../../shared/mascot/mascot';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-authentication',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, Mascot],
   templateUrl: './authentication.html',
   styleUrl: './authentication.css',
 })
@@ -17,11 +18,26 @@ export class Authentication {
   readonly providers = this.auth.providers;
   readonly submitting = signal(false);
   readonly errorMessage = signal<string | null>(null);
+  readonly isPasswordFocused = signal(false);
+  readonly typingLength = signal(0);
 
   readonly form = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required]],
   });
+
+  onPasswordFocus(): void {
+    this.isPasswordFocused.set(true);
+  }
+
+  onPasswordBlur(): void {
+    this.isPasswordFocused.set(false);
+  }
+
+  onEmailInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.typingLength.set(input.value.length);
+  }
 
   submit(): void {
     if (this.submitting()) return;

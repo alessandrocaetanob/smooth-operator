@@ -1,11 +1,12 @@
 import { Component, computed, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
+import { Mascot } from '../mascot/mascot';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-top-nav-bar',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, Mascot],
   templateUrl: './top-nav-bar.html',
   styleUrl: './top-nav-bar.css',
 })
