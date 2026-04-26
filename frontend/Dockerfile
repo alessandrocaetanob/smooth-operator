@@ -7,7 +7,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Upgrade npm to match the version declared in packageManager field
-RUN npm install -g npm@11.13.0
+RUN npm install -g npm@11.11.0
 
 # Use npm install instead of npm ci: @tailwindcss/postcss bundles @tailwindcss/oxide-wasm32-wasi
 # whose bundled WASM dependencies resolve differently on Linux vs Windows, causing lock file
