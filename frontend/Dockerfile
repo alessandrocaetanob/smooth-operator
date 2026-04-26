@@ -6,6 +6,9 @@ WORKDIR /app
 # Copy dependency definitions
 COPY package*.json ./
 
+# Upgrade npm to match the version declared in packageManager field
+RUN npm install -g npm@11.11.0
+
 # Install dependencies
 RUN npm ci
 
