@@ -13,6 +13,7 @@ namespace Backend.DTOs
         public string? OwnerName { get; set; }
         public DateTime CreatedAt { get; set; }
         public int MemberCount { get; set; }
+        public int VaultCount { get; set; }
         public List<UserGroupMemberDto> Members { get; set; } = new();
     }
 

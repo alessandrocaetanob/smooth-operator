@@ -40,7 +40,9 @@ namespace Backend.Controllers
                 {
                     Id = v.Id,
                     Name = v.Name,
-                    ParentGroupId = v.ParentGroupId
+                    ParentGroupId = v.ParentGroupId,
+                    UserCount = v.Users.Count,
+                    GroupCount = v.Groups.Count
                 })
                 .ToListAsync();
 

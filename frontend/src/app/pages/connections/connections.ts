@@ -9,6 +9,8 @@ import {
 import { HostsService, AppHost } from '../../services/hosts.service';
 import { CredentialsService, Credential } from '../../services/credentials.service';
 import { Vault, VaultsService } from '../../services/vaults.service';
+import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog.service';
+import { ToastService } from '../../shared/toast/toast.service';
 
 interface FormState {
   id: string | null;
@@ -41,6 +43,8 @@ export class Connections implements OnInit {
   private readonly hostsSvc = inject(HostsService);
   private readonly credentialsSvc = inject(CredentialsService);
   private readonly vaultsSvc = inject(VaultsService);
+  private readonly confirmSvc = inject(ConfirmDialogService);
+  private readonly toastSvc = inject(ToastService);
 
   readonly connections = this.connectionsSvc.list;
   readonly hosts = this.hostsSvc.list;
@@ -126,22 +130,38 @@ export class Connections implements OnInit {
     obs.subscribe({
       next: () => {
         this.busy.set(false);
+        this.toastSvc.success(f.id ? 'Connection updated.' : 'Connection created.');
         this.cancel();
         this.refresh();
       },
       error: (err: any) => {
         this.busy.set(false);
-        this.errorMessage.set(this.toMessage(err) || 'Save failed.');
+        const msg = this.toMessage(err) || 'Save failed.';
+        this.errorMessage.set(msg);
+        this.toastSvc.error(msg);
       },
     });
   }
 
-  remove(c: Connection): void {
-    if (!confirm(`Delete connection "${c.name}"?`)) return;
+  async remove(c: Connection): Promise<void> {
+    const ok = await this.confirmSvc.ask({
+      title: 'Delete connection',
+      message: `Delete connection "${c.name}"? This cannot be undone.`,
+      confirmLabel: 'Delete',
+      tone: 'danger',
+    });
+    if (!ok) return;
     this.errorMessage.set(null);
     this.connectionsSvc.remove(c.id).subscribe({
-      next: () => this.refresh(),
-      error: (err) => this.errorMessage.set(this.toMessage(err) || 'Delete failed.'),
+      next: () => {
+        this.toastSvc.success(`Connection "${c.name}" deleted.`);
+        this.refresh();
+      },
+      error: (err) => {
+        const msg = this.toMessage(err) || 'Delete failed.';
+        this.errorMessage.set(msg);
+        this.toastSvc.error(msg);
+      },
     });
   }
 

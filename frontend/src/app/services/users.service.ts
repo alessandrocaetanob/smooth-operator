@@ -27,6 +27,33 @@ export interface InviteResult {
   emailError?: string | null;
 }
 
+export interface EffectiveVaultRef {
+  id: string;
+  name: string;
+  parentGroupId?: string | null;
+}
+
+export interface EffectiveGroupVaults {
+  groupId: string;
+  groupName: string;
+  vaults: EffectiveVaultRef[];
+}
+
+export interface EffectiveVaults {
+  userId: string;
+  direct: EffectiveVaultRef[];
+  viaGroups: EffectiveGroupVaults[];
+  merged: EffectiveVaultRef[];
+}
+
+function normalizeVault(raw: any): EffectiveVaultRef {
+  return {
+    id: pickOr(raw, '', 'id', 'Id'),
+    name: pickOr(raw, '', 'name', 'Name'),
+    parentGroupId: raw?.parentGroupId ?? raw?.ParentGroupId ?? null,
+  };
+}
+
 @Injectable({ providedIn: 'root' })
 export class UsersService {
   private readonly http = inject(HttpClient);
@@ -68,6 +95,21 @@ export class UsersService {
 
   remove(id: string): Observable<void> {
     return this.http.delete<void>(`/api/users/${id}`);
+  }
+
+  getEffectiveVaults(id: string): Observable<EffectiveVaults> {
+    return this.http.get<any>(`/api/users/${id}/effective-vaults`).pipe(
+      map((raw) => ({
+        userId: pickOr(raw, '', 'userId', 'UserId'),
+        direct: (pickOr(raw, [] as any[], 'direct', 'Direct') ?? []).map(normalizeVault),
+        viaGroups: (pickOr(raw, [] as any[], 'viaGroups', 'ViaGroups') ?? []).map((g: any) => ({
+          groupId: pickOr(g, '', 'groupId', 'GroupId'),
+          groupName: pickOr(g, '', 'groupName', 'GroupName'),
+          vaults: (pickOr(g, [] as any[], 'vaults', 'Vaults') ?? []).map(normalizeVault),
+        })),
+        merged: (pickOr(raw, [] as any[], 'merged', 'Merged') ?? []).map(normalizeVault),
+      })),
+    );
   }
 
   invite(payload: { email: string; name?: string; password?: string; role?: string }): Observable<InviteResult> {

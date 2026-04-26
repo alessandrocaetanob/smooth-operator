@@ -4,6 +4,8 @@ import { forkJoin } from 'rxjs';
 import { Vault, VaultsService } from '../../../services/vaults.service';
 import { AppUser, UsersService } from '../../../services/users.service';
 import { UserGroup, GroupsService } from '../../../services/groups.service';
+import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
+import { ToastService } from '../../../shared/toast/toast.service';
 
 @Component({
   selector: 'app-settings-vaults',
@@ -15,6 +17,8 @@ export class SettingsVaults implements OnInit {
   private readonly vaultsSvc = inject(VaultsService);
   private readonly usersSvc = inject(UsersService);
   private readonly groupsSvc = inject(GroupsService);
+  private readonly confirmSvc = inject(ConfirmDialogService);
+  private readonly toastSvc = inject(ToastService);
 
   readonly vaults = this.vaultsSvc.list;
   readonly users = this.usersSvc.list;
@@ -83,11 +87,14 @@ export class SettingsVaults implements OnInit {
       next: () => {
         this.vaultBusy.set(false);
         this.newVaultName.set('');
+        this.toastSvc.success(`Vault "${name}" created.`);
         this.refresh();
       },
       error: (err) => {
         this.vaultBusy.set(false);
-        this.errorMessage.set(this.toMessage(err) || 'Failed to create vault.');
+        const msg = this.toMessage(err) || 'Failed to create vault.';
+        this.errorMessage.set(msg);
+        this.toastSvc.error(msg);
       },
     });
   }
@@ -111,21 +118,37 @@ export class SettingsVaults implements OnInit {
       next: () => {
         this.vaultBusy.set(false);
         this.cancelEdit();
+        this.toastSvc.success(`Vault renamed to "${name}".`);
         this.refresh();
       },
       error: (err) => {
         this.vaultBusy.set(false);
-        this.errorMessage.set(this.toMessage(err) || 'Failed to rename vault.');
+        const msg = this.toMessage(err) || 'Failed to rename vault.';
+        this.errorMessage.set(msg);
+        this.toastSvc.error(msg);
       },
     });
   }
 
-  deleteVault(vault: Vault): void {
-    if (!confirm(`Delete vault "${vault.name}"? All connections inside will be unlinked.`)) return;
+  async deleteVault(vault: Vault): Promise<void> {
+    const ok = await this.confirmSvc.ask({
+      title: 'Delete vault',
+      message: `Delete vault "${vault.name}"? All connections inside will be unlinked. This cannot be undone.`,
+      confirmLabel: 'Delete',
+      tone: 'danger',
+    });
+    if (!ok) return;
     this.errorMessage.set(null);
     this.vaultsSvc.remove(vault.id).subscribe({
-      next: () => this.refresh(),
-      error: (err) => this.errorMessage.set(this.toMessage(err) || 'Failed to delete vault.'),
+      next: () => {
+        this.toastSvc.success(`Vault "${vault.name}" deleted.`);
+        this.refresh();
+      },
+      error: (err) => {
+        const msg = this.toMessage(err) || 'Failed to delete vault.';
+        this.errorMessage.set(msg);
+        this.toastSvc.error(msg);
+      },
     });
   }
 
@@ -187,12 +210,15 @@ export class SettingsVaults implements OnInit {
       .subscribe({
         next: () => {
           this.assignBusy.set(false);
+          this.toastSvc.success(`Assignments updated for "${vault.name}".`);
           this.closeAssignments();
           this.refresh();
         },
         error: (err) => {
           this.assignBusy.set(false);
-          this.errorMessage.set(this.toMessage(err) || 'Failed to save assignments.');
+          const msg = this.toMessage(err) || 'Failed to save assignments.';
+          this.errorMessage.set(msg);
+          this.toastSvc.error(msg);
         },
       });
   }

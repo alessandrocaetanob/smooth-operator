@@ -43,6 +43,7 @@ namespace Backend.Controllers
                     OwnerName = g.Owner != null ? g.Owner.Name : null,
                     CreatedAt = g.CreatedAt,
                     MemberCount = g.Members.Count,
+                    VaultCount = g.Vaults.Count,
                     Members = g.Members
                         .OrderBy(m => m.Name)
                         .Select(m => new UserGroupMemberDto
@@ -257,6 +258,7 @@ namespace Backend.Controllers
                     OwnerName = g.Owner != null ? g.Owner.Name : null,
                     CreatedAt = g.CreatedAt,
                     MemberCount = g.Members.Count,
+                    VaultCount = g.Vaults.Count,
                     Members = g.Members
                         .OrderBy(m => m.Name)
                         .Select(m => new UserGroupMemberDto

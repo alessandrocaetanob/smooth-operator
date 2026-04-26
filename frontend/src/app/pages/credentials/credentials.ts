@@ -7,6 +7,8 @@ import {
   UpdateCredentialPayload,
 } from '../../services/credentials.service';
 import { AuthService } from '../../services/auth.service';
+import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog.service';
+import { ToastService } from '../../shared/toast/toast.service';
 
 interface FormState {
   id: string | null;
@@ -33,6 +35,8 @@ const EMPTY_FORM: FormState = {
 export class Credentials implements OnInit {
   private readonly svc = inject(CredentialsService);
   private readonly auth = inject(AuthService);
+  private readonly confirmSvc = inject(ConfirmDialogService);
+  private readonly toastSvc = inject(ToastService);
 
   readonly credentials = this.svc.list;
   readonly canManageCredentials = this.auth.canManageCredentials;
@@ -130,13 +134,26 @@ export class Credentials implements OnInit {
     }
   }
 
-  remove(c: Credential): void {
+  async remove(c: Credential): Promise<void> {
     if (!this.canManageCredentials()) return;
-    if (!confirm(`Delete credential "${c.name}"?`)) return;
+    const ok = await this.confirmSvc.ask({
+      title: 'Delete credential',
+      message: `Delete credential "${c.name}"? Connections that use it will lose authentication. This cannot be undone.`,
+      confirmLabel: 'Delete',
+      tone: 'danger',
+    });
+    if (!ok) return;
     this.errorMessage.set(null);
     this.svc.remove(c.id).subscribe({
-      next: () => this.refresh(),
-      error: (err) => this.errorMessage.set(this.toMessage(err) || 'Delete failed.'),
+      next: () => {
+        this.toastSvc.success(`Credential "${c.name}" deleted.`);
+        this.refresh();
+      },
+      error: (err) => {
+        const msg = this.toMessage(err) || 'Delete failed.';
+        this.errorMessage.set(msg);
+        this.toastSvc.error(msg);
+      },
     });
   }
 
@@ -146,13 +163,16 @@ export class Credentials implements OnInit {
 
   private done(): void {
     this.busy.set(false);
+    this.toastSvc.success('Credential saved.');
     this.cancel();
     this.refresh();
   }
 
   private fail(err: any): void {
     this.busy.set(false);
-    this.errorMessage.set(this.toMessage(err) || 'Save failed.');
+    const msg = this.toMessage(err) || 'Save failed.';
+    this.errorMessage.set(msg);
+    this.toastSvc.error(msg);
   }
 
   private toMessage(err: any): string | null {

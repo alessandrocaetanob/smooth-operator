@@ -70,6 +70,8 @@ namespace Backend.DTOs
         public Guid Id { get; set; }
         public string Name { get; set; } = string.Empty;
         public Guid? ParentGroupId { get; set; }
+        public int? UserCount { get; set; }
+        public int? GroupCount { get; set; }
     }
 
     public class CreateConnectionGroupDto

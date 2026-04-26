@@ -28,6 +28,19 @@
     </div>
   }
 
+  <div class="mb-4">
+    <div class="relative">
+      <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-base">search</span>
+      <input
+        type="text"
+        placeholder="Search users by name, email, or role…"
+        [ngModel]="searchQuery()"
+        (ngModelChange)="searchQuery.set($event)"
+        class="w-full bg-slate-900 border border-white/10 focus:border-blue-500 text-sm text-slate-200 rounded pl-9 pr-3 py-2 outline-none"
+      />
+    </div>
+  </div>
+
   @if (inviteResult(); as r) {
     <div class="mb-6 p-4 border border-emerald-500/40 bg-emerald-500/10 rounded-lg">
       <div class="flex items-start justify-between gap-3 mb-3">
@@ -148,7 +161,7 @@
         </tr>
       </thead>
       <tbody>
-        @for (u of users(); track trackById($index, u)) {
+        @for (u of filteredUsers(); track trackById($index, u)) {
           <tr class="border-t border-white/5 hover:bg-white/5">
             <td class="px-4 py-3 text-slate-100">{{ u.name }}</td>
             <td class="px-4 py-3 text-slate-300">{{ u.email }}</td>
@@ -214,7 +227,7 @@
         } @empty {
           <tr>
             <td colspan="6" class="px-4 py-8 text-center text-slate-500">
-              {{ loading() ? 'Loading…' : 'No users yet.' }}
+              {{ loading() ? 'Loading…' : (searchQuery() ? 'No users match the search.' : 'No users yet.') }}
             </td>
           </tr>
         }
@@ -223,8 +236,17 @@
   </div>
 
   @if (vaultModalUser(); as user) {
-    <div class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <div class="w-full max-w-lg bg-slate-900 border border-white/10 rounded-lg p-5">
+    <div
+      class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+      (click)="closeVaultAssignments()"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Vault assignments"
+    >
+      <div
+        class="w-full max-w-lg bg-slate-900 border border-white/10 rounded-lg p-5"
+        (click)="$event.stopPropagation()"
+      >
         <h3 class="text-sm font-semibold text-slate-100 uppercase tracking-widest">Vault assignments</h3>
         <p class="text-xs text-slate-400 mt-1">
           {{ user.name }} ({{ primaryRole(user) }}) can access/manage only selected vaults.

@@ -7,6 +7,8 @@ export interface Vault {
   id: string;
   name: string;
   parentGroupId?: string | null;
+  userCount?: number | null;
+  groupCount?: number | null;
 }
 
 export interface SaveVaultPayload {
@@ -56,6 +58,8 @@ export class VaultsService {
       id: pickOr(raw, '', 'id', 'Id'),
       name: pickOr(raw, '', 'name', 'Name'),
       parentGroupId: pick<string>(raw, 'parentGroupId', 'ParentGroupId') ?? null,
+      userCount: pick<number>(raw, 'userCount', 'UserCount') ?? null,
+      groupCount: pick<number>(raw, 'groupCount', 'GroupCount') ?? null,
     };
   }
 }

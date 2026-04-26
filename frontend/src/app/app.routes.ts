@@ -4,6 +4,8 @@ import { FirstAccess } from './pages/first-access/first-access';
 import { Administration } from './pages/administration/administration';
 import { SettingsVaults } from './pages/settings/vaults/vaults';
 import { SettingsGroups } from './pages/settings/groups/groups';
+import { SettingsRoles } from './pages/settings/roles/roles';
+import { MyAccess } from './pages/my-access/my-access';
 import { Vault } from './pages/vault/vault';
 import { EmptyState } from './pages/empty-state/empty-state';
 import { ConnectingState } from './pages/connecting-state/connecting-state';
@@ -37,6 +39,7 @@ export const routes: Routes = [
     canActivate: [authGuard],
     children: [
       { path: 'vault', component: Vault },
+      { path: 'my-access', component: MyAccess },
       { path: 'connections', component: Connections, canActivate: [connectionManagerGuard] },
       { path: 'credentials', component: Credentials, canActivate: [connectionManagerGuard] },
       { path: 'empty', component: EmptyState },
@@ -51,6 +54,7 @@ export const routes: Routes = [
           { path: 'users', component: Administration },
           { path: 'groups', component: SettingsGroups },
           { path: 'vaults', component: SettingsVaults },
+          { path: 'roles', component: SettingsRoles },
           { path: 'email', component: Email },
           { path: 'audit-logs', component: AuditLogs },
         ],

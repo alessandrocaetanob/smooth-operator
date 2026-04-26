@@ -17,6 +17,7 @@ export interface UserGroup {
   ownerName?: string | null;
   createdAt: string;
   memberCount: number;
+  vaultCount?: number;
   members: UserGroupMember[];
 }
 

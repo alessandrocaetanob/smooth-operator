@@ -1,0 +1,80 @@
+<div class="p-6 md:p-8 max-w-4xl mx-auto">
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-slate-100 tracking-tight">My Access</h1>
+    <p class="text-sm text-slate-400 mt-1">
+      Vaults you can access, either directly or through a group you belong to.
+    </p>
+  </div>
+
+  @if (errorMessage()) {
+    <div class="mb-4 p-3 border border-red-500/40 bg-red-500/10 rounded text-sm text-red-300">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="text-sm text-slate-500">Loading…</div>
+  } @else if (effective(); as eff) {
+    <div class="grid gap-3 md:grid-cols-3 mb-6">
+      <div class="border border-white/10 rounded-lg bg-slate-950/60 p-4">
+        <div class="text-xs uppercase tracking-widest text-slate-500">Total</div>
+        <div class="text-2xl font-bold text-slate-100 mt-1">{{ mergedCount() }}</div>
+        <div class="text-xs text-slate-400 mt-1">vaults you can access</div>
+      </div>
+      <div class="border border-white/10 rounded-lg bg-slate-950/60 p-4">
+        <div class="text-xs uppercase tracking-widest text-slate-500">Direct</div>
+        <div class="text-2xl font-bold text-slate-100 mt-1">{{ directCount() }}</div>
+        <div class="text-xs text-slate-400 mt-1">assigned to you personally</div>
+      </div>
+      <div class="border border-white/10 rounded-lg bg-slate-950/60 p-4">
+        <div class="text-xs uppercase tracking-widest text-slate-500">Via groups</div>
+        <div class="text-2xl font-bold text-slate-100 mt-1">{{ groupCount() }}</div>
+        <div class="text-xs text-slate-400 mt-1">groups granting vault access</div>
+      </div>
+    </div>
+
+    <section class="mb-6">
+      <h2 class="text-sm font-semibold text-slate-200 uppercase tracking-widest mb-3">All vaults</h2>
+      <div class="border border-white/10 rounded-lg bg-slate-950/60 overflow-hidden">
+        @if (eff.merged.length === 0) {
+          <div class="px-4 py-8 text-center text-slate-500 text-sm">
+            You don't have access to any vaults yet. Ask an administrator.
+          </div>
+        } @else {
+          <ul class="divide-y divide-white/5">
+            @for (v of eff.merged; track trackById($index, v)) {
+              <li class="px-4 py-3 flex items-center gap-3">
+                <span class="material-symbols-outlined text-blue-400">lock</span>
+                <span class="text-slate-100 text-sm">{{ v.name }}</span>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+    </section>
+
+    @if (eff.viaGroups.length > 0) {
+      <section>
+        <h2 class="text-sm font-semibold text-slate-200 uppercase tracking-widest mb-3">By group</h2>
+        <div class="space-y-3">
+          @for (g of eff.viaGroups; track trackGroup($index, g)) {
+            <div class="border border-white/10 rounded-lg bg-slate-950/60 p-4">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="material-symbols-outlined text-violet-400 text-base">workspaces</span>
+                <span class="text-slate-100 text-sm font-medium">{{ g.groupName }}</span>
+                <span class="text-xs text-slate-500 ml-auto">{{ g.vaults.length }} vault{{ g.vaults.length === 1 ? '' : 's' }}</span>
+              </div>
+              @if (g.vaults.length > 0) {
+                <ul class="space-y-1 ml-6">
+                  @for (v of g.vaults; track trackById($index, v)) {
+                    <li class="text-sm text-slate-400">{{ v.name }}</li>
+                  }
+                </ul>
+              }
+            </div>
+          }
+        </div>
+      </section>
+    }
+  }
+</div>

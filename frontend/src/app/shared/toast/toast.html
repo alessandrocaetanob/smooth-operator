@@ -1,0 +1,25 @@
+<div
+  class="fixed top-4 right-4 z-[90] flex flex-col gap-2 w-[min(360px,calc(100vw-2rem))]"
+  role="status"
+  aria-live="polite"
+>
+  @for (t of toasts(); track trackById($index, t)) {
+    <div
+      [class]="
+        'flex items-start gap-3 border rounded-lg px-4 py-3 shadow-lg backdrop-blur-sm text-sm ' +
+        toneClass(t.kind)
+      "
+    >
+      <span class="material-symbols-outlined text-base mt-0.5">{{ toneIcon(t.kind) }}</span>
+      <span class="flex-1 leading-snug">{{ t.message }}</span>
+      <button
+        type="button"
+        (click)="dismiss(t.id)"
+        class="text-current/70 hover:text-current text-xs uppercase tracking-widest"
+        aria-label="Dismiss notification"
+      >
+        ✕
+      </button>
+    </div>
+  }
+</div>
