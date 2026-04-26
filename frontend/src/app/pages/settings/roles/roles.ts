@@ -19,7 +19,7 @@ export class SettingsRoles {
     {
       key: 'Owner',
       name: 'Owner',
-      tone: 'text-amber-300 border-amber-500/40 bg-amber-500/10',
+      tone: 'text-amber-700 border-amber-500/50 bg-amber-500/15 dark:text-amber-300 dark:border-amber-500/40 dark:bg-amber-500/10',
       summary:
         'Root account, created on first setup. Cannot be demoted by anyone other than themselves.',
       permissions: [
@@ -32,7 +32,7 @@ export class SettingsRoles {
     {
       key: 'Admin',
       name: 'Admin',
-      tone: 'text-blue-300 border-blue-500/40 bg-blue-500/10',
+      tone: 'text-blue-700 border-blue-500/50 bg-blue-500/15 dark:text-blue-300 dark:border-blue-500/40 dark:bg-blue-500/10',
       summary:
         'Workspace administrators. Manage users, groups, vaults, and credentials, and audit activity.',
       permissions: [
@@ -45,7 +45,7 @@ export class SettingsRoles {
     {
       key: 'TeamAdmin',
       name: 'Team Admin',
-      tone: 'text-violet-300 border-violet-500/40 bg-violet-500/10',
+      tone: 'text-violet-700 border-violet-500/50 bg-violet-500/15 dark:text-violet-300 dark:border-violet-500/40 dark:bg-violet-500/10',
       summary:
         'Manage connections inside vaults they have access to. Cannot create vaults or invite users.',
       permissions: [
@@ -58,7 +58,7 @@ export class SettingsRoles {
     {
       key: 'User',
       name: 'User',
-      tone: 'text-slate-300 border-white/10 bg-white/5',
+      tone: 'text-slate-700 border-slate-400/50 bg-slate-500/10 dark:text-slate-300 dark:border-white/10 dark:bg-white/5',
       summary: 'Standard user. Can launch and use connections in vaults assigned to them.',
       permissions: [
         'Launch sessions on connections in assigned vaults',

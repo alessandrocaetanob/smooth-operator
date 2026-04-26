@@ -44,16 +44,22 @@
   animation-delay: 0.04s;
 }
 
-/* ---- Hands ---- */
-.hands {
-  opacity: 0;
-  transform: translateY(50px);
-  transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+/* ---- Closed eye arcs (password/privacy state) ---- */
+.eyes-closed {
+  transition: opacity 0.25s ease;
 }
-
-.hands.visible {
-  opacity: 1;
-  transform: translateY(0);
+.eye-arc {
+  transform-origin: center;
+  transform-box: fill-box;
+  animation: eye-arc-settle 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.eye-arc.right-arc {
+  animation-delay: 0.05s;
+}
+@keyframes eye-arc-settle {
+  0% { transform: scaleY(0.1); opacity: 0; }
+  60% { transform: scaleY(1.15); opacity: 1; }
+  100% { transform: scaleY(1); opacity: 1; }
 }
 
 /* ---- Mouths ---- */

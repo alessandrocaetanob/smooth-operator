@@ -53,6 +53,15 @@
       Email
     </a>
     <a
+      routerLink="retention"
+      routerLinkActive="text-primary border-primary"
+      [routerLinkActiveOptions]="{ exact: false }"
+      class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-on-surface-variant border-b-2 border-transparent hover:text-on-surface transition-colors"
+    >
+      <span class="material-symbols-outlined text-base">schedule</span>
+      Retention
+    </a>
+    <a
       routerLink="audit-logs"
       routerLinkActive="text-primary border-primary"
       [routerLinkActiveOptions]="{ exact: false }"

@@ -121,11 +121,36 @@
   </div>
 
   <div class="flex items-center justify-between mt-4 text-xs text-on-surface-variant">
-    <div>
-      Showing page {{ result().page }} of {{ result().totalPages || 1 }} —
-      {{ result().totalItems }} total
+    <div class="flex items-center gap-3">
+      <span>
+        Showing page {{ result().page }} of {{ result().totalPages || 1 }} —
+        {{ result().totalItems }} total
+      </span>
+      <label class="flex items-center gap-2">
+        <span class="text-outline">Rows:</span>
+        <select
+          [ngModel]="pageSize()"
+          (ngModelChange)="onPageSizeChange($event)"
+          name="pageSize"
+          class="bg-surface-container border border-outline-variant/40 rounded px-2 py-1 text-xs text-on-surface focus:border-primary outline-none"
+          aria-label="Rows per page"
+        >
+          <option [ngValue]="25">25</option>
+          <option [ngValue]="50">50</option>
+          <option [ngValue]="100">100</option>
+          <option [ngValue]="200">200</option>
+        </select>
+      </label>
     </div>
     <div class="flex items-center gap-2">
+      <button
+        (click)="goToPage(1)"
+        [disabled]="result().page <= 1"
+        class="px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded disabled:opacity-30"
+        aria-label="First page"
+      >
+        « First
+      </button>
       <button
         (click)="goToPage(result().page - 1)"
         [disabled]="result().page <= 1"
@@ -139,6 +164,14 @@
         class="px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded disabled:opacity-30"
       >
         Next
+      </button>
+      <button
+        (click)="goToPage(result().totalPages || 1)"
+        [disabled]="result().page >= result().totalPages"
+        class="px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded disabled:opacity-30"
+        aria-label="Last page"
+      >
+        Last »
       </button>
     </div>
   </div>

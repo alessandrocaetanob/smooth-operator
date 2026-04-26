@@ -69,10 +69,29 @@
       <path d="M117 100 Q126 109 135 100" stroke="var(--mascot-eye)" stroke-width="3" fill="none" stroke-linecap="round"/>
     </g>
 
-    <!-- Hands covering eyes (password state) -->
-    <g class="hands" [class.visible]="effectiveState === 'password'">
-      <rect x="52" y="80" width="42" height="28" rx="13" fill="var(--mascot-hand)"/>
-      <rect x="106" y="80" width="42" height="28" rx="13" fill="var(--mascot-hand)"/>
+    <!-- Eyes — closed/squinting (password state — privacy gesture) -->
+    <g class="eyes-closed" [style.opacity]="effectiveState === 'password' ? '1' : '0'">
+      <path
+        d="M62 100 Q74 95 86 100"
+        stroke="var(--mascot-eye)"
+        stroke-width="3.5"
+        fill="none"
+        stroke-linecap="round"
+        class="eye-arc left-arc"
+      />
+      <path
+        d="M114 100 Q126 95 138 100"
+        stroke="var(--mascot-eye)"
+        stroke-width="3.5"
+        fill="none"
+        stroke-linecap="round"
+        class="eye-arc right-arc"
+      />
+      <!-- Tiny lash flick for charm -->
+      <path d="M64 96 L60 92" stroke="var(--mascot-eye)" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+      <path d="M84 96 L88 92" stroke="var(--mascot-eye)" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+      <path d="M116 96 L112 92" stroke="var(--mascot-eye)" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+      <path d="M136 96 L140 92" stroke="var(--mascot-eye)" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
     </g>
 
     <!-- Mouth — happy smile -->
