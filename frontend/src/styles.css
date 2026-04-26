@@ -266,6 +266,48 @@
 }
 
 /* ============================================================
+   COMPONENTS — Reusable semantic utilities
+   ============================================================ */
+@layer components {
+  .btn-primary {
+    @apply flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-widest
+           text-on-primary-container bg-primary-container hover:bg-primary rounded-lg
+           transition-colors duration-150 disabled:opacity-50 btn-interactive;
+  }
+
+  .btn-secondary {
+    @apply flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-widest
+           text-on-secondary-container bg-surface-container hover:bg-surface-container-high rounded-lg
+           border border-outline-variant/50 transition-colors duration-150 disabled:opacity-50 btn-interactive;
+  }
+
+  .btn-ghost {
+    @apply flex items-center gap-2 px-3 py-2 text-xs font-medium uppercase tracking-widest
+           text-on-surface-variant hover:bg-on-surface/5 hover:text-on-surface rounded-lg
+           transition-colors duration-150 btn-interactive;
+  }
+
+  .btn-danger {
+    @apply flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-widest
+           text-on-error bg-error hover:bg-error/80 rounded-lg
+           transition-colors duration-150 disabled:opacity-50 btn-interactive;
+  }
+
+  .input-field {
+    @apply bg-surface-container border border-outline-variant/60
+           focus:border-primary text-sm text-on-surface rounded-lg px-3 py-2
+           outline-none transition-colors duration-150
+           placeholder:text-on-surface-variant/60;
+  }
+
+  .select-field {
+    @apply bg-surface-container border border-outline-variant/60
+           focus:border-primary text-sm text-on-surface rounded-lg px-3 py-2
+           outline-none transition-colors duration-150;
+  }
+}
+
+/* ============================================================
    REDUCED MOTION
    Disables non-essential animations for accessibility.
    ============================================================ */

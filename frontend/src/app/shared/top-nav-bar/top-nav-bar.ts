@@ -1,4 +1,5 @@
 import { Component, DestroyRef, NgZone, OnInit, computed, inject, signal } from '@angular/core';
+
 import { Router, RouterLink } from '@angular/router';
 import { Mascot, MascotState } from '../mascot/mascot';
 import { AuthService } from '../../services/auth.service';
@@ -29,6 +30,8 @@ export class TopNavBar implements OnInit {
     this.toastService.toasts().some((t) => t.kind === 'error') ? 'error' : this._idleState()
   );
 
+  readonly scrolled = signal(false);
+
   readonly user = this.auth.currentUser;
   readonly canAccessSettings = this.auth.canAccessSettings;
   readonly initials = computed(() => {
@@ -43,6 +46,15 @@ export class TopNavBar implements OnInit {
 
   ngOnInit(): void {
     this.zone.runOutsideAngular(() => {
+      const checkScroll = () => {
+        const s = window.scrollY > 4;
+        if (s !== this.scrolled()) {
+          this.zone.run(() => this.scrolled.set(s));
+        }
+      };
+      document.addEventListener('scroll', checkScroll, { passive: true });
+      checkScroll();
+
       const reset = () => {
         if (this.idleTimer) clearTimeout(this.idleTimer);
         if (this._idleState() === 'sleep') {
@@ -59,6 +71,7 @@ export class TopNavBar implements OnInit {
 
       this.destroyRef.onDestroy(() => {
         if (this.idleTimer) clearTimeout(this.idleTimer);
+        document.removeEventListener('scroll', checkScroll);
         events.forEach((evt) => document.removeEventListener(evt, reset));
       });
     });

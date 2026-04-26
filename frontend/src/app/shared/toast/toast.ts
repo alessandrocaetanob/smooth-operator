@@ -1,10 +1,12 @@
 import { Component, inject } from '@angular/core';
 import { Toast, ToastService } from './toast.service';
+import { toastEnter } from '../animations';
 
 @Component({
   selector: 'app-toast-container',
   standalone: true,
   templateUrl: './toast.html',
+  animations: [toastEnter],
 })
 export class ToastContainer {
   private readonly svc = inject(ToastService);

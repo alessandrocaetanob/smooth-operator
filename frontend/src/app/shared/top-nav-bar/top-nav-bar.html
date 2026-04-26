@@ -1,5 +1,6 @@
 <header
-  class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 h-16 glass-panel border-b border-outline-variant/30 font-inter tracking-tight text-sm"
+  class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 h-16 glass-panel border-b border-outline-variant/30 font-inter tracking-tight text-sm transition-shadow duration-200"
+  [class.shadow-xl]="scrolled()"
 >
   <div class="flex items-center gap-4">
     <button
