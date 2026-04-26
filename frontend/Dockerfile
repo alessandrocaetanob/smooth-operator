@@ -9,8 +9,8 @@ COPY package*.json ./
 # Upgrade npm to match the version declared in packageManager field
 RUN npm install -g npm@11.11.0
 
-# Install dependencies
-RUN npm ci
+# Install dependencies (omit optional native bindings - platform-specific, not needed for build)
+RUN npm ci --omit=optional
 
 # Copy the rest of the application
 COPY . .
