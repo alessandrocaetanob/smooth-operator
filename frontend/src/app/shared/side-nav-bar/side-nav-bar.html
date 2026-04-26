@@ -1,9 +1,23 @@
 <nav
-  class="hidden md:flex flex-col fixed left-0 top-16 bottom-0 w-64 z-40 glass-panel border-r border-outline-variant/30 shadow-2xl font-inter text-xs font-medium uppercase tracking-widest antialiased"
+  class="hidden md:flex flex-col fixed left-0 top-16 bottom-0 z-40 glass-panel border-r border-outline-variant/30 shadow-2xl font-inter text-xs font-medium uppercase tracking-widest antialiased transition-[width] duration-300 ease-out"
+  [class.w-64]="!collapsed()"
+  [class.w-16]="collapsed()"
+  [attr.aria-label]="'Primary navigation'"
 >
-  <div class="flex items-center p-6 border-b border-outline-variant/20">
-    <div
-      class="w-10 h-10 rounded-lg bg-primary-container/15 flex items-center justify-center mr-3 border border-primary-container/30"
+  <div
+    class="flex items-center border-b border-outline-variant/20"
+    [class.p-4]="!collapsed()"
+    [class.px-3]="collapsed()"
+    [class.py-4]="collapsed()"
+    [class.justify-center]="collapsed()"
+  >
+    <button
+      type="button"
+      (click)="toggleCollapsed()"
+      class="w-10 h-10 rounded-lg bg-primary-container/15 hover:bg-primary-container/30 flex items-center justify-center border border-primary-container/30 transition-colors btn-interactive shrink-0"
+      [attr.aria-label]="collapsed() ? 'Expand sidebar' : 'Collapse sidebar'"
+      [attr.aria-expanded]="!collapsed()"
+      title="Toggle sidebar"
     >
       <span
         class="material-symbols-outlined text-primary"
@@ -11,14 +25,20 @@
         aria-hidden="true"
         >security</span
       >
-    </div>
-    <div>
-      <div class="text-on-surface font-bold text-sm tracking-widest">COMMAND CENTER</div>
-      <div class="text-on-surface-variant mt-0.5">Active Ops</div>
-    </div>
+    </button>
+    @if (!collapsed()) {
+      <div class="ml-3 overflow-hidden">
+        <div class="text-on-surface font-bold text-sm tracking-tight normal-case truncate">
+          Smooth Operator
+        </div>
+        <div class="text-on-surface-variant mt-0.5 text-[10px] uppercase tracking-widest">
+          Active Ops
+        </div>
+      </div>
+    }
   </div>
 
-  @if (canManageConnections()) {
+  @if (canManageConnections() && !collapsed()) {
     <div class="p-4">
       <button
         (click)="newConnection()"
@@ -29,6 +49,18 @@
       </button>
     </div>
   }
+  @if (canManageConnections() && collapsed()) {
+    <div class="p-2 flex justify-center">
+      <button
+        (click)="newConnection()"
+        class="w-10 h-10 rounded-lg bg-primary-container hover:bg-primary text-on-primary-container flex items-center justify-center transition-all duration-200 btn-interactive primary-glow-hover"
+        title="New Connection"
+        aria-label="New Connection"
+      >
+        <span class="material-symbols-outlined text-base" aria-hidden="true">add</span>
+      </button>
+    </div>
+  }
 
   <div class="flex-1 overflow-y-auto py-2">
     <ul class="space-y-1 px-2">
@@ -36,10 +68,14 @@
         <a
           routerLink="/my-access"
           routerLinkActive="bg-primary-container/15 text-primary border-l-primary"
-          class="flex items-center gap-3 text-on-surface-variant px-3 py-2.5 rounded-lg hover:bg-on-surface/5 hover:text-on-surface transition-all border-l-2 border-l-transparent"
+          class="nav-link"
+          [class.justify-center]="collapsed()"
+          [attr.title]="collapsed() ? 'My Access' : null"
         >
           <span class="material-symbols-outlined" aria-hidden="true">verified_user</span>
-          <span>My Access</span>
+          @if (!collapsed()) {
+            <span>My Access</span>
+          }
         </a>
       </li>
       <li>
@@ -47,10 +83,14 @@
           routerLink="/vault"
           routerLinkActive="bg-primary-container/15 text-primary border-l-primary"
           [routerLinkActiveOptions]="{ exact: false }"
-          class="flex items-center gap-3 text-on-surface-variant px-3 py-2.5 rounded-lg hover:bg-on-surface/5 hover:text-on-surface transition-all border-l-2 border-l-transparent"
+          class="nav-link"
+          [class.justify-center]="collapsed()"
+          [attr.title]="collapsed() ? 'My Vaults' : null"
         >
           <span class="material-symbols-outlined" aria-hidden="true">dashboard</span>
-          <span>My Vaults</span>
+          @if (!collapsed()) {
+            <span>My Vaults</span>
+          }
         </a>
       </li>
       @if (canManageConnections()) {
@@ -58,10 +98,14 @@
           <a
             routerLink="/connections"
             routerLinkActive="bg-primary-container/15 text-primary border-l-primary"
-            class="flex items-center gap-3 text-on-surface-variant px-3 py-2.5 rounded-lg hover:bg-on-surface/5 hover:text-on-surface transition-all border-l-2 border-l-transparent"
+            class="nav-link"
+            [class.justify-center]="collapsed()"
+            [attr.title]="collapsed() ? 'Connections' : null"
           >
             <span class="material-symbols-outlined" aria-hidden="true">hub</span>
-            <span>Connections</span>
+            @if (!collapsed()) {
+              <span>Connections</span>
+            }
           </a>
         </li>
       }
@@ -70,10 +114,14 @@
           <a
             routerLink="/credentials"
             routerLinkActive="bg-primary-container/15 text-primary border-l-primary"
-            class="flex items-center gap-3 text-on-surface-variant px-3 py-2.5 rounded-lg hover:bg-on-surface/5 hover:text-on-surface transition-all border-l-2 border-l-transparent"
+            class="nav-link"
+            [class.justify-center]="collapsed()"
+            [attr.title]="collapsed() ? 'Credentials' : null"
           >
             <span class="material-symbols-outlined" aria-hidden="true">key</span>
-            <span>Credentials</span>
+            @if (!collapsed()) {
+              <span>Credentials</span>
+            }
           </a>
         </li>
       }
@@ -82,28 +130,49 @@
           <a
             routerLink="/settings"
             routerLinkActive="bg-primary-container/15 text-primary border-l-primary"
-            class="flex items-center gap-3 text-on-surface-variant px-3 py-2.5 rounded-lg hover:bg-on-surface/5 hover:text-on-surface transition-all border-l-2 border-l-transparent"
+            class="nav-link"
+            [class.justify-center]="collapsed()"
+            [attr.title]="collapsed() ? 'Settings' : null"
           >
             <span class="material-symbols-outlined" aria-hidden="true">settings</span>
-            <span>Settings</span>
+            @if (!collapsed()) {
+              <span>Settings</span>
+            }
           </a>
         </li>
       }
     </ul>
   </div>
 
-  <div class="p-3 border-t border-outline-variant/20">
-    <ul>
-      <li>
-        <button
-          (click)="logout()"
-          class="w-full flex items-center gap-3 px-3 py-2.5 text-on-surface-variant hover:text-error hover:bg-error/10 transition-all rounded-lg"
-        >
-          <span class="material-symbols-outlined text-lg" aria-hidden="true">logout</span>
-          <span>Sign out</span>
-        </button>
-      </li>
-    </ul>
+  <div class="p-2 border-t border-outline-variant/20">
+    <button
+      (click)="toggleCollapsed()"
+      class="w-full flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:text-on-surface hover:bg-on-surface/5 transition-all rounded-lg"
+      [class.justify-center]="collapsed()"
+      [attr.title]="collapsed() ? 'Expand sidebar' : 'Collapse sidebar'"
+      [attr.aria-label]="collapsed() ? 'Expand sidebar' : 'Collapse sidebar'"
+    >
+      <span class="material-symbols-outlined text-base" aria-hidden="true">{{
+        collapsed() ? 'chevron_right' : 'chevron_left'
+      }}</span>
+      @if (!collapsed()) {
+        <span class="text-[10px]">Collapse</span>
+      }
+    </button>
+  </div>
+
+  <div class="p-2 border-t border-outline-variant/20">
+    <button
+      (click)="logout()"
+      class="w-full flex items-center gap-3 px-3 py-2.5 text-on-surface-variant hover:text-error hover:bg-error/10 transition-all rounded-lg"
+      [class.justify-center]="collapsed()"
+      [attr.title]="collapsed() ? 'Sign out' : null"
+      [attr.aria-label]="'Sign out'"
+    >
+      <span class="material-symbols-outlined text-lg" aria-hidden="true">logout</span>
+      @if (!collapsed()) {
+        <span>Sign out</span>
+      }
+    </button>
   </div>
 </nav>
-

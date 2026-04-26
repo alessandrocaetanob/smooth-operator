@@ -25,10 +25,13 @@
         >search</span
       >
       <input
-        class="w-full bg-surface-container border border-outline-variant/40 focus:border-primary text-on-surface py-1.5 pl-10 pr-3 rounded-md outline-none transition-all placeholder:text-on-surface-variant/60 hover:bg-surface-container-high"
-        placeholder="Search Vault..."
-        type="text"
-        aria-label="Search"
+        class="w-full bg-surface-container border border-outline-variant/40 focus:border-primary text-on-surface py-1.5 pl-10 pr-3 rounded-md outline-none transition-all placeholder:text-on-surface-variant/60 hover:bg-surface-container-high focus-ring-glow"
+        placeholder="Search vaults & connections..."
+        type="search"
+        aria-label="Search vaults and connections"
+        [value]="searchTerm()"
+        (input)="onSearchInput($event)"
+        (keydown.enter)="submitSearch()"
       />
     </div>
   </div>

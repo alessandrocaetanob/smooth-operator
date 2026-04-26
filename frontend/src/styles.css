@@ -498,11 +498,21 @@
            outline-none transition-colors duration-150
            placeholder:text-on-surface-variant/60;
   }
+  .input-field:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgb(var(--color-primary) / 0.18),
+                0 0 0 1px rgb(var(--color-primary) / 0.6);
+  }
 
   .select-field {
     @apply bg-surface-container border border-outline-variant/60
            focus:border-primary text-sm text-on-surface rounded-lg px-3 py-2
            outline-none transition-colors duration-150;
+  }
+  .select-field:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgb(var(--color-primary) / 0.18),
+                0 0 0 1px rgb(var(--color-primary) / 0.6);
   }
 }
 

@@ -43,7 +43,20 @@ export class TopNavBar implements OnInit {
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   });
 
+  readonly searchTerm = signal('');
+
   menuOpen = false;
+
+  onSearchInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.searchTerm.set(input.value);
+  }
+
+  submitSearch(): void {
+    const q = this.searchTerm().trim();
+    if (!q) return;
+    this.router.navigate(['/search'], { queryParams: { q } });
+  }
 
   ngOnInit(): void {
     this.zone.runOutsideAngular(() => {
