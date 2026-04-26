@@ -145,7 +145,7 @@ namespace Backend.Controllers
 
             if (request.KeyType == "rsa")
             {
-                using var rsa = RSA.Create(2048);
+                using var rsa = RSA.Create(4096);
                 privateKey = rsa.ExportRSAPrivateKeyPem();
                 publicKey = EncodeRsaPublicKeyOpenSsh(rsa);
             }
