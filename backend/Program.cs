@@ -115,17 +115,26 @@ using (var scope = app.Services.CreateScope())
     var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("Migrations");
     try
     {
-        var pending = (await db.Database.GetPendingMigrationsAsync()).ToList();
-        if (pending.Count > 0)
+        if (db.Database.IsRelational())
         {
-            logger.LogInformation("Applying {Count} pending migration(s): {Migrations}",
-                pending.Count, string.Join(", ", pending));
-            await db.Database.MigrateAsync();
-            logger.LogInformation("Migrations applied successfully.");
+            var pending = (await db.Database.GetPendingMigrationsAsync()).ToList();
+            if (pending.Count > 0)
+            {
+                logger.LogInformation("Applying {Count} pending migration(s): {Migrations}",
+                    pending.Count, string.Join(", ", pending));
+                await db.Database.MigrateAsync();
+                logger.LogInformation("Migrations applied successfully.");
+            }
+            else
+            {
+                logger.LogInformation("Database is up to date; no migrations to apply.");
+            }
         }
         else
         {
-            logger.LogInformation("Database is up to date; no migrations to apply.");
+            // InMemory and other non-relational providers (used by tests) do not
+            // support migrations. Just ensure the in-memory store is created.
+            await db.Database.EnsureCreatedAsync();
         }
 
         await RoleSeeder.SeedDefaultsAsync(db, logger);
@@ -154,3 +163,8 @@ app.MapControllers();
 app.MapHealthChecks("/health");
 
 app.Run();
+
+
+// Expose the implicit Program class for WebApplicationFactory<Program> in tests.
+public partial class Program { }
+
