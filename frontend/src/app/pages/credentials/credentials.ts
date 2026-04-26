@@ -50,7 +50,6 @@ export class Credentials implements OnInit {
   readonly generatingSsh = signal(false);
   readonly showPublicKey = signal(false);
   readonly generatedPublicKey = signal<string>('');
-  readonly sshKeyAlgorithm = signal<'rsa' | 'ecdsa'>('rsa');
 
   readonly types = [
     { value: 'password', label: 'Password' },
@@ -93,11 +92,11 @@ export class Credentials implements OnInit {
     this.showForm.set(true);
   }
 
-  generateSshKey(): void {
+  generateSshKey(keyType: string = 'rsa'): void {
     if (!this.canManageCredentials()) return;
     this.generatingSsh.set(true);
     this.errorMessage.set(null);
-    this.svc.generateSsh(this.sshKeyAlgorithm()).subscribe({
+    this.svc.generateSsh(keyType).subscribe({
       next: (res) => {
         this.generatingSsh.set(false);
         this.patch('secret', res.privateKey);
@@ -121,7 +120,6 @@ export class Credentials implements OnInit {
     this.showForm.set(false);
     this.showPublicKey.set(false);
     this.generatedPublicKey.set('');
-    this.sshKeyAlgorithm.set('rsa');
     this.form.set({ ...EMPTY_FORM });
   }
 

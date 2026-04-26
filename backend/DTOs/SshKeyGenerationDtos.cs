@@ -5,7 +5,7 @@ namespace Backend.DTOs
     public class GenerateSshKeyRequest
     {
         [Required]
-        [RegularExpression("^(rsa|ecdsa)$", ErrorMessage = "Key type must be one of: rsa, ecdsa")]
+        [RegularExpression("^(rsa|ecdsa|ed25519)$", ErrorMessage = "Key type must be one of: rsa, ecdsa, ed25519")]
         public string KeyType { get; set; } = "rsa";
     }
 
