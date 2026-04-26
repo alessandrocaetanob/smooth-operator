@@ -28,9 +28,11 @@ export class VaultsService {
   readonly list = this._list.asReadonly();
 
   reload(): Observable<Vault[]> {
-    return this.http.get<any[]>('/api/vaults').pipe(
-      tap((rows) => this._list.set((rows ?? []).map((r) => this.normalize(r)))),
-    ) as unknown as Observable<Vault[]>;
+    return this.http
+      .get<any[]>('/api/vaults')
+      .pipe(
+        tap((rows) => this._list.set((rows ?? []).map((r) => this.normalize(r)))),
+      ) as unknown as Observable<Vault[]>;
   }
 
   create(payload: SaveVaultPayload): Observable<Vault> {

@@ -32,7 +32,7 @@ function makeAuth(overrides: Partial<AuthStub> = {}): AuthStub {
 function configure(auth: AuthStub) {
   TestBed.resetTestingModule();
   const router = {
-    parseUrl: vi.fn((url: string) => ({ __url: url } as unknown as UrlTree)),
+    parseUrl: vi.fn((url: string) => ({ __url: url }) as unknown as UrlTree),
   };
   TestBed.configureTestingModule({
     providers: [
@@ -138,7 +138,14 @@ describe('ownerAdminGuard', () => {
   });
 
   it('rejects TeamAdmin (not part of the OwnerOrAdmin set)', () => {
-    configure(makeAuth({ hasAnyRole: (...roles) => roles.includes('TeamAdmin') && !roles.includes('Owner') && !roles.includes('Admin') ? false : false }));
+    configure(
+      makeAuth({
+        hasAnyRole: (...roles) =>
+          roles.includes('TeamAdmin') && !roles.includes('Owner') && !roles.includes('Admin')
+            ? false
+            : false,
+      }),
+    );
     const result = run(() => ownerAdminGuard(dummyRoute, dummyState)) as any;
     expect(result.__url).toBe('/vault');
   });

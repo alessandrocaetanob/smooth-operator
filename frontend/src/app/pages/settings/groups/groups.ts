@@ -38,9 +38,7 @@ export class SettingsGroups implements OnInit {
     const term = this.memberSearch().toLowerCase();
     if (!term) return this.users();
     return this.users().filter(
-      (u) =>
-        (u.name?.toLowerCase() ?? '').includes(term) ||
-        u.email.toLowerCase().includes(term),
+      (u) => (u.name?.toLowerCase() ?? '').includes(term) || u.email.toLowerCase().includes(term),
     );
   });
 

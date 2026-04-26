@@ -33,33 +33,33 @@ export class GroupsService {
   readonly list = signal<UserGroup[]>([]);
 
   reload(): Observable<UserGroup[]> {
-    return this.http.get<UserGroup[]>('/api/groups').pipe(
-      tap((groups) => this.list.set(groups)),
-    );
+    return this.http.get<UserGroup[]>('/api/groups').pipe(tap((groups) => this.list.set(groups)));
   }
 
-  create(payload: { name: string; description?: string | null; ownerUserId?: string | null }): Observable<UserGroup> {
-    return this.http.post<UserGroup>('/api/groups', payload).pipe(
-      tap(() => this.reload().subscribe()),
-    );
+  create(payload: {
+    name: string;
+    description?: string | null;
+    ownerUserId?: string | null;
+  }): Observable<UserGroup> {
+    return this.http
+      .post<UserGroup>('/api/groups', payload)
+      .pipe(tap(() => this.reload().subscribe()));
   }
 
   rename(id: string, name: string): Observable<UserGroup> {
-    return this.http.put<UserGroup>(`/api/groups/${id}`, { name }).pipe(
-      tap(() => this.reload().subscribe()),
-    );
+    return this.http
+      .put<UserGroup>(`/api/groups/${id}`, { name })
+      .pipe(tap(() => this.reload().subscribe()));
   }
 
   update(id: string, payload: UpdateGroupPayload): Observable<UserGroup> {
-    return this.http.put<UserGroup>(`/api/groups/${id}`, payload).pipe(
-      tap(() => this.reload().subscribe()),
-    );
+    return this.http
+      .put<UserGroup>(`/api/groups/${id}`, payload)
+      .pipe(tap(() => this.reload().subscribe()));
   }
 
   remove(id: string): Observable<void> {
-    return this.http.delete<void>(`/api/groups/${id}`).pipe(
-      tap(() => this.reload().subscribe()),
-    );
+    return this.http.delete<void>(`/api/groups/${id}`).pipe(tap(() => this.reload().subscribe()));
   }
 
   setMembers(groupId: string, userIds: string[]): Observable<void> {

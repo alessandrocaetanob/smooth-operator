@@ -2,7 +2,9 @@
   <div class="flex items-center justify-between mb-6">
     <div>
       <h2 class="text-lg font-semibold text-slate-100">Vaults</h2>
-      <p class="text-sm text-slate-400 mt-1">Create and manage vaults that group connections together.</p>
+      <p class="text-sm text-slate-400 mt-1">
+        Create and manage vaults that group connections together.
+      </p>
     </div>
     <button
       (click)="refresh()"
@@ -139,9 +141,7 @@
       <h3 class="text-sm font-semibold text-slate-100 uppercase tracking-widest">
         Assign Access — {{ vault.name }}
       </h3>
-      <p class="text-xs text-slate-400 mt-1">
-        Select users and groups that can access this vault.
-      </p>
+      <p class="text-xs text-slate-400 mt-1">Select users and groups that can access this vault.</p>
 
       <div class="mt-4 grid grid-cols-2 gap-4">
         <!-- Users column -->

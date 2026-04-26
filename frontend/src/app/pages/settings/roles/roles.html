@@ -22,7 +22,9 @@
         <ul class="space-y-2">
           @for (perm of role.permissions; track perm) {
             <li class="flex items-start gap-2 text-sm text-slate-300">
-              <span class="material-symbols-outlined text-emerald-400 text-base mt-0.5">check_circle</span>
+              <span class="material-symbols-outlined text-emerald-400 text-base mt-0.5"
+                >check_circle</span
+              >
               <span>{{ perm }}</span>
             </li>
           }
@@ -33,6 +35,7 @@
 
   <div class="mt-6 p-4 border border-white/10 rounded-lg bg-slate-950/40 text-xs text-slate-500">
     <strong class="text-slate-400">Single-role policy:</strong>
-    Users hold one role at a time. Changing a role replaces the previous one. Permissions cannot be customized in this version.
+    Users hold one role at a time. Changing a role replaces the previous one. Permissions cannot be
+    customized in this version.
   </div>
 </div>

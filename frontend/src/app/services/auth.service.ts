@@ -82,21 +82,17 @@ export class AuthService {
   }
 
   setup(payload: { name: string; email: string; password: string }): Observable<AuthResponse> {
-    return this.http
-      .post<any>('/api/auth/setup', payload)
-      .pipe(tap((res) => this.acceptAuth(res)));
+    return this.http.post<any>('/api/auth/setup', payload).pipe(tap((res) => this.acceptAuth(res)));
   }
 
   login(payload: { email: string; password: string }): Observable<AuthResponse> {
-    return this.http
-      .post<any>('/api/auth/login', payload)
-      .pipe(tap((res) => this.acceptAuth(res)));
+    return this.http.post<any>('/api/auth/login', payload).pipe(tap((res) => this.acceptAuth(res)));
   }
 
   me(): Observable<UserInfo> {
-    return this.http.get<any>('/api/auth/me').pipe(
-      tap((u) => this._user.set(this.normalizeUser(u, this._token()))),
-    );
+    return this.http
+      .get<any>('/api/auth/me')
+      .pipe(tap((u) => this._user.set(this.normalizeUser(u, this._token()))));
   }
 
   hasRole(roleName: string): boolean {
@@ -142,7 +138,9 @@ export class AuthService {
   }
 
   private normalizeUser(raw: any, fallbackToken: string | null = null): UserInfo {
-    const roles = this.normalizeRoles(raw?.roles ?? raw?.Roles ?? this.rolesFromToken(fallbackToken));
+    const roles = this.normalizeRoles(
+      raw?.roles ?? raw?.Roles ?? this.rolesFromToken(fallbackToken),
+    );
     return {
       id: raw?.id ?? raw?.Id ?? '',
       email: raw?.email ?? raw?.Email ?? '',
@@ -159,8 +157,7 @@ export class AuthService {
     if (!payload) return null;
 
     const roleClaim =
-      payload['role'] ??
-      payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
+      payload['role'] ?? payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
 
     return {
       id:
@@ -207,9 +204,7 @@ export class AuthService {
 
   private normalizeRoles(raw: any): string[] {
     const values = Array.isArray(raw) ? raw : raw ? [raw] : [];
-    const clean = values
-      .map((r) => String(r).trim())
-      .filter((r) => r.length > 0);
+    const clean = values.map((r) => String(r).trim()).filter((r) => r.length > 0);
     return Array.from(new Set(clean));
   }
 }

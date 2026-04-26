@@ -42,9 +42,7 @@ export class SettingsVaults implements OnInit {
     const term = this.userAssignSearch().toLowerCase();
     if (!term) return this.users();
     return this.users().filter(
-      (u) =>
-        (u.name?.toLowerCase() ?? '').includes(term) ||
-        u.email.toLowerCase().includes(term),
+      (u) => (u.name?.toLowerCase() ?? '').includes(term) || u.email.toLowerCase().includes(term),
     );
   });
 
@@ -163,8 +161,7 @@ export class SettingsVaults implements OnInit {
         this.selectedUserIds.set(a.userIds);
         this.selectedGroupIds.set(a.groupIds);
       },
-      error: (err) =>
-        this.errorMessage.set(this.toMessage(err) || 'Failed to load assignments.'),
+      error: (err) => this.errorMessage.set(this.toMessage(err) || 'Failed to load assignments.'),
     });
   }
 

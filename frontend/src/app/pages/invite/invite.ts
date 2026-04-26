@@ -59,17 +59,19 @@ export class Invite implements OnInit {
     }
     this.busy.set(true);
     this.error.set(null);
-    this.invites.redeem(this.token(), { password: pw, name: this.name().trim() || undefined }).subscribe({
-      next: () => {
-        this.busy.set(false);
-        this.success.set(true);
-        setTimeout(() => this.router.navigate(['/login']), 1500);
-      },
-      error: (err) => {
-        this.busy.set(false);
-        this.error.set(this.toMessage(err) || 'Failed to complete account setup.');
-      },
-    });
+    this.invites
+      .redeem(this.token(), { password: pw, name: this.name().trim() || undefined })
+      .subscribe({
+        next: () => {
+          this.busy.set(false);
+          this.success.set(true);
+          setTimeout(() => this.router.navigate(['/login']), 1500);
+        },
+        error: (err) => {
+          this.busy.set(false);
+          this.error.set(this.toMessage(err) || 'Failed to complete account setup.');
+        },
+      });
   }
 
   private toMessage(err: any): string | null {

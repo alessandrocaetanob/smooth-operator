@@ -61,9 +61,11 @@ export class UsersService {
   readonly list = this._list.asReadonly();
 
   reload(): Observable<AppUser[]> {
-    return this.http.get<any[]>('/api/users').pipe(
-      tap((rows) => this._list.set((rows ?? []).map((r) => this.normalize(r)))),
-    ) as unknown as Observable<AppUser[]>;
+    return this.http
+      .get<any[]>('/api/users')
+      .pipe(
+        tap((rows) => this._list.set((rows ?? []).map((r) => this.normalize(r)))),
+      ) as unknown as Observable<AppUser[]>;
   }
 
   setActive(id: string, isActive: boolean): Observable<void> {
@@ -112,7 +114,12 @@ export class UsersService {
     );
   }
 
-  invite(payload: { email: string; name?: string; password?: string; role?: string }): Observable<InviteResult> {
+  invite(payload: {
+    email: string;
+    name?: string;
+    password?: string;
+    role?: string;
+  }): Observable<InviteResult> {
     return this.http.post<any>('/api/auth/invite', payload).pipe(
       map((raw) => ({
         message: pickOr(raw, '', 'message', 'Message'),

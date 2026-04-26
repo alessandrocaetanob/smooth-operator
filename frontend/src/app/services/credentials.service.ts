@@ -31,9 +31,11 @@ export class CredentialsService {
   readonly list = this._list.asReadonly();
 
   reload(): Observable<Credential[]> {
-    return this.http.get<any[]>('/api/credentials').pipe(
-      tap((rows) => this._list.set((rows ?? []).map((r) => this.normalize(r)))),
-    ) as unknown as Observable<Credential[]>;
+    return this.http
+      .get<any[]>('/api/credentials')
+      .pipe(
+        tap((rows) => this._list.set((rows ?? []).map((r) => this.normalize(r)))),
+      ) as unknown as Observable<Credential[]>;
   }
 
   create(payload: CreateCredentialPayload): Observable<Credential> {
