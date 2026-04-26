@@ -1,0 +1,91 @@
+.mascot-container {
+  width: 150px;
+  height: 150px;
+  margin: 0 auto;
+  position: relative;
+  transition: transform 0.3s ease;
+}
+
+.mascot-container.small {
+  width: 40px;
+  height: 40px;
+  margin: 0;
+}
+
+.mascot-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.eyes {
+  transition:
+    transform 0.1s ease-out,
+    opacity 0.2s ease;
+  opacity: 1;
+}
+
+.eyes.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.eyes-closed {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.eyes-closed.visible {
+  opacity: 1;
+}
+
+.hands {
+  opacity: 0;
+  transform: translateY(50px);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.hands.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.antenna-bulb.pulse {
+  animation: antenna-pulse 2s infinite alternate;
+}
+
+.smile {
+  transition: d 0.3s ease;
+}
+
+/* Float animation for the whole mascot to make it feel alive */
+.mascot-container {
+  animation: float 4s ease-in-out infinite;
+}
+
+.mascot-container.small {
+  animation: none;
+}
+
+@keyframes antenna-pulse {
+  0% {
+    fill: #4edea3;
+    filter: drop-shadow(0 0 2px rgba(78, 222, 163, 0.5));
+  }
+  100% {
+    fill: #6ffbbe;
+    filter: drop-shadow(0 0 8px rgba(111, 251, 190, 0.9));
+  }
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}

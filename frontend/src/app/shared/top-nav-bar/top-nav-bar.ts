@@ -1,11 +1,12 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, Output, EventEmitter } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
+import { Mascot } from '../mascot/mascot';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-top-nav-bar',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, Mascot],
   templateUrl: './top-nav-bar.html',
   styleUrl: './top-nav-bar.css',
 })
@@ -24,6 +25,8 @@ export class TopNavBar {
   });
 
   menuOpen = false;
+
+  @Output() readonly toggleMobileNav = new EventEmitter<void>();
 
   toggleMenu(): void {
     this.menuOpen = !this.menuOpen;

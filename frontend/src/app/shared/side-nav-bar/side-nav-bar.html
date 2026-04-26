@@ -1,20 +1,26 @@
-<nav
-  class="hidden md:flex flex-col fixed left-0 top-16 bottom-0 w-64 z-40 bg-slate-950/90 backdrop-blur-xl border-r border-white/10 shadow-2xl shadow-blue-900/20 font-inter text-xs font-medium uppercase tracking-widest antialiased"
->
-  <div class="flex items-center p-6 border-b border-white/10">
-    <div
-      class="w-10 h-10 rounded bg-blue-600/20 flex items-center justify-center mr-3 border border-blue-500/30"
-    >
-      <span
-        class="material-symbols-outlined text-blue-500"
-        style="font-variation-settings: 'FILL' 1"
-        >security</span
+<nav [class]="navClass">
+  <div class="flex items-center justify-between p-6 border-b border-white/10">
+    <div class="flex items-center">
+      <div
+        class="w-10 h-10 rounded bg-blue-600/20 flex items-center justify-center mr-3 border border-blue-500/30"
       >
+        <span
+          class="material-symbols-outlined text-blue-500"
+          style="font-variation-settings: 'FILL' 1"
+          >security</span
+        >
+      </div>
+      <div>
+        <div class="text-slate-100 font-bold text-sm tracking-widest">COMMAND CENTER</div>
+        <div class="text-slate-500 mt-0.5">Active Ops</div>
+      </div>
     </div>
-    <div>
-      <div class="text-slate-100 font-bold text-sm tracking-widest">COMMAND CENTER</div>
-      <div class="text-slate-500 mt-0.5">Active Ops</div>
-    </div>
+    <button
+      (click)="closeNav.emit()"
+      class="md:hidden text-slate-400 hover:text-slate-100 p-1 rounded-md hover:bg-white/5 transition-colors"
+    >
+      <span class="material-symbols-outlined">close</span>
+    </button>
   </div>
 
   @if (canManageConnections()) {
@@ -33,23 +39,23 @@
     <ul class="space-y-1">
       <li class="group">
         <a
-          routerLink="/vault"
-          routerLinkActive="bg-blue-600/10 text-blue-400 border-r-2 border-blue-500"
-          [routerLinkActiveOptions]="{ exact: false }"
-          class="flex items-center gap-3 text-slate-500 px-4 py-3 hover:bg-white/5 hover:text-slate-200 transition-all"
-        >
-          <span class="material-symbols-outlined">dashboard</span>
-          <span>The Vault</span>
-        </a>
-      </li>
-      <li class="group">
-        <a
           routerLink="/my-access"
           routerLinkActive="bg-blue-600/10 text-blue-400 border-r-2 border-blue-500"
           class="flex items-center gap-3 text-slate-500 px-4 py-3 hover:bg-white/5 hover:text-slate-200 transition-all"
         >
           <span class="material-symbols-outlined">verified_user</span>
           <span>My Access</span>
+        </a>
+      </li>
+      <li class="group">
+        <a
+          routerLink="/vault"
+          routerLinkActive="bg-blue-600/10 text-blue-400 border-r-2 border-blue-500"
+          [routerLinkActiveOptions]="{ exact: false }"
+          class="flex items-center gap-3 text-slate-500 px-4 py-3 hover:bg-white/5 hover:text-slate-200 transition-all"
+        >
+          <span class="material-symbols-outlined">dashboard</span>
+          <span>My Vaults</span>
         </a>
       </li>
       @if (canManageConnections()) {

@@ -1,5 +1,11 @@
-<app-top-nav-bar></app-top-nav-bar>
-<app-side-nav-bar></app-side-nav-bar>
+<app-top-nav-bar (toggleMobileNav)="sidebarVisible = !sidebarVisible"></app-top-nav-bar>
+<app-side-nav-bar
+  [mobileVisible]="sidebarVisible"
+  (closeNav)="sidebarVisible = false"
+></app-side-nav-bar>
+@if (sidebarVisible) {
+  <div class="fixed inset-0 z-30 bg-black/50 md:hidden" (click)="sidebarVisible = false"></div>
+}
 <main class="pt-16 md:pl-64 min-h-screen bg-slate-950">
   <router-outlet></router-outlet>
 </main>

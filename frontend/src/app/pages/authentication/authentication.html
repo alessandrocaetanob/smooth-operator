@@ -12,14 +12,11 @@
   <div class="glass-panel rounded-xl p-margin glow-effect flex flex-col items-center text-center">
     <!-- Logo area -->
     <div class="mb-lg flex flex-col items-center">
-      <div
-        class="w-16 h-16 rounded-full glass-panel flex items-center justify-center mb-md border border-white/20"
-      >
-        <span
-          class="material-symbols-outlined text-h2 text-primary-fixed-dim"
-          style="font-variation-settings: 'FILL' 1"
-          >vpn_key</span
-        >
+      <div class="mb-md">
+        <app-mascot
+          [isPasswordFocused]="isPasswordFocused()"
+          [typingLength]="typingLength()"
+        ></app-mascot>
       </div>
       <h1 class="font-h1 text-h1 text-on-background tracking-tighter">Smooth Operator</h1>
       <p class="font-body-sm text-body-sm text-on-surface-variant mt-sm max-w-[280px]">
@@ -65,6 +62,7 @@
             placeholder="admin@company.com"
             type="email"
             autocomplete="email"
+            (input)="onEmailInput($event)"
           />
         </div>
         <div>
@@ -87,6 +85,8 @@
             placeholder="••••••••"
             type="password"
             autocomplete="current-password"
+            (focus)="onPasswordFocus()"
+            (blur)="onPasswordBlur()"
           />
         </div>
 
