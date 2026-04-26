@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Backend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260426185801_AddSystemSettings")]
+    [Migration("20260426190440_AddSystemSettings")]
     partial class AddSystemSettings
     {
         /// <inheritdoc />
@@ -278,6 +278,23 @@ namespace Backend.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("SmtpSettings");
+                });
+
+            modelBuilder.Entity("Backend.Models.SystemSettings", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("AuditLogRetentionDays")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("SystemSettings");
                 });
 
             modelBuilder.Entity("Backend.Models.User", b =>
