@@ -1,4 +1,9 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Backend.Data;
+using Backend.DTOs;
 using Backend.Models;
 using Backend.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -13,55 +18,116 @@ namespace Backend.Controllers
     public class UserGroupsController : ControllerBase
     {
         private readonly AppDbContext _db;
+        private readonly IAuditService _audit;
 
-        public UserGroupsController(AppDbContext db)
+        public UserGroupsController(AppDbContext db, IAuditService audit)
         {
             _db = db;
+            _audit = audit;
         }
 
         [HttpGet]
-        public async Task<IActionResult> List()
+        public async Task<ActionResult<IEnumerable<UserGroupDto>>> List()
         {
             var groups = await _db.UserGroups
+                .AsNoTracking()
                 .Include(g => g.Members)
                 .OrderBy(g => g.Name)
-                .Select(g => new
+                .Select(g => new UserGroupDto
                 {
-                    g.Id,
-                    g.Name,
-                    g.CreatedAt,
+                    Id = g.Id,
+                    Name = g.Name,
+                    CreatedAt = g.CreatedAt,
                     MemberCount = g.Members.Count,
-                    Members = g.Members.Select(m => new { m.Id, m.Name, m.Email })
+                    Members = g.Members
+                        .OrderBy(m => m.Name)
+                        .Select(m => new UserGroupMemberDto
+                        {
+                            Id = m.Id,
+                            Name = m.Name,
+                            Email = m.Email,
+                            IsActive = m.IsActive
+                        })
+                        .ToList()
                 })
                 .ToListAsync();
 
             return Ok(groups);
         }
 
-        [HttpPost]
-        public async Task<IActionResult> Create([FromBody] CreateGroupRequest req)
+        [HttpGet("{id}")]
+        public async Task<ActionResult<UserGroupDto>> Get(Guid id)
         {
-            if (string.IsNullOrWhiteSpace(req.Name))
-                return BadRequest(new { message = "Group name is required." });
+            var dto = await BuildGroupDtoAsync(id);
+            if (dto == null) return NotFound();
+            return Ok(dto);
+        }
 
-            var group = new UserGroup { Name = req.Name.Trim() };
+        [HttpGet("{id}/vaults")]
+        public async Task<ActionResult<IEnumerable<UserGroupVaultDto>>> ListVaults(Guid id)
+        {
+            var group = await _db.UserGroups
+                .AsNoTracking()
+                .Include(g => g.Vaults)
+                .FirstOrDefaultAsync(g => g.Id == id);
+            if (group is null) return NotFound();
+
+            var vaults = group.Vaults
+                .OrderBy(v => v.Name)
+                .Select(v => new UserGroupVaultDto
+                {
+                    Id = v.Id,
+                    Name = v.Name,
+                    ParentGroupId = v.ParentGroupId
+                })
+                .ToList();
+
+            return Ok(vaults);
+        }
+
+        [HttpPost]
+        public async Task<ActionResult<UserGroupDto>> Create([FromBody] CreateUserGroupRequest req)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var name = req.Name.Trim();
+            if (await NameExistsAsync(name, null))
+            {
+                return Conflict(new { message = $"A group named \"{name}\" already exists." });
+            }
+
+            var group = new UserGroup { Name = name };
             _db.UserGroups.Add(group);
             await _db.SaveChangesAsync();
-            return Ok(new { group.Id, group.Name, group.CreatedAt, MemberCount = 0, Members = Array.Empty<object>() });
+            await _audit.WriteAsync("group.created", "UserGroup", group.Id.ToString(), new { group.Name });
+
+            var dto = await BuildGroupDtoAsync(group.Id);
+            return CreatedAtAction(nameof(Get), new { id = group.Id }, dto);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(Guid id, [FromBody] CreateGroupRequest req)
+        public async Task<ActionResult<UserGroupDto>> Update(Guid id, [FromBody] RenameUserGroupRequest req)
         {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
             var group = await _db.UserGroups.FindAsync(id);
             if (group is null) return NotFound();
 
-            if (string.IsNullOrWhiteSpace(req.Name))
-                return BadRequest(new { message = "Group name is required." });
+            var name = req.Name.Trim();
+            var previousName = group.Name;
+            if (!string.Equals(previousName, name, StringComparison.OrdinalIgnoreCase)
+                && await NameExistsAsync(name, id))
+            {
+                return Conflict(new { message = $"A group named \"{name}\" already exists." });
+            }
 
-            group.Name = req.Name.Trim();
+            group.Name = name;
             await _db.SaveChangesAsync();
-            return Ok(new { group.Id, group.Name, group.CreatedAt });
+            await _audit.WriteAsync("group.renamed", "UserGroup", group.Id.ToString(),
+                new { previousName, newName = group.Name });
+
+            var dto = await BuildGroupDtoAsync(group.Id);
+            return Ok(dto);
         }
 
         [HttpDelete("{id}")]
@@ -69,39 +135,98 @@ namespace Backend.Controllers
         {
             var group = await _db.UserGroups
                 .Include(g => g.Vaults)
+                .Include(g => g.Members)
                 .FirstOrDefaultAsync(g => g.Id == id);
             if (group is null) return NotFound();
 
             if (group.Vaults.Any())
                 return Conflict(new { message = "Cannot delete a group that is assigned to vaults. Remove vault assignments first." });
 
+            var snapshot = new { group.Name, MemberCount = group.Members.Count };
             _db.UserGroups.Remove(group);
             await _db.SaveChangesAsync();
+            await _audit.WriteAsync("group.deleted", "UserGroup", id.ToString(), snapshot);
             return NoContent();
         }
 
         [HttpPut("{id}/members")]
-        public async Task<IActionResult> SetMembers(Guid id, [FromBody] SetMembersRequest req)
+        public async Task<IActionResult> SetMembers(Guid id, [FromBody] SetUserGroupMembersRequest req)
         {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            if (req.UserIds == null) return BadRequest(new { message = "UserIds is required." });
+
             var group = await _db.UserGroups
                 .Include(g => g.Members)
                 .FirstOrDefaultAsync(g => g.Id == id);
-
             if (group is null) return NotFound();
 
+            var requestedIds = req.UserIds.Distinct().ToList();
             var users = await _db.Users
-                .Where(u => req.UserIds.Contains(u.Id))
+                .Where(u => requestedIds.Contains(u.Id))
                 .ToListAsync();
+
+            if (users.Count != requestedIds.Count)
+            {
+                var foundIds = users.Select(u => u.Id).ToHashSet();
+                var missing = requestedIds.Where(uid => !foundIds.Contains(uid)).ToList();
+                return BadRequest(new
+                {
+                    message = "One or more users do not exist.",
+                    missingUserIds = missing
+                });
+            }
+
+            var inactiveIds = users.Where(u => !u.IsActive).Select(u => u.Id).ToList();
+            var previousMemberIds = group.Members.Select(m => m.Id).ToList();
 
             group.Members.Clear();
             foreach (var user in users)
                 group.Members.Add(user);
 
             await _db.SaveChangesAsync();
+            await _audit.WriteAsync("group.members.updated", "UserGroup", id.ToString(),
+                new
+                {
+                    previousMemberIds,
+                    newMemberIds = users.Select(u => u.Id).ToList(),
+                    inactiveAssigned = inactiveIds
+                });
+
             return NoContent();
         }
-    }
 
-    public record CreateGroupRequest(string Name);
-    public record SetMembersRequest(List<Guid> UserIds);
+        private async Task<bool> NameExistsAsync(string name, Guid? excludeId)
+        {
+            var query = _db.UserGroups.AsNoTracking()
+                .Where(g => EF.Functions.ILike(g.Name, name));
+            if (excludeId.HasValue) query = query.Where(g => g.Id != excludeId.Value);
+            return await query.AnyAsync();
+        }
+
+        private async Task<UserGroupDto?> BuildGroupDtoAsync(Guid id)
+        {
+            return await _db.UserGroups
+                .AsNoTracking()
+                .Include(g => g.Members)
+                .Where(g => g.Id == id)
+                .Select(g => new UserGroupDto
+                {
+                    Id = g.Id,
+                    Name = g.Name,
+                    CreatedAt = g.CreatedAt,
+                    MemberCount = g.Members.Count,
+                    Members = g.Members
+                        .OrderBy(m => m.Name)
+                        .Select(m => new UserGroupMemberDto
+                        {
+                            Id = m.Id,
+                            Name = m.Name,
+                            Email = m.Email,
+                            IsActive = m.IsActive
+                        })
+                        .ToList()
+                })
+                .FirstOrDefaultAsync();
+        }
+    }
 }

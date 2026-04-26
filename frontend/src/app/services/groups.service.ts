@@ -6,6 +6,7 @@ export interface UserGroupMember {
   id: string;
   name: string;
   email: string;
+  isActive?: boolean;
 }
 
 export interface UserGroup {

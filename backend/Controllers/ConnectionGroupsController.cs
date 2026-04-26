@@ -62,10 +62,16 @@ namespace Backend.Controllers
                 }
             }
 
+            var name = dto.Name.Trim();
+            if (await VaultNameExistsAsync(name, null))
+            {
+                return Conflict(new { message = $"A vault named \"{name}\" already exists." });
+            }
+
             var vault = new ConnectionGroup
             {
                 Id = Guid.NewGuid(),
-                Name = dto.Name.Trim(),
+                Name = name,
                 ParentGroupId = dto.ParentGroupId
             };
 
@@ -104,7 +110,14 @@ namespace Backend.Controllers
             var vault = await _context.ConnectionGroups.FindAsync(id);
             if (vault == null) return NotFound();
 
-            vault.Name = dto.Name.Trim();
+            var name = dto.Name.Trim();
+            if (!string.Equals(vault.Name, name, StringComparison.OrdinalIgnoreCase)
+                && await VaultNameExistsAsync(name, id))
+            {
+                return Conflict(new { message = $"A vault named \"{name}\" already exists." });
+            }
+
+            vault.Name = name;
             vault.ParentGroupId = dto.ParentGroupId;
 
             await _context.SaveChangesAsync();
@@ -194,6 +207,14 @@ namespace Backend.Controllers
                 new { UserCount = users.Count, GroupCount = groups.Count });
 
             return NoContent();
+        }
+
+        private async Task<bool> VaultNameExistsAsync(string name, Guid? excludeId)
+        {
+            var query = _context.ConnectionGroups.AsNoTracking()
+                .Where(v => EF.Functions.ILike(v.Name, name));
+            if (excludeId.HasValue) query = query.Where(v => v.Id != excludeId.Value);
+            return await query.AnyAsync();
         }
     }
 
