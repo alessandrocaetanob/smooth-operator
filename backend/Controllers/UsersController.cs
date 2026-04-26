@@ -5,6 +5,7 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using Backend.Data;
 using Backend.DTOs;
+using Backend.Models;
 using Backend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -14,9 +15,18 @@ namespace Backend.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
+    [Authorize(Roles = AppRoles.OwnerOrAdmin)]
     public class UsersController : ControllerBase
     {
+        private static readonly IReadOnlyDictionary<string, string> RoleDescriptions =
+            new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                [AppRoles.Owner] = "Root access and bootstrap account owner.",
+                [AppRoles.Admin] = "Can create groups, invite users, vaults and credentials.",
+                [AppRoles.TeamAdmin] = "Can create/manage connections in assigned vaults.",
+                [AppRoles.User] = "Can only use connections in assigned vaults."
+            };
+
         private readonly AppDbContext _context;
         private readonly IAuditService _audit;
 
@@ -31,20 +41,11 @@ namespace Backend.Controllers
         {
             var users = await _context.Users
                 .Include(u => u.Roles)
+                .Include(u => u.ConnectionGroups)
                 .OrderBy(u => u.Email)
                 .ToListAsync();
 
-            return Ok(users.Select(u => new UserListItemDto
-            {
-                Id = u.Id,
-                Email = u.Email,
-                Name = u.Name,
-                IsActive = u.IsActive,
-                LinkedToEntra = !string.IsNullOrEmpty(u.EntraObjectId),
-                HasPassword = !string.IsNullOrEmpty(u.PasswordHash),
-                CreatedAt = u.CreatedAt,
-                Roles = u.Roles.Select(r => r.Name).ToList()
-            }));
+            return Ok(users.Select(Project));
         }
 
         [HttpGet("{id}")]
@@ -52,19 +53,32 @@ namespace Backend.Controllers
         {
             var user = await _context.Users
                 .Include(u => u.Roles)
+                .Include(u => u.ConnectionGroups)
                 .FirstOrDefaultAsync(u => u.Id == id);
             if (user == null) return NotFound();
 
-            return Ok(new UserListItemDto
+            return Ok(Project(user));
+        }
+
+        [HttpGet("roles")]
+        public ActionResult<IEnumerable<RoleCatalogItemDto>> GetRoles()
+            => Ok(AppRoles.Defaults.Select(r => new RoleCatalogItemDto
             {
-                Id = user.Id,
-                Email = user.Email,
-                Name = user.Name,
-                IsActive = user.IsActive,
-                LinkedToEntra = !string.IsNullOrEmpty(user.EntraObjectId),
-                HasPassword = !string.IsNullOrEmpty(user.PasswordHash),
-                CreatedAt = user.CreatedAt,
-                Roles = user.Roles.Select(r => r.Name).ToList()
+                Name = r,
+                Description = RoleDescriptions[r]
+            }));
+
+        [HttpGet("{id}/vaults")]
+        public async Task<ActionResult<object>> GetVaultAssignments(Guid id)
+        {
+            var user = await _context.Users
+                .Include(u => u.ConnectionGroups)
+                .FirstOrDefaultAsync(u => u.Id == id);
+            if (user == null) return NotFound();
+
+            return Ok(new
+            {
+                VaultIds = user.ConnectionGroups.Select(g => g.Id).OrderBy(v => v).ToList()
             });
         }
 
@@ -82,6 +96,89 @@ namespace Backend.Controllers
             return NoContent();
         }
 
+        [HttpPut("{id}/role")]
+        public async Task<IActionResult> SetRole(Guid id, [FromBody] SetUserRoleRequest dto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            if (!AppRoles.IsKnown(dto.Role))
+            {
+                return BadRequest(new { message = $"Unsupported role. Allowed values: {string.Join(", ", AppRoles.Defaults)}." });
+            }
+
+            var normalizedRole = AppRoles.Normalize(dto.Role);
+
+            var user = await _context.Users
+                .Include(u => u.Roles)
+                .FirstOrDefaultAsync(u => u.Id == id);
+            if (user == null) return NotFound();
+
+            var wasOwner = user.Roles.Any(r => r.Name == AppRoles.Owner);
+            var becomesOwner = string.Equals(normalizedRole, AppRoles.Owner, StringComparison.OrdinalIgnoreCase);
+            if (wasOwner && !becomesOwner && user.IsActive)
+            {
+                var otherActiveOwners = await _context.Users
+                    .Include(u => u.Roles)
+                    .CountAsync(u => u.Id != id && u.IsActive && u.Roles.Any(r => r.Name == AppRoles.Owner));
+                if (otherActiveOwners == 0)
+                {
+                    return Conflict(new { message = "Cannot remove the Owner role from the last active Owner." });
+                }
+            }
+
+            var role = await _context.Roles.FirstOrDefaultAsync(r => r.Name == normalizedRole);
+            if (role == null)
+            {
+                role = new Role
+                {
+                    Id = Guid.NewGuid(),
+                    Name = normalizedRole,
+                    Description = RoleDescriptions[normalizedRole]
+                };
+                _context.Roles.Add(role);
+            }
+
+            user.Roles.Clear();
+            user.Roles.Add(role);
+
+            await _context.SaveChangesAsync();
+            await _audit.WriteAsync("user.role_changed", "User", user.Id.ToString(), new { role = normalizedRole });
+            return NoContent();
+        }
+
+        [HttpPut("{id}/vaults")]
+        public async Task<IActionResult> SetVaultAssignments(Guid id, [FromBody] SetUserVaultAssignmentsRequest dto)
+        {
+            var user = await _context.Users
+                .Include(u => u.ConnectionGroups)
+                .FirstOrDefaultAsync(u => u.Id == id);
+            if (user == null) return NotFound();
+
+            var requestedIds = (dto.VaultIds ?? new List<Guid>())
+                .Where(v => v != Guid.Empty)
+                .Distinct()
+                .ToList();
+
+            var groups = await _context.ConnectionGroups
+                .Where(g => requestedIds.Contains(g.Id))
+                .ToListAsync();
+
+            if (groups.Count != requestedIds.Count)
+            {
+                return BadRequest(new { message = "One or more vault IDs are invalid." });
+            }
+
+            user.ConnectionGroups.Clear();
+            foreach (var group in groups)
+            {
+                user.ConnectionGroups.Add(group);
+            }
+
+            await _context.SaveChangesAsync();
+            await _audit.WriteAsync("user.vaults_updated", "User", user.Id.ToString(),
+                new { vaultIds = requestedIds });
+            return NoContent();
+        }
+
         [HttpPatch("{id}/active")]
         public async Task<IActionResult> SetActive(Guid id, [FromBody] SetUserActiveRequest dto)
         {
@@ -93,11 +190,11 @@ namespace Backend.Controllers
             {
                 var ownerCount = await _context.Users
                     .Include(u => u.Roles)
-                    .Where(u => u.IsActive && u.Roles.Any(r => r.Name == "Owner") && u.Id != id)
+                    .Where(u => u.IsActive && u.Roles.Any(r => r.Name == AppRoles.Owner) && u.Id != id)
                     .CountAsync();
                 var targetIsOwner = await _context.Users
                     .Include(u => u.Roles)
-                    .AnyAsync(u => u.Id == id && u.Roles.Any(r => r.Name == "Owner"));
+                    .AnyAsync(u => u.Id == id && u.Roles.Any(r => r.Name == AppRoles.Owner));
                 if (targetIsOwner && ownerCount == 0)
                 {
                     return Conflict(new { message = "Cannot disable the last active Owner." });
@@ -128,11 +225,11 @@ namespace Backend.Controllers
             if (user == null) return NotFound();
 
             // Don't allow deleting the last Owner.
-            if (user.Roles.Any(r => r.Name == "Owner"))
+            if (user.Roles.Any(r => r.Name == AppRoles.Owner))
             {
                 var otherOwners = await _context.Users
                     .Include(u => u.Roles)
-                    .CountAsync(u => u.Id != id && u.Roles.Any(r => r.Name == "Owner"));
+                    .CountAsync(u => u.Id != id && u.Roles.Any(r => r.Name == AppRoles.Owner));
                 if (otherOwners == 0)
                 {
                     return Conflict(new { message = "Cannot delete the last Owner." });
@@ -144,5 +241,18 @@ namespace Backend.Controllers
             await _audit.WriteAsync("user.deleted", "User", id.ToString(), new { user.Email });
             return NoContent();
         }
+
+        private static UserListItemDto Project(User user) => new()
+        {
+            Id = user.Id,
+            Email = user.Email,
+            Name = user.Name,
+            IsActive = user.IsActive,
+            LinkedToEntra = !string.IsNullOrEmpty(user.EntraObjectId),
+            HasPassword = !string.IsNullOrEmpty(user.PasswordHash),
+            CreatedAt = user.CreatedAt,
+            Roles = user.Roles.Select(r => r.Name).OrderBy(r => r).ToList(),
+            VaultIds = user.ConnectionGroups.Select(g => g.Id).OrderBy(v => v).ToList()
+        };
     }
 }

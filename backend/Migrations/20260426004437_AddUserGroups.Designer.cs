@@ -3,6 +3,7 @@ using System;
 using Backend.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Backend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260426004437_AddUserGroups")]
+    partial class AddUserGroups
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -347,21 +350,6 @@ namespace Backend.Migrations
                     b.ToTable("ConnectionGroupUser");
                 });
 
-            modelBuilder.Entity("ConnectionGroupUserGroup", b =>
-                {
-                    b.Property<Guid>("GroupsId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("VaultsId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("GroupsId", "VaultsId");
-
-                    b.HasIndex("VaultsId");
-
-                    b.ToTable("ConnectionGroupUserGroup");
-                });
-
             modelBuilder.Entity("ConnectionUser", b =>
                 {
                     b.Property<Guid>("ConnectionsId")
@@ -486,21 +474,6 @@ namespace Backend.Migrations
                     b.HasOne("Backend.Models.User", null)
                         .WithMany()
                         .HasForeignKey("UsersId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("ConnectionGroupUserGroup", b =>
-                {
-                    b.HasOne("Backend.Models.UserGroup", null)
-                        .WithMany()
-                        .HasForeignKey("GroupsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Backend.Models.ConnectionGroup", null)
-                        .WithMany()
-                        .HasForeignKey("VaultsId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

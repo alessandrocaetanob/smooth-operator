@@ -1,6 +1,7 @@
 import { Component, OnInit, computed, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { ConnectionsService } from '../../services/connections.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-vault',
@@ -11,10 +12,12 @@ import { ConnectionsService } from '../../services/connections.service';
 export class Vault implements OnInit {
   private readonly connections = inject(ConnectionsService);
   private readonly router = inject(Router);
+  private readonly auth = inject(AuthService);
 
   readonly list = this.connections.list;
   readonly loading = this.connections.loading;
   readonly hasConnections = computed(() => this.list().length > 0);
+  readonly canManageConnections = this.auth.canManageConnections;
 
   ngOnInit(): void {
     this.connections.reload().subscribe({ error: () => {} });

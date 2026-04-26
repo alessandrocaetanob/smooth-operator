@@ -1,7 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
-import { ConnectionsService } from '../../services/connections.service';
 
 @Component({
   selector: 'app-side-nav-bar',
@@ -13,9 +12,15 @@ import { ConnectionsService } from '../../services/connections.service';
 export class SideNavBar {
   private readonly router = inject(Router);
   private readonly auth = inject(AuthService);
-  private readonly connectionsSvc = inject(ConnectionsService);
+  readonly canManageConnections = this.auth.canManageConnections;
+  readonly canViewCredentials = this.auth.canViewCredentials;
+  readonly canAccessSettings = this.auth.canAccessSettings;
 
   newConnection(): void {
+    if (!this.canManageConnections()) {
+      this.router.navigate(['/vault']);
+      return;
+    }
     this.router.navigate(['/connections']);
   }
 

@@ -1,0 +1,61 @@
+import { HttpClient } from '@angular/common/http';
+import { Injectable, inject, signal } from '@angular/core';
+import { Observable, tap } from 'rxjs';
+import { pick, pickOr } from './json-utils';
+
+export interface Vault {
+  id: string;
+  name: string;
+  parentGroupId?: string | null;
+}
+
+export interface SaveVaultPayload {
+  name: string;
+  parentGroupId?: string | null;
+}
+
+export interface VaultAssignments {
+  userIds: string[];
+  groupIds: string[];
+}
+
+@Injectable({ providedIn: 'root' })
+export class VaultsService {
+  private readonly http = inject(HttpClient);
+  private readonly _list = signal<Vault[]>([]);
+  readonly list = this._list.asReadonly();
+
+  reload(): Observable<Vault[]> {
+    return this.http.get<any[]>('/api/vaults').pipe(
+      tap((rows) => this._list.set((rows ?? []).map((r) => this.normalize(r)))),
+    ) as unknown as Observable<Vault[]>;
+  }
+
+  create(payload: SaveVaultPayload): Observable<Vault> {
+    return this.http.post<any>('/api/vaults', payload);
+  }
+
+  update(id: string, payload: SaveVaultPayload): Observable<void> {
+    return this.http.put<void>(`/api/vaults/${id}`, payload);
+  }
+
+  remove(id: string): Observable<void> {
+    return this.http.delete<void>(`/api/vaults/${id}`);
+  }
+
+  getAssignments(id: string): Observable<VaultAssignments> {
+    return this.http.get<VaultAssignments>(`/api/vaults/${id}/assignments`);
+  }
+
+  setAssignments(id: string, payload: VaultAssignments): Observable<void> {
+    return this.http.put<void>(`/api/vaults/${id}/assignments`, payload);
+  }
+
+  private normalize(raw: any): Vault {
+    return {
+      id: pickOr(raw, '', 'id', 'Id'),
+      name: pickOr(raw, '', 'name', 'Name'),
+      parentGroupId: pick<string>(raw, 'parentGroupId', 'ParentGroupId') ?? null,
+    };
+  }
+}

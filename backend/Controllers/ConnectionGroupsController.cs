@@ -1,0 +1,205 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Backend.Data;
+using Backend.DTOs;
+using Backend.Models;
+using Backend.Services;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+
+namespace Backend.Controllers
+{
+    [ApiController]
+    [Route("api/vaults")]
+    [Authorize]
+    public class ConnectionGroupsController : ControllerBase
+    {
+        private readonly AppDbContext _context;
+        private readonly IAccessControlService _access;
+        private readonly IAuditService _audit;
+
+        public ConnectionGroupsController(AppDbContext context, IAccessControlService access, IAuditService audit)
+        {
+            _context = context;
+            _access = access;
+            _audit = audit;
+        }
+
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<ConnectionGroupDto>>> GetVaults()
+        {
+            var profile = await _access.GetCurrentProfileAsync(User);
+            if (profile == null) return Unauthorized();
+
+            var vaults = await _access.ApplyVaultScope(_context.ConnectionGroups.AsNoTracking(), profile)
+                .OrderBy(v => v.Name)
+                .Select(v => new ConnectionGroupDto
+                {
+                    Id = v.Id,
+                    Name = v.Name,
+                    ParentGroupId = v.ParentGroupId
+                })
+                .ToListAsync();
+
+            return Ok(vaults);
+        }
+
+        [HttpPost]
+        [Authorize(Roles = AppRoles.OwnerOrAdmin)]
+        public async Task<ActionResult<ConnectionGroupDto>> CreateVault([FromBody] CreateConnectionGroupDto dto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            if (dto.ParentGroupId.HasValue)
+            {
+                var parentExists = await _context.ConnectionGroups.AnyAsync(g => g.Id == dto.ParentGroupId.Value);
+                if (!parentExists)
+                {
+                    return BadRequest(new { message = "Parent vault does not exist." });
+                }
+            }
+
+            var vault = new ConnectionGroup
+            {
+                Id = Guid.NewGuid(),
+                Name = dto.Name.Trim(),
+                ParentGroupId = dto.ParentGroupId
+            };
+
+            _context.ConnectionGroups.Add(vault);
+            await _context.SaveChangesAsync();
+            await _audit.WriteAsync("vault.created", "ConnectionGroup", vault.Id.ToString(),
+                new { vault.Name, vault.ParentGroupId });
+
+            return CreatedAtAction(nameof(GetVaults), new { id = vault.Id }, new ConnectionGroupDto
+            {
+                Id = vault.Id,
+                Name = vault.Name,
+                ParentGroupId = vault.ParentGroupId
+            });
+        }
+
+        [HttpPut("{id}")]
+        [Authorize(Roles = AppRoles.OwnerOrAdmin)]
+        public async Task<IActionResult> UpdateVault(Guid id, [FromBody] CreateConnectionGroupDto dto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            if (dto.ParentGroupId == id)
+            {
+                return BadRequest(new { message = "A vault cannot be its own parent." });
+            }
+
+            if (dto.ParentGroupId.HasValue)
+            {
+                var parentExists = await _context.ConnectionGroups.AnyAsync(g => g.Id == dto.ParentGroupId.Value);
+                if (!parentExists)
+                {
+                    return BadRequest(new { message = "Parent vault does not exist." });
+                }
+            }
+
+            var vault = await _context.ConnectionGroups.FindAsync(id);
+            if (vault == null) return NotFound();
+
+            vault.Name = dto.Name.Trim();
+            vault.ParentGroupId = dto.ParentGroupId;
+
+            await _context.SaveChangesAsync();
+            await _audit.WriteAsync("vault.updated", "ConnectionGroup", id.ToString(),
+                new { vault.Name, vault.ParentGroupId });
+            return NoContent();
+        }
+
+        [HttpDelete("{id}")]
+        [Authorize(Roles = AppRoles.OwnerOrAdmin)]
+        public async Task<IActionResult> DeleteVault(Guid id)
+        {
+            var vault = await _context.ConnectionGroups
+                .Include(v => v.Connections)
+                .Include(v => v.Users)
+                .Include(v => v.Groups)
+                .FirstOrDefaultAsync(v => v.Id == id);
+            if (vault == null) return NotFound();
+
+            if (vault.Connections.Any())
+            {
+                return Conflict(new { message = "Cannot delete a vault that still has connections." });
+            }
+
+            if (vault.Users.Any())
+            {
+                return Conflict(new { message = "Cannot delete a vault that is assigned to users." });
+            }
+
+            if (vault.Groups.Any())
+            {
+                return Conflict(new { message = "Cannot delete a vault that is assigned to groups." });
+            }
+
+            _context.ConnectionGroups.Remove(vault);
+            await _context.SaveChangesAsync();
+            await _audit.WriteAsync("vault.deleted", "ConnectionGroup", id.ToString(), new { vault.Name });
+            return NoContent();
+        }
+
+        [HttpGet("{id}/assignments")]
+        [Authorize(Roles = AppRoles.OwnerOrAdmin)]
+        public async Task<ActionResult<VaultAssignmentsDto>> GetAssignments(Guid id)
+        {
+            var vault = await _context.ConnectionGroups
+                .AsNoTracking()
+                .Include(v => v.Users)
+                .Include(v => v.Groups)
+                .FirstOrDefaultAsync(v => v.Id == id);
+
+            if (vault == null) return NotFound();
+
+            return Ok(new VaultAssignmentsDto
+            {
+                UserIds = vault.Users.Select(u => u.Id).ToList(),
+                GroupIds = vault.Groups.Select(g => g.Id).ToList()
+            });
+        }
+
+        [HttpPut("{id}/assignments")]
+        [Authorize(Roles = AppRoles.OwnerOrAdmin)]
+        public async Task<IActionResult> SetAssignments(Guid id, [FromBody] VaultAssignmentsDto dto)
+        {
+            var vault = await _context.ConnectionGroups
+                .Include(v => v.Users)
+                .Include(v => v.Groups)
+                .FirstOrDefaultAsync(v => v.Id == id);
+
+            if (vault == null) return NotFound();
+
+            var users = await _context.Users
+                .Where(u => dto.UserIds.Contains(u.Id))
+                .ToListAsync();
+
+            var groups = await _context.UserGroups
+                .Where(g => dto.GroupIds.Contains(g.Id))
+                .ToListAsync();
+
+            vault.Users.Clear();
+            foreach (var u in users) vault.Users.Add(u);
+
+            vault.Groups.Clear();
+            foreach (var g in groups) vault.Groups.Add(g);
+
+            await _context.SaveChangesAsync();
+            await _audit.WriteAsync("vault.assignments.updated", "ConnectionGroup", id.ToString(),
+                new { UserCount = users.Count, GroupCount = groups.Count });
+
+            return NoContent();
+        }
+    }
+
+    public class VaultAssignmentsDto
+    {
+        public List<Guid> UserIds { get; set; } = new();
+        public List<Guid> GroupIds { get; set; } = new();
+    }
+}

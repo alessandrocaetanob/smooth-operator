@@ -96,17 +96,9 @@ namespace Backend.Controllers
             };
 
             // Ensure an Owner role exists and link it to the bootstrap user.
-            var ownerRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "Owner");
-            if (ownerRole == null)
-            {
-                ownerRole = new Role
-                {
-                    Id = Guid.NewGuid(),
-                    Name = "Owner",
-                    Description = "Full administrative control over the application."
-                };
-                _context.Roles.Add(ownerRole);
-            }
+            var ownerRole = await RequireRoleAsync(
+                AppRoles.Owner,
+                "Root access. First account created during setup.");
             user.Roles.Add(ownerRole);
 
             _context.Users.Add(user);
@@ -129,7 +121,7 @@ namespace Backend.Controllers
         // application is the source of truth for users and additional accounts
         // are created via invite or by an existing administrator.
         [HttpPost("register")]
-        [Authorize]
+        [Authorize(Roles = AppRoles.OwnerOrAdmin)]
         public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -141,6 +133,10 @@ namespace Backend.Controllers
                 return Conflict(new { message = "A user with this email already exists." });
             }
 
+            var defaultUserRole = await RequireRoleAsync(
+                AppRoles.User,
+                "Can use connections in assigned vaults.");
+
             var user = new User
             {
                 Id = Guid.NewGuid(),
@@ -150,6 +146,7 @@ namespace Backend.Controllers
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow
             };
+            user.Roles.Add(defaultUserRole);
 
             _context.Users.Add(user);
             _context.AuditLogs.Add(new AuditLog
@@ -175,7 +172,9 @@ namespace Backend.Controllers
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
             var email = request.Email.Trim().ToLowerInvariant();
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            var user = await _context.Users
+                .Include(u => u.Roles)
+                .FirstOrDefaultAsync(u => u.Email == email);
 
             const string invalid = "Invalid email or password.";
 
@@ -243,11 +242,17 @@ namespace Backend.Controllers
 
             email = email.Trim().ToLowerInvariant();
 
-            var user = await _context.Users.FirstOrDefaultAsync(u =>
+            var user = await _context.Users
+                .Include(u => u.Roles)
+                .FirstOrDefaultAsync(u =>
                 (objectId != null && u.EntraObjectId == objectId) || u.Email == email);
 
             if (user == null)
             {
+                var defaultUserRole = await RequireRoleAsync(
+                    AppRoles.User,
+                    "Can use connections in assigned vaults.");
+
                 user = new User
                 {
                     Id = Guid.NewGuid(),
@@ -257,6 +262,7 @@ namespace Backend.Controllers
                     IsActive = true,
                     CreatedAt = DateTime.UtcNow
                 };
+                user.Roles.Add(defaultUserRole);
                 _context.Users.Add(user);
                 _context.AuditLogs.Add(new AuditLog
                 {
@@ -280,6 +286,15 @@ namespace Backend.Controllers
                 await _context.SaveChangesAsync();
             }
 
+            if (user.Roles.Count == 0)
+            {
+                var defaultUserRole = await RequireRoleAsync(
+                    AppRoles.User,
+                    "Can use connections in assigned vaults.");
+                user.Roles.Add(defaultUserRole);
+                await _context.SaveChangesAsync();
+            }
+
             if (!user.IsActive)
             {
                 return StatusCode(403, new { message = "User account is disabled." });
@@ -298,7 +313,9 @@ namespace Backend.Controllers
                 return Unauthorized();
             }
 
-            var user = await _context.Users.FindAsync(userId);
+            var user = await _context.Users
+                .Include(u => u.Roles)
+                .FirstOrDefaultAsync(u => u.Id == userId);
             if (user == null) return NotFound();
 
             return Ok(new UserInfo
@@ -307,12 +324,17 @@ namespace Backend.Controllers
                 Email = user.Email,
                 Name = user.Name,
                 HasPassword = !string.IsNullOrEmpty(user.PasswordHash),
-                LinkedToEntra = !string.IsNullOrEmpty(user.EntraObjectId)
+                LinkedToEntra = !string.IsNullOrEmpty(user.EntraObjectId),
+                Roles = user.Roles
+                    .Select(r => r.Name)
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .OrderBy(r => r)
+                    .ToList()
             });
         }
 
         [HttpPost("invite")]
-        [Authorize] // In a real scenario, check if the current user is an Admin
+        [Authorize(Roles = AppRoles.OwnerOrAdmin)]
         public async Task<IActionResult> InviteUser([FromBody] InviteUserRequest request)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -323,6 +345,10 @@ namespace Backend.Controllers
                 return Conflict("User already exists.");
             }
 
+            var defaultUserRole = await RequireRoleAsync(
+                AppRoles.User,
+                "Can use connections in assigned vaults.");
+
             var user = new User
             {
                 Id = Guid.NewGuid(),
@@ -330,6 +356,7 @@ namespace Backend.Controllers
                 Name = request.Email,
                 IsActive = false
             };
+            user.Roles.Add(defaultUserRole);
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
@@ -400,9 +427,32 @@ namespace Backend.Controllers
                 Email = user.Email,
                 Name = user.Name,
                 HasPassword = !string.IsNullOrEmpty(user.PasswordHash),
-                LinkedToEntra = !string.IsNullOrEmpty(user.EntraObjectId)
+                LinkedToEntra = !string.IsNullOrEmpty(user.EntraObjectId),
+                Roles = user.Roles
+                    .Select(r => r.Name)
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .OrderBy(r => r)
+                    .ToList()
             }
         };
+
+        private async Task<Role> RequireRoleAsync(string roleName, string description)
+        {
+            var role = await _context.Roles.FirstOrDefaultAsync(r => r.Name == roleName);
+            if (role != null)
+            {
+                return role;
+            }
+
+            role = new Role
+            {
+                Id = Guid.NewGuid(),
+                Name = roleName,
+                Description = description
+            };
+            _context.Roles.Add(role);
+            return role;
+        }
     }
 
     public class InviteUserRequest

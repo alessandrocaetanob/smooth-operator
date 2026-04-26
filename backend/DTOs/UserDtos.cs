@@ -14,6 +14,7 @@ namespace Backend.DTOs
         public bool HasPassword { get; set; }
         public DateTime CreatedAt { get; set; }
         public List<string> Roles { get; set; } = new();
+        public List<Guid> VaultIds { get; set; } = new();
     }
 
     public class UpdateUserRequest
@@ -26,5 +27,23 @@ namespace Backend.DTOs
     public class SetUserActiveRequest
     {
         public bool IsActive { get; set; }
+    }
+
+    public class RoleCatalogItemDto
+    {
+        public string Name { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+    }
+
+    public class SetUserRoleRequest
+    {
+        [Required]
+        [StringLength(64, MinimumLength = 1)]
+        public string Role { get; set; } = string.Empty;
+    }
+
+    public class SetUserVaultAssignmentsRequest
+    {
+        public List<Guid> VaultIds { get; set; } = new();
     }
 }

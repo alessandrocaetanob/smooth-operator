@@ -13,7 +13,7 @@ namespace Backend.Controllers
 {
     [ApiController]
     [Route("api/settings/smtp")]
-    [Authorize]
+    [Authorize(Roles = AppRoles.OwnerOrAdmin)]
     public class SmtpSettingsController : ControllerBase
     {
         private static readonly Guid SingletonId = new("11111111-1111-1111-1111-111111111111");

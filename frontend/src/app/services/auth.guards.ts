@@ -8,7 +8,9 @@ export const rootRedirectGuard: CanActivateFn = (): UrlTree => {
   const auth = inject(AuthService);
   const router = inject(Router);
   if (auth.requiresSetup()) return router.parseUrl('/first-access');
-  if (auth.isAuthenticated()) return router.parseUrl('/administration');
+  if (auth.isAuthenticated()) {
+    return auth.canAccessSettings() ? router.parseUrl('/administration') : router.parseUrl('/vault');
+  }
   return router.parseUrl('/login');
 };
 
@@ -37,3 +39,15 @@ export const authGuard: CanActivateFn = (): boolean | UrlTree => {
   if (!auth.isAuthenticated()) return router.parseUrl('/login');
   return true;
 };
+
+const roleGuard = (...roles: string[]): CanActivateFn => (): boolean | UrlTree => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  if (auth.requiresSetup()) return router.parseUrl('/first-access');
+  if (!auth.isAuthenticated()) return router.parseUrl('/login');
+  if (!auth.hasAnyRole(...roles)) return router.parseUrl('/vault');
+  return true;
+};
+
+export const ownerAdminGuard = roleGuard('Owner', 'Admin');
+export const connectionManagerGuard = roleGuard('Owner', 'Admin', 'TeamAdmin');

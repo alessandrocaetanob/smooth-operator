@@ -1,7 +1,9 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { AppUser, InviteResult, UsersService } from '../../services/users.service';
+import { forkJoin } from 'rxjs';
+import { AppRole, AppUser, InviteResult, UsersService } from '../../services/users.service';
 import { AuthService } from '../../services/auth.service';
+import { VaultsService } from '../../services/vaults.service';
 
 @Component({
   selector: 'app-administration',
@@ -12,11 +14,16 @@ import { AuthService } from '../../services/auth.service';
 export class Administration implements OnInit {
   private readonly usersSvc = inject(UsersService);
   private readonly auth = inject(AuthService);
+  private readonly vaultsSvc = inject(VaultsService);
 
   readonly users = this.usersSvc.list;
+  readonly vaults = this.vaultsSvc.list;
   readonly currentUser = this.auth.currentUser;
   readonly loading = signal(false);
   readonly errorMessage = signal<string | null>(null);
+
+  readonly roles = signal<AppRole[]>([]);
+  readonly roleBusyUserId = signal<string | null>(null);
 
   readonly showInvite = signal(false);
   readonly inviteName = signal('');
@@ -26,6 +33,10 @@ export class Administration implements OnInit {
   readonly inviteResult = signal<InviteResult | null>(null);
   readonly copyState = signal<'idle' | 'copied' | 'failed'>('idle');
 
+  readonly vaultModalUser = signal<AppUser | null>(null);
+  readonly selectedVaultIds = signal<string[]>([]);
+  readonly vaultAssignmentBusy = signal(false);
+
   ngOnInit(): void {
     this.refresh();
   }
@@ -33,8 +44,15 @@ export class Administration implements OnInit {
   refresh(): void {
     this.loading.set(true);
     this.errorMessage.set(null);
-    this.usersSvc.reload().subscribe({
-      next: () => this.loading.set(false),
+    forkJoin({
+      users: this.usersSvc.reload(),
+      roles: this.usersSvc.roleCatalog(),
+      vaults: this.vaultsSvc.reload(),
+    }).subscribe({
+      next: ({ roles }) => {
+        this.roles.set(roles);
+        this.loading.set(false);
+      },
       error: (err) => {
         this.loading.set(false);
         this.errorMessage.set(this.toMessage(err) || 'Failed to load users.');
@@ -77,6 +95,73 @@ export class Administration implements OnInit {
     });
   }
 
+  changeRole(user: AppUser, role: string): void {
+    if (!role || this.roleBusyUserId() === user.id) return;
+
+    this.roleBusyUserId.set(user.id);
+    this.errorMessage.set(null);
+    this.usersSvc.setRole(user.id, role).subscribe({
+      next: () => {
+        this.roleBusyUserId.set(null);
+        this.refresh();
+      },
+      error: (err) => {
+        this.roleBusyUserId.set(null);
+        this.errorMessage.set(this.toMessage(err) || 'Failed to update role.');
+      },
+    });
+  }
+
+  openVaultAssignments(user: AppUser): void {
+    this.vaultModalUser.set(user);
+    this.selectedVaultIds.set([...(user.vaultIds ?? [])]);
+  }
+
+  closeVaultAssignments(): void {
+    this.vaultModalUser.set(null);
+    this.selectedVaultIds.set([]);
+    this.vaultAssignmentBusy.set(false);
+  }
+
+  toggleVaultSelection(vaultId: string, checked: boolean): void {
+    const current = new Set(this.selectedVaultIds());
+    if (checked) current.add(vaultId);
+    else current.delete(vaultId);
+    this.selectedVaultIds.set(Array.from(current));
+  }
+
+  saveVaultAssignments(): void {
+    const user = this.vaultModalUser();
+    if (!user || this.vaultAssignmentBusy()) return;
+
+    this.vaultAssignmentBusy.set(true);
+    this.errorMessage.set(null);
+    this.usersSvc.setVaultAssignments(user.id, this.selectedVaultIds()).subscribe({
+      next: () => {
+        this.vaultAssignmentBusy.set(false);
+        this.closeVaultAssignments();
+        this.refresh();
+      },
+      error: (err) => {
+        this.vaultAssignmentBusy.set(false);
+        this.errorMessage.set(this.toMessage(err) || 'Failed to update vault assignments.');
+      },
+    });
+  }
+
+  canAssignVaults(user: AppUser): boolean {
+    const role = this.primaryRole(user);
+    return role === 'TeamAdmin' || role === 'User';
+  }
+
+  primaryRole(user: AppUser): string {
+    return user.roles[0] || 'User';
+  }
+
+  isVaultSelected(vaultId: string): boolean {
+    return this.selectedVaultIds().includes(vaultId);
+  }
+
   copyInviteUrl(): void {
     const url = this.inviteResult()?.inviteUrl;
     if (!url) return;
@@ -117,6 +202,14 @@ export class Administration implements OnInit {
 
   trackById(_: number, u: AppUser): string {
     return u.id;
+  }
+
+  trackRole(_: number, role: AppRole): string {
+    return role.name;
+  }
+
+  trackVault(_: number, v: { id: string }): string {
+    return v.id;
   }
 
   private toMessage(err: any): string | null {

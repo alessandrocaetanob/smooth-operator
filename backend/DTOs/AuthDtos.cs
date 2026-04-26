@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel.DataAnnotations;
+using System.Collections.Generic;
 
 namespace Backend.DTOs
 {
@@ -45,5 +46,6 @@ namespace Backend.DTOs
         public string Name { get; set; } = string.Empty;
         public bool HasPassword { get; set; }
         public bool LinkedToEntra { get; set; }
+        public List<string> Roles { get; set; } = new();
     }
 }

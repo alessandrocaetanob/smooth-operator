@@ -14,7 +14,7 @@ namespace Backend.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
+    [Authorize(Roles = AppRoles.OwnerAdminOrTeamAdmin)]
     public class HostsController : ControllerBase
     {
         private readonly AppDbContext _context;

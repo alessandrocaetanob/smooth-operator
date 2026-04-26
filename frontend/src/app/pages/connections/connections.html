@@ -66,6 +66,18 @@
           }
         </select>
         <select
+          [ngModel]="form().connectionGroupId"
+          (ngModelChange)="patch('connectionGroupId', $event)"
+          name="connectionGroupId"
+          required
+          class="bg-slate-900 border border-white/10 focus:border-blue-500 text-sm text-slate-200 rounded px-3 py-2 outline-none"
+        >
+          <option value="" disabled>Select vault…</option>
+          @for (v of vaults(); track trackVault($index, v)) {
+            <option [value]="v.id">{{ v.name }}</option>
+          }
+        </select>
+        <select
           [ngModel]="form().credentialId"
           (ngModelChange)="patch('credentialId', $event)"
           name="credentialId"
@@ -109,10 +121,11 @@
       <thead class="bg-white/5 text-[11px] uppercase tracking-widest text-slate-400">
         <tr>
           <th class="text-left px-4 py-3 font-medium">Name</th>
-          <th class="text-left px-4 py-3 font-medium">Protocol</th>
-          <th class="text-left px-4 py-3 font-medium">Host</th>
-          <th class="text-left px-4 py-3 font-medium">Credential</th>
-          <th class="text-right px-4 py-3 font-medium">Actions</th>
+            <th class="text-left px-4 py-3 font-medium">Protocol</th>
+            <th class="text-left px-4 py-3 font-medium">Vault</th>
+            <th class="text-left px-4 py-3 font-medium">Host</th>
+            <th class="text-left px-4 py-3 font-medium">Credential</th>
+            <th class="text-right px-4 py-3 font-medium">Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -120,6 +133,7 @@
           <tr class="border-t border-white/5 hover:bg-white/5">
             <td class="px-4 py-3 text-slate-100">{{ c.name }}</td>
             <td class="px-4 py-3 text-slate-300 uppercase">{{ c.protocol }}</td>
+            <td class="px-4 py-3 text-slate-300">{{ vaultName(c.connectionGroupId) }}</td>
             <td class="px-4 py-3 text-slate-300">
               {{ c.host?.name || hostName(c.hostId) }}
               @if (c.host?.address) {
@@ -146,7 +160,7 @@
           </tr>
         } @empty {
           <tr>
-            <td colspan="5" class="px-4 py-8 text-center text-slate-500">
+            <td colspan="6" class="px-4 py-8 text-center text-slate-500">
               {{ loading() ? 'Loading…' : 'No connections defined yet.' }}
             </td>
           </tr>

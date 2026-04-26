@@ -53,14 +53,16 @@
             <div class="text-sm font-semibold text-slate-100">{{ user()?.name }}</div>
             <div class="text-xs text-slate-400 truncate">{{ user()?.email }}</div>
           </div>
-          <a
-            (click)="closeMenu()"
-            routerLink="/settings"
-            class="flex items-center gap-2 px-4 py-2 text-sm text-slate-200 hover:bg-white/5 cursor-pointer"
-          >
-            <span class="material-symbols-outlined text-base">settings</span>
-            Settings
-          </a>
+          @if (canAccessSettings()) {
+            <a
+              (click)="closeMenu()"
+              routerLink="/settings"
+              class="flex items-center gap-2 px-4 py-2 text-sm text-slate-200 hover:bg-white/5 cursor-pointer"
+            >
+              <span class="material-symbols-outlined text-base">settings</span>
+              Settings
+            </a>
+          }
           <button
             (click)="logout()"
             class="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-300 hover:bg-red-500/10 cursor-pointer text-left"

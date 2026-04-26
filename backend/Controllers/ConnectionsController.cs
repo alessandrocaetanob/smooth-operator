@@ -19,11 +19,13 @@ namespace Backend.Controllers
     {
         private readonly AppDbContext _context;
         private readonly IAuditService _audit;
+        private readonly IAccessControlService _access;
 
-        public ConnectionsController(AppDbContext context, IAuditService audit)
+        public ConnectionsController(AppDbContext context, IAuditService audit, IAccessControlService access)
         {
             _context = context;
             _audit = audit;
+            _access = access;
         }
 
         private static ConnectionDto Project(Connection c) => new()
@@ -51,9 +53,17 @@ namespace Backend.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ConnectionDto>>> GetConnections()
         {
-            var connections = await _context.Connections
-                .Include(c => c.Host)
-                .Include(c => c.ConnectionGroup)
+            var profile = await _access.GetCurrentProfileAsync(User);
+            if (profile == null) return Unauthorized();
+
+            var scopedQuery = _access.ApplyConnectionScope(
+                _context.Connections
+                    .Include(c => c.Host)
+                    .Include(c => c.ConnectionGroup)
+                    .Include(c => c.Users),
+                profile);
+
+            var connections = await scopedQuery
                 .OrderBy(c => c.Name)
                 .ToListAsync();
 
@@ -63,9 +73,15 @@ namespace Backend.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<ConnectionDto>> GetConnection(Guid id)
         {
-            var connection = await _context.Connections
-                .Include(c => c.Host)
-                .Include(c => c.ConnectionGroup)
+            var profile = await _access.GetCurrentProfileAsync(User);
+            if (profile == null) return Unauthorized();
+
+            var connection = await _access.ApplyConnectionScope(
+                    _context.Connections
+                        .Include(c => c.Host)
+                        .Include(c => c.ConnectionGroup)
+                        .Include(c => c.Users),
+                    profile)
                 .FirstOrDefaultAsync(c => c.Id == id);
 
             if (connection == null) return NotFound();
@@ -73,11 +89,20 @@ namespace Backend.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = AppRoles.OwnerAdminOrTeamAdmin)]
         public async Task<ActionResult<ConnectionDto>> CreateConnection([FromBody] CreateConnectionDto dto)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
+            }
+
+            var profile = await _access.GetCurrentProfileAsync(User);
+            if (profile == null) return Unauthorized();
+
+            if (!_access.CanManageConnectionsInVault(profile, dto.ConnectionGroupId))
+            {
+                return Forbid();
             }
 
             var connection = new Connection
@@ -94,7 +119,7 @@ namespace Backend.Controllers
             _context.Connections.Add(connection);
             await _context.SaveChangesAsync();
             await _audit.WriteAsync("connection.created", "Connection", connection.Id.ToString(),
-                new { connection.Name, connection.Protocol, connection.HostId });
+                new { connection.Name, connection.Protocol, connection.HostId, connection.ConnectionGroupId });
 
             return CreatedAtAction(nameof(GetConnection), new { id = connection.Id }, new ConnectionDto
             {
@@ -109,6 +134,7 @@ namespace Backend.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = AppRoles.OwnerAdminOrTeamAdmin)]
         public async Task<IActionResult> UpdateConnection(Guid id, [FromBody] CreateConnectionDto dto)
         {
             if (!ModelState.IsValid)
@@ -116,10 +142,20 @@ namespace Backend.Controllers
                 return BadRequest(ModelState);
             }
 
+            var profile = await _access.GetCurrentProfileAsync(User);
+            if (profile == null) return Unauthorized();
+
             var connection = await _context.Connections.FindAsync(id);
             if (connection == null)
             {
                 return NotFound();
+            }
+
+            var canManageCurrentVault = _access.CanManageConnectionsInVault(profile, connection.ConnectionGroupId);
+            var canManageTargetVault = _access.CanManageConnectionsInVault(profile, dto.ConnectionGroupId);
+            if (!canManageCurrentVault || !canManageTargetVault)
+            {
+                return Forbid();
             }
 
             connection.Name = dto.Name;
@@ -139,30 +175,37 @@ namespace Backend.Controllers
                 {
                     return NotFound();
                 }
-                else
-                {
-                    throw;
-                }
+
+                throw;
             }
 
             await _audit.WriteAsync("connection.updated", "Connection", id.ToString(),
-                new { connection.Name, connection.Protocol });
+                new { connection.Name, connection.Protocol, connection.ConnectionGroupId });
             return NoContent();
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = AppRoles.OwnerAdminOrTeamAdmin)]
         public async Task<IActionResult> DeleteConnection(Guid id)
         {
+            var profile = await _access.GetCurrentProfileAsync(User);
+            if (profile == null) return Unauthorized();
+
             var connection = await _context.Connections.FindAsync(id);
             if (connection == null)
             {
                 return NotFound();
             }
 
+            if (!_access.CanManageConnectionsInVault(profile, connection.ConnectionGroupId))
+            {
+                return Forbid();
+            }
+
             _context.Connections.Remove(connection);
             await _context.SaveChangesAsync();
             await _audit.WriteAsync("connection.deleted", "Connection", id.ToString(),
-                new { connection.Name });
+                new { connection.Name, connection.ConnectionGroupId });
             return NoContent();
         }
 

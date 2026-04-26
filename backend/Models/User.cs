@@ -16,5 +16,7 @@ namespace Backend.Models
         // Navigation properties
         public ICollection<Role> Roles { get; set; } = new List<Role>();
         public ICollection<Connection> Connections { get; set; } = new List<Connection>();
+        public ICollection<ConnectionGroup> ConnectionGroups { get; set; } = new List<ConnectionGroup>();
+        public ICollection<UserGroup> Groups { get; set; } = new List<UserGroup>();
     }
 }

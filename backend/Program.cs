@@ -21,6 +21,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IAuditService, AuditService>();
 builder.Services.AddScoped<IInviteService, InviteService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IAccessControlService, AccessControlService>();
 
 // Local JWT (HS256) is the default authentication scheme so the app works without
 // any external identity provider. Entra ID (or any other OIDC provider) is opt-in
@@ -126,6 +127,8 @@ using (var scope = app.Services.CreateScope())
         {
             logger.LogInformation("Database is up to date; no migrations to apply.");
         }
+
+        await RoleSeeder.SeedDefaultsAsync(db, logger);
     }
     catch (Exception ex)
     {
@@ -151,4 +154,3 @@ app.MapControllers();
 app.MapHealthChecks("/health");
 
 app.Run();
-

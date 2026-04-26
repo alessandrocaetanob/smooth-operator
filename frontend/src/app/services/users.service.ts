@@ -12,6 +12,12 @@ export interface AppUser {
   hasPassword: boolean;
   createdAt: string;
   roles: string[];
+  vaultIds: string[];
+}
+
+export interface AppRole {
+  name: string;
+  description: string;
 }
 
 export interface InviteResult {
@@ -41,6 +47,25 @@ export class UsersService {
     return this.http.put<void>(`/api/users/${id}`, { name });
   }
 
+  roleCatalog(): Observable<AppRole[]> {
+    return this.http.get<any[]>('/api/users/roles').pipe(
+      map((rows) =>
+        (rows ?? []).map((raw) => ({
+          name: pickOr(raw, '', 'name', 'Name'),
+          description: pickOr(raw, '', 'description', 'Description'),
+        })),
+      ),
+    );
+  }
+
+  setRole(id: string, role: string): Observable<void> {
+    return this.http.put<void>(`/api/users/${id}/role`, { role });
+  }
+
+  setVaultAssignments(id: string, vaultIds: string[]): Observable<void> {
+    return this.http.put<void>(`/api/users/${id}/vaults`, { vaultIds });
+  }
+
   remove(id: string): Observable<void> {
     return this.http.delete<void>(`/api/users/${id}`);
   }
@@ -66,6 +91,7 @@ export class UsersService {
       hasPassword: pickOr(raw, false, 'hasPassword', 'HasPassword'),
       createdAt: pickOr(raw, '', 'createdAt', 'CreatedAt'),
       roles: pickOr(raw, [] as string[], 'roles', 'Roles'),
+      vaultIds: pickOr(raw, [] as string[], 'vaultIds', 'VaultIds'),
     };
   }
 }

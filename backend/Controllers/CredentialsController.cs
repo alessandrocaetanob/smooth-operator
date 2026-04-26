@@ -15,7 +15,7 @@ namespace Backend.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
+    [Authorize(Roles = AppRoles.OwnerAdminOrTeamAdmin)]
     public class CredentialsController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -44,6 +44,7 @@ namespace Backend.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = AppRoles.OwnerOrAdmin)]
         public async Task<ActionResult<CredentialDto>> CreateCredential([FromBody] CreateCredentialDto dto)
         {
             if (!ModelState.IsValid)
@@ -77,6 +78,7 @@ namespace Backend.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = AppRoles.OwnerOrAdmin)]
         public async Task<IActionResult> UpdateCredential(Guid id, [FromBody] CreateCredentialDto dto)
         {
             if (!ModelState.IsValid)
@@ -109,6 +111,7 @@ namespace Backend.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = AppRoles.OwnerOrAdmin)]
         public async Task<IActionResult> DeleteCredential(Guid id)
         {
             var credential = await _context.Credentials.FindAsync(id);

@@ -6,6 +6,7 @@ import {
   CreateCredentialPayload,
   UpdateCredentialPayload,
 } from '../../services/credentials.service';
+import { AuthService } from '../../services/auth.service';
 
 interface FormState {
   id: string | null;
@@ -31,8 +32,10 @@ const EMPTY_FORM: FormState = {
 })
 export class Credentials implements OnInit {
   private readonly svc = inject(CredentialsService);
+  private readonly auth = inject(AuthService);
 
   readonly credentials = this.svc.list;
+  readonly canManageCredentials = this.auth.canManageCredentials;
   readonly loading = signal(false);
   readonly errorMessage = signal<string | null>(null);
   readonly showForm = signal(false);
@@ -62,11 +65,13 @@ export class Credentials implements OnInit {
   }
 
   newCredential(): void {
+    if (!this.canManageCredentials()) return;
     this.form.set({ ...EMPTY_FORM });
     this.showForm.set(true);
   }
 
   edit(c: Credential): void {
+    if (!this.canManageCredentials()) return;
     this.form.set({
       id: c.id,
       name: c.name,
@@ -87,6 +92,7 @@ export class Credentials implements OnInit {
   }
 
   save(): void {
+    if (!this.canManageCredentials()) return;
     if (this.busy()) return;
     const f = this.form();
     if (!f.name.trim() || !f.username.trim()) {
@@ -125,6 +131,7 @@ export class Credentials implements OnInit {
   }
 
   remove(c: Credential): void {
+    if (!this.canManageCredentials()) return;
     if (!confirm(`Delete credential "${c.name}"?`)) return;
     this.errorMessage.set(null);
     this.svc.remove(c.id).subscribe({

@@ -69,6 +69,16 @@ namespace Backend.DTOs
     {
         public Guid Id { get; set; }
         public string Name { get; set; } = string.Empty;
+        public Guid? ParentGroupId { get; set; }
+    }
+
+    public class CreateConnectionGroupDto
+    {
+        [Required(ErrorMessage = "Vault name is required")]
+        [StringLength(100, MinimumLength = 1, ErrorMessage = "Vault name must be between 1 and 100 characters")]
+        public string Name { get; set; } = string.Empty;
+
+        public Guid? ParentGroupId { get; set; }
     }
 
     public class CredentialDto
