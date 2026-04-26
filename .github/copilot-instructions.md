@@ -415,36 +415,6 @@ npm install -g @contextstream/mcp-server@latest
 ---
 
 
-## Skills & MCP Router (Tavily, Context7, Supabase, Render, Linear)
-
-Use specialized skills/tools first when they match the user request:
-
-- **Skill routing (mandatory when relevant):**
-  - Capability discovery/installation requests ("find a skill for X") -> `skill("find-skills")`
-  - Frontend/page/component design work -> `skill("frontend-design")`
-  - Copilot cloud agent setup/customization -> `skill("customize-cloud-agent")`
-  - Cross-session memory workflows -> `skill("contextstream-workflow")`
-
-- **Tool routing by intent:**
-  - **Tavily**: current events, external facts, or broad web research (`tavily_search`, `tavily_extract`, `tavily_crawl`, `tavily_research`)
-  - **Context7**: framework/library docs and examples. Resolve first with `context7-resolve-library-id`, then query with `context7-query-docs` (retry with `researchMode=true` only if needed)
-  - **Supabase**: database/project operations. Use `supabase-apply_migration` for DDL, `supabase-execute_sql` for data queries, and run advisors after schema changes
-  - **Render**: service/deploy/runtime operations, logs, and metrics (`render-list_*`, `render-get_*`, `render-get_metrics`, `render-list_logs`)
-  - **Linear**: issue/project/document workflows (`linear-list_*`, `linear-get_*`, `linear-save_*`)
-
-### Safety and workflow requirements
-
-- **Supabase cost gates:** Before creating a project/branch, ask for org, call `supabase-get_cost`, repeat cost to the user, then call `supabase-confirm_cost`.
-- **Supabase Edge Functions:** keep `verify_jwt=true` by default; only disable when explicitly justified.
-- **Render workspace safety:** only call `render-select_workspace` after explicit user confirmation.
-- **Production-impacting writes (Supabase/Render/Linear):** restate the exact target resource (project/service/issue) before executing destructive or high-impact actions.
-- **Context7 call order:** do not call `context7-query-docs` before resolving a valid library ID unless the user already provided `/org/project`.
-
-Prefer these specialized MCP servers over generic shell/web approaches whenever they can complete the task directly and safely.
-
----
-
-
 ---
 ## VS Code Copilot Notes
 

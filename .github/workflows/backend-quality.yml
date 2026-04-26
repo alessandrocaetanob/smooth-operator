@@ -2,12 +2,12 @@ name: "Backend Code Quality"
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ master, main, develop ]
     paths:
       - 'backend/**'
       - '.github/workflows/backend-quality.yml'
   pull_request:
-    branches: [ main, develop ]
+    branches: [ master, main, develop ]
     paths:
       - 'backend/**'
       - '.github/workflows/backend-quality.yml'
@@ -55,12 +55,16 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
-      - name: Restore test dependencies
+      - name: Restore backend & test dependencies
         run: |
-          mapfile -t test_projects < <(find backend -type f -name '*Tests*.csproj' | sort)
+          if [ -f backend/Backend.csproj ]; then
+            dotnet restore backend/Backend.csproj
+          fi
+
+          mapfile -t test_projects < <(find backend backend.tests -type f -name '*Tests*.csproj' 2>/dev/null | sort)
 
           if [ ${#test_projects[@]} -eq 0 ]; then
-            echo "No test projects found under backend/, skipping test restore"
+            echo "No test projects found, skipping test restore"
             exit 0
           fi
 
@@ -78,7 +82,7 @@ jobs:
 
       - name: Run tests
         run: |
-          mapfile -t test_projects < <(find backend -type f -name '*Tests*.csproj' | sort)
+          mapfile -t test_projects < <(find backend backend.tests -type f -name '*Tests*.csproj' 2>/dev/null | sort)
 
           if [ ${#test_projects[@]} -eq 0 ]; then
             echo "No test projects found under backend/, skipping test execution"
@@ -87,5 +91,5 @@ jobs:
 
           for project in "${test_projects[@]}"; do
             echo "Running tests for $project"
-            dotnet test "$project" --configuration Release --no-build --verbosity normal
+            dotnet test "$project" --configuration Release --verbosity normal
           done

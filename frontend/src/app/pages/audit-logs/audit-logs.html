@@ -2,7 +2,9 @@
   <div class="flex items-center justify-between mb-6">
     <div>
       <h2 class="text-lg font-semibold text-slate-100">Audit Logs</h2>
-      <p class="text-sm text-slate-400 mt-1">Every authentication and resource change is recorded.</p>
+      <p class="text-sm text-slate-400 mt-1">
+        Every authentication and resource change is recorded.
+      </p>
     </div>
     <div class="flex items-center gap-2">
       <button
@@ -89,13 +91,17 @@
       <tbody>
         @for (l of result().items; track l.id) {
           <tr class="border-t border-white/5 hover:bg-white/5">
-            <td class="px-4 py-3 text-slate-300 whitespace-nowrap">{{ l.timestamp | date: 'short' }}</td>
+            <td class="px-4 py-3 text-slate-300 whitespace-nowrap">
+              {{ l.timestamp | date: 'short' }}
+            </td>
             <td class="px-4 py-3 text-slate-300">
               {{ l.userEmail || (l.userId ? l.userId : '—') }}
             </td>
             <td class="px-4 py-3 text-slate-200 font-medium">{{ l.action }}</td>
             <td class="px-4 py-3 text-slate-300">
-              <span class="text-xs uppercase tracking-widest text-slate-500">{{ l.resourceType }}</span>
+              <span class="text-xs uppercase tracking-widest text-slate-500">{{
+                l.resourceType
+              }}</span>
               <span class="ml-2 text-xs text-slate-400">{{ l.resourceId }}</span>
             </td>
             <td class="px-4 py-3 text-slate-400">{{ l.ipAddress }}</td>

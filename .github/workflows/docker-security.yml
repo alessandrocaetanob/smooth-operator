@@ -2,13 +2,13 @@ name: "Docker Security Scan"
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ master, main, develop ]
     paths:
       - '**/Dockerfile'
       - 'docker-compose.yml'
       - '.github/workflows/docker-security.yml'
   pull_request:
-    branches: [ main, develop ]
+    branches: [ master, main, develop ]
     paths:
       - '**/Dockerfile'
       - 'docker-compose.yml'
@@ -74,7 +74,7 @@ jobs:
 
       - name: Run Trivy vulnerability scanner on image
         if: hashFiles(format('{0}/Dockerfile', matrix.component)) != ''
-        uses: aquasecurity/trivy-action@0.24.0
+        uses: aquasecurity/trivy-action@0.35.0
         with:
           image-ref: smooth-operator-${{ matrix.component }}:test
           format: 'sarif'
@@ -84,6 +84,8 @@ jobs:
       - name: Upload Trivy results to GitHub Security
         if: hashFiles(format('{0}/Dockerfile', matrix.component)) != ''
         uses: github/codeql-action/upload-sarif@v3
+        # Code Scanning upload requires GitHub Advanced Security.
+        continue-on-error: true
         with:
           sarif_file: 'trivy-${{ matrix.component }}-results.sarif'
           category: docker-${{ matrix.component }}

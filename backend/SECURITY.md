@@ -6,8 +6,9 @@ This document outlines the security features implemented in the Smooth Operator 
 
 ### 1. Authentication & Authorization
 
-- **JWT-based Authentication**: All endpoints require valid JWT tokens from Azure Entra ID
-- **Connection Permission Checks**: Users can only access connections explicitly assigned to them
+- **JWT-based Authentication**: Local HS256 JWT is the default auth flow; Azure Entra ID is optional.
+- **Role-Based Access Control**: Four default roles are enforced: `Owner`, `Admin`, `TeamAdmin`, and `User`.
+- **Connection Permission Checks**: Users can only access connections explicitly assigned to them or within assigned vaults.
 - **Active User Validation**: Inactive user accounts cannot authenticate or access resources
 
 ### 2. Audit Logging

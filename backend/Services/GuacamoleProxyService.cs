@@ -51,9 +51,18 @@ namespace Backend.Services
 
             using var scope = _scopeFactory.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var accessControl = scope.ServiceProvider.GetRequiredService<IAccessControlService>();
+
+            var profile = await accessControl.GetCurrentProfileAsync(user);
+            if (profile == null)
+            {
+                _logger.LogWarning("Authenticated user {Email} has no valid local profile. Connection denied.", email);
+                await webSocket.CloseAsync(WebSocketCloseStatus.PolicyViolation, "User not authorized", CancellationToken.None);
+                return;
+            }
 
             // Find user in database
-            var dbUser = await dbContext.Users.FirstOrDefaultAsync(u => u.Email == email);
+            var dbUser = await dbContext.Users.FirstOrDefaultAsync(u => u.Id == profile.UserId);
             if (dbUser == null || !dbUser.IsActive)
             {
                 _logger.LogWarning($"User {email} not found or inactive. Connection denied.");
@@ -89,7 +98,7 @@ namespace Backend.Services
             }
 
             // Check if user has permission to access this connection
-            var hasAccess = connection.Users.Any(u => u.Id == dbUser.Id);
+            var hasAccess = accessControl.CanUseConnection(profile, connection);
             if (!hasAccess)
             {
                 _logger.LogWarning($"User {email} does not have access to connection {connectionId}.");

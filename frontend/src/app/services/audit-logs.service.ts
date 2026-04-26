@@ -48,22 +48,20 @@ export class AuditLogsService {
 
   reload(q: AuditLogQuery = {}): Observable<PagedAuditLogs> {
     const params = this.buildParams(q);
-    return this.http
-      .get<any>('/api/audit-logs', { params })
-      .pipe(
-        tap((raw) => {
-          const items = (pickOr<any[]>(raw, [] as any[], 'items', 'Items') ?? []).map((r) =>
-            this.normalize(r),
-          );
-          this._result.set({
-            items,
-            page: pickOr(raw, 1, 'page', 'Page'),
-            pageSize: pickOr(raw, 25, 'pageSize', 'PageSize'),
-            totalItems: pickOr(raw, items.length, 'totalItems', 'TotalItems'),
-            totalPages: pickOr(raw, 0, 'totalPages', 'TotalPages'),
-          });
-        }),
-      ) as unknown as Observable<PagedAuditLogs>;
+    return this.http.get<any>('/api/audit-logs', { params }).pipe(
+      tap((raw) => {
+        const items = (pickOr<any[]>(raw, [] as any[], 'items', 'Items') ?? []).map((r) =>
+          this.normalize(r),
+        );
+        this._result.set({
+          items,
+          page: pickOr(raw, 1, 'page', 'Page'),
+          pageSize: pickOr(raw, 25, 'pageSize', 'PageSize'),
+          totalItems: pickOr(raw, items.length, 'totalItems', 'TotalItems'),
+          totalPages: pickOr(raw, 0, 'totalPages', 'TotalPages'),
+        });
+      }),
+    ) as unknown as Observable<PagedAuditLogs>;
   }
 
   exportCsvUrl(q: AuditLogQuery = {}): string {

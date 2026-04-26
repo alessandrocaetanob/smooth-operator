@@ -314,6 +314,63 @@ namespace Backend.Migrations
                     b.ToTable("Users");
                 });
 
+            modelBuilder.Entity("Backend.Models.UserGroup", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("OwnerUserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OwnerUserId");
+
+                    b.ToTable("UserGroups");
+                });
+
+            modelBuilder.Entity("ConnectionGroupUser", b =>
+                {
+                    b.Property<Guid>("ConnectionGroupsId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("UsersId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("ConnectionGroupsId", "UsersId");
+
+                    b.HasIndex("UsersId");
+
+                    b.ToTable("ConnectionGroupUser");
+                });
+
+            modelBuilder.Entity("ConnectionGroupUserGroup", b =>
+                {
+                    b.Property<Guid>("GroupsId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("VaultsId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("GroupsId", "VaultsId");
+
+                    b.HasIndex("VaultsId");
+
+                    b.ToTable("ConnectionGroupUserGroup");
+                });
+
             modelBuilder.Entity("ConnectionUser", b =>
                 {
                     b.Property<Guid>("ConnectionsId")
@@ -357,6 +414,21 @@ namespace Backend.Migrations
                     b.HasIndex("UsersId");
 
                     b.ToTable("RoleUser");
+                });
+
+            modelBuilder.Entity("UserUserGroup", b =>
+                {
+                    b.Property<Guid>("GroupsId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("MembersId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("GroupsId", "MembersId");
+
+                    b.HasIndex("MembersId");
+
+                    b.ToTable("UserUserGroup");
                 });
 
             modelBuilder.Entity("Backend.Models.AuditLog", b =>
@@ -412,6 +484,46 @@ namespace Backend.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Backend.Models.UserGroup", b =>
+                {
+                    b.HasOne("Backend.Models.User", "Owner")
+                        .WithMany()
+                        .HasForeignKey("OwnerUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Owner");
+                });
+
+            modelBuilder.Entity("ConnectionGroupUser", b =>
+                {
+                    b.HasOne("Backend.Models.ConnectionGroup", null)
+                        .WithMany()
+                        .HasForeignKey("ConnectionGroupsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Backend.Models.User", null)
+                        .WithMany()
+                        .HasForeignKey("UsersId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("ConnectionGroupUserGroup", b =>
+                {
+                    b.HasOne("Backend.Models.UserGroup", null)
+                        .WithMany()
+                        .HasForeignKey("GroupsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Backend.Models.ConnectionGroup", null)
+                        .WithMany()
+                        .HasForeignKey("VaultsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("ConnectionUser", b =>
                 {
                     b.HasOne("Backend.Models.Connection", null)
@@ -453,6 +565,21 @@ namespace Backend.Migrations
                     b.HasOne("Backend.Models.User", null)
                         .WithMany()
                         .HasForeignKey("UsersId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("UserUserGroup", b =>
+                {
+                    b.HasOne("Backend.Models.UserGroup", null)
+                        .WithMany()
+                        .HasForeignKey("GroupsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Backend.Models.User", null)
+                        .WithMany()
+                        .HasForeignKey("MembersId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

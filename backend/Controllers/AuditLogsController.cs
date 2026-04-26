@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Backend.Data;
 using Backend.DTOs;
+using Backend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -15,7 +16,7 @@ namespace Backend.Controllers
 {
     [ApiController]
     [Route("api/audit-logs")]
-    [Authorize]
+    [Authorize(Roles = AppRoles.OwnerOrAdmin)]
     public class AuditLogsController : ControllerBase
     {
         private readonly AppDbContext _context;

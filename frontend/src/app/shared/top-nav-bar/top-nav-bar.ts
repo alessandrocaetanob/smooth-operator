@@ -14,6 +14,7 @@ export class TopNavBar {
   private readonly router = inject(Router);
 
   readonly user = this.auth.currentUser;
+  readonly canAccessSettings = this.auth.canAccessSettings;
   readonly initials = computed(() => {
     const u = this.user();
     if (!u?.name) return '?';

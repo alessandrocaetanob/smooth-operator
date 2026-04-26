@@ -2,7 +2,7 @@
   <div class="flex items-center justify-between mb-6">
     <div>
       <h2 class="text-lg font-semibold text-slate-100">Users</h2>
-      <p class="text-sm text-slate-400 mt-1">Manage users that can access this instance.</p>
+      <p class="text-sm text-slate-400 mt-1">Manage users, roles and vault access.</p>
     </div>
     <div class="flex items-center gap-2">
       <button
@@ -28,11 +28,29 @@
     </div>
   }
 
+  <div class="mb-4">
+    <div class="relative">
+      <span
+        class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-base"
+        >search</span
+      >
+      <input
+        type="text"
+        placeholder="Search users by name, email, or role…"
+        [ngModel]="searchQuery()"
+        (ngModelChange)="searchQuery.set($event)"
+        class="w-full bg-slate-900 border border-white/10 focus:border-blue-500 text-sm text-slate-200 rounded pl-9 pr-3 py-2 outline-none"
+      />
+    </div>
+  </div>
+
   @if (inviteResult(); as r) {
     <div class="mb-6 p-4 border border-emerald-500/40 bg-emerald-500/10 rounded-lg">
       <div class="flex items-start justify-between gap-3 mb-3">
         <div>
-          <h3 class="text-sm font-semibold text-emerald-200 uppercase tracking-widest">Invitation created</h3>
+          <h3 class="text-sm font-semibold text-emerald-200 uppercase tracking-widest">
+            Invitation created
+          </h3>
           <p class="text-xs text-emerald-200/80 mt-1">
             @if (r.emailSent) {
               <span class="material-symbols-outlined text-base align-middle">mail</span>
@@ -67,7 +85,9 @@
           (click)="copyInviteUrl()"
           class="px-3 py-2 text-xs font-bold uppercase tracking-widest text-white bg-blue-600 hover:bg-blue-500 rounded"
         >
-          {{ copyState() === 'copied' ? 'Copied!' : copyState() === 'failed' ? 'Copy failed' : 'Copy' }}
+          {{
+            copyState() === 'copied' ? 'Copied!' : copyState() === 'failed' ? 'Copy failed' : 'Copy'
+          }}
         </button>
       </div>
     </div>
@@ -75,9 +95,12 @@
 
   @if (showInvite()) {
     <div class="mb-6 p-5 border border-white/10 rounded-lg bg-slate-950/60">
-      <h2 class="text-sm font-semibold text-slate-100 mb-3 uppercase tracking-widest">Invite user</h2>
+      <h2 class="text-sm font-semibold text-slate-100 mb-3 uppercase tracking-widest">
+        Invite user
+      </h2>
       <p class="text-xs text-slate-400 mb-3">
-        The user will receive a secure link to set their own password. The account stays inactive until the link is redeemed.
+        The user will receive a secure link to set their own password. The account stays inactive
+        until the link is redeemed.
       </p>
       <form (ngSubmit)="submitInvite()" class="grid grid-cols-1 md:grid-cols-2 gap-3">
         <input
@@ -97,6 +120,24 @@
           required
           class="bg-slate-900 border border-white/10 focus:border-blue-500 text-sm text-slate-200 rounded px-3 py-2 outline-none"
         />
+        <label class="md:col-span-2 flex flex-col gap-1 text-xs text-slate-400">
+          <span class="uppercase tracking-widest">Role</span>
+          <select
+            [ngModel]="inviteRole()"
+            (ngModelChange)="inviteRole.set($event)"
+            name="role"
+            class="bg-slate-900 border border-white/10 focus:border-blue-500 text-sm text-slate-200 rounded px-3 py-2 outline-none"
+          >
+            @for (r of invitableRoles(); track trackRole($index, r)) {
+              <option [value]="r.name">{{ r.name }} — {{ r.description }}</option>
+            }
+            @if (invitableRoles().length === 0) {
+              <option value="User">User</option>
+              <option value="TeamAdmin">TeamAdmin</option>
+              <option value="Admin">Admin</option>
+            }
+          </select>
+        </label>
         <div class="md:col-span-2 flex justify-end gap-2">
           <button
             type="button"
@@ -123,31 +164,51 @@
         <tr>
           <th class="text-left px-4 py-3 font-medium">User</th>
           <th class="text-left px-4 py-3 font-medium">Email</th>
-          <th class="text-left px-4 py-3 font-medium">Roles</th>
-          <th class="text-left px-4 py-3 font-medium">Auth</th>
+          <th class="text-left px-4 py-3 font-medium">Role</th>
+          <th class="text-left px-4 py-3 font-medium">Vault Scope</th>
           <th class="text-left px-4 py-3 font-medium">Status</th>
           <th class="text-right px-4 py-3 font-medium">Actions</th>
         </tr>
       </thead>
       <tbody>
-        @for (u of users(); track trackById($index, u)) {
+        @for (u of filteredUsers(); track trackById($index, u)) {
           <tr class="border-t border-white/5 hover:bg-white/5">
             <td class="px-4 py-3 text-slate-100">{{ u.name }}</td>
             <td class="px-4 py-3 text-slate-300">{{ u.email }}</td>
-            <td class="px-4 py-3 text-slate-300">{{ u.roles.join(', ') || '—' }}</td>
+            <td class="px-4 py-3">
+              <select
+                [ngModel]="primaryRole(u)"
+                (ngModelChange)="changeRole(u, $event)"
+                [disabled]="roleBusyUserId() === u.id"
+                class="bg-slate-900 border border-white/10 focus:border-blue-500 text-xs text-slate-200 rounded px-2 py-1 outline-none"
+              >
+                @for (role of roles(); track trackRole($index, role)) {
+                  <option [value]="role.name">{{ role.name }}</option>
+                }
+              </select>
+            </td>
             <td class="px-4 py-3 text-slate-300">
-              @if (u.linkedToEntra) {
-                <span class="text-xs text-blue-400">Entra</span>
-              }
-              @if (u.hasPassword) {
-                <span class="text-xs text-slate-400 ml-2">Local</span>
+              @if (canAssignVaults(u)) {
+                <button
+                  type="button"
+                  (click)="openVaultAssignments(u)"
+                  class="px-2 py-1 text-xs text-blue-300 hover:bg-blue-500/10 rounded"
+                >
+                  {{ u.vaultIds.length }} vault(s)
+                </button>
+              } @else {
+                <span class="text-xs text-slate-500">Global</span>
               }
             </td>
             <td class="px-4 py-3">
               @if (u.isActive) {
-                <span class="text-xs font-bold uppercase tracking-widest text-emerald-400">Active</span>
+                <span class="text-xs font-bold uppercase tracking-widest text-emerald-400"
+                  >Active</span
+                >
               } @else {
-                <span class="text-xs font-bold uppercase tracking-widest text-slate-500">Disabled</span>
+                <span class="text-xs font-bold uppercase tracking-widest text-slate-500"
+                  >Disabled</span
+                >
               }
             </td>
             <td class="px-4 py-3">
@@ -180,11 +241,72 @@
         } @empty {
           <tr>
             <td colspan="6" class="px-4 py-8 text-center text-slate-500">
-              {{ loading() ? 'Loading…' : 'No users yet.' }}
+              {{
+                loading()
+                  ? 'Loading…'
+                  : searchQuery()
+                    ? 'No users match the search.'
+                    : 'No users yet.'
+              }}
             </td>
           </tr>
         }
       </tbody>
     </table>
   </div>
+
+  @if (vaultModalUser(); as user) {
+    <div
+      class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+      (click)="closeVaultAssignments()"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Vault assignments"
+    >
+      <div
+        class="w-full max-w-lg bg-slate-900 border border-white/10 rounded-lg p-5"
+        (click)="$event.stopPropagation()"
+      >
+        <h3 class="text-sm font-semibold text-slate-100 uppercase tracking-widest">
+          Vault assignments
+        </h3>
+        <p class="text-xs text-slate-400 mt-1">
+          {{ user.name }} ({{ primaryRole(user) }}) can access/manage only selected vaults.
+        </p>
+
+        <div class="mt-4 max-h-64 overflow-y-auto space-y-2">
+          @for (vault of vaults(); track trackVault($index, vault)) {
+            <label class="flex items-center gap-2 text-sm text-slate-200">
+              <input
+                type="checkbox"
+                [checked]="isVaultSelected(vault.id)"
+                (change)="toggleVaultSelection(vault.id, $any($event.target).checked)"
+              />
+              <span>{{ vault.name }}</span>
+            </label>
+          } @empty {
+            <div class="text-xs text-slate-500">Create at least one vault to assign access.</div>
+          }
+        </div>
+
+        <div class="mt-5 flex justify-end gap-2">
+          <button
+            type="button"
+            (click)="closeVaultAssignments()"
+            class="px-3 py-2 text-xs font-medium uppercase tracking-widest text-slate-300 hover:bg-white/5 rounded"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            (click)="saveVaultAssignments()"
+            [disabled]="vaultAssignmentBusy()"
+            class="px-4 py-2 text-xs font-bold uppercase tracking-widest text-white bg-blue-600 hover:bg-blue-500 rounded disabled:opacity-50"
+          >
+            {{ vaultAssignmentBusy() ? 'Saving…' : 'Save assignments' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
 </div>

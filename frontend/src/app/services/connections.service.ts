@@ -52,9 +52,9 @@ export class ConnectionsService {
   }
 
   get(id: string): Observable<Connection> {
-    return this.http.get<any>(`/api/connections/${id}`).pipe(
-      tap(),
-    ) as unknown as Observable<Connection>;
+    return this.http
+      .get<any>(`/api/connections/${id}`)
+      .pipe(tap()) as unknown as Observable<Connection>;
   }
 
   create(payload: CreateConnectionPayload): Observable<Connection> {

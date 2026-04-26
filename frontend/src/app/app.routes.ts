@@ -2,6 +2,10 @@ import { Routes } from '@angular/router';
 import { Authentication } from './pages/authentication/authentication';
 import { FirstAccess } from './pages/first-access/first-access';
 import { Administration } from './pages/administration/administration';
+import { SettingsVaults } from './pages/settings/vaults/vaults';
+import { SettingsGroups } from './pages/settings/groups/groups';
+import { SettingsRoles } from './pages/settings/roles/roles';
+import { MyAccess } from './pages/my-access/my-access';
 import { Vault } from './pages/vault/vault';
 import { EmptyState } from './pages/empty-state/empty-state';
 import { ConnectingState } from './pages/connecting-state/connecting-state';
@@ -14,7 +18,14 @@ import { Settings } from './pages/settings/settings';
 import { Email } from './pages/settings/email/email';
 import { Invite } from './pages/invite/invite';
 import { Layout } from './shared/layout/layout';
-import { rootRedirectGuard, loginGuard, setupGuard, authGuard } from './services/auth.guards';
+import {
+  rootRedirectGuard,
+  loginGuard,
+  setupGuard,
+  authGuard,
+  ownerAdminGuard,
+  connectionManagerGuard,
+} from './services/auth.guards';
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', canActivate: [rootRedirectGuard], children: [] },
@@ -28,17 +39,22 @@ export const routes: Routes = [
     canActivate: [authGuard],
     children: [
       { path: 'vault', component: Vault },
-      { path: 'connections', component: Connections },
-      { path: 'credentials', component: Credentials },
+      { path: 'my-access', component: MyAccess },
+      { path: 'connections', component: Connections, canActivate: [connectionManagerGuard] },
+      { path: 'credentials', component: Credentials, canActivate: [connectionManagerGuard] },
       { path: 'empty', component: EmptyState },
       { path: 'search', component: SearchResults },
       { path: 'connecting', component: ConnectingState },
       {
         path: 'settings',
         component: Settings,
+        canActivate: [ownerAdminGuard],
         children: [
           { path: '', pathMatch: 'full', redirectTo: 'users' },
           { path: 'users', component: Administration },
+          { path: 'groups', component: SettingsGroups },
+          { path: 'vaults', component: SettingsVaults },
+          { path: 'roles', component: SettingsRoles },
           { path: 'email', component: Email },
           { path: 'audit-logs', component: AuditLogs },
         ],

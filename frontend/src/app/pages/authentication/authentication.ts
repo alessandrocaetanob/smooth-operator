@@ -35,7 +35,7 @@ export class Authentication {
     this.auth.login(this.form.getRawValue()).subscribe({
       next: () => {
         this.submitting.set(false);
-        this.router.navigateByUrl('/administration');
+        this.router.navigateByUrl(this.auth.canAccessSettings() ? '/administration' : '/vault');
       },
       error: (err) => {
         this.submitting.set(false);

@@ -1,5 +1,6 @@
 using System;
 using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using Backend.Models;
@@ -52,6 +53,11 @@ namespace Backend.Services
                 new(ClaimTypes.Email, user.Email),
                 new(ClaimTypes.Name, string.IsNullOrWhiteSpace(user.Name) ? user.Email : user.Name),
             };
+
+            foreach (var roleName in user.Roles.Select(r => r.Name).Distinct(StringComparer.OrdinalIgnoreCase))
+            {
+                claims.Add(new Claim(ClaimTypes.Role, roleName));
+            }
 
             var creds = new SigningCredentials(_signingKey, SecurityAlgorithms.HmacSha256);
 

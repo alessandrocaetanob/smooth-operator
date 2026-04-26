@@ -6,6 +6,9 @@ import {
   CreateCredentialPayload,
   UpdateCredentialPayload,
 } from '../../services/credentials.service';
+import { AuthService } from '../../services/auth.service';
+import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog.service';
+import { ToastService } from '../../shared/toast/toast.service';
 
 interface FormState {
   id: string | null;
@@ -31,8 +34,12 @@ const EMPTY_FORM: FormState = {
 })
 export class Credentials implements OnInit {
   private readonly svc = inject(CredentialsService);
+  private readonly auth = inject(AuthService);
+  private readonly confirmSvc = inject(ConfirmDialogService);
+  private readonly toastSvc = inject(ToastService);
 
   readonly credentials = this.svc.list;
+  readonly canManageCredentials = this.auth.canManageCredentials;
   readonly loading = signal(false);
   readonly errorMessage = signal<string | null>(null);
   readonly showForm = signal(false);
@@ -62,11 +69,13 @@ export class Credentials implements OnInit {
   }
 
   newCredential(): void {
+    if (!this.canManageCredentials()) return;
     this.form.set({ ...EMPTY_FORM });
     this.showForm.set(true);
   }
 
   edit(c: Credential): void {
+    if (!this.canManageCredentials()) return;
     this.form.set({
       id: c.id,
       name: c.name,
@@ -87,6 +96,7 @@ export class Credentials implements OnInit {
   }
 
   save(): void {
+    if (!this.canManageCredentials()) return;
     if (this.busy()) return;
     const f = this.form();
     if (!f.name.trim() || !f.username.trim()) {
@@ -124,12 +134,26 @@ export class Credentials implements OnInit {
     }
   }
 
-  remove(c: Credential): void {
-    if (!confirm(`Delete credential "${c.name}"?`)) return;
+  async remove(c: Credential): Promise<void> {
+    if (!this.canManageCredentials()) return;
+    const ok = await this.confirmSvc.ask({
+      title: 'Delete credential',
+      message: `Delete credential "${c.name}"? Connections that use it will lose authentication. This cannot be undone.`,
+      confirmLabel: 'Delete',
+      tone: 'danger',
+    });
+    if (!ok) return;
     this.errorMessage.set(null);
     this.svc.remove(c.id).subscribe({
-      next: () => this.refresh(),
-      error: (err) => this.errorMessage.set(this.toMessage(err) || 'Delete failed.'),
+      next: () => {
+        this.toastSvc.success(`Credential "${c.name}" deleted.`);
+        this.refresh();
+      },
+      error: (err) => {
+        const msg = this.toMessage(err) || 'Delete failed.';
+        this.errorMessage.set(msg);
+        this.toastSvc.error(msg);
+      },
     });
   }
 
@@ -139,13 +163,16 @@ export class Credentials implements OnInit {
 
   private done(): void {
     this.busy.set(false);
+    this.toastSvc.success('Credential saved.');
     this.cancel();
     this.refresh();
   }
 
   private fail(err: any): void {
     this.busy.set(false);
-    this.errorMessage.set(this.toMessage(err) || 'Save failed.');
+    const msg = this.toMessage(err) || 'Save failed.';
+    this.errorMessage.set(msg);
+    this.toastSvc.error(msg);
   }
 
   private toMessage(err: any): string | null {

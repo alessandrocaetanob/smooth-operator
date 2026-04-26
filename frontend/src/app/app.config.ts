@@ -1,7 +1,12 @@
-import { ApplicationConfig, provideBrowserGlobalErrorListeners, provideAppInitializer, inject } from '@angular/core';
+import {
+  ApplicationConfig,
+  provideBrowserGlobalErrorListeners,
+  provideAppInitializer,
+  inject,
+} from '@angular/core';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
+import { catchError, firstValueFrom, of } from 'rxjs';
 
 import { routes } from './app.routes';
 import { AuthService } from './services/auth.service';
@@ -12,8 +17,20 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes, withComponentInputBinding()),
     provideHttpClient(withInterceptors([authInterceptor])),
-    // Load setup-status + providers once before the router activates the first route
-    // so the redirect logic in app.routes.ts has the data it needs synchronously.
-    provideAppInitializer(() => firstValueFrom(inject(AuthService).loadSetupStatus())),
+    // Load setup-status + user profile (when authenticated) before route activation.
+    provideAppInitializer(async () => {
+      const auth = inject(AuthService);
+      await firstValueFrom(auth.loadSetupStatus());
+      if (!auth.token()) return;
+
+      await firstValueFrom(
+        auth.me().pipe(
+          catchError(() => {
+            auth.logout();
+            return of(null);
+          }),
+        ),
+      );
+    }),
   ],
 };

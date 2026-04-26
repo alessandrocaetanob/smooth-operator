@@ -21,9 +21,11 @@ export class HostsService {
   readonly list = this._list.asReadonly();
 
   reload(): Observable<AppHost[]> {
-    return this.http.get<any[]>('/api/hosts').pipe(
-      tap((rows) => this._list.set((rows ?? []).map((r) => this.normalize(r)))),
-    ) as unknown as Observable<AppHost[]>;
+    return this.http
+      .get<any[]>('/api/hosts')
+      .pipe(
+        tap((rows) => this._list.set((rows ?? []).map((r) => this.normalize(r)))),
+      ) as unknown as Observable<AppHost[]>;
   }
 
   create(payload: CreateHostPayload): Observable<AppHost> {

@@ -8,12 +8,16 @@ import {
 } from '../../services/connections.service';
 import { HostsService, AppHost } from '../../services/hosts.service';
 import { CredentialsService, Credential } from '../../services/credentials.service';
+import { Vault, VaultsService } from '../../services/vaults.service';
+import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog.service';
+import { ToastService } from '../../shared/toast/toast.service';
 
 interface FormState {
   id: string | null;
   name: string;
   protocol: string;
   hostId: string;
+  connectionGroupId: string;
   credentialId: string;
   settings: string;
 }
@@ -23,6 +27,7 @@ const EMPTY_FORM: FormState = {
   name: '',
   protocol: 'rdp',
   hostId: '',
+  connectionGroupId: '',
   credentialId: '',
   settings: '{}',
 };
@@ -37,10 +42,14 @@ export class Connections implements OnInit {
   private readonly connectionsSvc = inject(ConnectionsService);
   private readonly hostsSvc = inject(HostsService);
   private readonly credentialsSvc = inject(CredentialsService);
+  private readonly vaultsSvc = inject(VaultsService);
+  private readonly confirmSvc = inject(ConfirmDialogService);
+  private readonly toastSvc = inject(ToastService);
 
   readonly connections = this.connectionsSvc.list;
   readonly hosts = this.hostsSvc.list;
   readonly credentials = this.credentialsSvc.list;
+  readonly vaults = this.vaultsSvc.list;
 
   readonly loading = signal(false);
   readonly errorMessage = signal<string | null>(null);
@@ -61,6 +70,7 @@ export class Connections implements OnInit {
       conns: this.connectionsSvc.reload(),
       hosts: this.hostsSvc.reload(),
       creds: this.credentialsSvc.reload(),
+      vaults: this.vaultsSvc.reload(),
     }).subscribe({
       next: () => this.loading.set(false),
       error: (err) => {
@@ -81,6 +91,7 @@ export class Connections implements OnInit {
       name: c.name,
       protocol: c.protocol,
       hostId: c.hostId,
+      connectionGroupId: c.connectionGroupId ?? '',
       credentialId: c.credentialId ?? '',
       settings: c.settings || '{}',
     });
@@ -99,14 +110,15 @@ export class Connections implements OnInit {
   save(): void {
     if (this.busy()) return;
     const f = this.form();
-    if (!f.name.trim() || !f.hostId || !f.protocol) {
-      this.errorMessage.set('Name, host and protocol are required.');
+    if (!f.name.trim() || !f.hostId || !f.protocol || !f.connectionGroupId) {
+      this.errorMessage.set('Name, host, protocol and vault are required.');
       return;
     }
     const payload: CreateConnectionPayload = {
       name: f.name.trim(),
       protocol: f.protocol,
       hostId: f.hostId,
+      connectionGroupId: f.connectionGroupId || null,
       credentialId: f.credentialId || null,
       settings: f.settings || '{}',
     };
@@ -118,22 +130,38 @@ export class Connections implements OnInit {
     obs.subscribe({
       next: () => {
         this.busy.set(false);
+        this.toastSvc.success(f.id ? 'Connection updated.' : 'Connection created.');
         this.cancel();
         this.refresh();
       },
       error: (err: any) => {
         this.busy.set(false);
-        this.errorMessage.set(this.toMessage(err) || 'Save failed.');
+        const msg = this.toMessage(err) || 'Save failed.';
+        this.errorMessage.set(msg);
+        this.toastSvc.error(msg);
       },
     });
   }
 
-  remove(c: Connection): void {
-    if (!confirm(`Delete connection "${c.name}"?`)) return;
+  async remove(c: Connection): Promise<void> {
+    const ok = await this.confirmSvc.ask({
+      title: 'Delete connection',
+      message: `Delete connection "${c.name}"? This cannot be undone.`,
+      confirmLabel: 'Delete',
+      tone: 'danger',
+    });
+    if (!ok) return;
     this.errorMessage.set(null);
     this.connectionsSvc.remove(c.id).subscribe({
-      next: () => this.refresh(),
-      error: (err) => this.errorMessage.set(this.toMessage(err) || 'Delete failed.'),
+      next: () => {
+        this.toastSvc.success(`Connection "${c.name}" deleted.`);
+        this.refresh();
+      },
+      error: (err) => {
+        const msg = this.toMessage(err) || 'Delete failed.';
+        this.errorMessage.set(msg);
+        this.toastSvc.error(msg);
+      },
     });
   }
 
@@ -149,6 +177,10 @@ export class Connections implements OnInit {
     return c.id;
   }
 
+  trackVault(_: number, v: Vault): string {
+    return v.id;
+  }
+
   hostName(id: string): string {
     return this.hosts().find((h) => h.id === id)?.name ?? '—';
   }
@@ -156,6 +188,11 @@ export class Connections implements OnInit {
   credentialName(id: string | null | undefined): string {
     if (!id) return '—';
     return this.credentials().find((c) => c.id === id)?.name ?? '—';
+  }
+
+  vaultName(id: string | null | undefined): string {
+    if (!id) return '—';
+    return this.vaults().find((v) => v.id === id)?.name ?? '—';
   }
 
   private toMessage(err: any): string | null {

@@ -17,6 +17,7 @@ namespace Backend.Data
         public DbSet<AuditLog> AuditLogs { get; set; } = null!;
         public DbSet<Invitation> Invitations { get; set; } = null!;
         public DbSet<SmtpSettings> SmtpSettings { get; set; } = null!;
+        public DbSet<UserGroup> UserGroups { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -36,6 +37,32 @@ namespace Backend.Data
             modelBuilder.Entity<User>()
                 .HasMany(u => u.Connections)
                 .WithMany(c => c.Users);
+
+            // M2M User <-> ConnectionGroup (vault assignment)
+            modelBuilder.Entity<User>()
+                .HasMany(u => u.ConnectionGroups)
+                .WithMany(cg => cg.Users);
+
+            // M2M User <-> UserGroup
+            modelBuilder.Entity<User>()
+                .HasMany(u => u.Groups)
+                .WithMany(g => g.Members);
+
+            // M2M ConnectionGroup <-> UserGroup (vault group assignments)
+            modelBuilder.Entity<ConnectionGroup>()
+                .HasMany(cg => cg.Groups)
+                .WithMany(g => g.Vaults);
+
+            // UserGroup -> Owner (User). SetNull on user delete so groups outlive their owner.
+            modelBuilder.Entity<UserGroup>()
+                .HasOne(g => g.Owner)
+                .WithMany()
+                .HasForeignKey(g => g.OwnerUserId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<UserGroup>()
+                .Property(g => g.Description)
+                .HasMaxLength(500);
 
             // Self-referencing ConnectionGroup
             modelBuilder.Entity<ConnectionGroup>()

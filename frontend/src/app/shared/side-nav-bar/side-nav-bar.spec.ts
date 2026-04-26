@@ -17,10 +17,10 @@ describe('SideNavBar', () => {
           provide: ActivatedRoute,
           useValue: {
             params: of({}),
-            queryParams: of({})
-          }
-        }
-      ]
+            queryParams: of({}),
+          },
+        },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(SideNavBar);
