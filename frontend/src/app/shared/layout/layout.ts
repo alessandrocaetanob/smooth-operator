@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, HostListener } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { TopNavBar } from '../top-nav-bar/top-nav-bar';
 import { SideNavBar } from '../side-nav-bar/side-nav-bar';
@@ -12,4 +12,11 @@ import { ToastContainer } from '../toast/toast';
   templateUrl: './layout.html',
   styleUrl: './layout.css',
 })
-export class Layout {}
+export class Layout {
+  sidebarVisible = false;
+
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    this.sidebarVisible = false;
+  }
+}
