@@ -160,7 +160,8 @@ namespace Backend.Controllers
                 return BadRequest("Unsupported key type.");
             }
 
-            return Ok(new GenerateSshKeyResponse {
+            return Ok(new GenerateSshKeyResponse
+            {
                 PrivateKey = privateKey,
                 PublicKey = publicKey
             });

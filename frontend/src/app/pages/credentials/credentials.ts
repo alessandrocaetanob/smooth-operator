@@ -51,7 +51,6 @@ export class Credentials implements OnInit {
   readonly showPublicKey = signal(false);
   readonly generatedPublicKey = signal<string>('');
 
-
   readonly types = [
     { value: 'password', label: 'Password' },
     { value: 'private_key', label: 'Private key (SSH)' },
@@ -108,7 +107,7 @@ export class Credentials implements OnInit {
       error: (err) => {
         this.generatingSsh.set(false);
         this.errorMessage.set(this.toMessage(err) || 'Failed to generate SSH key.');
-      }
+      },
     });
   }
 

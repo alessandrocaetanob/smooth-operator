@@ -54,7 +54,10 @@ export class CredentialsService {
   }
 
   generateSsh(keyType: string): Observable<{ privateKey: string; publicKey: string }> {
-    return this.http.post<{ privateKey: string; publicKey: string }>('/api/credentials/generate-ssh', { keyType });
+    return this.http.post<{ privateKey: string; publicKey: string }>(
+      '/api/credentials/generate-ssh',
+      { keyType },
+    );
   }
 
   private normalize(raw: any): Credential {
