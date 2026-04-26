@@ -53,9 +53,13 @@
         [attr.aria-expanded]="menuOpen"
       >
         <div
-          class="w-8 h-8 rounded-full bg-primary-container/20 border border-primary-container/40 flex items-center justify-center text-xs font-bold text-on-primary-container"
+          class="w-8 h-8 rounded-full overflow-hidden bg-primary-container/20 border border-primary-container/40 flex items-center justify-center text-xs font-bold text-on-primary-container"
         >
-          {{ initials() }}
+          @if (user()?.avatarUrl; as src) {
+            <img [src]="src" alt="" class="w-full h-full object-cover" />
+          } @else {
+            {{ initials() }}
+          }
         </div>
         <span class="hidden md:block text-xs text-on-surface-variant">{{ user()?.name || 'Account' }}</span>
         <span class="material-symbols-outlined text-base text-on-surface-variant" aria-hidden="true">arrow_drop_down</span>
@@ -68,6 +72,14 @@
             <div class="text-sm font-semibold text-on-surface">{{ user()?.name }}</div>
             <div class="text-xs text-on-surface-variant truncate">{{ user()?.email }}</div>
           </div>
+          <a
+            (click)="closeMenu()"
+            routerLink="/profile"
+            class="flex items-center gap-2 px-4 py-2 text-sm text-on-surface hover:bg-on-surface/5 cursor-pointer transition-colors"
+          >
+            <span class="material-symbols-outlined text-base" aria-hidden="true">account_circle</span>
+            Profile
+          </a>
           @if (canAccessSettings()) {
             <a
               (click)="closeMenu()"

@@ -338,6 +338,7 @@ namespace Backend.Controllers
                 Name = user.Name,
                 HasPassword = !string.IsNullOrEmpty(user.PasswordHash),
                 LinkedToEntra = !string.IsNullOrEmpty(user.EntraObjectId),
+                AvatarUrl = BuildAvatarUrl(user),
                 Roles = user.Roles
                     .Select(r => r.Name)
                     .Distinct(StringComparer.OrdinalIgnoreCase)
@@ -475,6 +476,7 @@ namespace Backend.Controllers
                 Name = user.Name,
                 HasPassword = !string.IsNullOrEmpty(user.PasswordHash),
                 LinkedToEntra = !string.IsNullOrEmpty(user.EntraObjectId),
+                AvatarUrl = BuildAvatarUrl(user),
                 Roles = user.Roles
                     .Select(r => r.Name)
                     .Distinct(StringComparer.OrdinalIgnoreCase)
@@ -482,6 +484,16 @@ namespace Backend.Controllers
                     .ToList()
             }
         };
+
+        internal static string? BuildAvatarUrl(User user)
+        {
+            if (string.IsNullOrWhiteSpace(user.AvatarBase64) ||
+                string.IsNullOrWhiteSpace(user.AvatarMimeType))
+            {
+                return null;
+            }
+            return $"data:{user.AvatarMimeType};base64,{user.AvatarBase64}";
+        }
 
         private async Task<Role> RequireRoleAsync(string roleName, string description)
         {

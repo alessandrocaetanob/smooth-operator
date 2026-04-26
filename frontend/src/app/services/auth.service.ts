@@ -18,6 +18,7 @@ export interface UserInfo {
   name: string;
   hasPassword: boolean;
   linkedToEntra: boolean;
+  avatarUrl?: string | null;
   roles: string[];
 }
 
@@ -147,8 +148,13 @@ export class AuthService {
       name: raw?.name ?? raw?.Name ?? '',
       hasPassword: raw?.hasPassword ?? raw?.HasPassword ?? false,
       linkedToEntra: raw?.linkedToEntra ?? raw?.LinkedToEntra ?? false,
+      avatarUrl: raw?.avatarUrl ?? raw?.AvatarUrl ?? null,
       roles,
     };
+  }
+
+  setCurrentUser(user: UserInfo): void {
+    this._user.set(user);
   }
 
   private userFromStoredToken(token: string | null): UserInfo | null {
