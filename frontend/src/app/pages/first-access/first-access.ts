@@ -8,10 +8,11 @@ import {
 } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { ThemeToggle } from '../../shared/theme-toggle/theme-toggle';
 
 @Component({
   selector: 'app-first-access',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, ThemeToggle],
   templateUrl: './first-access.html',
   styleUrl: './first-access.css',
 })

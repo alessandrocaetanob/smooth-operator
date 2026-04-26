@@ -2,6 +2,7 @@ import { Component, DestroyRef, NgZone, OnInit, computed, inject, signal } from 
 
 import { Router, RouterLink } from '@angular/router';
 import { Mascot, MascotState } from '../mascot/mascot';
+import { ThemeToggle } from '../theme-toggle/theme-toggle';
 import { AuthService } from '../../services/auth.service';
 import { ThemeService } from '../../services/theme.service';
 import { ToastService } from '../toast/toast.service';
@@ -11,7 +12,7 @@ const IDLE_TIMEOUT_MS = 3 * 60 * 1000;
 @Component({
   selector: 'app-top-nav-bar',
   standalone: true,
-  imports: [RouterLink, Mascot],
+  imports: [RouterLink, Mascot, ThemeToggle],
   templateUrl: './top-nav-bar.html',
   styleUrl: './top-nav-bar.css',
 })

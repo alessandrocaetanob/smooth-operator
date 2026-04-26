@@ -2,11 +2,12 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Mascot, MascotState } from '../../shared/mascot/mascot';
+import { ThemeToggle } from '../../shared/theme-toggle/theme-toggle';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-authentication',
-  imports: [ReactiveFormsModule, Mascot],
+  imports: [ReactiveFormsModule, Mascot, ThemeToggle],
   templateUrl: './authentication.html',
   styleUrl: './authentication.css',
 })

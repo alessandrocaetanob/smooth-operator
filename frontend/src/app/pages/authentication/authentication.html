@@ -1,3 +1,5 @@
+<!-- Floating theme toggle (layout-less page) -->
+<app-theme-toggle variant="floating" />
 <!-- Ambient Background Lighting -->
 <div class="absolute inset-0 z-0 pointer-events-none">
   <div
@@ -14,8 +16,8 @@
     <div class="mb-lg flex flex-col items-center">
       <div class="mb-md">
         <app-mascot
-          [isPasswordFocused]="isPasswordFocused()"
-          [typingLength]="typingLength()"
+          [state]="mascotState()"
+          [trackPointer]="true"
         ></app-mascot>
       </div>
       <h1 class="font-h1 text-h1 text-on-background tracking-tighter">Smooth Operator</h1>

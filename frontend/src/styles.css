@@ -1,12 +1,13 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+/* Tailwind v4 dark variant — class strategy (.dark on <html>) */
+@custom-variant dark (&:where(.dark, .dark *));
 
 /* ============================================================
    DESIGN TOKENS — CSS Custom Properties
-   Light values live in :root, dark overrides in .dark
+   Light values live in :root, dark overrides in .dark.
    Colors are space-separated RGB integers to support
-   Tailwind's opacity modifiers: rgb(var(--color-x) / 0.5)
+   Tailwind's opacity modifiers and inline rgb(var(...) / α) usage.
    ============================================================ */
 
 :root {
@@ -157,6 +158,180 @@
 }
 
 /* ============================================================
+   TAILWIND v4 THEME — registers utility classes that reference
+   the raw triplet CSS vars above. `inline` keeps Tailwind from
+   re-emitting these as :root vars (which would clash by name).
+   Tailwind v4's color-mix opacity modifier still works because
+   `rgb(var(--color-primary))` resolves to a valid color.
+   ============================================================ */
+@theme inline {
+  /* Surface hierarchy */
+  --color-background:                rgb(var(--color-background));
+  --color-surface:                   rgb(var(--color-surface));
+  --color-surface-dim:               rgb(var(--color-surface-dim));
+  --color-surface-bright:            rgb(var(--color-surface-bright));
+  --color-surface-variant:           rgb(var(--color-surface-variant));
+  --color-surface-tint:              rgb(var(--color-surface-tint));
+  --color-surface-container:         rgb(var(--color-surface-container));
+  --color-surface-container-low:     rgb(var(--color-surface-container-low));
+  --color-surface-container-lowest:  rgb(var(--color-surface-container-lowest));
+  --color-surface-container-high:    rgb(var(--color-surface-container-high));
+  --color-surface-container-highest: rgb(var(--color-surface-container-highest));
+  /* On-surface text */
+  --color-on-background:             rgb(var(--color-on-background));
+  --color-on-surface:                rgb(var(--color-on-surface));
+  --color-on-surface-variant:        rgb(var(--color-on-surface-variant));
+  /* Borders */
+  --color-outline:                   rgb(var(--color-outline));
+  --color-outline-variant:           rgb(var(--color-outline-variant));
+  /* Inverse */
+  --color-inverse-surface:           rgb(var(--color-inverse-surface));
+  --color-inverse-on-surface:        rgb(var(--color-inverse-on-surface));
+  /* Primary */
+  --color-primary:                   rgb(var(--color-primary));
+  --color-primary-container:         rgb(var(--color-primary-container));
+  --color-primary-fixed:             rgb(var(--color-primary-fixed));
+  --color-primary-fixed-dim:         rgb(var(--color-primary-fixed-dim));
+  --color-on-primary:                rgb(var(--color-on-primary));
+  --color-on-primary-container:      rgb(var(--color-on-primary-container));
+  --color-on-primary-fixed:          rgb(var(--color-on-primary-fixed));
+  --color-on-primary-fixed-variant:  rgb(var(--color-on-primary-fixed-variant));
+  --color-inverse-primary:           rgb(var(--color-inverse-primary));
+  /* Secondary */
+  --color-secondary:                 rgb(var(--color-secondary));
+  --color-secondary-container:       rgb(var(--color-secondary-container));
+  --color-secondary-fixed:           rgb(var(--color-secondary-fixed));
+  --color-secondary-fixed-dim:       rgb(var(--color-secondary-fixed-dim));
+  --color-on-secondary:              rgb(var(--color-on-secondary));
+  --color-on-secondary-container:    rgb(var(--color-on-secondary-container));
+  --color-on-secondary-fixed:        rgb(var(--color-on-secondary-fixed));
+  --color-on-secondary-fixed-variant:rgb(var(--color-on-secondary-fixed-variant));
+  /* Tertiary */
+  --color-tertiary:                  rgb(var(--color-tertiary));
+  --color-tertiary-container:        rgb(var(--color-tertiary-container));
+  --color-tertiary-fixed:            rgb(var(--color-tertiary-fixed));
+  --color-tertiary-fixed-dim:        rgb(var(--color-tertiary-fixed-dim));
+  --color-on-tertiary:               rgb(var(--color-on-tertiary));
+  --color-on-tertiary-container:     rgb(var(--color-on-tertiary-container));
+  --color-on-tertiary-fixed:         rgb(var(--color-on-tertiary-fixed));
+  --color-on-tertiary-fixed-variant: rgb(var(--color-on-tertiary-fixed-variant));
+  /* Error */
+  --color-error:                     rgb(var(--color-error));
+  --color-error-container:           rgb(var(--color-error-container));
+  --color-on-error:                  rgb(var(--color-on-error));
+  --color-on-error-container:        rgb(var(--color-on-error-container));
+
+  /* Spacing (Tailwind v4 keeps default 0.25rem step; these are extras) */
+  --spacing-xs:             0.25rem;
+  --spacing-sm:             0.5rem;
+  --spacing-md:             1rem;
+  --spacing-lg:             1.5rem;
+  --spacing-xl:             2.5rem;
+  --spacing-margin:         2rem;
+  --spacing-gutter:         1.5rem;
+  --spacing-unit:           8px;
+  --spacing-container-max:  1440px;
+
+  /* Border radius */
+  --radius-DEFAULT: 0.25rem;
+  --radius-lg:      0.5rem;
+  --radius-xl:      0.75rem;
+  --radius-2xl:     1rem;
+  --radius-full:    9999px;
+
+  /* Font families */
+  --font-inter:        Inter, sans-serif;
+  --font-body-lg:      Inter, sans-serif;
+  --font-body-md:      Inter, sans-serif;
+  --font-body-sm:      Inter, sans-serif;
+  --font-h1:           Inter, sans-serif;
+  --font-h2:           Inter, sans-serif;
+  --font-h3:           Inter, sans-serif;
+  --font-label-caps:   Inter, sans-serif;
+  --font-mono:         ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* Typography scale — text-* utilities */
+  --text-body-lg:               18px;
+  --text-body-lg--line-height:  1.6;
+  --text-body-lg--font-weight:  400;
+  --text-body-md:               16px;
+  --text-body-md--line-height:  1.6;
+  --text-body-md--font-weight:  400;
+  --text-body-sm:               14px;
+  --text-body-sm--line-height:  1.5;
+  --text-body-sm--font-weight:  400;
+  --text-h1:                    40px;
+  --text-h1--line-height:       1.2;
+  --text-h1--letter-spacing:    -0.02em;
+  --text-h1--font-weight:       700;
+  --text-h2:                    32px;
+  --text-h2--line-height:       1.2;
+  --text-h2--letter-spacing:    -0.01em;
+  --text-h2--font-weight:       600;
+  --text-h3:                    24px;
+  --text-h3--line-height:       1.3;
+  --text-h3--font-weight:       600;
+  --text-label-caps:                 12px;
+  --text-label-caps--line-height:    1;
+  --text-label-caps--letter-spacing: 0.05em;
+  --text-label-caps--font-weight:    600;
+  --text-mono:                  14px;
+  --text-mono--line-height:     1.5;
+  --text-mono--font-weight:     400;
+
+  /* Animation utilities */
+  --animate-float:            float 4s ease-in-out infinite;
+  --animate-slide-up:         slide-up 0.3s ease forwards;
+  --animate-fade-in:          fade-in 0.3s ease forwards;
+  --animate-scale-in:         scale-in 0.25s ease forwards;
+  --animate-slide-in-right:   slide-in-right 0.3s ease forwards;
+  --animate-shimmer:          shimmer 2.5s linear infinite;
+  --animate-pulse-glow:       pulse-glow 2s ease-in-out infinite;
+  --animate-blink:            blink 5s ease-in-out infinite;
+  --animate-antenna-pulse:    antenna-pulse 2s ease-in-out infinite alternate;
+}
+
+/* ============================================================
+   KEYFRAMES (referenced by --animate-* above)
+   ============================================================ */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%      { transform: translateY(-6px); }
+}
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(16px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes shimmer {
+  from { background-position: 200% center; }
+  to   { background-position: -200% center; }
+}
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(78, 222, 163, 0.4); }
+  50%      { box-shadow: 0 0 0 6px rgba(78, 222, 163, 0); }
+}
+@keyframes blink {
+  0%, 88%, 100% { transform: scaleY(1); }
+  94%           { transform: scaleY(0.08); }
+}
+@keyframes antenna-pulse {
+  0%   { filter: drop-shadow(0 0 2px rgba(78, 222, 163, 0.4)); }
+  100% { filter: drop-shadow(0 0 10px rgba(111, 251, 190, 0.9)); }
+}
+
+/* ============================================================
    BASE STYLES
    ============================================================ */
 @layer base {
@@ -238,7 +413,7 @@
     animation: pulse-glow 2s ease-in-out infinite;
   }
 
-  /* Interactive states */
+  /* Interactive states - kept for legacy direct-class usage; @utility variant below for @apply */
   .btn-interactive {
     transition: transform 0.1s ease, box-shadow 0.2s ease, background-color 0.15s ease;
   }
@@ -258,11 +433,35 @@
     border-radius: 6px;
   }
 
-  /* Slide-in transitions */
+  /* Slide-in transitions (kept for legacy usage) */
   .animate-slide-up       { animation: slide-up 0.3s ease forwards; }
   .animate-slide-in-right { animation: slide-in-right 0.3s ease forwards; }
   .animate-scale-in       { animation: scale-in 0.25s ease forwards; }
   .animate-fade-in        { animation: fade-in 0.25s ease forwards; }
+
+  /* Accent focus ring — subtle glow for inputs */
+  .focus-ring-glow:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgb(var(--color-primary) / 0.18),
+                0 0 0 1px rgb(var(--color-primary) / 0.6);
+    border-color: rgb(var(--color-primary)) !important;
+  }
+
+  /* Subtle SVG noise overlay — adds tactile grain over flat backgrounds */
+  .surface-grain {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.45 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    background-size: 160px 160px;
+  }
+}
+
+/* ============================================================
+   CUSTOM UTILITIES — registered with @utility so they are
+   @apply-able from component layer (Tailwind v4 requirement).
+   ============================================================ */
+@utility btn-interactive {
+  transition: transform 0.1s ease, box-shadow 0.2s ease, background-color 0.15s ease;
+  &:hover  { transform: translateY(-1px); }
+  &:active { transform: scale(0.97); }
 }
 
 /* ============================================================

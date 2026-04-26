@@ -40,18 +40,7 @@
       <span class="text-xs font-medium text-tertiary">System Status: Optimal</span>
     </div>
     <!-- Theme toggle -->
-    <button
-      (click)="toggleTheme()"
-      class="p-2 rounded-md text-on-surface-variant hover:text-on-surface hover:bg-on-surface/5 transition-colors btn-interactive"
-      [attr.aria-label]="themeService.theme() === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'"
-      title="Toggle theme"
-    >
-      @if (themeService.theme() === 'dark') {
-        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0" aria-hidden="true">light_mode</span>
-      } @else {
-        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1" aria-hidden="true">dark_mode</span>
-      }
-    </button>
+    <app-theme-toggle variant="nav" />
     <div class="h-6 w-px bg-outline-variant/50 mx-1"></div>
     <div class="relative">
       <button

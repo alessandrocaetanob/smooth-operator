@@ -32,6 +32,16 @@
 
 .eye {
   transition: cx 0.06s ease-out, cy 0.06s ease-out;
+  /* Use fill-box so scaleY pivots on the ellipse's own centre, not the SVG origin */
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: blink 5.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* Stagger the right eye so the two blinks desync over time and don't look mechanical. */
+.eye.right-eye {
+  animation-duration: 6.1s;
+  animation-delay: 0.04s;
 }
 
 /* ---- Hands ---- */
@@ -97,6 +107,20 @@
   animation: sleep-pulse 6s ease-in-out infinite;
 }
 
+/* Faster, gentler blink while typing (focused engagement) */
+.state-typing .eye {
+  animation-duration: 3.2s;
+}
+.state-typing .eye.right-eye {
+  animation-duration: 3.6s;
+}
+
+/* No live blinking when the mascot is asleep or hands cover the eyes */
+.state-sleep .eye,
+.state-password .eye {
+  animation: none;
+}
+
 /* ---- Keyframes ---- */
 @keyframes float {
   0%, 100% { transform: translateY(0); }
@@ -152,12 +176,21 @@
   50%       { transform: translateY(-10px); }
 }
 
+/* Natural squash blink: the eye ellipse compresses to a thin slit, then springs back.
+   Held closed for one frame only; total visible blink ~120ms inside a 5–6s loop. */
+@keyframes blink {
+  0%, 94%, 100% { transform: scaleY(1); }
+  96%           { transform: scaleY(0.08); }
+  98%           { transform: scaleY(1); }
+}
+
 /* ---- Reduced motion guard ---- */
 @media (prefers-reduced-motion: reduce) {
   .mascot-container,
   .mascot-svg,
   .antenna-bulb,
-  .chest-dot {
+  .chest-dot,
+  .eye {
     animation: none !important;
     transition: none !important;
   }
