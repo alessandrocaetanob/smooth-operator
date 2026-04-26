@@ -2,19 +2,178 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================
+   DESIGN TOKENS — CSS Custom Properties
+   Light values live in :root, dark overrides in .dark
+   Colors are space-separated RGB integers to support
+   Tailwind's opacity modifiers: rgb(var(--color-x) / 0.5)
+   ============================================================ */
+
+:root {
+  /* Surface hierarchy */
+  --color-background:                245 247 251;
+  --color-surface:                   255 255 255;
+  --color-surface-dim:               232 234 239;
+  --color-surface-bright:            245 247 251;
+  --color-surface-variant:           224 226 236;
+  --color-surface-tint:              0 84 214;
+  --color-surface-container:         234 236 243;
+  --color-surface-container-low:     240 242 249;
+  --color-surface-container-lowest:  255 255 255;
+  --color-surface-container-high:    223 225 232;
+  --color-surface-container-highest: 217 219 226;
+  /* On-surface text */
+  --color-on-background:             26 29 39;
+  --color-on-surface:                26 29 39;
+  --color-on-surface-variant:        68 71 90;
+  /* Borders */
+  --color-outline:                   117 120 145;
+  --color-outline-variant:           196 198 216;
+  /* Inverse */
+  --color-inverse-surface:           47 48 56;
+  --color-inverse-on-surface:        241 240 249;
+  /* Primary (blue) */
+  --color-primary:                   0 84 214;
+  --color-primary-container:         24 104 232;
+  --color-primary-fixed:             218 225 255;
+  --color-primary-fixed-dim:         179 197 255;
+  --color-on-primary:                255 255 255;
+  --color-on-primary-container:      255 255 255;
+  --color-on-primary-fixed:          0 24 73;
+  --color-on-primary-fixed-variant:  0 63 164;
+  --color-inverse-primary:           179 197 255;
+  /* Secondary (cyan) */
+  --color-secondary:                 0 104 116;
+  --color-secondary-container:       0 220 229;
+  --color-secondary-fixed:           158 239 255;
+  --color-secondary-fixed-dim:       0 220 229;
+  --color-on-secondary:              255 255 255;
+  --color-on-secondary-container:    0 55 57;
+  --color-on-secondary-fixed:        0 32 33;
+  --color-on-secondary-fixed-variant:0 79 83;
+  /* Tertiary (green) */
+  --color-tertiary:                  0 108 69;
+  --color-tertiary-container:        142 245 192;
+  --color-tertiary-fixed:            168 255 213;
+  --color-tertiary-fixed-dim:        78 222 163;
+  --color-on-tertiary:               255 255 255;
+  --color-on-tertiary-container:     0 33 19;
+  --color-on-tertiary-fixed:         0 33 19;
+  --color-on-tertiary-fixed-variant: 0 82 54;
+  /* Error (red) */
+  --color-error:                     186 26 26;
+  --color-error-container:           255 218 214;
+  --color-on-error:                  255 255 255;
+  --color-on-error-container:        65 0 2;
+
+  /* Glass utilities */
+  --glass-panel-bg:     rgba(255, 255, 255, 0.72);
+  --glass-panel-border: rgba(0, 0, 0, 0.08);
+  --glass-card-bg:      rgba(234, 236, 243, 0.65);
+  --glass-card-border:  rgba(0, 0, 0, 0.06);
+  --glass-blur:         12px;
+
+  /* Mascot skin — light */
+  --mascot-chassis:        #c4cdd8;
+  --mascot-chassis-stroke: #0054d6;
+  --mascot-screen:         #e8eaf0;
+  --mascot-screen-stroke:  #006a8a;
+  --mascot-eye:            #0054d6;
+  --mascot-hand:           #1868e8;
+  --mascot-antenna:        #008259;
+}
+
+.dark {
+  /* Surface hierarchy */
+  --color-background:                16 20 26;
+  --color-surface:                   16 20 26;
+  --color-surface-dim:               16 20 26;
+  --color-surface-bright:            53 57 64;
+  --color-surface-variant:           49 53 60;
+  --color-surface-tint:              179 197 255;
+  --color-surface-container:         28 32 38;
+  --color-surface-container-low:     24 28 34;
+  --color-surface-container-lowest:  10 14 20;
+  --color-surface-container-high:    38 42 49;
+  --color-surface-container-highest: 49 53 60;
+  /* On-surface text */
+  --color-on-background:             223 226 235;
+  --color-on-surface:                223 226 235;
+  --color-on-surface-variant:        194 198 216;
+  /* Borders */
+  --color-outline:                   140 144 161;
+  --color-outline-variant:           66 70 86;
+  /* Inverse */
+  --color-inverse-surface:           223 226 235;
+  --color-inverse-on-surface:        45 49 55;
+  /* Primary (electric blue) */
+  --color-primary:                   179 197 255;
+  --color-primary-container:         0 102 255;
+  --color-primary-fixed:             218 225 255;
+  --color-primary-fixed-dim:         179 197 255;
+  --color-on-primary:                0 43 117;
+  --color-on-primary-container:      248 247 255;
+  --color-on-primary-fixed:          0 24 73;
+  --color-on-primary-fixed-variant:  0 63 164;
+  --color-inverse-primary:           0 84 214;
+  /* Secondary (cyan) */
+  --color-secondary:                 230 254 255;
+  --color-secondary-container:       0 244 254;
+  --color-secondary-fixed:           99 247 255;
+  --color-secondary-fixed-dim:       0 220 229;
+  --color-on-secondary:              0 55 57;
+  --color-on-secondary-container:    0 108 113;
+  --color-on-secondary-fixed:        0 32 33;
+  --color-on-secondary-fixed-variant:0 79 83;
+  /* Tertiary (green) */
+  --color-tertiary:                  78 222 163;
+  --color-tertiary-container:        0 130 89;
+  --color-tertiary-fixed:            111 251 190;
+  --color-tertiary-fixed-dim:        78 222 163;
+  --color-on-tertiary:               0 56 36;
+  --color-on-tertiary-container:     225 255 236;
+  --color-on-tertiary-fixed:         0 33 19;
+  --color-on-tertiary-fixed-variant: 0 82 54;
+  /* Error */
+  --color-error:                     255 180 171;
+  --color-error-container:           147 0 10;
+  --color-on-error:                  105 0 5;
+  --color-on-error-container:        255 218 214;
+
+  /* Glass utilities */
+  --glass-panel-bg:     rgba(28, 32, 38, 0.5);
+  --glass-panel-border: rgba(255, 255, 255, 0.1);
+  --glass-card-bg:      rgba(49, 53, 60, 0.4);
+  --glass-card-border:  rgba(255, 255, 255, 0.07);
+
+  /* Mascot skin — dark */
+  --mascot-chassis:        #1c2026;
+  --mascot-chassis-stroke: #0066ff;
+  --mascot-screen:         #0a0e14;
+  --mascot-screen-stroke:  #00dce5;
+  --mascot-eye:            #00dce5;
+  --mascot-hand:           #0066ff;
+  --mascot-antenna:        #4edea3;
+}
+
+/* ============================================================
+   BASE STYLES
+   ============================================================ */
 @layer base {
+  html {
+    transition: background-color 0.25s ease, color 0.25s ease;
+  }
+
   body {
-    background-color: theme('colors.background');
-    color: theme('colors.on-background');
+    background-color: rgb(var(--color-background));
+    color: rgb(var(--color-on-background));
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   .material-symbols-outlined {
-    font-variation-settings:
-      'FILL' 0,
-      'wght' 400,
-      'GRAD' 0,
-      'opsz' 24;
-
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
     font-family: 'Material Symbols Outlined';
     font-weight: normal;
     font-style: normal;
@@ -29,46 +188,94 @@
     -webkit-font-feature-settings: 'liga';
     -webkit-font-smoothing: antialiased;
   }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  :focus-visible {
+    outline: 2px solid rgb(var(--color-primary));
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
 }
 
+/* ============================================================
+   UTILITIES
+   ============================================================ */
 @layer utilities {
+  /* Glass effects — theme-aware via CSS vars */
   .glass-panel {
-    background: rgba(28, 32, 38, 0.4);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--glass-panel-bg);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--glass-panel-border);
   }
+
   .glass-card {
-    background: rgba(49, 53, 60, 0.3);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--glass-card-bg);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--glass-card-border);
   }
+
+  /* Glow effects */
   .primary-glow {
-    box-shadow: 0 0 12px rgba(0, 102, 255, 0.3);
+    box-shadow: 0 0 16px rgb(var(--color-primary-container) / 0.35);
   }
+
   .primary-glow-hover:hover {
-    box-shadow: 0 0 16px rgba(0, 102, 255, 0.5);
+    box-shadow: 0 0 20px rgb(var(--color-primary-container) / 0.5);
   }
+
   .text-glow {
-    text-shadow: 0 0 8px rgba(0, 102, 255, 0.5);
+    text-shadow: 0 0 10px rgb(var(--color-primary-container) / 0.5);
   }
+
   .status-pulse {
-    animation: pulse-glow 2s infinite;
+    animation: pulse-glow 2s ease-in-out infinite;
   }
-  .electric-glow:hover {
-    box-shadow: 0 0 12px rgba(0, 102, 255, 0.6);
+
+  /* Interactive states */
+  .btn-interactive {
+    transition: transform 0.1s ease, box-shadow 0.2s ease, background-color 0.15s ease;
   }
+  .btn-interactive:hover  { transform: translateY(-1px); }
+  .btn-interactive:active { transform: scale(0.97); }
+
+  /* Shimmer skeleton */
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      rgb(var(--color-surface-container)) 0%,
+      rgb(var(--color-surface-container-high)) 50%,
+      rgb(var(--color-surface-container)) 100%
+    );
+    background-size: 200% auto;
+    animation: shimmer 1.8s linear infinite;
+    border-radius: 6px;
+  }
+
+  /* Slide-in transitions */
+  .animate-slide-up       { animation: slide-up 0.3s ease forwards; }
+  .animate-slide-in-right { animation: slide-in-right 0.3s ease forwards; }
+  .animate-scale-in       { animation: scale-in 0.25s ease forwards; }
+  .animate-fade-in        { animation: fade-in 0.25s ease forwards; }
 }
 
-@keyframes pulse-glow {
-  0% {
-    box-shadow: 0 0 0 0 rgba(78, 222, 163, 0.4);
-  }
-  70% {
-    box-shadow: 0 0 0 6px rgba(78, 222, 163, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(78, 222, 163, 0);
+/* ============================================================
+   REDUCED MOTION
+   Disables non-essential animations for accessibility.
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

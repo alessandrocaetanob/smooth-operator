@@ -1,48 +1,44 @@
 .mascot-container {
-  width: 150px;
-  height: 150px;
+  width: 160px;
+  height: 180px;
   margin: 0 auto;
   position: relative;
-  transition: transform 0.3s ease;
+  animation: float 4s ease-in-out infinite;
+  will-change: transform;
 }
 
 .mascot-container.small {
   width: 40px;
-  height: 40px;
+  height: 44px;
   margin: 0;
+  animation: none;
 }
 
 .mascot-svg {
   width: 100%;
   height: 100%;
   display: block;
+  overflow: visible;
 }
 
-.eyes {
-  transition:
-    transform 0.1s ease-out,
-    opacity 0.2s ease;
-  opacity: 1;
-}
-
-.eyes.hidden {
-  opacity: 0;
-  pointer-events: none;
-}
-
-.eyes-closed {
-  opacity: 0;
+/* ---- Eye states ---- */
+.eyes-open {
   transition: opacity 0.2s ease;
 }
 
-.eyes-closed.visible {
-  opacity: 1;
+.eyes-sleep {
+  transition: opacity 0.25s ease;
 }
 
+.eye {
+  transition: cx 0.06s ease-out, cy 0.06s ease-out;
+}
+
+/* ---- Hands ---- */
 .hands {
   opacity: 0;
   transform: translateY(50px);
-  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .hands.visible {
@@ -50,42 +46,120 @@
   transform: translateY(0);
 }
 
-.antenna-bulb.pulse {
-  animation: antenna-pulse 2s infinite alternate;
+/* ---- Mouths ---- */
+.mouth {
+  transition: opacity 0.25s ease;
 }
 
-.smile {
-  transition: d 0.3s ease;
+/* ---- Antenna ---- */
+.antenna-bulb {
+  animation: antenna-pulse 2s ease-in-out infinite alternate;
+  will-change: filter;
 }
 
-/* Float animation for the whole mascot to make it feel alive */
-.mascot-container {
-  animation: float 4s ease-in-out infinite;
+/* ---- Chest dots ---- */
+.chest-dot {
+  animation: blink-dot 4s ease-in-out infinite;
 }
 
-.mascot-container.small {
-  animation: none;
+.chest-dot:nth-child(2) { animation-delay: 0.6s; }
+.chest-dot:nth-child(3) { animation-delay: 1.2s; }
+
+/* ---- State-specific overrides ---- */
+
+/* Loading: head rocks side to side */
+.state-loading .mascot-svg {
+  animation: loading-rock 1s ease-in-out infinite;
+}
+
+/* Success: quick bounce up */
+.state-success .mascot-container {
+  animation: success-bounce 0.5s ease-out;
+}
+
+/* Error: head shakes */
+.state-error .mascot-svg {
+  animation: error-shake 0.45s ease-out;
+}
+
+/* Thinking: slight tilt */
+.state-thinking .mascot-svg {
+  animation: thinking-tilt 2.5s ease-in-out infinite;
+}
+
+/* Wave: right arm waves (body moves) */
+.state-wave .mascot-container {
+  animation: wave-bounce 0.6s ease-in-out 2;
+}
+
+/* Sleep: very slow pulse instead of float */
+.state-sleep .mascot-container {
+  animation: sleep-pulse 6s ease-in-out infinite;
+}
+
+/* ---- Keyframes ---- */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-7px); }
+}
+
+@keyframes sleep-pulse {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50%       { transform: translateY(-3px) scale(1.01); }
 }
 
 @keyframes antenna-pulse {
-  0% {
-    fill: #4edea3;
-    filter: drop-shadow(0 0 2px rgba(78, 222, 163, 0.5));
-  }
-  100% {
-    fill: #6ffbbe;
-    filter: drop-shadow(0 0 8px rgba(111, 251, 190, 0.9));
+  0%   { filter: drop-shadow(0 0 2px rgba(78, 222, 163, 0.4)); }
+  100% { filter: drop-shadow(0 0 10px rgba(111, 251, 190, 0.95)); }
+}
+
+@keyframes blink-dot {
+  0%, 90%, 100% { opacity: 0.85; }
+  95%           { opacity: 0.2; }
+}
+
+@keyframes loading-rock {
+  0%, 100% { transform: rotate(-4deg); }
+  50%       { transform: rotate(4deg); }
+}
+
+@keyframes success-bounce {
+  0%        { transform: translateY(0) scale(1); }
+  35%       { transform: translateY(-14px) scale(1.05); }
+  65%       { transform: translateY(-6px) scale(0.98); }
+  80%       { transform: translateY(-10px) scale(1.02); }
+  100%      { transform: translateY(0) scale(1); }
+}
+
+@keyframes error-shake {
+  0%        { transform: translateX(0); }
+  18%       { transform: translateX(-6px); }
+  36%       { transform: translateX(6px); }
+  54%       { transform: translateX(-4px); }
+  72%       { transform: translateX(4px); }
+  88%       { transform: translateX(-2px); }
+  100%      { transform: translateX(0); }
+}
+
+@keyframes thinking-tilt {
+  0%, 100% { transform: rotate(0deg); }
+  30%      { transform: rotate(-4deg); }
+  70%      { transform: rotate(4deg); }
+}
+
+@keyframes wave-bounce {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-10px); }
+}
+
+/* ---- Reduced motion guard ---- */
+@media (prefers-reduced-motion: reduce) {
+  .mascot-container,
+  .mascot-svg,
+  .antenna-bulb,
+  .chest-dot {
+    animation: none !important;
+    transition: none !important;
   }
 }
 
-@keyframes float {
-  0% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-5px);
-  }
-  100% {
-    transform: translateY(0px);
-  }
-}
