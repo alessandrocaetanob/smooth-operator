@@ -8,6 +8,7 @@
       <span
         class="material-symbols-outlined text-primary"
         style="font-variation-settings: 'FILL' 1"
+        aria-hidden="true"
         >security</span
       >
     </div>
@@ -23,7 +24,7 @@
         (click)="newConnection()"
         class="w-full flex items-center justify-center gap-2 bg-primary-container hover:bg-primary text-on-primary-container py-2.5 px-4 rounded-lg transition-all duration-200 text-xs font-bold tracking-widest uppercase btn-interactive primary-glow-hover"
       >
-        <span class="material-symbols-outlined text-sm">add</span>
+        <span class="material-symbols-outlined text-sm" aria-hidden="true">add</span>
         New Connection
       </button>
     </div>
@@ -37,7 +38,7 @@
           routerLinkActive="bg-primary-container/15 text-primary border-l-primary"
           class="flex items-center gap-3 text-on-surface-variant px-3 py-2.5 rounded-lg hover:bg-on-surface/5 hover:text-on-surface transition-all border-l-2 border-l-transparent"
         >
-          <span class="material-symbols-outlined">verified_user</span>
+          <span class="material-symbols-outlined" aria-hidden="true">verified_user</span>
           <span>My Access</span>
         </a>
       </li>
@@ -48,7 +49,7 @@
           [routerLinkActiveOptions]="{ exact: false }"
           class="flex items-center gap-3 text-on-surface-variant px-3 py-2.5 rounded-lg hover:bg-on-surface/5 hover:text-on-surface transition-all border-l-2 border-l-transparent"
         >
-          <span class="material-symbols-outlined">dashboard</span>
+          <span class="material-symbols-outlined" aria-hidden="true">dashboard</span>
           <span>My Vaults</span>
         </a>
       </li>
@@ -59,7 +60,7 @@
             routerLinkActive="bg-primary-container/15 text-primary border-l-primary"
             class="flex items-center gap-3 text-on-surface-variant px-3 py-2.5 rounded-lg hover:bg-on-surface/5 hover:text-on-surface transition-all border-l-2 border-l-transparent"
           >
-            <span class="material-symbols-outlined">hub</span>
+            <span class="material-symbols-outlined" aria-hidden="true">hub</span>
             <span>Connections</span>
           </a>
         </li>
@@ -71,7 +72,7 @@
             routerLinkActive="bg-primary-container/15 text-primary border-l-primary"
             class="flex items-center gap-3 text-on-surface-variant px-3 py-2.5 rounded-lg hover:bg-on-surface/5 hover:text-on-surface transition-all border-l-2 border-l-transparent"
           >
-            <span class="material-symbols-outlined">key</span>
+            <span class="material-symbols-outlined" aria-hidden="true">key</span>
             <span>Credentials</span>
           </a>
         </li>
@@ -83,7 +84,7 @@
             routerLinkActive="bg-primary-container/15 text-primary border-l-primary"
             class="flex items-center gap-3 text-on-surface-variant px-3 py-2.5 rounded-lg hover:bg-on-surface/5 hover:text-on-surface transition-all border-l-2 border-l-transparent"
           >
-            <span class="material-symbols-outlined">settings</span>
+            <span class="material-symbols-outlined" aria-hidden="true">settings</span>
             <span>Settings</span>
           </a>
         </li>
@@ -98,7 +99,7 @@
           (click)="logout()"
           class="w-full flex items-center gap-3 px-3 py-2.5 text-on-surface-variant hover:text-error hover:bg-error/10 transition-all rounded-lg"
         >
-          <span class="material-symbols-outlined text-lg">logout</span>
+          <span class="material-symbols-outlined text-lg" aria-hidden="true">logout</span>
           <span>Sign out</span>
         </button>
       </li>

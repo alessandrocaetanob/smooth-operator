@@ -5,14 +5,14 @@
     (click)="cancel()"
     role="dialog"
     aria-modal="true"
-    [attr.aria-label]="req.title"
+    aria-labelledby="dialog-title"
   >
     <div
       @scaleIn
       class="w-full max-w-md glass-panel rounded-xl p-6 shadow-2xl"
       (click)="$event.stopPropagation()"
     >
-      <h3 class="text-sm font-semibold text-on-surface uppercase tracking-widest">
+      <h3 id="dialog-title" class="text-sm font-semibold text-on-surface uppercase tracking-widest">
         {{ req.title }}
       </h3>
       <p class="text-sm text-on-surface-variant mt-3 whitespace-pre-line">{{ req.message }}</p>

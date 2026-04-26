@@ -7,7 +7,7 @@
       class="md:hidden text-on-surface-variant hover:text-on-surface p-1 rounded-md hover:bg-on-surface/5 transition-colors"
       aria-label="Open menu"
     >
-      <span class="material-symbols-outlined">menu</span>
+      <span class="material-symbols-outlined" aria-hidden="true">menu</span>
     </button>
     <div class="hidden md:flex items-center gap-2 mr-4">
       <app-mascot [isSmall]="true" [state]="navMascotState()"></app-mascot>
@@ -21,6 +21,7 @@
     <div class="relative hidden sm:block w-64 md:w-80 group">
       <span
         class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-on-surface-variant group-focus-within:text-primary transition-colors"
+        aria-hidden="true"
         >search</span
       >
       <input
@@ -46,9 +47,9 @@
       title="Toggle theme"
     >
       @if (themeService.theme() === 'dark') {
-        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0">light_mode</span>
+        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0" aria-hidden="true">light_mode</span>
       } @else {
-        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">dark_mode</span>
+        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1" aria-hidden="true">dark_mode</span>
       }
     </button>
     <div class="h-6 w-px bg-outline-variant/50 mx-1"></div>
@@ -56,6 +57,7 @@
       <button
         (click)="toggleMenu()"
         class="flex items-center gap-2 hover:bg-on-surface/5 p-1 pr-2 rounded-full transition-colors btn-interactive"
+        aria-haspopup="true"
         [attr.aria-expanded]="menuOpen"
       >
         <div
@@ -64,7 +66,7 @@
           {{ initials() }}
         </div>
         <span class="hidden md:block text-xs text-on-surface-variant">{{ user()?.name || 'Account' }}</span>
-        <span class="material-symbols-outlined text-base text-on-surface-variant">arrow_drop_down</span>
+        <span class="material-symbols-outlined text-base text-on-surface-variant" aria-hidden="true">arrow_drop_down</span>
       </button>
       @if (menuOpen) {
         <div
@@ -80,7 +82,7 @@
               routerLink="/settings"
               class="flex items-center gap-2 px-4 py-2 text-sm text-on-surface hover:bg-on-surface/5 cursor-pointer transition-colors"
             >
-              <span class="material-symbols-outlined text-base">settings</span>
+              <span class="material-symbols-outlined text-base" aria-hidden="true">settings</span>
               Settings
             </a>
           }
@@ -88,7 +90,7 @@
             (click)="logout()"
             class="w-full flex items-center gap-2 px-4 py-2 text-sm text-error hover:bg-error/10 cursor-pointer text-left transition-colors"
           >
-            <span class="material-symbols-outlined text-base">logout</span>
+            <span class="material-symbols-outlined text-base" aria-hidden="true">logout</span>
             Sign out
           </button>
         </div>
