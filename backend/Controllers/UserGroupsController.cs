@@ -32,11 +32,15 @@ namespace Backend.Controllers
             var groups = await _db.UserGroups
                 .AsNoTracking()
                 .Include(g => g.Members)
+                .Include(g => g.Owner)
                 .OrderBy(g => g.Name)
                 .Select(g => new UserGroupDto
                 {
                     Id = g.Id,
                     Name = g.Name,
+                    Description = g.Description,
+                    OwnerUserId = g.OwnerUserId,
+                    OwnerName = g.Owner != null ? g.Owner.Name : null,
                     CreatedAt = g.CreatedAt,
                     MemberCount = g.Members.Count,
                     Members = g.Members
@@ -96,10 +100,23 @@ namespace Backend.Controllers
                 return Conflict(new { message = $"A group named \"{name}\" already exists." });
             }
 
-            var group = new UserGroup { Name = name };
+            if (req.OwnerUserId.HasValue)
+            {
+                var ownerExists = await _db.Users.AnyAsync(u => u.Id == req.OwnerUserId.Value);
+                if (!ownerExists)
+                    return BadRequest(new { message = "Owner user does not exist." });
+            }
+
+            var group = new UserGroup
+            {
+                Name = name,
+                Description = string.IsNullOrWhiteSpace(req.Description) ? null : req.Description.Trim(),
+                OwnerUserId = req.OwnerUserId
+            };
             _db.UserGroups.Add(group);
             await _db.SaveChangesAsync();
-            await _audit.WriteAsync("group.created", "UserGroup", group.Id.ToString(), new { group.Name });
+            await _audit.WriteAsync("group.created", "UserGroup", group.Id.ToString(),
+                new { group.Name, group.Description, group.OwnerUserId });
 
             var dto = await BuildGroupDtoAsync(group.Id);
             return CreatedAtAction(nameof(Get), new { id = group.Id }, dto);
@@ -121,10 +138,31 @@ namespace Backend.Controllers
                 return Conflict(new { message = $"A group named \"{name}\" already exists." });
             }
 
+            if (req.OwnerUserId.HasValue)
+            {
+                var ownerExists = await _db.Users.AnyAsync(u => u.Id == req.OwnerUserId.Value);
+                if (!ownerExists)
+                    return BadRequest(new { message = "Owner user does not exist." });
+            }
+
+            var previousDescription = group.Description;
+            var previousOwnerId = group.OwnerUserId;
+
             group.Name = name;
+            group.Description = string.IsNullOrWhiteSpace(req.Description) ? null : req.Description.Trim();
+            group.OwnerUserId = req.OwnerUserId;
+
             await _db.SaveChangesAsync();
-            await _audit.WriteAsync("group.renamed", "UserGroup", group.Id.ToString(),
-                new { previousName, newName = group.Name });
+            await _audit.WriteAsync("group.updated", "UserGroup", group.Id.ToString(),
+                new
+                {
+                    previousName,
+                    newName = group.Name,
+                    previousDescription,
+                    newDescription = group.Description,
+                    previousOwnerId,
+                    newOwnerId = group.OwnerUserId
+                });
 
             var dto = await BuildGroupDtoAsync(group.Id);
             return Ok(dto);
@@ -208,11 +246,15 @@ namespace Backend.Controllers
             return await _db.UserGroups
                 .AsNoTracking()
                 .Include(g => g.Members)
+                .Include(g => g.Owner)
                 .Where(g => g.Id == id)
                 .Select(g => new UserGroupDto
                 {
                     Id = g.Id,
                     Name = g.Name,
+                    Description = g.Description,
+                    OwnerUserId = g.OwnerUserId,
+                    OwnerName = g.Owner != null ? g.Owner.Name : null,
                     CreatedAt = g.CreatedAt,
                     MemberCount = g.Members.Count,
                     Members = g.Members

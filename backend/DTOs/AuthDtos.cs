@@ -48,4 +48,23 @@ namespace Backend.DTOs
         public bool LinkedToEntra { get; set; }
         public List<string> Roles { get; set; } = new();
     }
+
+    public class InviteUserRequest
+    {
+        [Required(ErrorMessage = "Email is required")]
+        [EmailAddress(ErrorMessage = "Invalid email format")]
+        [StringLength(255, ErrorMessage = "Email cannot exceed 255 characters")]
+        public string Email { get; set; } = string.Empty;
+
+        [StringLength(255, ErrorMessage = "Name cannot exceed 255 characters")]
+        public string? Name { get; set; }
+
+        /// <summary>
+        /// Initial role for the invited user. Defaults to <c>User</c>. Cannot be
+        /// <c>Owner</c>; the Owner role is reserved for the bootstrap account and
+        /// promotions handled separately.
+        /// </summary>
+        [StringLength(64)]
+        public string? Role { get; set; }
+    }
 }

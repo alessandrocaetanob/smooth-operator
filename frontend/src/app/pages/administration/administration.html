@@ -97,6 +97,24 @@
           required
           class="bg-slate-900 border border-white/10 focus:border-blue-500 text-sm text-slate-200 rounded px-3 py-2 outline-none"
         />
+        <label class="md:col-span-2 flex flex-col gap-1 text-xs text-slate-400">
+          <span class="uppercase tracking-widest">Role</span>
+          <select
+            [ngModel]="inviteRole()"
+            (ngModelChange)="inviteRole.set($event)"
+            name="role"
+            class="bg-slate-900 border border-white/10 focus:border-blue-500 text-sm text-slate-200 rounded px-3 py-2 outline-none"
+          >
+            @for (r of invitableRoles(); track trackRole($index, r)) {
+              <option [value]="r.name">{{ r.name }} — {{ r.description }}</option>
+            }
+            @if (invitableRoles().length === 0) {
+              <option value="User">User</option>
+              <option value="TeamAdmin">TeamAdmin</option>
+              <option value="Admin">Admin</option>
+            }
+          </select>
+        </label>
         <div class="md:col-span-2 flex justify-end gap-2">
           <button
             type="button"

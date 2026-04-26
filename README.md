@@ -85,7 +85,7 @@ dotnet run
 
 *   **Zero-Friction Auth:** Passwordless/SSO-first entry flow. The backend handles token claims and team membership logic transparently.
 *   **Role-Based Vault Dashboards:** Admins can manage teams and register server instances, while Operators view an organized bento-grid dashboard of accessible servers without ever seeing the underlying credentials.
-*   **Built-in RBAC Defaults:** Owner (root bootstrap account), Admin (users/vaults/credentials), TeamAdmin (connections in assigned vaults), and User (connect-only access in assigned vaults).
+*   **Built-in RBAC Defaults:** Owner (root bootstrap account), Admin (users/vaults/credentials), TeamAdmin (connections in assigned vaults), and User (connect-only access in assigned vaults). New users are added through invite-only flow; direct self-registration is disabled outside Development unless `Auth:AllowSelfRegister=true` is set.
 *   **Instant Browser Connections:** Initiating a connection opens a seamless HTML5 Canvas session using `guacamole-common-js`, immediately capturing input devices without local software.
 *   **Comprehensive Audit Logs:** A robust auditing view allows administrators to trace historical sessions, operator actions, and connection durations.
 

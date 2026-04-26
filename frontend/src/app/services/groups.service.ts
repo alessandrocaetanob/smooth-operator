@@ -12,9 +12,18 @@ export interface UserGroupMember {
 export interface UserGroup {
   id: string;
   name: string;
+  description?: string | null;
+  ownerUserId?: string | null;
+  ownerName?: string | null;
   createdAt: string;
   memberCount: number;
   members: UserGroupMember[];
+}
+
+export interface UpdateGroupPayload {
+  name: string;
+  description?: string | null;
+  ownerUserId?: string | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -28,14 +37,20 @@ export class GroupsService {
     );
   }
 
-  create(name: string): Observable<UserGroup> {
-    return this.http.post<UserGroup>('/api/groups', { name }).pipe(
+  create(payload: { name: string; description?: string | null; ownerUserId?: string | null }): Observable<UserGroup> {
+    return this.http.post<UserGroup>('/api/groups', payload).pipe(
       tap(() => this.reload().subscribe()),
     );
   }
 
   rename(id: string, name: string): Observable<UserGroup> {
     return this.http.put<UserGroup>(`/api/groups/${id}`, { name }).pipe(
+      tap(() => this.reload().subscribe()),
+    );
+  }
+
+  update(id: string, payload: UpdateGroupPayload): Observable<UserGroup> {
+    return this.http.put<UserGroup>(`/api/groups/${id}`, payload).pipe(
       tap(() => this.reload().subscribe()),
     );
   }

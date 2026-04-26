@@ -70,7 +70,7 @@ export class UsersService {
     return this.http.delete<void>(`/api/users/${id}`);
   }
 
-  invite(payload: { email: string; name?: string; password?: string }): Observable<InviteResult> {
+  invite(payload: { email: string; name?: string; password?: string; role?: string }): Observable<InviteResult> {
     return this.http.post<any>('/api/auth/invite', payload).pipe(
       map((raw) => ({
         message: pickOr(raw, '', 'message', 'Message'),

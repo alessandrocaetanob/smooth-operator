@@ -209,6 +209,85 @@ namespace Backend.Controllers
             return NoContent();
         }
 
+        [HttpGet("{id}/effective-users")]
+        [Authorize(Roles = AppRoles.OwnerAdminOrTeamAdmin)]
+        public async Task<ActionResult<VaultEffectiveUsersDto>> GetEffectiveUsers(Guid id)
+        {
+            var profile = await _access.GetCurrentProfileAsync(User);
+            if (profile == null) return Unauthorized();
+
+            // TeamAdmins can only inspect vaults they have access to.
+            if (!profile.IsOwnerOrAdmin && !profile.VaultIds.Contains(id))
+            {
+                return Forbid();
+            }
+
+            var vault = await _context.ConnectionGroups
+                .AsNoTracking()
+                .Where(v => v.Id == id)
+                .Select(v => new
+                {
+                    v.Id,
+                    v.Name,
+                    DirectUsers = v.Users.Select(u => new
+                    {
+                        u.Id,
+                        u.Name,
+                        u.Email,
+                        u.IsActive,
+                        Roles = u.Roles.Select(r => r.Name).ToList()
+                    }).ToList(),
+                    GroupUsers = v.Groups.SelectMany(g => g.Members.Select(u => new
+                    {
+                        UserId = u.Id,
+                        u.Name,
+                        u.Email,
+                        u.IsActive,
+                        Roles = u.Roles.Select(r => r.Name).ToList(),
+                        GroupId = g.Id
+                    })).ToList()
+                })
+                .FirstOrDefaultAsync();
+
+            if (vault == null) return NotFound();
+
+            var directIds = vault.DirectUsers.Select(u => u.Id).ToHashSet();
+            var groupedByUser = vault.GroupUsers
+                .GroupBy(gu => gu.UserId)
+                .ToDictionary(grp => grp.Key, grp => grp.ToList());
+
+            var allUserIds = directIds.Union(groupedByUser.Keys).ToList();
+
+            var users = new List<EffectiveUserSourceDto>();
+            foreach (var uid in allUserIds)
+            {
+                var direct = vault.DirectUsers.FirstOrDefault(u => u.Id == uid);
+                var viaGroups = groupedByUser.TryGetValue(uid, out var list) ? list : null;
+                var name = direct?.Name ?? viaGroups?[0].Name ?? string.Empty;
+                var email = direct?.Email ?? viaGroups?[0].Email ?? string.Empty;
+                var isActive = direct?.IsActive ?? viaGroups?[0].IsActive ?? false;
+                var roles = direct?.Roles ?? viaGroups?[0].Roles ?? new List<string>();
+
+                users.Add(new EffectiveUserSourceDto
+                {
+                    Id = uid,
+                    Name = name,
+                    Email = email,
+                    IsActive = isActive,
+                    Roles = roles,
+                    DirectAssignment = directIds.Contains(uid),
+                    ViaGroupIds = viaGroups?.Select(v => v.GroupId).Distinct().ToList() ?? new List<Guid>()
+                });
+            }
+
+            return Ok(new VaultEffectiveUsersDto
+            {
+                VaultId = vault.Id,
+                VaultName = vault.Name,
+                Users = users.OrderBy(u => u.Name).ToList()
+            });
+        }
+
         private async Task<bool> VaultNameExistsAsync(string name, Guid? excludeId)
         {
             var query = _context.ConnectionGroups.AsNoTracking()

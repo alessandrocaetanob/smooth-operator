@@ -53,6 +53,17 @@ namespace Backend.Data
                 .HasMany(cg => cg.Groups)
                 .WithMany(g => g.Vaults);
 
+            // UserGroup -> Owner (User). SetNull on user delete so groups outlive their owner.
+            modelBuilder.Entity<UserGroup>()
+                .HasOne(g => g.Owner)
+                .WithMany()
+                .HasForeignKey(g => g.OwnerUserId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<UserGroup>()
+                .Property(g => g.Description)
+                .HasMaxLength(500);
+
             // Self-referencing ConnectionGroup
             modelBuilder.Entity<ConnectionGroup>()
                 .HasOne(cg => cg.ParentGroup)

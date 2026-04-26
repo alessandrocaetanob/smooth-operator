@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 
 namespace Backend.Controllers
 {
@@ -23,19 +24,22 @@ namespace Backend.Controllers
         private readonly ITokenService _tokenService;
         private readonly IInviteService _inviteService;
         private readonly IEmailService _emailService;
+        private readonly IHostEnvironment _environment;
 
         public AuthController(
             AppDbContext context,
             IConfiguration configuration,
             ITokenService tokenService,
             IInviteService inviteService,
-            IEmailService emailService)
+            IEmailService emailService,
+            IHostEnvironment environment)
         {
             _context = context;
             _configuration = configuration;
             _tokenService = tokenService;
             _inviteService = inviteService;
             _emailService = emailService;
+            _environment = environment;
         }
 
         // Lets the frontend discover which login methods are enabled and whether
@@ -117,13 +121,22 @@ namespace Backend.Controllers
             return Ok(BuildAuthResponse(user));
         }
 
-        // Local user registration. Restricted to authenticated callers – the
-        // application is the source of truth for users and additional accounts
-        // are created via invite or by an existing administrator.
+        // Local user registration. Even though this endpoint is gated by
+        // <c>OwnerOrAdmin</c>, the recommended onboarding flow is invite-based.
+        // Setting <c>Auth:AllowSelfRegister=false</c> (the default outside
+        // Development) hides this endpoint with a 404 — defense in depth so a
+        // misconfigured policy can't expose direct user creation in production.
         [HttpPost("register")]
         [Authorize(Roles = AppRoles.OwnerOrAdmin)]
         public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
+            var allowSelfRegister = _configuration.GetValue<bool?>("Auth:AllowSelfRegister")
+                                    ?? _environment.IsDevelopment();
+            if (!allowSelfRegister)
+            {
+                return NotFound();
+            }
+
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
             var email = request.Email.Trim().ToLowerInvariant();
@@ -345,18 +358,41 @@ namespace Backend.Controllers
                 return Conflict("User already exists.");
             }
 
-            var defaultUserRole = await RequireRoleAsync(
-                AppRoles.User,
-                "Can use connections in assigned vaults.");
+            var requestedRole = string.IsNullOrWhiteSpace(request.Role)
+                ? AppRoles.User
+                : AppRoles.Normalize(request.Role!);
+
+            if (!AppRoles.IsKnown(requestedRole))
+            {
+                return BadRequest(new { message = $"Unknown role \"{request.Role}\"." });
+            }
+
+            if (string.Equals(requestedRole, AppRoles.Owner, StringComparison.OrdinalIgnoreCase))
+            {
+                return BadRequest(new { message = "Owner role cannot be assigned via invite." });
+            }
+
+            var role = await RequireRoleAsync(
+                requestedRole,
+                requestedRole switch
+                {
+                    AppRoles.Admin => "Can create groups, invite users, vaults and credentials.",
+                    AppRoles.TeamAdmin => "Can create/manage connections in assigned vaults.",
+                    _ => "Can use connections in assigned vaults."
+                });
+
+            var displayName = string.IsNullOrWhiteSpace(request.Name)
+                ? request.Email
+                : request.Name!.Trim();
 
             var user = new User
             {
                 Id = Guid.NewGuid(),
                 Email = email,
-                Name = request.Email,
+                Name = displayName,
                 IsActive = false
             };
-            user.Roles.Add(defaultUserRole);
+            user.Roles.Add(role);
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
@@ -383,7 +419,13 @@ namespace Backend.Controllers
                 Action = "user.invited",
                 ResourceType = "User",
                 ResourceId = user.Id.ToString(),
-                Details = System.Text.Json.JsonSerializer.Serialize(new { email = user.Email, emailSent }),
+                Details = System.Text.Json.JsonSerializer.Serialize(new
+                {
+                    email = user.Email,
+                    name = user.Name,
+                    role = requestedRole,
+                    emailSent
+                }),
                 IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? ""
             });
             await _context.SaveChangesAsync();
@@ -453,13 +495,5 @@ namespace Backend.Controllers
             _context.Roles.Add(role);
             return role;
         }
-    }
-
-    public class InviteUserRequest
-    {
-        [Required(ErrorMessage = "Email is required")]
-        [EmailAddress(ErrorMessage = "Invalid email format")]
-        [StringLength(255, ErrorMessage = "Email cannot exceed 255 characters")]
-        public string Email { get; set; } = string.Empty;
     }
 }

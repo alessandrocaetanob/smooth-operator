@@ -8,6 +8,9 @@ namespace Backend.DTOs
     {
         public Guid Id { get; set; }
         public string Name { get; set; } = string.Empty;
+        public string? Description { get; set; }
+        public Guid? OwnerUserId { get; set; }
+        public string? OwnerName { get; set; }
         public DateTime CreatedAt { get; set; }
         public int MemberCount { get; set; }
         public List<UserGroupMemberDto> Members { get; set; } = new();
@@ -33,6 +36,11 @@ namespace Backend.DTOs
         [Required(ErrorMessage = "Group name is required")]
         [StringLength(120, MinimumLength = 1, ErrorMessage = "Group name must be between 1 and 120 characters")]
         public string Name { get; set; } = string.Empty;
+
+        [StringLength(500, ErrorMessage = "Description cannot exceed 500 characters")]
+        public string? Description { get; set; }
+
+        public Guid? OwnerUserId { get; set; }
     }
 
     public class RenameUserGroupRequest
@@ -40,6 +48,11 @@ namespace Backend.DTOs
         [Required(ErrorMessage = "Group name is required")]
         [StringLength(120, MinimumLength = 1, ErrorMessage = "Group name must be between 1 and 120 characters")]
         public string Name { get; set; } = string.Empty;
+
+        [StringLength(500, ErrorMessage = "Description cannot exceed 500 characters")]
+        public string? Description { get; set; }
+
+        public Guid? OwnerUserId { get; set; }
     }
 
     public class SetUserGroupMembersRequest

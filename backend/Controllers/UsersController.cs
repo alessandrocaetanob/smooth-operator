@@ -96,6 +96,12 @@ namespace Backend.Controllers
             return NoContent();
         }
 
+        /// <summary>
+        /// Replaces the user's role. Smooth Operator enforces a single-role policy: the
+        /// user's existing role assignment is cleared and replaced with the requested
+        /// role. There is no additive role accumulation. The last active Owner cannot
+        /// be demoted while still active.
+        /// </summary>
         [HttpPut("{id}/role")]
         public async Task<IActionResult> SetRole(Guid id, [FromBody] SetUserRoleRequest dto)
         {
@@ -240,6 +246,52 @@ namespace Backend.Controllers
             await _context.SaveChangesAsync();
             await _audit.WriteAsync("user.deleted", "User", id.ToString(), new { user.Email });
             return NoContent();
+        }
+
+        [HttpGet("{id}/effective-vaults")]
+        public async Task<ActionResult<UserEffectiveVaultsDto>> GetEffectiveVaults(Guid id)
+        {
+            var user = await _context.Users
+                .AsNoTracking()
+                .Where(u => u.Id == id)
+                .Select(u => new
+                {
+                    u.Id,
+                    Direct = u.ConnectionGroups
+                        .OrderBy(v => v.Name)
+                        .Select(v => new EffectiveVaultDto { Id = v.Id, Name = v.Name, ParentGroupId = v.ParentGroupId })
+                        .ToList(),
+                    ViaGroups = u.Groups
+                        .OrderBy(g => g.Name)
+                        .Select(g => new EffectiveGroupVaultsDto
+                        {
+                            GroupId = g.Id,
+                            GroupName = g.Name,
+                            Vaults = g.Vaults
+                                .OrderBy(v => v.Name)
+                                .Select(v => new EffectiveVaultDto { Id = v.Id, Name = v.Name, ParentGroupId = v.ParentGroupId })
+                                .ToList()
+                        })
+                        .ToList()
+                })
+                .FirstOrDefaultAsync();
+
+            if (user is null) return NotFound();
+
+            var merged = user.Direct
+                .Concat(user.ViaGroups.SelectMany(g => g.Vaults))
+                .GroupBy(v => v.Id)
+                .Select(grp => grp.First())
+                .OrderBy(v => v.Name)
+                .ToList();
+
+            return Ok(new UserEffectiveVaultsDto
+            {
+                UserId = user.Id,
+                Direct = user.Direct,
+                ViaGroups = user.ViaGroups,
+                Merged = merged
+            });
         }
 
         private static UserListItemDto Project(User user) => new()

@@ -46,4 +46,44 @@ namespace Backend.DTOs
     {
         public List<Guid> VaultIds { get; set; } = new();
     }
+
+    public class EffectiveVaultDto
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public Guid? ParentGroupId { get; set; }
+    }
+
+    public class EffectiveGroupVaultsDto
+    {
+        public Guid GroupId { get; set; }
+        public string GroupName { get; set; } = string.Empty;
+        public List<EffectiveVaultDto> Vaults { get; set; } = new();
+    }
+
+    public class UserEffectiveVaultsDto
+    {
+        public Guid UserId { get; set; }
+        public List<EffectiveVaultDto> Direct { get; set; } = new();
+        public List<EffectiveGroupVaultsDto> ViaGroups { get; set; } = new();
+        public List<EffectiveVaultDto> Merged { get; set; } = new();
+    }
+
+    public class EffectiveUserSourceDto
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public bool IsActive { get; set; }
+        public List<string> Roles { get; set; } = new();
+        public bool DirectAssignment { get; set; }
+        public List<Guid> ViaGroupIds { get; set; } = new();
+    }
+
+    public class VaultEffectiveUsersDto
+    {
+        public Guid VaultId { get; set; }
+        public string VaultName { get; set; } = string.Empty;
+        public List<EffectiveUserSourceDto> Users { get; set; } = new();
+    }
 }

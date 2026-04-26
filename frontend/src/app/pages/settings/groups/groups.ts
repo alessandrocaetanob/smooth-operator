@@ -68,7 +68,7 @@ export class SettingsGroups implements OnInit {
     }
     this.groupBusy.set(true);
     this.errorMessage.set(null);
-    this.groupsSvc.create(name).subscribe({
+    this.groupsSvc.create({ name }).subscribe({
       next: () => {
         this.groupBusy.set(false);
         this.newGroupName.set('');

@@ -28,6 +28,7 @@ export class Administration implements OnInit {
   readonly showInvite = signal(false);
   readonly inviteName = signal('');
   readonly inviteEmail = signal('');
+  readonly inviteRole = signal<string>('User');
   readonly inviteBusy = signal(false);
 
   readonly inviteResult = signal<InviteResult | null>(null);
@@ -65,6 +66,7 @@ export class Administration implements OnInit {
     if (!this.showInvite()) {
       this.inviteName.set('');
       this.inviteEmail.set('');
+      this.inviteRole.set('User');
     }
   }
 
@@ -72,13 +74,14 @@ export class Administration implements OnInit {
     if (this.inviteBusy()) return;
     const name = this.inviteName().trim();
     const email = this.inviteEmail().trim();
+    const role = this.inviteRole();
     if (!email) {
       this.errorMessage.set('Email is required.');
       return;
     }
     this.inviteBusy.set(true);
     this.errorMessage.set(null);
-    this.usersSvc.invite({ name: name || undefined, email }).subscribe({
+    this.usersSvc.invite({ name: name || undefined, email, role }).subscribe({
       next: (res) => {
         this.inviteBusy.set(false);
         this.inviteResult.set(res);
@@ -86,6 +89,7 @@ export class Administration implements OnInit {
         this.showInvite.set(false);
         this.inviteName.set('');
         this.inviteEmail.set('');
+        this.inviteRole.set('User');
         this.refresh();
       },
       error: (err) => {
@@ -93,6 +97,10 @@ export class Administration implements OnInit {
         this.errorMessage.set(this.toMessage(err) || 'Invite failed.');
       },
     });
+  }
+
+  invitableRoles(): AppRole[] {
+    return this.roles().filter((r) => r.name !== 'Owner');
   }
 
   changeRole(user: AppUser, role: string): void {
