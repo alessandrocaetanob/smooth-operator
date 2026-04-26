@@ -56,7 +56,7 @@
             >Email Address</label
           >
           <input
-            class="w-full bg-[#10141a]/50 border border-white/10 rounded-lg px-md py-2.5 text-body-md text-on-background focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-colors placeholder:text-on-surface-variant/30"
+            class="w-full input-field px-md py-2.5 text-body-md"
             id="email"
             formControlName="email"
             placeholder="admin@company.com"
@@ -79,7 +79,7 @@
             >
           </div>
           <input
-            class="w-full bg-[#10141a]/50 border border-white/10 rounded-lg px-md py-2.5 text-body-md text-on-background focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-colors placeholder:text-on-surface-variant/30"
+            class="w-full input-field px-md py-2.5 text-body-md"
             id="password"
             formControlName="password"
             placeholder="••••••••"
@@ -99,7 +99,7 @@
         }
 
         <button
-          class="w-full flex items-center justify-center bg-surface-variant hover:bg-surface-bright text-on-background py-2.5 px-lg rounded-lg font-body-md transition-colors border border-white/10 mt-xs disabled:opacity-50 disabled:cursor-not-allowed"
+          class="btn-primary w-full justify-center py-2.5 mt-xs"
           type="submit"
           [disabled]="submitting() || form.invalid"
         >
