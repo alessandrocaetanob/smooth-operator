@@ -1,20 +1,20 @@
 <div>
   <div class="flex items-center justify-between mb-6">
     <div>
-      <h2 class="text-lg font-semibold text-on-surface">Users</h2>
-      <p class="text-sm text-on-surface-variant mt-1">Manage users, roles and vault access.</p>
+      <h2 class="text-lg font-semibold text-slate-100">Users</h2>
+      <p class="text-sm text-slate-400 mt-1">Manage users, roles and vault access.</p>
     </div>
     <div class="flex items-center gap-2">
       <button
         (click)="refresh()"
-        class="btn-ghost"
+        class="flex items-center gap-2 px-3 py-2 text-xs font-medium uppercase tracking-widest text-slate-300 bg-white/5 hover:bg-white/10 rounded-md transition"
       >
         <span class="material-symbols-outlined text-base">refresh</span>
         Refresh
       </button>
       <button
         (click)="toggleInvite()"
-        class="btn-primary"
+        class="flex items-center gap-2 px-3 py-2 text-xs font-bold uppercase tracking-widest text-white bg-blue-600 hover:bg-blue-500 rounded-md transition"
       >
         <span class="material-symbols-outlined text-base">person_add</span>
         Invite user
@@ -23,7 +23,7 @@
   </div>
 
   @if (errorMessage()) {
-      <div class="mb-4 p-3 border border-error/40 bg-error/10 rounded text-sm text-error">
+    <div class="mb-4 p-3 border border-red-500/40 bg-red-500/10 rounded text-sm text-red-300">
       {{ errorMessage() }}
     </div>
   }
@@ -31,7 +31,7 @@
   <div class="mb-4">
     <div class="relative">
       <span
-        class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-base"
+        class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-base"
         >search</span
       >
       <input
@@ -39,19 +39,19 @@
         placeholder="Search users by name, email, or role…"
         [ngModel]="searchQuery()"
         (ngModelChange)="searchQuery.set($event)"
-        class="w-full input-field pl-9 pr-3"
+        class="w-full bg-slate-900 border border-white/10 focus:border-blue-500 text-sm text-slate-200 rounded pl-9 pr-3 py-2 outline-none"
       />
     </div>
   </div>
 
   @if (inviteResult(); as r) {
-    <div class="mb-6 p-4 border border-tertiary/40 bg-tertiary/10 rounded-lg">
+    <div class="mb-6 p-4 border border-emerald-500/40 bg-emerald-500/10 rounded-lg">
       <div class="flex items-start justify-between gap-3 mb-3">
         <div>
-          <h3 class="text-sm font-semibold text-tertiary uppercase tracking-widest">
+          <h3 class="text-sm font-semibold text-emerald-200 uppercase tracking-widest">
             Invitation created
           </h3>
-          <p class="text-xs text-tertiary/80 mt-1">
+          <p class="text-xs text-emerald-200/80 mt-1">
             @if (r.emailSent) {
               <span class="material-symbols-outlined text-base align-middle">mail</span>
               Email sent automatically. The link below is also available as a fallback.
@@ -67,7 +67,7 @@
         <button
           type="button"
           (click)="dismissInviteResult()"
-          class="text-tertiary/60 hover:text-tertiary"
+          class="text-emerald-200/60 hover:text-emerald-100"
           aria-label="Dismiss"
         >
           <span class="material-symbols-outlined">close</span>
@@ -78,12 +78,12 @@
           type="text"
           readonly
           [value]="r.inviteUrl"
-          class="flex-1 input-field text-xs font-mono"
+          class="flex-1 bg-slate-950 border border-white/10 text-xs text-slate-300 rounded px-3 py-2 outline-none font-mono"
         />
         <button
           type="button"
           (click)="copyInviteUrl()"
-          class="btn-primary"
+          class="px-3 py-2 text-xs font-bold uppercase tracking-widest text-white bg-blue-600 hover:bg-blue-500 rounded"
         >
           {{
             copyState() === 'copied' ? 'Copied!' : copyState() === 'failed' ? 'Copy failed' : 'Copy'
@@ -94,11 +94,11 @@
   }
 
   @if (showInvite()) {
-    <div class="mb-6 p-5 glass-card rounded-lg">
-      <h2 class="text-sm font-semibold text-on-surface mb-3 uppercase tracking-widest">
+    <div class="mb-6 p-5 border border-white/10 rounded-lg bg-slate-950/60">
+      <h2 class="text-sm font-semibold text-slate-100 mb-3 uppercase tracking-widest">
         Invite user
       </h2>
-      <p class="text-xs text-on-surface-variant mb-3">
+      <p class="text-xs text-slate-400 mb-3">
         The user will receive a secure link to set their own password. The account stays inactive
         until the link is redeemed.
       </p>
@@ -109,7 +109,7 @@
           [ngModel]="inviteName()"
           (ngModelChange)="inviteName.set($event)"
           name="name"
-          class="input-field"
+          class="bg-slate-900 border border-white/10 focus:border-blue-500 text-sm text-slate-200 rounded px-3 py-2 outline-none"
         />
         <input
           type="email"
@@ -118,15 +118,15 @@
           (ngModelChange)="inviteEmail.set($event)"
           name="email"
           required
-          class="input-field"
+          class="bg-slate-900 border border-white/10 focus:border-blue-500 text-sm text-slate-200 rounded px-3 py-2 outline-none"
         />
-        <label class="md:col-span-2 flex flex-col gap-1 text-xs text-on-surface-variant">
+        <label class="md:col-span-2 flex flex-col gap-1 text-xs text-slate-400">
           <span class="uppercase tracking-widest">Role</span>
           <select
             [ngModel]="inviteRole()"
             (ngModelChange)="inviteRole.set($event)"
             name="role"
-            class="select-field"
+            class="bg-slate-900 border border-white/10 focus:border-blue-500 text-sm text-slate-200 rounded px-3 py-2 outline-none"
           >
             @for (r of invitableRoles(); track trackRole($index, r)) {
               <option [value]="r.name">{{ r.name }} — {{ r.description }}</option>
@@ -142,14 +142,14 @@
           <button
             type="button"
             (click)="toggleInvite()"
-            class="btn-ghost"
+            class="px-3 py-2 text-xs font-medium uppercase tracking-widest text-slate-300 hover:bg-white/5 rounded"
           >
             Cancel
           </button>
           <button
             type="submit"
             [disabled]="inviteBusy()"
-            class="btn-primary"
+            class="px-4 py-2 text-xs font-bold uppercase tracking-widest text-white bg-blue-600 hover:bg-blue-500 rounded disabled:opacity-50"
           >
             {{ inviteBusy() ? 'Sending…' : 'Send invite' }}
           </button>
@@ -158,9 +158,9 @@
     </div>
   }
 
-  <div class="glass-card rounded-lg overflow-hidden">
+  <div class="border border-white/10 rounded-lg bg-slate-950/60 overflow-hidden">
     <table class="w-full text-sm">
-      <thead class="bg-white/5 text-[11px] uppercase tracking-widest text-on-surface-variant">
+      <thead class="bg-white/5 text-[11px] uppercase tracking-widest text-slate-400">
         <tr>
           <th class="text-left px-4 py-3 font-medium">User</th>
           <th class="text-left px-4 py-3 font-medium">Email</th>
@@ -173,40 +173,40 @@
       <tbody>
         @for (u of filteredUsers(); track trackById($index, u)) {
           <tr class="border-t border-white/5 hover:bg-white/5">
-            <td class="px-4 py-3 text-on-surface">{{ u.name }}</td>
-            <td class="px-4 py-3 text-on-surface-variant">{{ u.email }}</td>
+            <td class="px-4 py-3 text-slate-100">{{ u.name }}</td>
+            <td class="px-4 py-3 text-slate-300">{{ u.email }}</td>
             <td class="px-4 py-3">
               <select
                 [ngModel]="primaryRole(u)"
                 (ngModelChange)="changeRole(u, $event)"
                 [disabled]="roleBusyUserId() === u.id"
-                class="select-field text-xs px-2 py-1"
+                class="bg-slate-900 border border-white/10 focus:border-blue-500 text-xs text-slate-200 rounded px-2 py-1 outline-none"
               >
                 @for (role of roles(); track trackRole($index, role)) {
                   <option [value]="role.name">{{ role.name }}</option>
                 }
               </select>
             </td>
-            <td class="px-4 py-3 text-on-surface-variant">
+            <td class="px-4 py-3 text-slate-300">
               @if (canAssignVaults(u)) {
                 <button
                   type="button"
                   (click)="openVaultAssignments(u)"
-                  class="px-2 py-1 text-xs text-primary hover:bg-primary/10 rounded"
+                  class="px-2 py-1 text-xs text-blue-300 hover:bg-blue-500/10 rounded"
                 >
                   {{ u.vaultIds.length }} vault(s)
                 </button>
               } @else {
-                <span class="text-xs text-outline">Global</span>
+                <span class="text-xs text-slate-500">Global</span>
               }
             </td>
             <td class="px-4 py-3">
               @if (u.isActive) {
-                <span class="text-xs font-bold uppercase tracking-widest text-tertiary"
+                <span class="text-xs font-bold uppercase tracking-widest text-emerald-400"
                   >Active</span
                 >
               } @else {
-                <span class="text-xs font-bold uppercase tracking-widest text-outline"
+                <span class="text-xs font-bold uppercase tracking-widest text-slate-500"
                   >Disabled</span
                 >
               }
@@ -223,7 +223,7 @@
                 } @else {
                   <button
                     (click)="setActive(u, true)"
-                    class="px-2 py-1 text-xs text-tertiary hover:bg-tertiary/10 rounded"
+                    class="px-2 py-1 text-xs text-emerald-300 hover:bg-emerald-500/10 rounded"
                   >
                     Enable
                   </button>
@@ -231,7 +231,7 @@
                 <button
                   (click)="delete(u)"
                   [disabled]="currentUser()?.id === u.id"
-                  class="px-2 py-1 text-xs text-error hover:bg-error/10 rounded disabled:opacity-30"
+                  class="px-2 py-1 text-xs text-red-300 hover:bg-red-500/10 rounded disabled:opacity-30"
                 >
                   Delete
                 </button>
@@ -240,7 +240,7 @@
           </tr>
         } @empty {
           <tr>
-            <td colspan="6" class="px-4 py-8 text-center text-outline">
+            <td colspan="6" class="px-4 py-8 text-center text-slate-500">
               {{
                 loading()
                   ? 'Loading…'
@@ -264,19 +264,19 @@
       aria-label="Vault assignments"
     >
       <div
-        class="w-full max-w-lg glass-panel rounded-lg p-5"
+        class="w-full max-w-lg bg-slate-900 border border-white/10 rounded-lg p-5"
         (click)="$event.stopPropagation()"
       >
-        <h3 class="text-sm font-semibold text-on-surface uppercase tracking-widest">
+        <h3 class="text-sm font-semibold text-slate-100 uppercase tracking-widest">
           Vault assignments
         </h3>
-        <p class="text-xs text-on-surface-variant mt-1">
+        <p class="text-xs text-slate-400 mt-1">
           {{ user.name }} ({{ primaryRole(user) }}) can access/manage only selected vaults.
         </p>
 
         <div class="mt-4 max-h-64 overflow-y-auto space-y-2">
           @for (vault of vaults(); track trackVault($index, vault)) {
-            <label class="flex items-center gap-2 text-sm text-on-surface">
+            <label class="flex items-center gap-2 text-sm text-slate-200">
               <input
                 type="checkbox"
                 [checked]="isVaultSelected(vault.id)"
@@ -285,7 +285,7 @@
               <span>{{ vault.name }}</span>
             </label>
           } @empty {
-            <div class="text-xs text-outline">Create at least one vault to assign access.</div>
+            <div class="text-xs text-slate-500">Create at least one vault to assign access.</div>
           }
         </div>
 
@@ -293,7 +293,7 @@
           <button
             type="button"
             (click)="closeVaultAssignments()"
-            class="btn-ghost"
+            class="px-3 py-2 text-xs font-medium uppercase tracking-widest text-slate-300 hover:bg-white/5 rounded"
           >
             Cancel
           </button>
@@ -301,7 +301,7 @@
             type="button"
             (click)="saveVaultAssignments()"
             [disabled]="vaultAssignmentBusy()"
-            class="btn-primary"
+            class="px-4 py-2 text-xs font-bold uppercase tracking-widest text-white bg-blue-600 hover:bg-blue-500 rounded disabled:opacity-50"
           >
             {{ vaultAssignmentBusy() ? 'Saving…' : 'Save assignments' }}
           </button>

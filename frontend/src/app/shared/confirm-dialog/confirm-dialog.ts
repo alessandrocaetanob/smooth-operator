@@ -9,13 +9,11 @@ import {
   inject,
 } from '@angular/core';
 import { ConfirmDialogService } from './confirm-dialog.service';
-import { fadeIn, scaleIn } from '../animations';
 
 @Component({
   selector: 'app-confirm-dialog',
   standalone: true,
   templateUrl: './confirm-dialog.html',
-  animations: [fadeIn, scaleIn],
 })
 export class ConfirmDialog implements AfterViewInit {
   private readonly svc = inject(ConfirmDialogService);

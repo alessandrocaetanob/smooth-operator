@@ -277,34 +277,11 @@ namespace Backend.Migrations
                     b.ToTable("SmtpSettings");
                 });
 
-            modelBuilder.Entity("Backend.Models.SystemSettings", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("AuditLogRetentionDays")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("SystemSettings");
-                });
-
             modelBuilder.Entity("Backend.Models.User", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
-
-                    b.Property<string>("AvatarBase64")
-                        .HasColumnType("text");
-
-                    b.Property<string>("AvatarMimeType")
-                        .HasColumnType("text");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");

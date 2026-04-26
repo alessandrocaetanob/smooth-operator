@@ -88,16 +88,14 @@ dotnet run
 *   **Built-in RBAC Defaults:** Owner (root bootstrap account), Admin (users/vaults/credentials), TeamAdmin (connections in assigned vaults), and User (connect-only access in assigned vaults). New users are added through invite-only flow; direct self-registration is disabled outside Development unless `Auth:AllowSelfRegister=true` is set.
 *   **Instant Browser Connections:** Initiating a connection opens a seamless HTML5 Canvas session using `guacamole-common-js`, immediately capturing input devices without local software.
 *   **Comprehensive Audit Logs:** A robust auditing view allows administrators to trace historical sessions, operator actions, and connection durations.
-*   **Operator Glass Design Language:** The frontend uses a theme-aware glassmorphic design system built on Material Design 3 color tokens. All colors are driven by CSS custom properties that auto-switch with the active theme. Users can toggle between **light** and **dark** themes via the header button, or the app auto-selects based on `prefers-color-scheme` on first visit. See [frontend/DESIGN_SYSTEM.md](frontend/DESIGN_SYSTEM.md) for the full component and token reference.
 
 ---
 
 ## 🛠️ Development Tools
 
-*   **Styling:** Tailwind CSS with a custom design-token system — see [frontend/DESIGN_SYSTEM.md](frontend/DESIGN_SYSTEM.md) for the full token and component reference.
-*   **Design System:** "Operator Glass" — glass-morphic, token-driven, theme-aware. Light/dark switching via `ThemeService`. All color, spacing, and type choices must reference design tokens, not hardcoded values.
+*   **Styling:** Tailwind CSS integrated directly into Angular components.
 *   **Icons:** Google Material Symbols (Outlined).
-*   **Testing:** Angular unit tests (Jasmine/Karma) and Playwright for frontend E2E and visual verification.
+*   **Testing:** Playwright for frontend E2E and visual verification.
 
 ---
 

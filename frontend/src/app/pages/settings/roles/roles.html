@@ -1,16 +1,16 @@
 <div>
   <div class="mb-6">
-    <h2 class="text-lg font-semibold text-on-surface">Roles</h2>
-    <p class="text-sm text-on-surface-variant mt-1">
+    <h2 class="text-lg font-semibold text-slate-100">Roles</h2>
+    <p class="text-sm text-slate-400 mt-1">
       Smooth Operator ships with four fixed roles. Each user has exactly one role.
     </p>
   </div>
 
   <div class="grid gap-4 md:grid-cols-2">
     @for (role of roles; track trackRole($index, role)) {
-      <div class="glass-card rounded-lg p-5">
+      <div class="border border-white/10 rounded-lg bg-slate-950/60 p-5">
         <div class="flex items-center justify-between mb-3">
-          <h3 class="text-base font-semibold text-on-surface">{{ role.name }}</h3>
+          <h3 class="text-base font-semibold text-slate-100">{{ role.name }}</h3>
           <span
             class="px-2 py-1 text-[10px] font-bold uppercase tracking-widest rounded border"
             [class]="role.tone"
@@ -18,11 +18,11 @@
             {{ role.key }}
           </span>
         </div>
-        <p class="text-sm text-on-surface-variant mb-4">{{ role.summary }}</p>
+        <p class="text-sm text-slate-400 mb-4">{{ role.summary }}</p>
         <ul class="space-y-2">
           @for (perm of role.permissions; track perm) {
-            <li class="flex items-start gap-2 text-sm text-on-surface">
-              <span class="material-symbols-outlined text-tertiary text-base mt-0.5"
+            <li class="flex items-start gap-2 text-sm text-slate-300">
+              <span class="material-symbols-outlined text-emerald-400 text-base mt-0.5"
                 >check_circle</span
               >
               <span>{{ perm }}</span>
@@ -33,8 +33,8 @@
     }
   </div>
 
-  <div class="mt-6 p-4 glass-card rounded-lg text-xs text-outline">
-    <strong class="text-on-surface-variant">Single-role policy:</strong>
+  <div class="mt-6 p-4 border border-white/10 rounded-lg bg-slate-950/40 text-xs text-slate-500">
+    <strong class="text-slate-400">Single-role policy:</strong>
     Users hold one role at a time. Changing a role replaces the previous one. Permissions cannot be
     customized in this version.
   </div>

@@ -1,9 +1,8 @@
 import { Component } from '@angular/core';
-import { Mascot } from '../../shared/mascot/mascot';
 
 @Component({
   selector: 'app-empty-state',
-  imports: [Mascot],
+  imports: [],
   templateUrl: './empty-state.html',
   styleUrl: './empty-state.css',
 })

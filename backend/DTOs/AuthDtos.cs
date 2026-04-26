@@ -46,24 +46,7 @@ namespace Backend.DTOs
         public string Name { get; set; } = string.Empty;
         public bool HasPassword { get; set; }
         public bool LinkedToEntra { get; set; }
-        public string? AvatarUrl { get; set; }
         public List<string> Roles { get; set; } = new();
-    }
-
-    public class UpdateProfileRequest
-    {
-        [Required(ErrorMessage = "Name is required")]
-        [StringLength(255, MinimumLength = 1, ErrorMessage = "Name must be 1-255 characters")]
-        public string Name { get; set; } = string.Empty;
-
-        // Roughly ~2 MB base64 string ceiling (the actual decoded payload is
-        // additionally validated server-side to <= 1 MB).
-        [StringLength(2_800_000)]
-        public string? AvatarBase64 { get; set; }
-
-        [StringLength(64)]
-        [RegularExpression("^image/(png|jpeg|jpg|webp)$", ErrorMessage = "Avatar mime type must be image/png, image/jpeg, or image/webp")]
-        public string? AvatarMimeType { get; set; }
     }
 
     public class InviteUserRequest

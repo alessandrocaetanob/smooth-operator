@@ -5,7 +5,11 @@
   <!-- Left: Brand & Connection Status -->
   <div class="flex items-center gap-6">
     <div class="flex items-center gap-3">
-      <app-mascot [isSmall]="true" [state]="mascotState()"></app-mascot>
+      <span
+        class="material-symbols-outlined text-blue-600 dark:text-blue-500"
+        style="font-variation-settings: 'FILL' 1"
+        >terminal</span
+      >
       <span
         class="text-lg font-black tracking-tighter text-slate-50 dark:text-white uppercase drop-shadow-[0_0_8px_rgba(0,84,214,0.5)]"
         >Smooth Operator</span
@@ -23,7 +27,7 @@
     </div>
   </div>
   <!-- Center: Timer (Optional/Subtle) -->
-  <div class="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 text-on-surface-variant">
+  <div class="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 text-slate-400">
     <span class="material-symbols-outlined text-sm">schedule</span>
     <span class="font-mono text-mono">02:14:36</span>
   </div>
@@ -31,23 +35,23 @@
   <div class="flex items-center gap-4">
     <div class="flex items-center gap-2 mr-4 border-r border-white/10 pr-4">
       <button
-        class="p-2 text-on-surface-variant hover:text-on-surface hover:bg-white/5 rounded-full transition-colors active:scale-95 duration-200"
+        class="p-2 text-slate-400 hover:text-slate-200 hover:bg-white/5 rounded-full transition-colors active:scale-95 duration-200"
       >
         <span class="material-symbols-outlined">sensors</span>
       </button>
       <button
-        class="p-2 text-on-surface-variant hover:text-on-surface hover:bg-white/5 rounded-full transition-colors active:scale-95 duration-200"
+        class="p-2 text-slate-400 hover:text-slate-200 hover:bg-white/5 rounded-full transition-colors active:scale-95 duration-200"
       >
         <span class="material-symbols-outlined">notifications</span>
       </button>
     </div>
     <button
-      class="p-2 text-on-surface-variant hover:text-on-surface hover:bg-white/5 rounded-full transition-colors active:scale-95 duration-200"
+      class="p-2 text-slate-400 hover:text-slate-200 hover:bg-white/5 rounded-full transition-colors active:scale-95 duration-200"
     >
       <span class="material-symbols-outlined">settings</span>
     </button>
     <button
-      class="p-2 text-on-surface-variant hover:text-on-surface hover:bg-white/5 rounded-full transition-colors active:scale-95 duration-200 mr-2"
+      class="p-2 text-slate-400 hover:text-slate-200 hover:bg-white/5 rounded-full transition-colors active:scale-95 duration-200 mr-2"
     >
       <span class="material-symbols-outlined">fullscreen</span>
     </button>
@@ -66,7 +70,7 @@
 >
   <div class="flex-1 py-4 flex flex-col gap-2">
     <a
-      class="flex items-center justify-center p-3 text-outline hover:bg-on-surface/5 hover:text-on-surface transition-all active:scale-95 duration-200 group"
+      class="flex items-center justify-center p-3 text-slate-500 hover:bg-white/5 hover:text-slate-200 transition-all active:scale-95 duration-200 group"
       href="#"
       title="The Vault"
     >
@@ -75,14 +79,14 @@
       >
     </a>
     <a
-      class="flex items-center justify-center p-3 bg-primary/10 text-primary border-l-2 border-primary transition-all active:scale-95 duration-200 group"
+      class="flex items-center justify-center p-3 bg-blue-600/10 text-blue-500 border-l-2 border-blue-500 transition-all active:scale-95 duration-200 group"
       href="#"
       title="Connections"
     >
       <span class="material-symbols-outlined group-hover:translate-x-1 duration-300">hub</span>
     </a>
     <a
-      class="flex items-center justify-center p-3 text-outline hover:bg-on-surface/5 hover:text-on-surface transition-all active:scale-95 duration-200 group"
+      class="flex items-center justify-center p-3 text-slate-500 hover:bg-white/5 hover:text-slate-200 transition-all active:scale-95 duration-200 group"
       href="#"
       title="Admin"
     >
@@ -91,7 +95,7 @@
       >
     </a>
     <a
-      class="flex items-center justify-center p-3 text-outline hover:bg-on-surface/5 hover:text-on-surface transition-all active:scale-95 duration-200 group"
+      class="flex items-center justify-center p-3 text-slate-500 hover:bg-white/5 hover:text-slate-200 transition-all active:scale-95 duration-200 group"
       href="#"
       title="Audit Logs"
     >
@@ -102,14 +106,14 @@
   </div>
   <div class="py-4 flex flex-col gap-2 border-t border-white/10">
     <a
-      class="flex items-center justify-center p-3 text-outline hover:bg-on-surface/5 hover:text-on-surface transition-all active:scale-95 duration-200 group"
+      class="flex items-center justify-center p-3 text-slate-500 hover:bg-white/5 hover:text-slate-200 transition-all active:scale-95 duration-200 group"
       href="#"
       title="Settings"
     >
       <span class="material-symbols-outlined group-hover:translate-x-1 duration-300">settings</span>
     </a>
     <a
-      class="flex items-center justify-center p-3 text-outline hover:bg-on-surface/5 hover:text-on-surface transition-all active:scale-95 duration-200 group"
+      class="flex items-center justify-center p-3 text-slate-500 hover:bg-white/5 hover:text-slate-200 transition-all active:scale-95 duration-200 group"
       href="#"
       title="Support"
     >

@@ -1,110 +1,76 @@
 <header
-  class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 h-16 glass-panel border-b border-outline-variant/30 font-inter tracking-tight text-sm transition-shadow duration-200"
-  [class.shadow-xl]="scrolled()"
+  class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 h-16 bg-slate-950/80 backdrop-blur-md border-b border-white/10 shadow-none font-inter tracking-tight text-sm"
 >
   <div class="flex items-center gap-4">
     <button
-      class="md:hidden text-on-surface-variant hover:text-on-surface p-1 rounded-md hover:bg-on-surface/5 transition-colors"
-      aria-label="Open menu"
+      class="md:hidden text-slate-400 hover:text-slate-100 p-1 rounded-md hover:bg-white/5 transition-colors"
     >
-      <span class="material-symbols-outlined" aria-hidden="true">menu</span>
+      <span class="material-symbols-outlined">menu</span>
     </button>
-    <a
-      routerLink="/"
-      class="hidden md:flex items-center gap-2 mr-4 group rounded-md px-1.5 py-1 hover:bg-on-surface/5 transition-colors"
-      aria-label="Go to dashboard"
-    >
-      <app-mascot [isSmall]="true" [state]="navMascotState()"></app-mascot>
+    <div class="hidden md:flex items-center gap-2 mr-4">
+      <app-mascot [isSmall]="true"></app-mascot>
       <div
-        class="text-lg font-black tracking-tighter text-on-surface uppercase group-hover:text-primary transition-colors"
-        style="text-shadow: 0 0 8px rgb(var(--color-primary-container) / 0.4)"
+        class="text-lg font-black tracking-tighter text-slate-50 uppercase drop-shadow-[0_0_8px_rgba(0,102,255,0.5)]"
       >
         SMOOTH OPERATOR
       </div>
-    </a>
+    </div>
     <div class="relative hidden sm:block w-64 md:w-80 group">
       <span
-        class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-on-surface-variant group-focus-within:text-primary transition-colors"
-        aria-hidden="true"
+        class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 group-focus-within:text-blue-500 transition-colors"
         >search</span
       >
       <input
-        class="w-full bg-surface-container border border-outline-variant/40 focus:border-primary text-on-surface py-1.5 pl-10 pr-3 rounded-md outline-none transition-all placeholder:text-on-surface-variant/60 hover:bg-surface-container-high focus-ring-glow"
-        placeholder="Search vaults & connections..."
-        type="search"
-        aria-label="Search vaults and connections"
-        [value]="searchTerm()"
-        (input)="onSearchInput($event)"
-        (keydown.enter)="submitSearch()"
+        class="w-full bg-slate-900/50 border border-white/10 focus:border-blue-500 text-slate-200 py-1.5 pl-10 pr-3 rounded-md outline-none transition-all placeholder:text-slate-500 hover:bg-white/5"
+        placeholder="Search Vault..."
+        type="text"
       />
     </div>
   </div>
-  <div class="flex items-center gap-3">
+  <div class="flex items-center gap-4">
     <div
-      class="hidden lg:flex items-center gap-2 px-3 py-1 rounded-full border transition-colors"
-      [ngClass]="healthPillClasses()"
-      [attr.title]="health() === 'healthy' ? 'API and database reachable' : (health() === 'down' ? 'Backend unreachable' : 'Checking system status...')"
-      role="status"
-      aria-live="polite"
+      class="hidden lg:flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30"
     >
-      <div class="w-2 h-2 rounded-full status-pulse" [ngClass]="healthDotClasses()"></div>
-      <span class="text-xs font-medium" [ngClass]="healthTextClasses()">
-        {{ health() === 'healthy' ? 'System: Optimal' : (health() === 'down' ? 'System: Offline' : 'System: Checking') }}
-      </span>
+      <div class="w-2 h-2 rounded-full bg-emerald-400 status-pulse"></div>
+      <span class="text-xs font-medium text-emerald-300">System Status: Optimal</span>
     </div>
-    <!-- Theme toggle -->
-    <app-theme-toggle variant="nav" />
-    <div class="h-6 w-px bg-outline-variant/50 mx-1"></div>
+    <div class="h-8 w-px bg-white/10 mx-1"></div>
     <div class="relative">
       <button
         (click)="toggleMenu()"
-        class="flex items-center gap-2 hover:bg-on-surface/5 p-1 pr-2 rounded-full transition-colors btn-interactive"
-        aria-haspopup="true"
-        [attr.aria-expanded]="menuOpen"
+        class="flex items-center gap-2 hover:bg-white/5 p-1 pr-2 rounded-full transition-colors active:scale-95 duration-200"
       >
         <div
-          class="w-8 h-8 rounded-full overflow-hidden bg-primary-container/20 border border-primary-container/40 flex items-center justify-center text-xs font-bold text-on-primary-container"
+          class="w-8 h-8 rounded-full bg-blue-600/30 border border-blue-500/40 flex items-center justify-center text-xs font-bold text-blue-200"
         >
-          @if (user()?.avatarUrl; as src) {
-            <img [src]="src" alt="" class="w-full h-full object-cover" />
-          } @else {
-            {{ initials() }}
-          }
+          {{ initials() }}
         </div>
-        <span class="hidden md:block text-xs text-on-surface-variant">{{ user()?.name || 'Account' }}</span>
-        <span class="material-symbols-outlined text-base text-on-surface-variant" aria-hidden="true">arrow_drop_down</span>
+        <span class="hidden md:block text-xs text-slate-300">{{ user()?.name || 'Account' }}</span>
+        <span class="material-symbols-outlined text-base text-slate-400">arrow_drop_down</span>
       </button>
       @if (menuOpen) {
         <div
-          class="absolute right-0 mt-2 w-56 glass-panel rounded-xl shadow-2xl shadow-black/30 z-50 overflow-hidden animate-scale-in"
+          class="absolute right-0 mt-2 w-56 bg-slate-900 border border-white/10 rounded-md shadow-2xl shadow-black/50 z-50 overflow-hidden"
         >
-          <div class="px-4 py-3 border-b border-outline-variant/30">
-            <div class="text-sm font-semibold text-on-surface">{{ user()?.name }}</div>
-            <div class="text-xs text-on-surface-variant truncate">{{ user()?.email }}</div>
+          <div class="px-4 py-3 border-b border-white/10">
+            <div class="text-sm font-semibold text-slate-100">{{ user()?.name }}</div>
+            <div class="text-xs text-slate-400 truncate">{{ user()?.email }}</div>
           </div>
-          <a
-            (click)="closeMenu()"
-            routerLink="/profile"
-            class="flex items-center gap-2 px-4 py-2 text-sm text-on-surface hover:bg-on-surface/5 cursor-pointer transition-colors"
-          >
-            <span class="material-symbols-outlined text-base" aria-hidden="true">account_circle</span>
-            Profile
-          </a>
           @if (canAccessSettings()) {
             <a
               (click)="closeMenu()"
               routerLink="/settings"
-              class="flex items-center gap-2 px-4 py-2 text-sm text-on-surface hover:bg-on-surface/5 cursor-pointer transition-colors"
+              class="flex items-center gap-2 px-4 py-2 text-sm text-slate-200 hover:bg-white/5 cursor-pointer"
             >
-              <span class="material-symbols-outlined text-base" aria-hidden="true">settings</span>
+              <span class="material-symbols-outlined text-base">settings</span>
               Settings
             </a>
           }
           <button
             (click)="logout()"
-            class="w-full flex items-center gap-2 px-4 py-2 text-sm text-error hover:bg-error/10 cursor-pointer text-left transition-colors"
+            class="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-300 hover:bg-red-500/10 cursor-pointer text-left"
           >
-            <span class="material-symbols-outlined text-base" aria-hidden="true">logout</span>
+            <span class="material-symbols-outlined text-base">logout</span>
             Sign out
           </button>
         </div>
@@ -112,4 +78,3 @@
     </div>
   </div>
 </header>
-

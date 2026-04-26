@@ -10,9 +10,20 @@
   <div
     class="relative z-10 w-full max-w-lg bg-surface-container/40 backdrop-blur-xl border border-white/10 rounded-xl p-12 flex flex-col items-center text-center shadow-2xl shadow-black/50"
   >
-    <!-- Mascot greeting the user -->
-    <div class="mb-6">
-      <app-mascot [state]="'wave'"></app-mascot>
+    <!-- Hexagonal Icon Wrapper for Tech Feel -->
+    <div class="relative w-24 h-24 mb-8 flex items-center justify-center">
+      <div
+        class="absolute inset-0 bg-primary-container/20 rotate-45 rounded-xl border border-primary-container/30 blur-sm"
+      ></div>
+      <div
+        class="absolute inset-1 bg-surface-container rotate-45 rounded-xl border border-outline-variant/50"
+      ></div>
+      <span
+        class="material-symbols-outlined text-[48px] text-primary relative z-10 drop-shadow-[0_0_8px_rgba(179,197,255,0.5)]"
+        style="font-variation-settings: 'wght' 300"
+      >
+        security
+      </span>
     </div>
     <h1 class="font-h2 text-h2 text-on-surface mb-4">Your Vault is Empty</h1>
     <p class="font-body-md text-body-md text-on-surface-variant mb-10 max-w-sm">

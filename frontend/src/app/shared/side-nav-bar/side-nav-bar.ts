@@ -1,7 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
-import { LayoutService } from '../../services/layout.service';
 
 @Component({
   selector: 'app-side-nav-bar',
@@ -13,16 +12,9 @@ import { LayoutService } from '../../services/layout.service';
 export class SideNavBar {
   private readonly router = inject(Router);
   private readonly auth = inject(AuthService);
-  readonly layout = inject(LayoutService);
-
   readonly canManageConnections = this.auth.canManageConnections;
   readonly canViewCredentials = this.auth.canViewCredentials;
   readonly canAccessSettings = this.auth.canAccessSettings;
-  readonly collapsed = this.layout.collapsed;
-
-  toggleCollapsed(): void {
-    this.layout.toggle();
-  }
 
   newConnection(): void {
     if (!this.canManageConnections()) {

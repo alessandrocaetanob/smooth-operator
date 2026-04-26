@@ -69,18 +69,6 @@ export class AuditLogs implements OnInit {
     return t ? { Authorization: `Bearer ${t}` } : {};
   }
 
-  setPageSize(size: number): void {
-    this.pageSize.set(size);
-    this.page.set(1);
-    this.load();
-  }
-
-  onPageSizeChange(value: string | number): void {
-    const n = typeof value === 'number' ? value : parseInt(value, 10);
-    if (!Number.isFinite(n) || n < 1) return;
-    this.setPageSize(n);
-  }
-
   private load(): void {
     this.loading.set(true);
     this.svc.reload(this.buildQuery(true)).subscribe({

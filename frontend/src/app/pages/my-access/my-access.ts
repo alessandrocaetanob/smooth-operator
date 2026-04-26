@@ -1,12 +1,11 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { UsersService, EffectiveVaults } from '../../services/users.service';
 import { AuthService } from '../../services/auth.service';
-import { Mascot } from '../../shared/mascot/mascot';
 
 @Component({
   selector: 'app-my-access',
   standalone: true,
-  imports: [Mascot],
+  imports: [],
   templateUrl: './my-access.html',
 })
 export class MyAccess implements OnInit {

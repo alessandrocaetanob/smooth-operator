@@ -2,11 +2,10 @@ import { Component, OnInit, computed, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { ConnectionsService } from '../../services/connections.service';
 import { AuthService } from '../../services/auth.service';
-import { Mascot } from '../../shared/mascot/mascot';
 
 @Component({
   selector: 'app-vault',
-  imports: [RouterLink, Mascot],
+  imports: [RouterLink],
   templateUrl: './vault.html',
   styleUrl: './vault.css',
 })

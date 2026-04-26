@@ -17,7 +17,6 @@ namespace Backend.Data
         public DbSet<AuditLog> AuditLogs { get; set; } = null!;
         public DbSet<Invitation> Invitations { get; set; } = null!;
         public DbSet<SmtpSettings> SmtpSettings { get; set; } = null!;
-        public DbSet<SystemSettings> SystemSettings { get; set; } = null!;
         public DbSet<UserGroup> UserGroups { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
