@@ -2,12 +2,12 @@ name: "Frontend Code Quality"
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ master, main, develop ]
     paths:
       - 'frontend/**'
       - '.github/workflows/frontend-quality.yml'
   pull_request:
-    branches: [ main, develop ]
+    branches: [ master, main, develop ]
     paths:
       - 'frontend/**'
       - '.github/workflows/frontend-quality.yml'

@@ -2,7 +2,7 @@ name: "PR Quality Checks"
 
 on:
   pull_request:
-    branches: [ main, develop ]
+    branches: [ master, main, develop ]
     types: [opened, synchronize, reopened, ready_for_review]
 
 jobs:
