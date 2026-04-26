@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 
 // Mutation methods (create / rename / update / remove) intentionally do NOT
 // trigger an internal reload. Callers own their refresh strategy (typically by
