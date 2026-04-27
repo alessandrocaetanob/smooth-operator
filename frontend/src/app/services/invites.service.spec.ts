@@ -51,49 +51,61 @@ describe('InvitesService', () => {
     it('should propagate a 400 Bad Request error', () => {
       const token = 'invalid-token';
       const payload = { password: 'password123' };
+      let errorHandled = false;
 
       service.redeem(token, payload).subscribe({
         next: () => expect.fail('Should have failed with 400'),
         error: (error) => {
+          errorHandled = true;
           expect(error.status).toBe(400);
           expect(error.statusText).toBe('Bad Request');
         },
+        complete: () => expect.fail('Should not have completed without error for 400'),
       });
 
       const req = httpTestingController.expectOne(`/api/invites/${token}/redeem`);
       req.flush('Invalid token', { status: 400, statusText: 'Bad Request' });
+      expect(errorHandled).toBe(true);
     });
 
     it('should propagate a 404 Not Found error', () => {
       const token = 'nonexistent-token';
       const payload = { password: 'password123' };
+      let errorHandled = false;
 
       service.redeem(token, payload).subscribe({
         next: () => expect.fail('Should have failed with 404'),
         error: (error) => {
+          errorHandled = true;
           expect(error.status).toBe(404);
           expect(error.statusText).toBe('Not Found');
         },
+        complete: () => expect.fail('Should not have completed without error for 404'),
       });
 
       const req = httpTestingController.expectOne(`/api/invites/${token}/redeem`);
       req.flush('Token not found', { status: 404, statusText: 'Not Found' });
+      expect(errorHandled).toBe(true);
     });
 
     it('should propagate a 500 Internal Server Error', () => {
       const token = 'valid-token';
       const payload = { password: 'password123' };
+      let errorHandled = false;
 
       service.redeem(token, payload).subscribe({
         next: () => expect.fail('Should have failed with 500'),
         error: (error) => {
+          errorHandled = true;
           expect(error.status).toBe(500);
           expect(error.statusText).toBe('Internal Server Error');
         },
+        complete: () => expect.fail('Should not have completed without error for 500'),
       });
 
       const req = httpTestingController.expectOne(`/api/invites/${token}/redeem`);
       req.flush('Server error', { status: 500, statusText: 'Internal Server Error' });
+      expect(errorHandled).toBe(true);
     });
   });
 });
