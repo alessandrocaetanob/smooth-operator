@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 
 import { AuthService, UserInfo } from './auth.service';
 
@@ -9,7 +9,6 @@ describe('AuthService', () => {
   let httpTestingController: HttpTestingController;
 
   beforeEach(() => {
-    // Let's use Vitest's mocked approach similar to auth.guards.spec.ts or use real TestBed correctly
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
       imports: [HttpClientTestingModule],
