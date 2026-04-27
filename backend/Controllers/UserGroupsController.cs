@@ -200,13 +200,14 @@ namespace Backend.Controllers
             if (group is null) return NotFound();
 
             var requestedIds = req.UserIds.Distinct().ToList();
-            var users = await _db.Users
+            var userInfos = await _db.Users
                 .Where(u => requestedIds.Contains(u.Id))
+                .Select(u => new { u.Id, u.IsActive })
                 .ToListAsync();
 
-            if (users.Count != requestedIds.Count)
+            if (userInfos.Count != requestedIds.Count)
             {
-                var foundIds = users.Select(u => u.Id).ToHashSet();
+                var foundIds = userInfos.Select(u => u.Id).ToHashSet();
                 var missing = requestedIds.Where(uid => !foundIds.Contains(uid)).ToList();
                 return BadRequest(new
                 {
@@ -215,19 +216,31 @@ namespace Backend.Controllers
                 });
             }
 
-            var inactiveIds = users.Where(u => !u.IsActive).Select(u => u.Id).ToList();
+            var inactiveIds = userInfos.Where(u => !u.IsActive).Select(u => u.Id).ToList();
             var previousMemberIds = group.Members.Select(m => m.Id).ToList();
 
-            group.Members.Clear();
-            foreach (var user in users)
-                group.Members.Add(user);
+            var currentMemberIds = previousMemberIds.ToHashSet();
+            var newRequestedIds = requestedIds.ToHashSet();
+
+            var toRemove = group.Members.Where(m => !newRequestedIds.Contains(m.Id)).ToList();
+            var toAddIds = newRequestedIds.Where(id => !currentMemberIds.Contains(id)).ToList();
+
+            foreach (var user in toRemove)
+                group.Members.Remove(user);
+
+            foreach (var newId in toAddIds)
+            {
+                var dummyUser = new User { Id = newId };
+                _db.Users.Attach(dummyUser);
+                group.Members.Add(dummyUser);
+            }
 
             await _db.SaveChangesAsync();
             await _audit.WriteAsync("group.members.updated", "UserGroup", id.ToString(),
                 new
                 {
                     previousMemberIds,
-                    newMemberIds = users.Select(u => u.Id).ToList(),
+                    newMemberIds = requestedIds,
                     inactiveAssigned = inactiveIds
                 });
 
