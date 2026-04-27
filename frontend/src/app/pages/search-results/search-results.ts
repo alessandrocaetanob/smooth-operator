@@ -35,10 +35,9 @@ export class SearchResults {
   private readonly vaults = inject(VaultsService);
   private readonly connections = inject(ConnectionsService);
 
-  readonly query = toSignal(
-    this.route.queryParamMap.pipe(map((p) => (p.get('q') ?? '').trim())),
-    { initialValue: '' },
-  );
+  readonly query = toSignal(this.route.queryParamMap.pipe(map((p) => (p.get('q') ?? '').trim())), {
+    initialValue: '',
+  });
 
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);

@@ -253,7 +253,7 @@ namespace Backend.Controllers
         public string Secret { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Credential type is required")]
-        [RegularExpression("^(password|private_key|api_token)$", ErrorMessage = "Credential type must be one of: password, private_key, api_token")]
+        [RegularExpression("^(password|private_key)$", ErrorMessage = "Credential type must be one of: password, private_key")]
         public string CredentialType { get; set; } = "password";
 
         public string? PublicKey { get; set; }

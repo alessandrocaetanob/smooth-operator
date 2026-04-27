@@ -11,14 +11,13 @@
 </div>
 <!-- Main Authentication Container -->
 <main class="relative z-10 w-full max-w-md px-app-gutter">
-  <div class="glass-panel rounded-xl p-app-margin glow-effect flex flex-col items-center text-center">
+  <div
+    class="glass-panel rounded-xl p-app-margin glow-effect flex flex-col items-center text-center"
+  >
     <!-- Logo area -->
     <div class="mb-app-lg flex flex-col items-center">
       <div class="mb-app-md">
-        <app-mascot
-          [state]="mascotState()"
-          [trackPointer]="true"
-        ></app-mascot>
+        <app-mascot [state]="mascotState()" [trackPointer]="true"></app-mascot>
       </div>
       <h1 class="font-h1 text-h1 text-on-background tracking-tighter">Smooth Operator</h1>
       <p class="font-body-sm text-body-sm text-on-surface-variant mt-app-sm max-w-[280px]">

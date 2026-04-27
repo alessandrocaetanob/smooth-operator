@@ -54,7 +54,7 @@ export class TopNavBar implements OnInit {
   });
 
   readonly navMascotState = computed<MascotState>(() =>
-    this.toastService.toasts().some((t) => t.kind === 'error') ? 'error' : this._idleState()
+    this.toastService.toasts().some((t) => t.kind === 'error') ? 'error' : this._idleState(),
   );
 
   readonly scrolled = signal(false);
@@ -147,4 +147,3 @@ export class TopNavBar implements OnInit {
     this.router.navigate(['/login']);
   }
 }
-

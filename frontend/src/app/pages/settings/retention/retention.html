@@ -2,9 +2,9 @@
   <div class="mb-6">
     <h2 class="text-lg font-semibold text-on-surface">Audit Log Retention</h2>
     <p class="text-sm text-on-surface-variant mt-1">
-      Control how long audit log entries are kept in the database. A daily background job
-      purges entries older than the configured retention window. Set to <strong>0</strong> to
-      keep audit logs forever.
+      Control how long audit log entries are kept in the database. A daily background job purges
+      entries older than the configured retention window. Set to <strong>0</strong> to keep audit
+      logs forever.
     </p>
   </div>
 
@@ -51,7 +51,11 @@
         class="btn-primary px-4 py-2 rounded text-sm font-medium"
         [disabled]="loading() || busy()"
       >
-        @if (busy()) { Saving… } @else { Save }
+        @if (busy()) {
+          Saving…
+        } @else {
+          Save
+        }
       </button>
       <button
         type="button"

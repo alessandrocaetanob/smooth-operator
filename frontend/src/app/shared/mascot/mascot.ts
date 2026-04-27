@@ -1,12 +1,4 @@
-import {
-  Component,
-  DestroyRef,
-  ElementRef,
-  Input,
-  OnInit,
-  inject,
-  signal,
-} from '@angular/core';
+import { Component, DestroyRef, ElementRef, Input, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 export type MascotState =
@@ -74,4 +66,3 @@ export class Mascot implements OnInit {
     this.destroyRef.onDestroy(() => document.removeEventListener('mousemove', handler));
   }
 }
-

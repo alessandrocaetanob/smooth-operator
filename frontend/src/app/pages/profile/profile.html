@@ -80,7 +80,9 @@
 
       <div class="flex-1 w-full space-y-5">
         <div>
-          <label for="profile-name" class="block text-xs font-semibold uppercase tracking-wider text-on-surface-variant mb-1.5"
+          <label
+            for="profile-name"
+            class="block text-xs font-semibold uppercase tracking-wider text-on-surface-variant mb-1.5"
             >Name</label
           >
           <input
@@ -95,7 +97,8 @@
         </div>
 
         <div>
-          <label class="block text-xs font-semibold uppercase tracking-wider text-on-surface-variant mb-1.5"
+          <label
+            class="block text-xs font-semibold uppercase tracking-wider text-on-surface-variant mb-1.5"
             >Email</label
           >
           <input
@@ -104,13 +107,12 @@
             [value]="user()?.email ?? ''"
             readonly
           />
-          <p class="mt-1 text-[11px] text-on-surface-variant">
-            Email cannot be changed here.
-          </p>
+          <p class="mt-1 text-[11px] text-on-surface-variant">Email cannot be changed here.</p>
         </div>
 
         <div>
-          <label class="block text-xs font-semibold uppercase tracking-wider text-on-surface-variant mb-1.5"
+          <label
+            class="block text-xs font-semibold uppercase tracking-wider text-on-surface-variant mb-1.5"
             >Roles</label
           >
           <div class="flex flex-wrap gap-1.5">

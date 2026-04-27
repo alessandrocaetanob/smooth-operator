@@ -19,7 +19,9 @@
   </div>
 
   @if (errorMessage()) {
-    <div class="mb-4 p-3 border border-error/40 bg-error-container/20 rounded-lg text-sm text-on-error-container">
+    <div
+      class="mb-4 p-3 border border-error/40 bg-error-container/20 rounded-lg text-sm text-on-error-container"
+    >
       {{ errorMessage() }}
     </div>
   }
@@ -104,7 +106,9 @@
 
   <div class="glass-card rounded-xl overflow-hidden">
     <table class="w-full text-sm">
-      <thead class="bg-surface-container-high/40 text-[11px] uppercase tracking-widest text-on-surface-variant">
+      <thead
+        class="bg-surface-container-high/40 text-[11px] uppercase tracking-widest text-on-surface-variant"
+      >
         <tr>
           <th class="text-left px-4 py-3 font-medium">Name</th>
           <th class="text-left px-4 py-3 font-medium">Protocol</th>
@@ -130,7 +134,10 @@
             <td class="px-4 py-3">
               <div class="flex items-center justify-end gap-2">
                 <button (click)="edit(c)" class="btn-ghost px-2 py-1 text-xs">Edit</button>
-                <button (click)="remove(c)" class="px-2 py-1 text-xs text-error hover:bg-error/10 rounded transition-colors">
+                <button
+                  (click)="remove(c)"
+                  class="px-2 py-1 text-xs text-error hover:bg-error/10 rounded transition-colors"
+                >
                   Delete
                 </button>
               </div>
@@ -147,4 +154,3 @@
     </table>
   </div>
 </div>
-

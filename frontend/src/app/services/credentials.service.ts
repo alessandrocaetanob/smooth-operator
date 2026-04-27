@@ -7,7 +7,7 @@ export interface Credential {
   id: string;
   name: string;
   username: string;
-  credentialType: 'password' | 'private_key' | 'api_token' | string;
+  credentialType: 'password' | 'private_key' | string;
   publicKey?: string;
 }
 

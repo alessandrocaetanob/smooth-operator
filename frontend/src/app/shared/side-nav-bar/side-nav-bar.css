@@ -6,7 +6,10 @@
   border-radius: 0.5rem;
   color: rgb(var(--color-on-surface-variant));
   border-left: 2px solid transparent;
-  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
 }
 
 .nav-link:hover {

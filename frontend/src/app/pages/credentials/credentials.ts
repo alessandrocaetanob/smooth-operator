@@ -55,7 +55,6 @@ export class Credentials implements OnInit {
   readonly types = [
     { value: 'password', label: 'Password' },
     { value: 'private_key', label: 'Private key (SSH)' },
-    { value: 'api_token', label: 'API token' },
   ];
 
   ngOnInit(): void {
@@ -113,8 +112,20 @@ export class Credentials implements OnInit {
   }
 
   copyPublicKey(): void {
-    navigator.clipboard.writeText(this.generatedPublicKey());
+    const key = this.publicKeyToShow();
+    if (!key) return;
+    navigator.clipboard.writeText(key);
     this.toastSvc.success('Public key copied to clipboard');
+  }
+
+  copyRowPublicKey(c: Credential): void {
+    if (!c.publicKey) return;
+    navigator.clipboard.writeText(c.publicKey);
+    this.toastSvc.success(`Public key for "${c.name}" copied to clipboard`);
+  }
+
+  publicKeyToShow(): string {
+    return this.generatedPublicKey() || this.form().publicKey || '';
   }
 
   cancel(): void {

@@ -10,7 +10,8 @@ export class ThemeService {
   init(): void {
     const saved = localStorage.getItem('theme') as Theme | null;
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const resolved: Theme = saved === 'light' || saved === 'dark' ? saved : prefersDark ? 'dark' : 'light';
+    const resolved: Theme =
+      saved === 'light' || saved === 'dark' ? saved : prefersDark ? 'dark' : 'light';
     this.apply(resolved);
 
     // Keep signal in sync when the OS preference changes (only if no saved override)

@@ -13,9 +13,12 @@ export class ActiveSession {
 
   readonly mascotState = computed<MascotState>(() => {
     switch (this.connectionStatus()) {
-      case 'connecting': return 'loading';
-      case 'disconnected': return 'error';
-      default: return 'idle';
+      case 'connecting':
+        return 'loading';
+      case 'disconnected':
+        return 'error';
+      default:
+        return 'idle';
     }
   });
 }
