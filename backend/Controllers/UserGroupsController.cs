@@ -223,7 +223,7 @@ namespace Backend.Controllers
             var newRequestedIds = requestedIds.ToHashSet();
 
             var toRemove = group.Members.Where(m => !newRequestedIds.Contains(m.Id)).ToList();
-            var toAddIds = newRequestedIds.Where(id => !currentMemberIds.Contains(id)).ToList();
+            var toAddIds = newRequestedIds.Where(uid => !currentMemberIds.Contains(uid)).ToList();
 
             foreach (var user in toRemove)
                 group.Members.Remove(user);
