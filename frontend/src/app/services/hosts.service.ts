@@ -33,7 +33,7 @@ export class HostsService {
   }
 
   update(id: string, payload: CreateHostPayload): Observable<void> {
-    return this.http.put<void>(`/api/hosts/${id}`, { id, ...payload });
+    return this.http.put<void>(`/api/hosts/${id}`, payload);
   }
 
   remove(id: string): Observable<void> {

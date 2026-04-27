@@ -8,6 +8,7 @@ export interface Credential {
   name: string;
   username: string;
   credentialType: 'password' | 'private_key' | 'api_token' | string;
+  publicKey?: string;
 }
 
 export interface CreateCredentialPayload {
@@ -15,6 +16,7 @@ export interface CreateCredentialPayload {
   username: string;
   secret: string;
   credentialType: string;
+  publicKey?: string;
 }
 
 export interface UpdateCredentialPayload {
@@ -22,6 +24,7 @@ export interface UpdateCredentialPayload {
   username: string;
   secret?: string; // optional - omit to keep existing secret
   credentialType: string;
+  publicKey?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -50,12 +53,20 @@ export class CredentialsService {
     return this.http.delete<void>(`/api/credentials/${id}`);
   }
 
+  generateSsh(keyType: string): Observable<{ privateKey: string; publicKey: string }> {
+    return this.http.post<{ privateKey: string; publicKey: string }>(
+      '/api/credentials/generate-ssh',
+      { keyType },
+    );
+  }
+
   private normalize(raw: any): Credential {
     return {
       id: pickOr(raw, '', 'id', 'Id'),
       name: pickOr(raw, '', 'name', 'Name'),
       username: pickOr(raw, '', 'username', 'Username'),
       credentialType: pickOr(raw, 'password', 'credentialType', 'CredentialType'),
+      publicKey: pickOr(raw, '', 'publicKey', 'PublicKey'),
     };
   }
 }

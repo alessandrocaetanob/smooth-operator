@@ -16,6 +16,7 @@ interface FormState {
   username: string;
   secret: string;
   credentialType: string;
+  publicKey?: string;
 }
 
 const EMPTY_FORM: FormState = {
@@ -24,6 +25,7 @@ const EMPTY_FORM: FormState = {
   username: '',
   secret: '',
   credentialType: 'password',
+  publicKey: '',
 };
 
 @Component({
@@ -45,6 +47,10 @@ export class Credentials implements OnInit {
   readonly showForm = signal(false);
   readonly form = signal<FormState>({ ...EMPTY_FORM });
   readonly busy = signal(false);
+  readonly generatingSsh = signal(false);
+  readonly showPublicKey = signal(false);
+  readonly generatedPublicKey = signal<string>('');
+  readonly sshKeyAlgorithm = signal<'rsa' | 'ecdsa'>('rsa');
 
   readonly types = [
     { value: 'password', label: 'Password' },
@@ -82,12 +88,40 @@ export class Credentials implements OnInit {
       username: c.username,
       secret: '',
       credentialType: c.credentialType,
+      publicKey: c.publicKey || '',
     });
     this.showForm.set(true);
   }
 
+  generateSshKey(): void {
+    if (!this.canManageCredentials()) return;
+    this.generatingSsh.set(true);
+    this.errorMessage.set(null);
+    this.svc.generateSsh(this.sshKeyAlgorithm()).subscribe({
+      next: (res) => {
+        this.generatingSsh.set(false);
+        this.patch('secret', res.privateKey);
+        this.patch('publicKey', res.publicKey);
+        this.generatedPublicKey.set(res.publicKey);
+        this.showPublicKey.set(true);
+      },
+      error: (err) => {
+        this.generatingSsh.set(false);
+        this.errorMessage.set(this.toMessage(err) || 'Failed to generate SSH key.');
+      },
+    });
+  }
+
+  copyPublicKey(): void {
+    navigator.clipboard.writeText(this.generatedPublicKey());
+    this.toastSvc.success('Public key copied to clipboard');
+  }
+
   cancel(): void {
     this.showForm.set(false);
+    this.showPublicKey.set(false);
+    this.generatedPublicKey.set('');
+    this.sshKeyAlgorithm.set('rsa');
     this.form.set({ ...EMPTY_FORM });
   }
 
@@ -114,6 +148,7 @@ export class Credentials implements OnInit {
         name: f.name.trim(),
         username: f.username.trim(),
         credentialType: f.credentialType,
+        publicKey: f.publicKey,
       };
       if (f.secret) upd.secret = f.secret;
       this.svc.update(f.id, upd).subscribe({
@@ -126,6 +161,7 @@ export class Credentials implements OnInit {
         username: f.username.trim(),
         secret: f.secret,
         credentialType: f.credentialType,
+        publicKey: f.publicKey,
       };
       this.svc.create(create).subscribe({
         next: () => this.done(),
