@@ -1,0 +1,17 @@
+@if (type === 'text') {
+  @for (r of rowArray; track $index) {
+    <div class="skeleton h-4 rounded mb-3"></div>
+  }
+} @else if (type === 'card') {
+  @for (r of rowArray; track $index) {
+    <div class="skeleton h-24 rounded-xl mb-4"></div>
+  }
+} @else {
+  @for (r of rowArray; track $index) {
+    <div class="flex gap-4 py-3 border-b border-outline-variant/10">
+      <div class="skeleton h-4 rounded flex-1"></div>
+      <div class="skeleton h-4 rounded w-24"></div>
+      <div class="skeleton h-4 rounded w-16"></div>
+    </div>
+  }
+}

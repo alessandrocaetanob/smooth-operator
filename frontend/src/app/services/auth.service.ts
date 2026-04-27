@@ -18,6 +18,7 @@ export interface UserInfo {
   name: string;
   hasPassword: boolean;
   linkedToEntra: boolean;
+  avatarUrl?: string | null;
   roles: string[];
 }
 
@@ -69,10 +70,13 @@ export class AuthService {
       }),
       catchError(() => {
         // Backend unreachable or returned a non-JSON payload (e.g. SPA HTML
-        // when the API proxy is misconfigured). Assume setup is required so
-        // the operator can finish bootstrap instead of being stuck on login.
+        // when the API proxy is misconfigured). Default to `requiresSetup:
+        // false` so existing users land on /login and see real connection
+        // errors there — defaulting to `true` would hijack a healthy
+        // installation and dump every user on the bootstrap screen the
+        // moment the API hiccups, which has happened in production.
         const fallback: SetupStatus = {
-          requiresSetup: true,
+          requiresSetup: false,
           providers: { local: true, entraId: false },
         };
         this._setup.set(fallback);
@@ -147,8 +151,13 @@ export class AuthService {
       name: raw?.name ?? raw?.Name ?? '',
       hasPassword: raw?.hasPassword ?? raw?.HasPassword ?? false,
       linkedToEntra: raw?.linkedToEntra ?? raw?.LinkedToEntra ?? false,
+      avatarUrl: raw?.avatarUrl ?? raw?.AvatarUrl ?? null,
       roles,
     };
+  }
+
+  setCurrentUser(user: UserInfo): void {
+    this._user.set(user);
   }
 
   private userFromStoredToken(token: string | null): UserInfo | null {

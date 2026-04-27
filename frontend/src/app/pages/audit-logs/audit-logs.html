@@ -1,15 +1,15 @@
 <div>
   <div class="flex items-center justify-between mb-6">
     <div>
-      <h2 class="text-lg font-semibold text-slate-100">Audit Logs</h2>
-      <p class="text-sm text-slate-400 mt-1">
+      <h2 class="text-lg font-semibold text-on-surface">Audit Logs</h2>
+      <p class="text-sm text-on-surface-variant mt-1">
         Every authentication and resource change is recorded.
       </p>
     </div>
     <div class="flex items-center gap-2">
       <button
         (click)="exportCsv()"
-        class="flex items-center gap-2 px-3 py-2 text-xs font-bold uppercase tracking-widest text-slate-200 bg-white/5 hover:bg-white/10 rounded-md transition"
+        class="btn-ghost"
       >
         <span class="material-symbols-outlined text-base">download</span>
         Export CSV
@@ -19,7 +19,7 @@
 
   <form
     (ngSubmit)="search()"
-    class="grid grid-cols-1 md:grid-cols-5 gap-3 mb-4 p-4 border border-white/10 rounded-lg bg-slate-950/60"
+    class="grid grid-cols-1 md:grid-cols-5 gap-3 mb-4 p-4 glass-card rounded-lg"
   >
     <input
       type="text"
@@ -27,7 +27,7 @@
       [ngModel]="user()"
       (ngModelChange)="user.set($event)"
       name="user"
-      class="bg-slate-900 border border-white/10 focus:border-blue-500 text-sm text-slate-200 rounded px-3 py-2 outline-none"
+      class="input-field"
     />
     <input
       type="text"
@@ -35,7 +35,7 @@
       [ngModel]="action()"
       (ngModelChange)="action.set($event)"
       name="action"
-      class="bg-slate-900 border border-white/10 focus:border-blue-500 text-sm text-slate-200 rounded px-3 py-2 outline-none"
+      class="input-field"
     />
     <input
       type="text"
@@ -43,42 +43,42 @@
       [ngModel]="resourceType()"
       (ngModelChange)="resourceType.set($event)"
       name="resourceType"
-      class="bg-slate-900 border border-white/10 focus:border-blue-500 text-sm text-slate-200 rounded px-3 py-2 outline-none"
+      class="input-field"
     />
     <input
       type="date"
       [ngModel]="from()"
       (ngModelChange)="from.set($event)"
       name="from"
-      class="bg-slate-900 border border-white/10 focus:border-blue-500 text-sm text-slate-200 rounded px-3 py-2 outline-none"
+      class="input-field"
     />
     <input
       type="date"
       [ngModel]="to()"
       (ngModelChange)="to.set($event)"
       name="to"
-      class="bg-slate-900 border border-white/10 focus:border-blue-500 text-sm text-slate-200 rounded px-3 py-2 outline-none"
+      class="input-field"
     />
     <div class="md:col-span-5 flex justify-end gap-2">
       <button
         type="button"
         (click)="reset()"
-        class="px-3 py-2 text-xs font-medium uppercase tracking-widest text-slate-300 hover:bg-white/5 rounded"
+        class="btn-ghost"
       >
         Reset
       </button>
       <button
         type="submit"
-        class="px-4 py-2 text-xs font-bold uppercase tracking-widest text-white bg-blue-600 hover:bg-blue-500 rounded"
+        class="btn-primary"
       >
         Search
       </button>
     </div>
   </form>
 
-  <div class="border border-white/10 rounded-lg bg-slate-950/60 overflow-hidden">
+  <div class="glass-card rounded-lg overflow-hidden">
     <table class="w-full text-sm">
-      <thead class="bg-white/5 text-[11px] uppercase tracking-widest text-slate-400">
+      <thead class="bg-white/5 text-[11px] uppercase tracking-widest text-on-surface-variant">
         <tr>
           <th class="text-left px-4 py-3 font-medium">Timestamp</th>
           <th class="text-left px-4 py-3 font-medium">User</th>
@@ -91,27 +91,27 @@
       <tbody>
         @for (l of result().items; track l.id) {
           <tr class="border-t border-white/5 hover:bg-white/5">
-            <td class="px-4 py-3 text-slate-300 whitespace-nowrap">
+            <td class="px-4 py-3 text-on-surface-variant whitespace-nowrap">
               {{ l.timestamp | date: 'short' }}
             </td>
-            <td class="px-4 py-3 text-slate-300">
+            <td class="px-4 py-3 text-on-surface-variant">
               {{ l.userEmail || (l.userId ? l.userId : '—') }}
             </td>
-            <td class="px-4 py-3 text-slate-200 font-medium">{{ l.action }}</td>
-            <td class="px-4 py-3 text-slate-300">
-              <span class="text-xs uppercase tracking-widest text-slate-500">{{
+            <td class="px-4 py-3 text-on-surface font-medium">{{ l.action }}</td>
+            <td class="px-4 py-3 text-on-surface-variant">
+              <span class="text-xs uppercase tracking-widest text-outline">{{
                 l.resourceType
               }}</span>
-              <span class="ml-2 text-xs text-slate-400">{{ l.resourceId }}</span>
+              <span class="ml-2 text-xs text-on-surface-variant">{{ l.resourceId }}</span>
             </td>
-            <td class="px-4 py-3 text-slate-400">{{ l.ipAddress }}</td>
-            <td class="px-4 py-3 text-slate-400 max-w-md truncate" [title]="l.details">
+            <td class="px-4 py-3 text-on-surface-variant">{{ l.ipAddress }}</td>
+            <td class="px-4 py-3 text-on-surface-variant max-w-md truncate" [title]="l.details">
               {{ l.details }}
             </td>
           </tr>
         } @empty {
           <tr>
-            <td colspan="6" class="px-4 py-8 text-center text-slate-500">
+            <td colspan="6" class="px-4 py-8 text-center text-outline">
               {{ loading() ? 'Loading…' : 'No log entries match the current filters.' }}
             </td>
           </tr>
@@ -120,12 +120,37 @@
     </table>
   </div>
 
-  <div class="flex items-center justify-between mt-4 text-xs text-slate-400">
-    <div>
-      Showing page {{ result().page }} of {{ result().totalPages || 1 }} —
-      {{ result().totalItems }} total
+  <div class="flex items-center justify-between mt-4 text-xs text-on-surface-variant">
+    <div class="flex items-center gap-3">
+      <span>
+        Showing page {{ result().page }} of {{ result().totalPages || 1 }} —
+        {{ result().totalItems }} total
+      </span>
+      <label class="flex items-center gap-2">
+        <span class="text-outline">Rows:</span>
+        <select
+          [ngModel]="pageSize()"
+          (ngModelChange)="onPageSizeChange($event)"
+          name="pageSize"
+          class="bg-surface-container border border-outline-variant/40 rounded px-2 py-1 text-xs text-on-surface focus:border-primary outline-none"
+          aria-label="Rows per page"
+        >
+          <option [ngValue]="25">25</option>
+          <option [ngValue]="50">50</option>
+          <option [ngValue]="100">100</option>
+          <option [ngValue]="200">200</option>
+        </select>
+      </label>
     </div>
     <div class="flex items-center gap-2">
+      <button
+        (click)="goToPage(1)"
+        [disabled]="result().page <= 1"
+        class="px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded disabled:opacity-30"
+        aria-label="First page"
+      >
+        « First
+      </button>
       <button
         (click)="goToPage(result().page - 1)"
         [disabled]="result().page <= 1"
@@ -139,6 +164,14 @@
         class="px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded disabled:opacity-30"
       >
         Next
+      </button>
+      <button
+        (click)="goToPage(result().totalPages || 1)"
+        [disabled]="result().page >= result().totalPages"
+        class="px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded disabled:opacity-30"
+        aria-label="Last page"
+      >
+        Last »
       </button>
     </div>
   </div>

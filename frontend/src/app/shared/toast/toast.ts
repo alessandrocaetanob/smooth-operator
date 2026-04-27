@@ -1,10 +1,12 @@
 import { Component, inject } from '@angular/core';
 import { Toast, ToastService } from './toast.service';
+import { toastEnter } from '../animations';
 
 @Component({
   selector: 'app-toast-container',
   standalone: true,
   templateUrl: './toast.html',
+  animations: [toastEnter],
 })
 export class ToastContainer {
   private readonly svc = inject(ToastService);
@@ -21,11 +23,11 @@ export class ToastContainer {
   toneClass(kind: Toast['kind']): string {
     switch (kind) {
       case 'success':
-        return 'border-emerald-500/40 bg-emerald-950/80 text-emerald-100';
+        return 'border-tertiary/40 bg-tertiary-container/20 text-on-tertiary-container';
       case 'error':
-        return 'border-red-500/40 bg-red-950/80 text-red-100';
+        return 'border-error/40 bg-error-container/20 text-on-error-container';
       default:
-        return 'border-blue-500/40 bg-blue-950/80 text-blue-100';
+        return 'border-primary-container/40 bg-primary-container/15 text-on-primary-container';
     }
   }
 

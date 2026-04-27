@@ -1,0 +1,8 @@
+/* Floating variant gets a soft accent ring on focus to confirm it's interactive
+   on top of the ambient glass background. */
+.theme-toggle-floating:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 3px rgb(var(--color-primary) / 0.35),
+    0 8px 24px rgb(0 0 0 / 0.25);
+}

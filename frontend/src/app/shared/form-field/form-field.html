@@ -1,0 +1,9 @@
+<div class="flex flex-col gap-1">
+  <label [for]="controlId" class="text-xs font-medium text-on-surface-variant uppercase tracking-widest">
+    {{ label }}
+  </label>
+  <ng-content></ng-content>
+  @if (error) {
+    <p [id]="controlId + '-error'" class="text-xs text-error mt-0.5">{{ error }}</p>
+  }
+</div>

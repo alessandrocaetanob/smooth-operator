@@ -22,6 +22,7 @@ builder.Services.AddScoped<IAuditService, AuditService>();
 builder.Services.AddScoped<IInviteService, InviteService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IAccessControlService, AccessControlService>();
+builder.Services.AddHostedService<AuditRetentionService>();
 
 // Local JWT (HS256) is the default authentication scheme so the app works without
 // any external identity provider. Entra ID (or any other OIDC provider) is opt-in

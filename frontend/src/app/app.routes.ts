@@ -17,7 +17,9 @@ import { Hosts } from './pages/hosts/hosts';
 import { Credentials } from './pages/credentials/credentials';
 import { Settings } from './pages/settings/settings';
 import { Email } from './pages/settings/email/email';
+import { Retention } from './pages/settings/retention/retention';
 import { Invite } from './pages/invite/invite';
+import { Profile } from './pages/profile/profile';
 import { Layout } from './shared/layout/layout';
 import {
   rootRedirectGuard,
@@ -46,6 +48,7 @@ export const routes: Routes = [
       { path: 'credentials', component: Credentials, canActivate: [connectionManagerGuard] },
       { path: 'empty', component: EmptyState },
       { path: 'search', component: SearchResults },
+      { path: 'profile', component: Profile },
       { path: 'connecting', component: ConnectingState },
       {
         path: 'settings',
@@ -58,6 +61,7 @@ export const routes: Routes = [
           { path: 'vaults', component: SettingsVaults },
           { path: 'roles', component: SettingsRoles },
           { path: 'email', component: Email },
+          { path: 'retention', component: Retention },
           { path: 'audit-logs', component: AuditLogs },
         ],
       },

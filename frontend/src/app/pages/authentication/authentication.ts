@@ -1,12 +1,13 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { Mascot } from '../../shared/mascot/mascot';
+import { Mascot, MascotState } from '../../shared/mascot/mascot';
+import { ThemeToggle } from '../../shared/theme-toggle/theme-toggle';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-authentication',
-  imports: [ReactiveFormsModule, Mascot],
+  imports: [ReactiveFormsModule, Mascot, ThemeToggle],
   templateUrl: './authentication.html',
   styleUrl: './authentication.css',
 })
@@ -24,6 +25,14 @@ export class Authentication {
   readonly form = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required]],
+  });
+
+  readonly mascotState = computed<MascotState>(() => {
+    if (this.isPasswordFocused()) return 'password';
+    if (this.submitting()) return 'loading';
+    if (this.errorMessage()) return 'error';
+    if (this.typingLength() > 0) return 'typing';
+    return 'idle';
   });
 
   onPasswordFocus(): void {
@@ -65,3 +74,4 @@ export class Authentication {
     this.errorMessage.set('SSO flow is not yet wired up in the frontend.');
   }
 }
+

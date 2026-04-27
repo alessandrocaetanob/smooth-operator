@@ -1,83 +1,148 @@
-<div class="mascot-container" [class.small]="isSmall">
-  <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="mascot-svg">
+<div
+  class="mascot-container"
+  [class.small]="isSmall"
+  [class.state-idle]="effectiveState === 'idle'"
+  [class.state-typing]="effectiveState === 'typing'"
+  [class.state-password]="effectiveState === 'password'"
+  [class.state-loading]="effectiveState === 'loading'"
+  [class.state-success]="effectiveState === 'success'"
+  [class.state-error]="effectiveState === 'error'"
+  [class.state-thinking]="effectiveState === 'thinking'"
+  [class.state-wave]="effectiveState === 'wave'"
+  [class.state-sleep]="effectiveState === 'sleep'"
+>
+  <svg viewBox="0 0 200 220" xmlns="http://www.w3.org/2000/svg" class="mascot-svg" aria-hidden="true">
     <!-- Antenna -->
-    <path d="M100 20 L100 40" stroke="#0066ff" stroke-width="4" stroke-linecap="round" />
-    <circle
-      cx="100"
-      cy="15"
-      r="8"
-      fill="#4edea3"
-      class="antenna-bulb"
-      [class.pulse]="!isPasswordFocused"
-    />
+    <line x1="100" y1="26" x2="100" y2="50" stroke="var(--mascot-chassis-stroke)" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="100" cy="17" r="11" fill="var(--mascot-antenna)" class="antenna-bulb"/>
+    <circle cx="100" cy="17" r="5" fill="var(--mascot-screen)" opacity="0.4"/>
 
-    <!-- Head Background -->
-    <rect
-      x="40"
-      y="40"
-      width="120"
-      height="100"
-      rx="30"
-      fill="#1c2026"
-      stroke="#0066ff"
-      stroke-width="4"
-    />
+    <!-- Head chassis -->
+    <rect x="36" y="48" width="128" height="108" rx="30" fill="var(--mascot-chassis)" stroke="var(--mascot-chassis-stroke)" stroke-width="3"/>
 
-    <!-- Screen/Face -->
-    <rect
-      x="50"
-      y="55"
-      width="100"
-      height="70"
-      rx="15"
-      fill="#0a0e14"
-      stroke="#00dce5"
-      stroke-width="2"
-    />
+    <!-- Screen / face panel -->
+    <rect x="50" y="62" width="100" height="76" rx="16" fill="var(--mascot-screen)" stroke="var(--mascot-screen-stroke)" stroke-width="1.5"/>
 
-    <!-- Eyes (Visible when NOT typing password) -->
+    <!-- Scan-line overlay (decorative) -->
+    <rect x="50" y="62" width="100" height="76" rx="16" fill="url(#scanlines)" opacity="0.06"/>
+
+    <!-- Eyes — open (hidden when password or sleep) -->
     <g
-      class="eyes"
-      [class.hidden]="isPasswordFocused"
-      [style.transform]="'translateX(' + eyeOffsetX + 'px)'"
+      class="eyes-open"
+      [style.opacity]="(effectiveState !== 'password' && effectiveState !== 'sleep') ? '1' : '0'"
     >
-      <ellipse cx="80" cy="90" rx="8" ry="12" fill="#00dce5" class="eye left-eye" />
-      <ellipse cx="120" cy="90" rx="8" ry="12" fill="#00dce5" class="eye right-eye" />
+      <!-- Left pupil -->
+      <ellipse
+        [attr.cx]="74 + eyeOffsetX()"
+        [attr.cy]="100 + eyeOffsetY()"
+        rx="9" ry="11"
+        fill="var(--mascot-eye)"
+        class="eye left-eye"
+      />
+      <ellipse
+        [attr.cx]="76 + eyeOffsetX()"
+        [attr.cy]="97 + eyeOffsetY()"
+        rx="3" ry="3"
+        fill="white"
+        opacity="0.5"
+      />
+      <!-- Right pupil -->
+      <ellipse
+        [attr.cx]="126 + eyeOffsetX()"
+        [attr.cy]="100 + eyeOffsetY()"
+        rx="9" ry="11"
+        fill="var(--mascot-eye)"
+        class="eye right-eye"
+      />
+      <ellipse
+        [attr.cx]="128 + eyeOffsetX()"
+        [attr.cy]="97 + eyeOffsetY()"
+        rx="3" ry="3"
+        fill="white"
+        opacity="0.5"
+      />
     </g>
 
-    <!-- Closed Eyes (Visible when typing password) -->
-    <g class="eyes-closed" [class.visible]="isPasswordFocused">
+    <!-- Eyes — sleeping (arcs) -->
+    <g class="eyes-sleep" [style.opacity]="effectiveState === 'sleep' ? '1' : '0'">
+      <path d="M65 100 Q74 109 83 100" stroke="var(--mascot-eye)" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <path d="M117 100 Q126 109 135 100" stroke="var(--mascot-eye)" stroke-width="3" fill="none" stroke-linecap="round"/>
+    </g>
+
+    <!-- Eyes — closed/squinting (password state — privacy gesture) -->
+    <g class="eyes-closed" [style.opacity]="effectiveState === 'password' ? '1' : '0'">
       <path
-        d="M70 90 Q80 80 90 90"
-        stroke="#00dce5"
-        stroke-width="4"
-        fill="transparent"
+        d="M62 100 Q74 95 86 100"
+        stroke="var(--mascot-eye)"
+        stroke-width="3.5"
+        fill="none"
         stroke-linecap="round"
+        class="eye-arc left-arc"
       />
       <path
-        d="M110 90 Q120 80 130 90"
-        stroke="#00dce5"
-        stroke-width="4"
-        fill="transparent"
+        d="M114 100 Q126 95 138 100"
+        stroke="var(--mascot-eye)"
+        stroke-width="3.5"
+        fill="none"
         stroke-linecap="round"
+        class="eye-arc right-arc"
       />
+      <!-- Tiny lash flick for charm -->
+      <path d="M64 96 L60 92" stroke="var(--mascot-eye)" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+      <path d="M84 96 L88 92" stroke="var(--mascot-eye)" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+      <path d="M116 96 L112 92" stroke="var(--mascot-eye)" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+      <path d="M136 96 L140 92" stroke="var(--mascot-eye)" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
     </g>
 
-    <!-- Hands covering eyes (Visible when typing password) -->
-    <g class="hands" [class.visible]="isPasswordFocused">
-      <rect x="65" y="80" width="30" height="20" rx="10" fill="#0066ff" />
-      <rect x="105" y="80" width="30" height="20" rx="10" fill="#0066ff" />
-    </g>
-
-    <!-- Smile -->
+    <!-- Mouth — happy smile -->
     <path
-      d="M85 110 Q100 120 115 110"
-      stroke="#00dce5"
+      class="mouth mouth-smile"
+      d="M82 118 Q100 130 118 118"
+      stroke="var(--mascot-eye)"
       stroke-width="3"
-      fill="transparent"
+      fill="none"
       stroke-linecap="round"
-      class="smile"
-      [class.worried]="isPasswordFocused"
+      [style.opacity]="['idle','typing','wave','success'].includes(effectiveState) ? '1' : '0'"
     />
+    <!-- Mouth — worried arc -->
+    <path
+      class="mouth mouth-worried"
+      d="M82 125 Q100 116 118 125"
+      stroke="var(--mascot-eye)"
+      stroke-width="3"
+      fill="none"
+      stroke-linecap="round"
+      [style.opacity]="(effectiveState === 'password' || effectiveState === 'error') ? '1' : '0'"
+    />
+    <!-- Mouth — flat line (thinking / loading / sleep) -->
+    <path
+      class="mouth mouth-flat"
+      d="M84 122 Q100 122 116 122"
+      stroke="var(--mascot-eye)"
+      stroke-width="3"
+      fill="none"
+      stroke-linecap="round"
+      [style.opacity]="['thinking','loading','sleep'].includes(effectiveState) ? '1' : '0'"
+    />
+
+    <!-- Neck -->
+    <rect x="84" y="154" width="32" height="14" rx="6" fill="var(--mascot-chassis)" stroke="var(--mascot-chassis-stroke)" stroke-width="2"/>
+
+    <!-- Body -->
+    <rect x="48" y="166" width="104" height="50" rx="20" fill="var(--mascot-chassis)" stroke="var(--mascot-chassis-stroke)" stroke-width="2.5"/>
+
+    <!-- Chest panel -->
+    <rect x="64" y="178" width="72" height="28" rx="10" fill="var(--mascot-screen)" stroke="var(--mascot-screen-stroke)" stroke-width="1.5" opacity="0.8"/>
+    <circle cx="82" cy="192" r="5" fill="var(--mascot-antenna)" class="chest-dot" opacity="0.85"/>
+    <circle cx="100" cy="192" r="5" fill="var(--mascot-eye)" class="chest-dot" opacity="0.85"/>
+    <circle cx="118" cy="192" r="5" fill="var(--mascot-hand)" class="chest-dot" opacity="0.85"/>
+
+    <!-- Scanlines pattern (subtle decorative texture) -->
+    <defs>
+      <pattern id="scanlines" x="0" y="0" width="100" height="4" patternUnits="userSpaceOnUse">
+        <rect width="100" height="2" fill="white"/>
+      </pattern>
+    </defs>
   </svg>
 </div>
+

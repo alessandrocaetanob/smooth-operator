@@ -1,9 +1,10 @@
-import { Component, HostListener } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { TopNavBar } from '../top-nav-bar/top-nav-bar';
 import { SideNavBar } from '../side-nav-bar/side-nav-bar';
 import { ConfirmDialog } from '../confirm-dialog/confirm-dialog';
 import { ToastContainer } from '../toast/toast';
+import { LayoutService } from '../../services/layout.service';
 
 @Component({
   selector: 'app-layout',
@@ -13,10 +14,6 @@ import { ToastContainer } from '../toast/toast';
   styleUrl: './layout.css',
 })
 export class Layout {
-  sidebarVisible = false;
-
-  @HostListener('document:keydown.escape')
-  onEscape(): void {
-    this.sidebarVisible = false;
-  }
+  readonly layout = inject(LayoutService);
+  readonly collapsed = this.layout.collapsed;
 }
