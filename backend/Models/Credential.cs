@@ -15,5 +15,7 @@ namespace Backend.Models
 
         // Type of credential (e.g., "password", "private_key")
         public string CredentialType { get; set; } = "password";
+
+        public string? PublicKey { get; set; }
     }
 }

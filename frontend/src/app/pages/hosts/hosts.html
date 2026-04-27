@@ -1,0 +1,120 @@
+<div class="p-6 md:p-8">
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-100 tracking-tight">Hosts</h1>
+      <p class="text-sm text-slate-400 mt-1">Manage target servers and endpoints.</p>
+    </div>
+    <div class="flex items-center gap-2">
+      <button
+        (click)="refresh()"
+        class="flex items-center gap-2 px-3 py-2 text-xs font-medium uppercase tracking-widest text-slate-300 bg-white/5 hover:bg-white/10 rounded-md transition"
+      >
+        <span class="material-symbols-outlined text-base">refresh</span>
+        Refresh
+      </button>
+      @if (canManageConnections()) {
+        <button
+          (click)="newHost()"
+          class="flex items-center gap-2 px-3 py-2 text-xs font-bold uppercase tracking-widest text-white bg-blue-600 hover:bg-blue-500 rounded-md transition"
+        >
+          <span class="material-symbols-outlined text-base">computer</span>
+          New Host
+        </button>
+      }
+    </div>
+  </div>
+
+  @if (errorMessage()) {
+    <div class="mb-4 p-3 border border-red-500/40 bg-red-500/10 rounded text-sm text-red-300">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  @if (showForm() && canManageConnections()) {
+    <div class="mb-6 p-5 border border-white/10 rounded-lg bg-slate-950/60">
+      <h2 class="text-sm font-semibold text-slate-100 mb-3 uppercase tracking-widest">
+        {{ form().id ? 'Edit host' : 'New host' }}
+      </h2>
+      <form (ngSubmit)="save()" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <input
+          type="text"
+          placeholder="Display name"
+          [ngModel]="form().name"
+          (ngModelChange)="patch('name', $event)"
+          name="name"
+          required
+          class="bg-slate-900 border border-white/10 focus:border-blue-500 text-sm text-slate-200 rounded px-3 py-2 outline-none"
+        />
+        <input
+          type="text"
+          placeholder="Address (IP or hostname)"
+          [ngModel]="form().address"
+          (ngModelChange)="patch('address', $event)"
+          name="address"
+          required
+          class="bg-slate-900 border border-white/10 focus:border-blue-500 text-sm text-slate-200 rounded px-3 py-2 outline-none"
+        />
+        <div class="md:col-span-2 flex justify-end gap-2">
+          <button
+            type="button"
+            (click)="cancel()"
+            class="px-3 py-2 text-xs font-medium uppercase tracking-widest text-slate-300 hover:bg-white/5 rounded"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            [disabled]="busy()"
+            class="px-4 py-2 text-xs font-bold uppercase tracking-widest text-white bg-blue-600 hover:bg-blue-500 rounded disabled:opacity-50"
+          >
+            {{ busy() ? 'Saving…' : 'Save' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  }
+
+  <div class="border border-white/10 rounded-lg bg-slate-950/60 overflow-hidden">
+    <table class="w-full text-sm">
+      <thead class="bg-white/5 text-[11px] uppercase tracking-widest text-slate-400">
+        <tr>
+          <th class="text-left px-4 py-3 font-medium">Name</th>
+          <th class="text-left px-4 py-3 font-medium">Address</th>
+          <th class="text-right px-4 py-3 font-medium">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (h of hosts(); track trackById($index, h)) {
+          <tr class="border-t border-white/5 hover:bg-white/5">
+            <td class="px-4 py-3 text-slate-100">{{ h.name }}</td>
+            <td class="px-4 py-3 text-slate-300 font-mono text-xs">{{ h.address }}</td>
+            <td class="px-4 py-3">
+              <div class="flex items-center justify-end gap-2">
+                @if (canManageConnections()) {
+                  <button
+                    (click)="edit(h)"
+                    class="px-2 py-1 text-xs text-slate-300 hover:bg-white/10 rounded"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    (click)="remove(h)"
+                    class="px-2 py-1 text-xs text-red-300 hover:bg-red-500/10 rounded"
+                  >
+                    Delete
+                  </button>
+                }
+              </div>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="3" class="px-4 py-8 text-center text-slate-500">
+              {{ loading() ? 'Loading…' : 'No hosts defined yet.' }}
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
