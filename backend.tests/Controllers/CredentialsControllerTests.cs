@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 using Backend.Data;
 using Backend.DTOs;
 using Backend.Models;
@@ -28,13 +29,6 @@ public class CredentialsControllerTests
         return client;
     }
 
-    // A factory wrapper to ensure ENCRYPTION_KEY is set in environment for these tests
-    private static TestWebApplicationFactory CreateFactory(Action<AppDbContext>? seed = null)
-    {
-        Environment.SetEnvironmentVariable("ENCRYPTION_KEY", new string('a', 64));
-        return new TestWebApplicationFactory(seed);
-    }
-
     [Theory]
     [InlineData(AppRoles.Owner)]
     [InlineData(AppRoles.Admin)]
@@ -46,7 +40,7 @@ public class CredentialsControllerTests
         var credentialId1 = Guid.NewGuid();
         var credentialId2 = Guid.NewGuid();
 
-        await using var factory = CreateFactory(db =>
+        await using var factory = new TestWebApplicationFactory(db =>
         {
             var user = new User { Id = userId, Email = $"test_{role}@test.com", Name = $"Test {role}", IsActive = true, CreatedAt = DateTime.UtcNow };
             AttachRoles(db, user, role);
@@ -66,7 +60,11 @@ public class CredentialsControllerTests
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        var credentials = await response.Content.ReadFromJsonAsync<List<CredentialDto>>();
+        // Verify the raw JSON payload does not expose the encrypted secret
+        var rawJson = await response.Content.ReadAsStringAsync();
+        Assert.DoesNotContain("encryptedSecret", rawJson, StringComparison.OrdinalIgnoreCase);
+
+        var credentials = JsonSerializer.Deserialize<List<CredentialDto>>(rawJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         Assert.NotNull(credentials);
         Assert.Equal(2, credentials.Count);
 
@@ -89,7 +87,7 @@ public class CredentialsControllerTests
         // Arrange
         var userId = Guid.NewGuid();
 
-        await using var factory = CreateFactory(db =>
+        await using var factory = new TestWebApplicationFactory(db =>
         {
             var user = new User { Id = userId, Email = "test_user@test.com", Name = "Test User", IsActive = true, CreatedAt = DateTime.UtcNow };
             AttachRoles(db, user, AppRoles.User);
@@ -113,7 +111,7 @@ public class CredentialsControllerTests
     public async Task GetCredentials_Unauthenticated_ReturnsUnauthorized()
     {
         // Arrange
-        await using var factory = CreateFactory(db =>
+        await using var factory = new TestWebApplicationFactory(db =>
         {
             db.Credentials.Add(
                 new Credential { Id = Guid.NewGuid(), Name = "Cred 1", Username = "user1", CredentialType = "password", EncryptedSecret = "encrypted1" }
@@ -135,7 +133,7 @@ public class CredentialsControllerTests
         // Arrange
         var userId = Guid.NewGuid();
 
-        await using var factory = CreateFactory(db =>
+        await using var factory = new TestWebApplicationFactory(db =>
         {
             var user = new User { Id = userId, Email = "test_admin@test.com", Name = "Test Admin", IsActive = true, CreatedAt = DateTime.UtcNow };
             AttachRoles(db, user, AppRoles.Admin);

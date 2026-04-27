@@ -37,6 +37,9 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             "Host=localhost;Database=tests;Username=test;Password=test");
         Environment.SetEnvironmentVariable("ConnectionStrings__Redis", "localhost:6379");
         Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "Testing");
+        // Required by EncryptionService; set once here so all controller tests share
+        // the same key without per-test process-state mutations.
+        Environment.SetEnvironmentVariable("ENCRYPTION_KEY", new string('a', 64));
     }
 
     public TestWebApplicationFactory(Action<AppDbContext>? seed = null, bool seedPhantomOwner = true)
