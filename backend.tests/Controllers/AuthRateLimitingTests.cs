@@ -6,8 +6,9 @@ using Xunit;
 namespace Backend.Tests.Controllers;
 
 /// <summary>
-/// Integration tests that verify the "auth" rate-limiting policy applied to
-/// <c>AuthController</c>. Each test uses its own <see cref="TestWebApplicationFactory"/>
+/// Integration tests that verify the "auth" rate-limiting policy applied to the
+/// sensitive actions on <c>AuthController</c> (Login, ForgotPassword, Register).
+/// Each test uses its own <see cref="TestWebApplicationFactory"/>
 /// so the in-memory rate-limiter state is fully isolated between test runs.
 /// </summary>
 public class AuthRateLimitingTests

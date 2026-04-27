@@ -18,7 +18,6 @@ namespace Backend.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [EnableRateLimiting("auth")]
     public class AuthController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -130,6 +129,7 @@ namespace Backend.Controllers
         // misconfigured policy can't expose direct user creation in production.
         [HttpPost("register")]
         [Authorize(Roles = AppRoles.OwnerOrAdmin)]
+        [EnableRateLimiting("auth")]
         public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
             var allowSelfRegister = _configuration.GetValue<bool?>("Auth:AllowSelfRegister")
@@ -182,6 +182,7 @@ namespace Backend.Controllers
         // Local username + password login. Returns a JWT signed by this server.
         [HttpPost("login")]
         [AllowAnonymous]
+        [EnableRateLimiting("auth")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -448,6 +449,7 @@ namespace Backend.Controllers
 
         [HttpPost("forgot-password")]
         [AllowAnonymous]
+        [EnableRateLimiting("auth")]
         public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
