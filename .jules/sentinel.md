@@ -1,0 +1,4 @@
+## 2024-04-27 - Strict Rate Limiting for Authentication Endpoints
+**Vulnerability:** The authentication endpoints (`Login` and `ForgotPassword`) in `AuthController.cs` did not have a specific, stricter rate limit policy, making them susceptible to brute force attacks and email spamming despite the global limit of 100 requests per minute.
+**Learning:** The application had an existing global rate limiting mechanism set to 100 requests per minute. However, this limit was too generous for authentication endpoints, which require stronger protection. The `AddRateLimiter` can configure named policies using `AddPolicy` allowing more granular control.
+**Prevention:** Always define specific rate limiting policies (e.g., 5 requests per minute) for sensitive endpoints like login, password reset, and registration using `[EnableRateLimiting("policy_name")]` alongside a global rate limit.
