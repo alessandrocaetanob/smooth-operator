@@ -37,6 +37,9 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             "Host=localhost;Database=tests;Username=test;Password=test");
         Environment.SetEnvironmentVariable("ConnectionStrings__Redis", "localhost:6379");
         Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "Testing");
+        // EncryptionService requires a 64-char hex key (32 bytes for AES-256).
+        Environment.SetEnvironmentVariable("ENCRYPTION_KEY",
+            "0000000000000000000000000000000000000000000000000000000000000000");
     }
 
     public TestWebApplicationFactory(Action<AppDbContext>? seed = null, bool seedPhantomOwner = true)
@@ -63,7 +66,9 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
                 ["AzureAd:TenantId"] = "",
                 ["Jwt:Key"] = "test-only-signing-key-not-used-for-anything-real-please-32+chars",
                 ["Jwt:Issuer"] = "test-issuer",
-                ["Jwt:Audience"] = "test-audience"
+                ["Jwt:Audience"] = "test-audience",
+                // EncryptionService requires a 64-char hex key (32 bytes for AES-256).
+                ["ENCRYPTION_KEY"] = "0000000000000000000000000000000000000000000000000000000000000000"
             });
         });
 
