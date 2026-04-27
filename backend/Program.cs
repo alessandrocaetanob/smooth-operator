@@ -90,7 +90,7 @@ builder.Services.AddRateLimiter(options =>
 
     options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
-            partitionKey: httpContext.User.Identity?.Name ?? httpContext.Request.Headers.Host.ToString(),
+            partitionKey: httpContext.User.Identity?.Name ?? "unknown",
             factory: partition => new FixedWindowRateLimiterOptions
             {
                 AutoReplenishment = true,

@@ -20,6 +20,9 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
 {
     public string DatabaseName { get; } = $"test-db-{Guid.NewGuid():N}";
 
+    // A valid 64-character hex key (32 bytes for AES-256) used only in tests.
+    private const string TestEncryptionKey = "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef";
+
     private readonly Action<AppDbContext>? _seed;
     private readonly bool _seedPhantomOwner;
 
@@ -38,8 +41,7 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
         Environment.SetEnvironmentVariable("ConnectionStrings__Redis", "localhost:6379");
         Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "Testing");
         // EncryptionService requires a 64-char hex key (32 bytes for AES-256).
-        Environment.SetEnvironmentVariable("ENCRYPTION_KEY",
-            "0000000000000000000000000000000000000000000000000000000000000000");
+        Environment.SetEnvironmentVariable("ENCRYPTION_KEY", TestEncryptionKey);
     }
 
     public TestWebApplicationFactory(Action<AppDbContext>? seed = null, bool seedPhantomOwner = true)
@@ -68,7 +70,7 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
                 ["Jwt:Issuer"] = "test-issuer",
                 ["Jwt:Audience"] = "test-audience",
                 // EncryptionService requires a 64-char hex key (32 bytes for AES-256).
-                ["ENCRYPTION_KEY"] = "0000000000000000000000000000000000000000000000000000000000000000"
+                ["ENCRYPTION_KEY"] = TestEncryptionKey
             });
         });
 
