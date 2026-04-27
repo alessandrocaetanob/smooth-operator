@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { forkJoin, Observable } from 'rxjs';
 import {
@@ -50,6 +50,11 @@ export class Connections implements OnInit {
   readonly hosts = this.hostsSvc.list;
   readonly credentials = this.credentialsSvc.list;
   readonly vaults = this.vaultsSvc.list;
+
+  // Performance optimization: O(1) lookups for template bindings
+  readonly hostsMap = computed(() => new Map(this.hosts().map((h) => [h.id, h])));
+  readonly credentialsMap = computed(() => new Map(this.credentials().map((c) => [c.id, c])));
+  readonly vaultsMap = computed(() => new Map(this.vaults().map((v) => [v.id, v])));
 
   readonly loading = signal(false);
   readonly errorMessage = signal<string | null>(null);
@@ -182,17 +187,17 @@ export class Connections implements OnInit {
   }
 
   hostName(id: string): string {
-    return this.hosts().find((h) => h.id === id)?.name ?? '—';
+    return this.hostsMap().get(id)?.name ?? '—';
   }
 
   credentialName(id: string | null | undefined): string {
     if (!id) return '—';
-    return this.credentials().find((c) => c.id === id)?.name ?? '—';
+    return this.credentialsMap().get(id)?.name ?? '—';
   }
 
   vaultName(id: string | null | undefined): string {
     if (!id) return '—';
-    return this.vaults().find((v) => v.id === id)?.name ?? '—';
+    return this.vaultsMap().get(id)?.name ?? '—';
   }
 
   private toMessage(err: any): string | null {
