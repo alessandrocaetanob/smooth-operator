@@ -76,11 +76,7 @@
               class="w-full input-field"
             />
           </div>
-          <button
-            type="submit"
-            [disabled]="busy()"
-            class="btn-primary w-full justify-center"
-          >
+          <button type="submit" [disabled]="busy()" class="btn-primary w-full justify-center">
             {{ busy() ? 'Creating account…' : 'Create account' }}
           </button>
         </form>

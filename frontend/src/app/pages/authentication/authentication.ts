@@ -74,4 +74,3 @@ export class Authentication {
     this.errorMessage.set('SSO flow is not yet wired up in the frontend.');
   }
 }
-

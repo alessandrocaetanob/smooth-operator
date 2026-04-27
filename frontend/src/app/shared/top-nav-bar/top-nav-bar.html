@@ -43,13 +43,25 @@
     <div
       class="hidden lg:flex items-center gap-2 px-3 py-1 rounded-full border transition-colors"
       [ngClass]="healthPillClasses()"
-      [attr.title]="health() === 'healthy' ? 'API and database reachable' : (health() === 'down' ? 'Backend unreachable' : 'Checking system status...')"
+      [attr.title]="
+        health() === 'healthy'
+          ? 'API and database reachable'
+          : health() === 'down'
+            ? 'Backend unreachable'
+            : 'Checking system status...'
+      "
       role="status"
       aria-live="polite"
     >
       <div class="w-2 h-2 rounded-full status-pulse" [ngClass]="healthDotClasses()"></div>
       <span class="text-xs font-medium" [ngClass]="healthTextClasses()">
-        {{ health() === 'healthy' ? 'System: Optimal' : (health() === 'down' ? 'System: Offline' : 'System: Checking') }}
+        {{
+          health() === 'healthy'
+            ? 'System: Optimal'
+            : health() === 'down'
+              ? 'System: Offline'
+              : 'System: Checking'
+        }}
       </span>
     </div>
     <!-- Theme toggle -->
@@ -71,8 +83,12 @@
             {{ initials() }}
           }
         </div>
-        <span class="hidden md:block text-xs text-on-surface-variant">{{ user()?.name || 'Account' }}</span>
-        <span class="material-symbols-outlined text-base text-on-surface-variant" aria-hidden="true">arrow_drop_down</span>
+        <span class="hidden md:block text-xs text-on-surface-variant">{{
+          user()?.name || 'Account'
+        }}</span>
+        <span class="material-symbols-outlined text-base text-on-surface-variant" aria-hidden="true"
+          >arrow_drop_down</span
+        >
       </button>
       @if (menuOpen) {
         <div
@@ -87,7 +103,9 @@
             routerLink="/profile"
             class="flex items-center gap-2 px-4 py-2 text-sm text-on-surface hover:bg-on-surface/5 cursor-pointer transition-colors"
           >
-            <span class="material-symbols-outlined text-base" aria-hidden="true">account_circle</span>
+            <span class="material-symbols-outlined text-base" aria-hidden="true"
+              >account_circle</span
+            >
             Profile
           </a>
           @if (canAccessSettings()) {
@@ -112,4 +130,3 @@
     </div>
   </div>
 </header>
-

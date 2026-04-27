@@ -24,9 +24,7 @@
   }
 
   @if (message()) {
-    <div
-      class="mb-4 p-3 border border-tertiary/40 bg-tertiary/10 rounded text-sm text-tertiary"
-    >
+    <div class="mb-4 p-3 border border-tertiary/40 bg-tertiary/10 rounded text-sm text-tertiary">
       {{ message() }}
     </div>
   }
@@ -39,7 +37,9 @@
   <form (ngSubmit)="save()" class="space-y-4 max-w-2xl">
     <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
       <div class="md:col-span-2">
-        <label class="block text-xs uppercase tracking-widest text-on-surface-variant mb-1">Host</label>
+        <label class="block text-xs uppercase tracking-widest text-on-surface-variant mb-1"
+          >Host</label
+        >
         <input
           type="text"
           [ngModel]="host()"
@@ -51,7 +51,9 @@
         />
       </div>
       <div>
-        <label class="block text-xs uppercase tracking-widest text-on-surface-variant mb-1">Port</label>
+        <label class="block text-xs uppercase tracking-widest text-on-surface-variant mb-1"
+          >Port</label
+        >
         <input
           type="number"
           min="1"
@@ -88,7 +90,9 @@
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
       <div>
-        <label class="block text-xs uppercase tracking-widest text-on-surface-variant mb-1">Username</label>
+        <label class="block text-xs uppercase tracking-widest text-on-surface-variant mb-1"
+          >Username</label
+        >
         <input
           type="text"
           [ngModel]="username()"
@@ -146,7 +150,9 @@
         />
       </div>
       <div>
-        <label class="block text-xs uppercase tracking-widest text-on-surface-variant mb-1">From name</label>
+        <label class="block text-xs uppercase tracking-widest text-on-surface-variant mb-1"
+          >From name</label
+        >
         <input
           type="text"
           [ngModel]="fromName()"
@@ -159,11 +165,7 @@
     </div>
 
     <div class="flex justify-end">
-      <button
-        type="submit"
-        [disabled]="busy()"
-        class="btn-primary"
-      >
+      <button type="submit" [disabled]="busy()" class="btn-primary">
         {{ busy() ? 'Saving…' : 'Save SMTP settings' }}
       </button>
     </div>

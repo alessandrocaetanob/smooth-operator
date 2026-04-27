@@ -31,7 +31,9 @@
 }
 
 .eye {
-  transition: cx 0.06s ease-out, cy 0.06s ease-out;
+  transition:
+    cx 0.06s ease-out,
+    cy 0.06s ease-out;
   /* Use fill-box so scaleY pivots on the ellipse's own centre, not the SVG origin */
   transform-box: fill-box;
   transform-origin: center;
@@ -57,9 +59,18 @@
   animation-delay: 0.05s;
 }
 @keyframes eye-arc-settle {
-  0% { transform: scaleY(0.1); opacity: 0; }
-  60% { transform: scaleY(1.15); opacity: 1; }
-  100% { transform: scaleY(1); opacity: 1; }
+  0% {
+    transform: scaleY(0.1);
+    opacity: 0;
+  }
+  60% {
+    transform: scaleY(1.15);
+    opacity: 1;
+  }
+  100% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
 }
 
 /* ---- Mouths ---- */
@@ -78,8 +89,12 @@
   animation: blink-dot 4s ease-in-out infinite;
 }
 
-.chest-dot:nth-child(2) { animation-delay: 0.6s; }
-.chest-dot:nth-child(3) { animation-delay: 1.2s; }
+.chest-dot:nth-child(2) {
+  animation-delay: 0.6s;
+}
+.chest-dot:nth-child(3) {
+  animation-delay: 1.2s;
+}
 
 /* ---- State-specific overrides ---- */
 
@@ -129,65 +144,134 @@
 
 /* ---- Keyframes ---- */
 @keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50%       { transform: translateY(-7px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-7px);
+  }
 }
 
 @keyframes sleep-pulse {
-  0%, 100% { transform: translateY(0) scale(1); }
-  50%       { transform: translateY(-3px) scale(1.01); }
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-3px) scale(1.01);
+  }
 }
 
 @keyframes antenna-pulse {
-  0%   { filter: drop-shadow(0 0 2px rgba(78, 222, 163, 0.4)); }
-  100% { filter: drop-shadow(0 0 10px rgba(111, 251, 190, 0.95)); }
+  0% {
+    filter: drop-shadow(0 0 2px rgba(78, 222, 163, 0.4));
+  }
+  100% {
+    filter: drop-shadow(0 0 10px rgba(111, 251, 190, 0.95));
+  }
 }
 
 @keyframes blink-dot {
-  0%, 90%, 100% { opacity: 0.85; }
-  95%           { opacity: 0.2; }
+  0%,
+  90%,
+  100% {
+    opacity: 0.85;
+  }
+  95% {
+    opacity: 0.2;
+  }
 }
 
 @keyframes loading-rock {
-  0%, 100% { transform: rotate(-4deg); }
-  50%       { transform: rotate(4deg); }
+  0%,
+  100% {
+    transform: rotate(-4deg);
+  }
+  50% {
+    transform: rotate(4deg);
+  }
 }
 
 @keyframes success-bounce {
-  0%        { transform: translateY(0) scale(1); }
-  35%       { transform: translateY(-14px) scale(1.05); }
-  65%       { transform: translateY(-6px) scale(0.98); }
-  80%       { transform: translateY(-10px) scale(1.02); }
-  100%      { transform: translateY(0) scale(1); }
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  35% {
+    transform: translateY(-14px) scale(1.05);
+  }
+  65% {
+    transform: translateY(-6px) scale(0.98);
+  }
+  80% {
+    transform: translateY(-10px) scale(1.02);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
 }
 
 @keyframes error-shake {
-  0%        { transform: translateX(0); }
-  18%       { transform: translateX(-6px); }
-  36%       { transform: translateX(6px); }
-  54%       { transform: translateX(-4px); }
-  72%       { transform: translateX(4px); }
-  88%       { transform: translateX(-2px); }
-  100%      { transform: translateX(0); }
+  0% {
+    transform: translateX(0);
+  }
+  18% {
+    transform: translateX(-6px);
+  }
+  36% {
+    transform: translateX(6px);
+  }
+  54% {
+    transform: translateX(-4px);
+  }
+  72% {
+    transform: translateX(4px);
+  }
+  88% {
+    transform: translateX(-2px);
+  }
+  100% {
+    transform: translateX(0);
+  }
 }
 
 @keyframes thinking-tilt {
-  0%, 100% { transform: rotate(0deg); }
-  30%      { transform: rotate(-4deg); }
-  70%      { transform: rotate(4deg); }
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  30% {
+    transform: rotate(-4deg);
+  }
+  70% {
+    transform: rotate(4deg);
+  }
 }
 
 @keyframes wave-bounce {
-  0%, 100% { transform: translateY(0); }
-  50%       { transform: translateY(-10px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
 /* Natural squash blink: the eye ellipse compresses to a thin slit, then springs back.
    Held closed for one frame only; total visible blink ~120ms inside a 5–6s loop. */
 @keyframes blink {
-  0%, 94%, 100% { transform: scaleY(1); }
-  96%           { transform: scaleY(0.08); }
-  98%           { transform: scaleY(1); }
+  0%,
+  94%,
+  100% {
+    transform: scaleY(1);
+  }
+  96% {
+    transform: scaleY(0.08);
+  }
+  98% {
+    transform: scaleY(1);
+  }
 }
 
 /* ---- Reduced motion guard ---- */
@@ -201,4 +285,3 @@
     transition: none !important;
   }
 }
-

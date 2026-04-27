@@ -7,7 +7,9 @@
   </div>
 
   @if (errorMessage()) {
-    <div class="mb-4 p-3 border border-error/40 bg-error-container/20 rounded-lg text-sm text-on-error-container">
+    <div
+      class="mb-4 p-3 border border-error/40 bg-error-container/20 rounded-lg text-sm text-on-error-container"
+    >
       {{ errorMessage() }}
     </div>
   }
@@ -87,4 +89,3 @@
     }
   }
 </div>
-

@@ -30,9 +30,7 @@
       <span class="sr-only">Loading vault connections…</span>
     </div>
   } @else if (!hasConnections()) {
-    <div
-      class="flex flex-col items-center justify-center py-24 px-6 glass-card rounded-xl"
-    >
+    <div class="flex flex-col items-center justify-center py-24 px-6 glass-card rounded-xl">
       <app-mascot [state]="'idle'"></app-mascot>
       <h2 class="text-lg font-semibold text-on-surface mb-2">Your vault is empty</h2>
       <p class="text-sm text-on-surface-variant max-w-md text-center mb-6">
@@ -86,4 +84,3 @@
     </div>
   }
 </div>
-

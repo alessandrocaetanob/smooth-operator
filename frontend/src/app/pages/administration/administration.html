@@ -5,17 +5,11 @@
       <p class="text-sm text-on-surface-variant mt-1">Manage users, roles and vault access.</p>
     </div>
     <div class="flex items-center gap-2">
-      <button
-        (click)="refresh()"
-        class="btn-ghost"
-      >
+      <button (click)="refresh()" class="btn-ghost">
         <span class="material-symbols-outlined text-base">refresh</span>
         Refresh
       </button>
-      <button
-        (click)="toggleInvite()"
-        class="btn-primary"
-      >
+      <button (click)="toggleInvite()" class="btn-primary">
         <span class="material-symbols-outlined text-base">person_add</span>
         Invite user
       </button>
@@ -23,7 +17,7 @@
   </div>
 
   @if (errorMessage()) {
-      <div class="mb-4 p-3 border border-error/40 bg-error/10 rounded text-sm text-error">
+    <div class="mb-4 p-3 border border-error/40 bg-error/10 rounded text-sm text-error">
       {{ errorMessage() }}
     </div>
   }
@@ -80,11 +74,7 @@
           [value]="r.inviteUrl"
           class="flex-1 input-field text-xs font-mono"
         />
-        <button
-          type="button"
-          (click)="copyInviteUrl()"
-          class="btn-primary"
-        >
+        <button type="button" (click)="copyInviteUrl()" class="btn-primary">
           {{
             copyState() === 'copied' ? 'Copied!' : copyState() === 'failed' ? 'Copy failed' : 'Copy'
           }}
@@ -139,18 +129,8 @@
           </select>
         </label>
         <div class="md:col-span-2 flex justify-end gap-2">
-          <button
-            type="button"
-            (click)="toggleInvite()"
-            class="btn-ghost"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            [disabled]="inviteBusy()"
-            class="btn-primary"
-          >
+          <button type="button" (click)="toggleInvite()" class="btn-ghost">Cancel</button>
+          <button type="submit" [disabled]="inviteBusy()" class="btn-primary">
             {{ inviteBusy() ? 'Sending…' : 'Send invite' }}
           </button>
         </div>
@@ -263,10 +243,7 @@
       aria-modal="true"
       aria-label="Vault assignments"
     >
-      <div
-        class="w-full max-w-lg glass-panel rounded-lg p-5"
-        (click)="$event.stopPropagation()"
-      >
+      <div class="w-full max-w-lg glass-panel rounded-lg p-5" (click)="$event.stopPropagation()">
         <h3 class="text-sm font-semibold text-on-surface uppercase tracking-widest">
           Vault assignments
         </h3>
@@ -290,13 +267,7 @@
         </div>
 
         <div class="mt-5 flex justify-end gap-2">
-          <button
-            type="button"
-            (click)="closeVaultAssignments()"
-            class="btn-ghost"
-          >
-            Cancel
-          </button>
+          <button type="button" (click)="closeVaultAssignments()" class="btn-ghost">Cancel</button>
           <button
             type="button"
             (click)="saveVaultAssignments()"

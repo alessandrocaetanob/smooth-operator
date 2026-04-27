@@ -39,7 +39,7 @@ export class ProfileService {
       hasPassword: raw?.hasPassword ?? raw?.HasPassword ?? false,
       linkedToEntra: raw?.linkedToEntra ?? raw?.LinkedToEntra ?? false,
       avatarUrl: raw?.avatarUrl ?? raw?.AvatarUrl ?? null,
-      roles: Array.isArray(raw?.roles ?? raw?.Roles) ? raw?.roles ?? raw?.Roles : [],
+      roles: Array.isArray(raw?.roles ?? raw?.Roles) ? (raw?.roles ?? raw?.Roles) : [],
     };
   }
 }

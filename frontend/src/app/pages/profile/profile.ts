@@ -129,9 +129,7 @@ export class Profile {
     });
   }
 
-  private downscale(
-    file: File,
-  ): Promise<{ base64: string; mime: string; dataUrl: string }> {
+  private downscale(file: File): Promise<{ base64: string; mime: string; dataUrl: string }> {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => {
