@@ -3,7 +3,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 
-import { AuthService } from './auth.service';
+import { AuthService, UserInfo } from './auth.service';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -22,9 +22,53 @@ describe('AuthService', () => {
     httpTesting.verify();
   });
 
+  describe('me()', () => {
+    it('should fetch user info and update currentUser state', () => {
+      const mockUserInfo: UserInfo = {
+        id: '123',
+        email: 'test@example.com',
+        name: 'Test User',
+        hasPassword: true,
+        linkedToEntra: false,
+        roles: ['Admin'],
+      };
+
+      let emittedUser: UserInfo | undefined;
+      service.me().subscribe((user) => {
+        emittedUser = user;
+      });
+
+      const req = httpTesting.expectOne('/api/auth/me');
+      expect(req.request.method).toEqual('GET');
+      req.flush(mockUserInfo);
+
+      expect(emittedUser).toBeTruthy();
+      expect(emittedUser?.id).toBe('123');
+      expect(emittedUser?.email).toBe('test@example.com');
+
+      // Verify that the _user signal (exposed via currentUser) was updated
+      expect(service.currentUser()?.id).toBe('123');
+      expect(service.currentUser()?.email).toBe('test@example.com');
+    });
+
+    it('should throw an error when the server returns an error', () => {
+      let errorThrown = false;
+      service.me().subscribe({
+        next: () => {},
+        error: () => {
+          errorThrown = true;
+        },
+      });
+
+      const req = httpTesting.expectOne('/api/auth/me');
+      req.flush('Error', { status: 500, statusText: 'Internal Server Error' });
+
+      expect(errorThrown).toBe(true);
+    });
+  });
+
   describe('hasRole', () => {
     it('returns false when user has no roles', () => {
-      // Mock the me endpoint to return a user with empty roles
       service.me().subscribe();
       const req = httpTesting.expectOne('/api/auth/me');
       req.flush({ roles: [] });
