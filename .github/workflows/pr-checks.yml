@@ -21,10 +21,10 @@ jobs:
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
-          if [[ ! "$PR_TITLE" =~ ^(feat|fix|docs|style|refactor|perf|test|chore|ci|build|revert)(\(.+\))?: ]]; then
+          if [[ ! "$PR_TITLE" =~ ^(feat|fix|docs|style|refactor|perf|test|chore|ci|build|revert|security)(\(.+\))?: ]]; then
             echo "❌ PR title must follow conventional commits format:"
             echo "   type(scope?): description"
-            echo "   Types: feat, fix, docs, style, refactor, perf, test, chore, ci, build, revert"
+            echo "   Types: feat, fix, docs, style, refactor, perf, test, chore, ci, build, revert, security"
             echo "   Example: feat(backend): add user authentication"
             exit 1
           fi

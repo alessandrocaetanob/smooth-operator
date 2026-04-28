@@ -5,6 +5,7 @@ using Backend.DTOs;
 using Backend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Controllers
@@ -43,6 +44,7 @@ namespace Backend.Controllers
         }
 
         [HttpPost("{token}/redeem")]
+        [EnableRateLimiting("auth")]
         public async Task<IActionResult> Redeem(string token, [FromBody] RedeemInviteRequest request)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
