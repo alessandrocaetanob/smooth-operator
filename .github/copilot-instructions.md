@@ -416,10 +416,57 @@ npm install -g @contextstream/mcp-server@latest
 
 
 ---
+
+## EXTERNAL DOCS & WEB RESEARCH (Context7 + Tavily)
+
+ContextStream `search()` covers THIS repo. For external library docs and live web information, use the Context7 and Tavily MCPs instead of guessing or relying on stale model knowledge.
+
+### Context7 — Library / Framework Documentation
+Use Context7 whenever you need accurate, up-to-date docs or code examples for a third-party library, framework, SDK, or API (e.g., Angular, .NET, EF Core, Tailwind, Apache Guacamole, BCrypt, JWT libs).
+
+Workflow:
+1. **Resolve the library ID** (skip if the user gave you `/org/project` directly):
+   `context7-resolve-library-id(libraryName="<official name>", query="<what you need>")`
+2. **Query the docs**:
+   `context7-query-docs(libraryId="/org/project", query="<specific question>")`
+3. If the first answer is thin, retry once with `researchMode: true`. Max 3 calls per question.
+
+When to use:
+- API signatures, configuration options, version-specific behavior
+- "How do I do X with library Y?" — before trial-and-error or web search
+- Verifying breaking changes between versions
+
+When NOT to use: questions about THIS repo's code (use ContextStream `search` first).
+
+### Tavily — Live Web Search & Extraction
+Use Tavily for current information, news, blog posts, GitHub issues/discussions, error messages, CVEs, or anything beyond the training cutoff or not in Context7.
+
+Pick the right tool:
+- `tavily-tavily_search` — general web search; default first choice. Use `search_depth="advanced"` for tougher questions.
+- `tavily-tavily_extract` — fetch full content from specific URLs (e.g., a docs page or GitHub issue)
+- `tavily-tavily_crawl` / `tavily-tavily_map` — structured exploration of a docs site
+- `tavily-tavily_research` — deep multi-source research on a broad topic (rate-limited; use sparingly)
+
+When to use:
+- Recent CVEs / security advisories affecting our deps
+- Error messages or stack traces with no Context7 coverage
+- Comparing approaches, looking up community patterns, GitHub issue triage
+- Anything time-sensitive ("latest", "current", "as of …")
+
+### Tool Selection Order
+1. ContextStream `search()` — repo code/docs
+2. Context7 — third-party library/framework docs
+3. Tavily — live web / news / issues / niche topics
+4. `web_fetch` / `web_search` — fallback when the above don't fit
+
+Cite sources (URLs from Tavily, library ID from Context7) in your response when the answer relies on them. Never paste secrets, credentials, or proprietary code into Context7/Tavily queries.
+
+---
 ## VS Code Copilot Notes
 
 - Keep this file concise; put detailed workflows in `.github/skills/contextstream-workflow/SKILL.md`
 - Use ContextStream plans/tasks as the persistent record of work
 - Before code discovery, use `search(mode="auto", query="...")`
+- For external library docs use Context7; for live web info use Tavily
 
 </contextstream>
