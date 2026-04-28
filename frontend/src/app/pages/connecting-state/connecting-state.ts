@@ -52,6 +52,8 @@ export class ConnectingState implements OnInit, OnDestroy {
         return 'connected';
       case 'error':
         return 'crashed';
+      case 'disconnected':
+        return this.errorMsg() ? 'crashed' : 'thinking';
       case 'requesting-ticket':
       case 'connecting':
       case 'waiting':

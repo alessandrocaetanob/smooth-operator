@@ -42,15 +42,17 @@
         >
           <span
             class="w-2 h-2 rounded-full transition-colors duration-500"
-            [class.bg-primary]="state() !== 'error' && state() !== 'connected'"
-            [class.status-pulse]="state() !== 'error' && state() !== 'connected'"
-            [class.bg-error]="state() === 'error'"
+            [class.bg-primary]="state() !== 'error' && state() !== 'connected' && !(state() === 'disconnected' && errorMsg())"
+            [class.status-pulse]="state() !== 'error' && state() !== 'connected' && state() !== 'disconnected'"
+            [class.bg-error]="state() === 'error' || (state() === 'disconnected' && errorMsg())"
             [class.bg-tertiary]="state() === 'connected'"
+            [class.bg-on-surface-variant]="state() === 'disconnected' && !errorMsg()"
           ></span>
           <span class="font-mono text-xs font-semibold tracking-widest"
-            [class.text-primary]="state() !== 'error' && state() !== 'connected'"
-            [class.text-error]="state() === 'error'"
+            [class.text-primary]="state() !== 'error' && state() !== 'connected' && !(state() === 'disconnected' && errorMsg())"
+            [class.text-error]="state() === 'error' || (state() === 'disconnected' && errorMsg())"
             [class.text-tertiary]="state() === 'connected'"
+            [class.text-on-surface-variant]="state() === 'disconnected' && !errorMsg()"
           >{{ statusLabel() }}</span>
         </div>
       </div>
@@ -62,8 +64,10 @@
           <app-mascot [state]="mascotState()" [isSmall]="false"></app-mascot>
           @if (state() === 'connected') {
             <span class="font-label-caps text-label-caps text-tertiary animate-fade-in">TUNNEL ESTABLISHED</span>
-          } @else if (state() === 'error') {
+          } @else if (state() === 'error' || (state() === 'disconnected' && errorMsg())) {
             <span class="font-label-caps text-label-caps text-error animate-fade-in">CONNECTION FAILED</span>
+          } @else if (state() === 'disconnected') {
+            <span class="font-label-caps text-label-caps text-on-surface-variant/60 animate-fade-in">DISCONNECTED</span>
           } @else {
             <span class="font-label-caps text-label-caps text-on-surface-variant/60 animate-fade-in">PROCESSING…</span>
           }
