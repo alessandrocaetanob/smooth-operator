@@ -1,4 +1,4 @@
-import { Component, OnDestroy, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { Toast, ToastService } from './toast.service';
 import { toastEnter } from '../animations';
 
@@ -8,18 +8,9 @@ import { toastEnter } from '../animations';
   templateUrl: './toast.html',
   animations: [toastEnter],
 })
-export class ToastContainer implements OnDestroy {
+export class ToastContainer {
   private readonly svc = inject(ToastService);
   readonly toasts = this.svc.toasts;
-
-  private readonly tick = setInterval(() => {
-    // Force change-detection each tick so drain bars stay live.
-    // Signals already handle this; the interval just ensures sub-second repaint.
-  }, 100);
-
-  ngOnDestroy(): void {
-    clearInterval(this.tick);
-  }
 
   trackById(_: number, t: Toast): number {
     return t.id;

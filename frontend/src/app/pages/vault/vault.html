@@ -123,12 +123,10 @@
             >
               <div class="p-4 flex items-start gap-3 flex-1">
                 <div
-                  class="w-10 h-10 rounded-lg border flex items-center justify-center shrink-0 transition-colors"
-                  [class]="protocolIconBg(c.protocol)"
+                  [class]="'w-10 h-10 rounded-lg border flex items-center justify-center shrink-0 transition-colors ' + protocolIconBg(c.protocol)"
                 >
                   <span
-                    class="material-symbols-outlined transition-colors"
-                    [class]="protocolIconColor(c.protocol)"
+                    [class]="'material-symbols-outlined transition-colors ' + protocolIconColor(c.protocol)"
                   >
                     {{ protocolIcon(c.protocol) }}
                   </span>
@@ -145,12 +143,10 @@
                 </div>
               </div>
               <div
-                class="px-4 py-2 border-t border-outline-variant/10 flex items-center justify-between"
-                [class]="protocolFooterBg(c.protocol)"
+                [class]="'px-4 py-2 border-t border-outline-variant/10 flex items-center justify-between ' + protocolFooterBg(c.protocol)"
               >
                 <span
-                  class="text-[10px] font-bold uppercase tracking-widest"
-                  [class]="protocolBadgeColor(c.protocol)"
+                  [class]="'text-[10px] font-bold uppercase tracking-widest ' + protocolBadgeColor(c.protocol)"
                 >{{ c.protocol }}</span>
                 <span
                   class="text-[10px] uppercase tracking-widest text-primary opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 font-bold"

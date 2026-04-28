@@ -29,8 +29,7 @@
 
       <!-- Drain progress bar — animates from 100% → 0% over the toast TTL -->
       <div
-        class="absolute bottom-0 left-0 h-[3px] rounded-full opacity-60"
-        [class]="drainClass(t.kind)"
+        [class]="'absolute bottom-0 left-0 h-[3px] rounded-full opacity-60 ' + drainClass(t.kind)"
         [style.animation]="'toast-drain ' + drainDuration(t) + ' linear forwards'"
       ></div>
     </div>

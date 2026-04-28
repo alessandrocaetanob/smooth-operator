@@ -293,23 +293,6 @@
   --animate-antenna-pulse: antenna-pulse 2s ease-in-out infinite alternate;
 }
 
-@keyframes drawer-in {
-  from {
-    transform: translateX(100%);
-  }
-  to {
-    transform: translateX(0);
-  }
-}
-@keyframes drawer-out {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(100%);
-  }
-}
-
 /* ============================================================
    KEYFRAMES (referenced by --animate-* above)
    ============================================================ */

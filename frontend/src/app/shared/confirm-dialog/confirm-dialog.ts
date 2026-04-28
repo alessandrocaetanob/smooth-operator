@@ -48,6 +48,10 @@ export class ConfirmDialog implements AfterViewInit, OnDestroy {
         } else {
           this.isCountingDown.set(false);
         }
+      } else {
+        // Dialog closed — cancel any pending countdown
+        clearTimeout(this.countdownTimer);
+        this.isCountingDown.set(false);
       }
     });
   }

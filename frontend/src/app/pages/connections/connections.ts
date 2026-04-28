@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed, ElementRef, ViewChild } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { forkJoin, Observable, of } from 'rxjs';
 import { switchMap, catchError } from 'rxjs/operators';
@@ -64,8 +64,6 @@ export class Connections implements OnInit {
   private readonly confirmSvc = inject(ConfirmDialogService);
   private readonly toastSvc = inject(ToastService);
 
-  @ViewChild('tagInput') tagInputRef?: ElementRef<HTMLInputElement>;
-
   readonly connections = this.connectionsSvc.list;
   readonly hosts = this.hostsSvc.list;
   readonly credentials = this.credentialsSvc.list;
@@ -122,7 +120,7 @@ export class Connections implements OnInit {
         c.protocol.toLowerCase().includes(q) ||
         (c.host?.address?.toLowerCase().includes(q) ?? false) ||
         (c.host?.name?.toLowerCase().includes(q) ?? false) ||
-        c.tags?.some((t) => t.includes(q))
+        c.tags?.some((t) => t.toLowerCase().includes(q))
       );
     });
   });

@@ -11,14 +11,15 @@
   @drawerPanel
   class="fixed inset-y-0 right-0 z-50 flex flex-col w-full max-w-xl bg-surface border-l border-outline-variant/30 shadow-2xl"
   role="dialog"
-  [attr.aria-label]="title"
+  aria-modal="true"
+  aria-labelledby="drawer-title"
 >
   <!-- Header -->
   <div
     class="flex items-center justify-between px-6 py-4 border-b border-outline-variant/20 shrink-0"
   >
     <div>
-      <h2 class="text-base font-semibold text-on-surface">{{ title }}</h2>
+      <h2 id="drawer-title" class="text-base font-semibold text-on-surface">{{ title }}</h2>
       @if (subtitle) {
         <p class="text-xs text-on-surface-variant mt-0.5">{{ subtitle }}</p>
       }
