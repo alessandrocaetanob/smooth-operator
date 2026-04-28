@@ -5,6 +5,7 @@ import { SideNavBar } from '../side-nav-bar/side-nav-bar';
 import { ConfirmDialog } from '../confirm-dialog/confirm-dialog';
 import { ToastContainer } from '../toast/toast';
 import { LayoutService } from '../../services/layout.service';
+import { routeFade } from '../animations';
 
 @Component({
   selector: 'app-layout',
@@ -12,6 +13,7 @@ import { LayoutService } from '../../services/layout.service';
   imports: [RouterOutlet, TopNavBar, SideNavBar, ConfirmDialog, ToastContainer],
   templateUrl: './layout.html',
   styleUrl: './layout.css',
+  animations: [routeFade],
 })
 export class Layout {
   readonly layout = inject(LayoutService);

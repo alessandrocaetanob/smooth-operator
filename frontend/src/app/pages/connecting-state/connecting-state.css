@@ -1,16 +1,82 @@
+/* Dot-matrix scan background */
+.scan-bg {
+  background-image: radial-gradient(
+    circle,
+    rgba(0, 102, 255, 0.18) 1px,
+    transparent 1px
+  );
+  background-size: 28px 28px;
+  background-position: center center;
+  animation: bg-scroll 12s linear infinite;
+}
+
+@keyframes bg-scroll {
+  from { background-position: 0 0; }
+  to   { background-position: 28px 28px; }
+}
+
+/* Pulsing status indicator dot */
+.status-pulse {
+  animation: pulse-dot 1.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
+
+/* Shimmer for the progress bar */
+.animate-shimmer {
+  animation: shimmer 1.8s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0%   { transform: translateX(-200%); }
+  100% { transform: translateX(200%); }
+}
+
+/* Scale-in entrance for the card */
+.animate-scale-in {
+  animation: scale-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes scale-in {
+  from { transform: scale(0.92); opacity: 0; }
+  to   { transform: scale(1);    opacity: 1; }
+}
+
+/* Generic fade-in for labels */
+.animate-fade-in {
+  animation: fade-in 0.4s ease forwards;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Slide-up for error banner */
+.animate-slide-up {
+  animation: slide-up 0.3s ease forwards;
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Step active glow */
+.shadow-primary {
+  box-shadow: 0 0 12px rgb(var(--color-primary) / 0.45);
+}
+
+/* Legacy glow-pulse retained for compatibility */
 .glow-pulse {
-  box-shadow: 0 0 15px rgba(37, 99, 235, 0.5); /* blue-600 */
+  box-shadow: 0 0 15px rgba(0, 102, 255, 0.5);
   animation: pulse-glow 2s infinite alternate;
 }
+
 @keyframes pulse-glow {
-  from {
-    box-shadow: 0 0 10px rgba(37, 99, 235, 0.3);
-  }
-  to {
-    box-shadow: 0 0 20px rgba(37, 99, 235, 0.7);
-  }
-}
-.progress-bar-fill {
-  background: linear-gradient(90deg, #1d4ed8, #3b82f6); /* blue-700 to blue-500 */
-  width: 65%;
+  from { box-shadow: 0 0 10px rgba(0, 102, 255, 0.3); }
+  to   { box-shadow: 0 0 20px rgba(0, 102, 255, 0.7); }
 }

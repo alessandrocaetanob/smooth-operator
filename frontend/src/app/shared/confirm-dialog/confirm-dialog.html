@@ -9,36 +9,92 @@
   >
     <div
       @scaleIn
-      class="w-full max-w-md glass-panel rounded-xl p-6 shadow-2xl"
+      class="w-full max-w-md glass-panel rounded-xl shadow-2xl overflow-hidden"
       (click)="$event.stopPropagation()"
     >
-      <h3 id="dialog-title" class="text-sm font-semibold text-on-surface uppercase tracking-widest">
-        {{ req.title }}
-      </h3>
-      <p class="text-sm text-on-surface-variant mt-3 whitespace-pre-line">{{ req.message }}</p>
+      <!-- Top accent bar -->
+      <div
+        class="h-[3px] w-full"
+        [class.bg-gradient-to-r]="tone() !== 'danger'"
+        [class.from-primary]="tone() !== 'danger'"
+        [class.to-secondary]="tone() !== 'danger'"
+        [class.bg-error]="tone() === 'danger'"
+      ></div>
 
-      <div class="mt-6 flex justify-end gap-2">
-        <button
-          type="button"
-          (click)="cancel()"
-          class="px-3 py-2 text-xs font-medium uppercase tracking-widest text-on-surface-variant hover:bg-on-surface/5 rounded-lg transition-colors btn-interactive"
-        >
-          {{ cancelLabel() }}
-        </button>
-        <button
-          #confirmBtn
-          type="button"
-          (click)="confirm()"
-          [class]="
-            'px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-lg disabled:opacity-50 btn-interactive transition-colors ' +
-            (tone() === 'danger'
-              ? 'text-on-error bg-error hover:bg-error/80'
-              : 'text-on-primary bg-primary-container hover:bg-primary')
-          "
-        >
-          {{ confirmLabel() }}
-        </button>
+      <div class="p-6 flex gap-4">
+        <!-- Mascot: emotional anchor for the dialog -->
+        <div class="shrink-0 pt-1">
+          <app-mascot
+            [state]="tone() === 'danger' ? 'error' : 'thinking'"
+            [isSmall]="true"
+          ></app-mascot>
+        </div>
+
+        <div class="flex-1 min-w-0">
+          <h3 id="dialog-title" class="text-sm font-semibold text-on-surface uppercase tracking-widest">
+            {{ req.title }}
+          </h3>
+          <p class="text-sm text-on-surface-variant mt-2 whitespace-pre-line leading-relaxed">{{ req.message }}</p>
+
+          @if (tone() === 'danger' && isCountingDown()) {
+            <div class="mt-3 flex items-center gap-2 text-error/80">
+              <span class="material-symbols-outlined text-sm">timer</span>
+              <span class="font-mono text-[11px] font-semibold tracking-widest">CONFIRM IN 3 SECONDS…</span>
+            </div>
+          }
+
+          <div class="mt-5 flex justify-end gap-2 items-center">
+            <button
+              type="button"
+              (click)="cancel()"
+              class="px-3 py-2 text-xs font-medium uppercase tracking-widest text-on-surface-variant hover:bg-on-surface/5 rounded-lg transition-colors btn-interactive"
+            >
+              {{ cancelLabel() }}
+            </button>
+
+            <!-- Danger button with SVG countdown ring overlay -->
+            <div class="relative inline-flex items-center justify-center">
+              @if (tone() === 'danger' && isCountingDown()) {
+                <!-- SVG countdown ring — pure CSS, no JS polling -->
+                <svg
+                  class="absolute inset-0 w-full h-full pointer-events-none countdown-ring"
+                  viewBox="0 0 100 100"
+                  xmlns="http://www.w3.org/2000/svg"
+                  aria-hidden="true"
+                  style="border-radius: 8px; overflow: visible;"
+                >
+                  <rect
+                    x="2" y="2" width="96" height="96"
+                    rx="7"
+                    fill="none"
+                    stroke="rgb(var(--color-error))"
+                    stroke-width="3"
+                    stroke-dasharray="376"
+                    stroke-dashoffset="0"
+                    style="animation: countdown-rect 3s linear forwards;"
+                    pathLength="376"
+                  />
+                </svg>
+              }
+              <button
+                #confirmBtn
+                type="button"
+                (click)="confirm()"
+                [disabled]="isCountingDown()"
+                [class]="
+                  'relative px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-lg disabled:opacity-40 btn-interactive transition-colors ' +
+                  (tone() === 'danger'
+                    ? 'text-on-error bg-error hover:bg-error/80 disabled:cursor-not-allowed'
+                    : 'text-on-primary bg-primary-container hover:bg-primary')
+                "
+              >
+                {{ confirmLabel() }}
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 }
+

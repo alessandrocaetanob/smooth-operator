@@ -1,0 +1,30 @@
+<svg
+  [attr.width]="px"
+  [attr.height]="px"
+  [attr.viewBox]="'0 0 ' + px + ' ' + px"
+  fill="none"
+  aria-hidden="true"
+  class="spinner"
+  [class]="'spinner--' + size + ' spinner--' + color"
+>
+  <!-- Outer arc: clockwise -->
+  <circle
+    [attr.cx]="cx"
+    [attr.cy]="cx"
+    [attr.r]="r"
+    [attr.stroke-width]="strokeWidth"
+    stroke-linecap="round"
+    class="arc arc--cw"
+    [style.stroke-dasharray]="(r * 2 * 3.14159 * 0.7) + ' ' + (r * 2 * 3.14159 * 0.3)"
+  />
+  <!-- Inner arc: counter-clockwise (drawn at 65% radius) -->
+  <circle
+    [attr.cx]="cx"
+    [attr.cy]="cx"
+    [attr.r]="r * 0.6"
+    [attr.stroke-width]="strokeWidth * 0.8"
+    stroke-linecap="round"
+    class="arc arc--ccw"
+    [style.stroke-dasharray]="(r * 0.6 * 2 * 3.14159 * 0.5) + ' ' + (r * 0.6 * 2 * 3.14159 * 0.5)"
+  />
+</svg>

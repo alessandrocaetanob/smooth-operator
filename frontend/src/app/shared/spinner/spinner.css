@@ -1,0 +1,56 @@
+.spinner {
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+/* Color variants */
+.spinner--primary .arc {
+  stroke: rgb(var(--color-primary));
+}
+.spinner--primary .arc--ccw {
+  stroke: rgb(var(--color-secondary) / 0.7);
+}
+
+.spinner--white .arc {
+  stroke: rgba(255, 255, 255, 0.95);
+}
+.spinner--white .arc--ccw {
+  stroke: rgba(255, 255, 255, 0.45);
+}
+
+.spinner--error .arc {
+  stroke: rgb(var(--color-error));
+}
+.spinner--error .arc--ccw {
+  stroke: rgb(var(--color-error) / 0.5);
+}
+
+/* Arcs */
+.arc {
+  fill: none;
+  transform-origin: center;
+}
+
+.arc--cw {
+  animation: spin-cw 1s linear infinite;
+}
+
+.arc--ccw {
+  animation: spin-ccw 0.7s linear infinite;
+}
+
+@keyframes spin-cw {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes spin-ccw {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(-360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arc {
+    animation: none !important;
+  }
+}

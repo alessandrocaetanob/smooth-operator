@@ -1,0 +1,26 @@
+/* Scan-line sweep on card hover */
+.scan-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.scan-card::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgb(var(--color-primary) / 0.5) 50%,
+    transparent 100%
+  );
+  transform: translateY(-100%);
+  transition: none;
+}
+
+.scan-card:hover::after {
+  animation: scan-sweep 0.7s ease-out forwards;
+}

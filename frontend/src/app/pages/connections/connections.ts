@@ -14,6 +14,7 @@ import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog
 import { ToastService } from '../../shared/toast/toast.service';
 import { Mascot, MascotState } from '../../shared/mascot/mascot';
 import { Drawer } from '../../shared/drawer/drawer';
+import { Spinner } from '../../shared/spinner/spinner';
 
 interface FormState {
   id: string | null;
@@ -51,7 +52,7 @@ const TAG_PALETTES = [
 
 @Component({
   selector: 'app-connections',
-  imports: [FormsModule, Mascot, Drawer],
+  imports: [FormsModule, Mascot, Drawer, Spinner],
   templateUrl: './connections.html',
   styleUrl: './connections.css',
 })

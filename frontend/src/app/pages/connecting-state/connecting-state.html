@@ -1,134 +1,163 @@
 <main
-  class="min-h-screen w-full flex items-center justify-center p-8 relative bg-surface text-on-surface"
+  class="min-h-screen w-full flex items-center justify-center p-8 relative bg-surface text-on-surface overflow-hidden"
 >
+  <!-- Dot-matrix scan background -->
+  <div class="scan-bg absolute inset-0 z-0 pointer-events-none" aria-hidden="true"></div>
+
+  <!-- Ambient glow behind the card -->
   <div
-    class="absolute inset-0 z-0 opacity-10 pointer-events-none"
+    class="absolute inset-0 z-0 pointer-events-none"
     style="
       background-image: radial-gradient(
-        circle at 50% 50%,
-        rgba(37, 99, 235, 0.2) 0%,
-        transparent 50%
+        ellipse at 50% 60%,
+        rgba(0, 102, 255, 0.12) 0%,
+        transparent 65%
       );
     "
   ></div>
 
-  <div class="glass-card rounded-xl w-full max-w-2xl p-8 relative z-10 overflow-hidden shadow-2xl">
+  <div class="glass-card rounded-xl w-full max-w-2xl relative z-10 overflow-hidden shadow-2xl animate-scale-in">
+    <!-- Top accent bar (animates color with state) -->
     <div
-      class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-slate-800 via-blue-600 to-slate-800"
+      class="h-[3px] w-full transition-all duration-700"
+      [class.bg-gradient-to-r]="true"
+      [class.from-primary]="state() !== 'error'"
+      [class.via-secondary]="state() !== 'error'"
+      [class.to-primary]="state() !== 'error'"
+      [class.from-error]="state() === 'error'"
+      [class.to-error]="state() === 'error'"
     ></div>
 
-    <div class="flex items-start justify-between mb-8">
-      <div>
-        <h1 class="text-2xl font-semibold text-on-surface mb-2">
-          Connecting to {{ connection()?.name || 'remote host' }}
-        </h1>
-        <p class="font-mono text-sm text-on-surface-variant">ID: {{ connectionId() }}</p>
-      </div>
-      <div
-        class="flex items-center space-x-2 bg-surface-container px-3 py-1.5 rounded-full border border-outline-variant/20"
-      >
-        <span
-          class="w-2 h-2 rounded-full"
-          [class.bg-primary]="state() !== 'error'"
-          [class.bg-error]="state() === 'error'"
-          [class.glow-pulse]="state() !== 'error' && state() !== 'connected'"
-        ></span>
-        <span class="font-inter text-xs font-semibold tracking-widest text-primary">{{
-          statusLabel()
-        }}</span>
-      </div>
-    </div>
-
-    <!-- Stepper -->
-    <div
-      class="grid grid-cols-4 gap-2 py-6 border-y border-outline-variant/10 my-4 bg-surface-container/50 rounded-lg px-4"
-    >
-      @for (step of steps; track step.key) {
-        <div class="flex flex-col items-center text-center">
-          <div
-            class="w-9 h-9 rounded-full flex items-center justify-center mb-2 border transition-colors"
-            [class.bg-primary]="isStepActive(step) || isStepDone(step)"
-            [class.border-primary]="isStepActive(step) || isStepDone(step)"
-            [class.border-outline]="!isStepActive(step) && !isStepDone(step)"
-            [class.text-on-primary]="isStepActive(step) || isStepDone(step)"
-            [class.text-on-surface-variant]="!isStepActive(step) && !isStepDone(step)"
-            [class.glow-pulse]="isStepActive(step)"
-          >
-            <span class="material-symbols-outlined text-base">
-              @if (isStepDone(step)) {
-                check
-              } @else if (isStepActive(step)) {
-                bolt
-              } @else {
-                radio_button_unchecked
-              }
-            </span>
-          </div>
-          <span class="font-inter text-[10px] font-semibold tracking-widest">{{ step.label }}</span>
+    <div class="p-8">
+      <!-- Header row: title + status badge -->
+      <div class="flex items-start justify-between mb-6">
+        <div>
+          <h1 class="text-2xl font-semibold text-on-surface mb-1">
+            Connecting to <span class="text-primary">{{ connection()?.name || 'remote host' }}</span>
+          </h1>
+          <p class="font-mono text-xs text-on-surface-variant opacity-60">ID: {{ connectionId() }}</p>
         </div>
-      }
-    </div>
-
-    <!-- Progress -->
-    <div class="space-y-3 mt-6">
-      <div class="flex justify-between items-center">
-        <span class="font-inter text-xs font-semibold tracking-widest text-on-surface-variant"
-          >CONNECTION PROGRESS</span
-        >
-        <span class="font-mono text-primary">{{ progress() }}%</span>
-      </div>
-      <div
-        class="w-full h-2 bg-surface-container rounded-full overflow-hidden border border-outline/30"
-      >
         <div
-          class="h-full bg-gradient-to-r from-blue-700 to-blue-500 rounded-full transition-all duration-300 relative"
-          [style.width.%]="progress()"
+          class="flex items-center space-x-2 bg-surface-container px-3 py-1.5 rounded-full border border-outline-variant/20 shrink-0 ml-4"
         >
-          <div
-            class="absolute top-0 right-0 bottom-0 w-8 bg-gradient-to-r from-transparent to-white/30"
-          ></div>
+          <span
+            class="w-2 h-2 rounded-full transition-colors duration-500"
+            [class.bg-primary]="state() !== 'error' && state() !== 'connected'"
+            [class.status-pulse]="state() !== 'error' && state() !== 'connected'"
+            [class.bg-error]="state() === 'error'"
+            [class.bg-tertiary]="state() === 'connected'"
+          ></span>
+          <span class="font-mono text-xs font-semibold tracking-widest"
+            [class.text-primary]="state() !== 'error' && state() !== 'connected'"
+            [class.text-error]="state() === 'error'"
+            [class.text-tertiary]="state() === 'connected'"
+          >{{ statusLabel() }}</span>
         </div>
       </div>
 
-      <!-- Log Output -->
+      <!-- Mascot + stepper side by side -->
+      <div class="flex items-center gap-8 mb-6">
+        <!-- Mascot — the emotional core of this page -->
+        <div class="shrink-0 flex flex-col items-center gap-2">
+          <app-mascot [state]="mascotState()" [isSmall]="false"></app-mascot>
+          @if (state() === 'connected') {
+            <span class="font-label-caps text-label-caps text-tertiary animate-fade-in">TUNNEL ESTABLISHED</span>
+          } @else if (state() === 'error') {
+            <span class="font-label-caps text-label-caps text-error animate-fade-in">CONNECTION FAILED</span>
+          } @else {
+            <span class="font-label-caps text-label-caps text-on-surface-variant/60 animate-fade-in">SECURING TUNNEL…</span>
+          }
+        </div>
+
+        <!-- Steps + progress -->
+        <div class="flex-1 flex flex-col gap-4">
+          <!-- Stepper -->
+          <div class="grid grid-cols-4 gap-1">
+            @for (step of steps; track step.key) {
+              <div class="flex flex-col items-center text-center">
+                <div
+                  class="w-8 h-8 rounded-full flex items-center justify-center mb-1.5 border-2 transition-all duration-400"
+                  [class.bg-primary]="isStepDone(step)"
+                  [class.border-primary]="isStepDone(step) || isStepActive(step)"
+                  [class.border-outline-variant]="!isStepDone(step) && !isStepActive(step)"
+                  [class.scale-110]="isStepActive(step)"
+                  [class.shadow-lg]="isStepActive(step)"
+                  [class.shadow-primary]="isStepActive(step)"
+                  [class.bg-surface-container]="!isStepDone(step)"
+                >
+                  @if (isStepDone(step)) {
+                    <span class="material-symbols-outlined text-on-primary text-sm">check</span>
+                  } @else if (isStepActive(step)) {
+                    <span class="w-2.5 h-2.5 rounded-full bg-primary status-pulse block"></span>
+                  } @else {
+                    <span class="w-2 h-2 rounded-full bg-outline-variant/60 block"></span>
+                  }
+                </div>
+                <span class="font-mono text-[9px] font-semibold tracking-widest text-on-surface-variant/70">{{ step.label }}</span>
+              </div>
+            }
+          </div>
+
+          <!-- Progress bar -->
+          <div>
+            <div class="flex justify-between items-center mb-1.5">
+              <span class="font-mono text-[10px] text-on-surface-variant/60 uppercase tracking-widest">Connection Progress</span>
+              <span class="font-mono text-xs font-semibold text-primary">{{ progress() }}%</span>
+            </div>
+            <div class="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
+              <div
+                class="h-full rounded-full transition-all duration-500 relative overflow-hidden"
+                [class.bg-gradient-to-r]="true"
+                [class.from-primary]="state() !== 'error'"
+                [class.to-secondary]="state() !== 'error'"
+                [class.bg-error]="state() === 'error'"
+                [style.width.%]="progress()"
+              >
+                <!-- Shimmer sweep over the progress bar -->
+                <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Log output -->
       <div
-        class="bg-surface-container p-4 rounded-lg font-mono text-sm border border-outline/10 space-y-1 mt-4 max-h-48 overflow-y-auto"
+        class="bg-surface-container-lowest/80 p-4 rounded-lg font-mono text-xs border border-outline-variant/10 space-y-1 max-h-36 overflow-y-auto"
       >
         @for (entry of logs(); track entry.timestamp + '-' + entry.message) {
-          <div class="flex items-start text-on-surface-variant">
-            <span class="mr-3" [class]="logColorClass(entry.level)">{{ logTag(entry.level) }}</span>
-            <span>{{ entry.message }}</span>
+          <div class="flex items-start text-on-surface-variant animate-fade-in">
+            <span class="mr-3 shrink-0 font-bold" [class]="logColorClass(entry.level)">{{ logTag(entry.level) }}</span>
+            <span class="opacity-80">{{ entry.message }}</span>
           </div>
         }
         @if (logs().length === 0) {
-          <div class="text-on-surface-variant/60 italic">Waiting for activity...</div>
+          <div class="text-on-surface-variant/40 italic">Awaiting connection events…</div>
         }
       </div>
 
       @if (errorMsg()) {
         <div
-          class="bg-error/10 border border-error/30 text-error rounded-lg p-3 mt-3 font-mono text-sm"
+          class="bg-error/10 border border-error/30 text-error rounded-lg p-3 mt-3 font-mono text-xs flex items-center gap-2 animate-slide-up"
         >
+          <span class="material-symbols-outlined text-base shrink-0">error_outline</span>
           {{ errorMsg() }}
         </div>
       }
-    </div>
 
-    <div class="mt-8 flex justify-end gap-3">
-      @if (state() === 'error') {
-        <button
-          class="px-6 py-2 border border-primary/50 text-primary rounded font-inter text-xs font-semibold tracking-widest hover:bg-primary/10 transition-colors"
-          (click)="retry()"
-        >
-          RETRY
+      <!-- Action buttons -->
+      <div class="mt-6 flex justify-end gap-3">
+        @if (state() === 'error') {
+          <button class="btn-secondary" (click)="retry()">
+            <span class="material-symbols-outlined text-base">refresh</span>
+            Retry
+          </button>
+        }
+        <button class="btn-ghost text-error hover:bg-error/10 border border-error/30" (click)="cancel()">
+          <span class="material-symbols-outlined text-base">cancel</span>
+          Cancel
         </button>
-      }
-      <button
-        class="px-6 py-2 border border-error/50 text-error rounded font-inter text-xs font-semibold tracking-widest hover:bg-error/10 transition-colors"
-        (click)="cancel()"
-      >
-        CANCEL CONNECTION
-      </button>
+      </div>
     </div>
   </div>
 </main>

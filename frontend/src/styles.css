@@ -396,6 +396,47 @@
   }
 }
 
+/* Orbital spinner — two arcs rotating in opposite directions */
+@keyframes spin-cw {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+@keyframes spin-ccw {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(-360deg); }
+}
+
+/* Card scan-line sweep: a bright line moves from top to bottom */
+@keyframes scan-sweep {
+  0%   { top: 0%; opacity: 0.6; }
+  90%  { top: 100%; opacity: 0.2; }
+  100% { top: 100%; opacity: 0; }
+}
+
+/* Countdown ring — stroke-dashoffset drains from 0 to full circumference */
+@keyframes countdown-stroke {
+  from { stroke-dashoffset: 0; }
+  to   { stroke-dashoffset: 138; } /* 2π × 22 ≈ 138 */
+}
+
+/* Countdown rect border for confirm dialog (perimeter of 96×96 rect ≈ 376) */
+@keyframes countdown-rect {
+  from { stroke-dashoffset: 0; }
+  to   { stroke-dashoffset: 376; }
+}
+
+/* Sparkle burst — particles fly outward and fade */
+@keyframes sparkle-out {
+  0%   { transform: translate(0, 0) scale(1); opacity: 1; }
+  100% { transform: translate(var(--sx, 0px), var(--sy, 0px)) scale(0); opacity: 0; }
+}
+
+/* Toast drain bar */
+@keyframes toast-drain {
+  from { width: 100%; }
+  to   { width: 0%; }
+}
+
 /* ============================================================
    BASE STYLES
    ============================================================ */

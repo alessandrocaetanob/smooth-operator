@@ -142,10 +142,13 @@
         type="submit"
         [disabled]="submitting() || form.invalid"
       >
-        <span class="material-symbols-outlined text-[20px]">{{
-          submitting() ? 'progress_activity' : 'how_to_reg'
-        }}</span>
-        {{ submitting() ? 'Creating…' : 'Create Root Account' }}
+        @if (submitting()) {
+          <app-spinner size="sm" color="white"></app-spinner>
+          Creating…
+        } @else {
+          <span class="material-symbols-outlined text-[20px]">how_to_reg</span>
+          Create Root Account
+        }
       </button>
     </div>
   </form>

@@ -112,18 +112,23 @@
           }
         </div>
       } @else {
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-8">
+        <div
+          [@listStagger]="filteredConnections().length"
+          class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-8"
+        >
           @for (c of filteredConnections(); track c.id) {
             <button
               (click)="connect(c.id)"
-              class="group flex flex-col text-left glass-card rounded-xl p-0 hover:border-primary/40 transition-all duration-200 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/5 overflow-hidden focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-surface"
+              class="scan-card group flex flex-col text-left glass-card rounded-xl p-0 hover:border-primary/40 transition-all duration-200 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/5 overflow-hidden focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-surface"
             >
               <div class="p-4 flex items-start gap-3 flex-1">
                 <div
-                  class="w-10 h-10 rounded-lg bg-surface-container border border-outline-variant/30 flex items-center justify-center shrink-0 group-hover:bg-primary-container group-hover:border-primary/30 transition-colors"
+                  class="w-10 h-10 rounded-lg border flex items-center justify-center shrink-0 transition-colors"
+                  [class]="protocolIconBg(c.protocol)"
                 >
                   <span
-                    class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors"
+                    class="material-symbols-outlined transition-colors"
+                    [class]="protocolIconColor(c.protocol)"
                   >
                     {{ protocolIcon(c.protocol) }}
                   </span>
@@ -140,12 +145,13 @@
                 </div>
               </div>
               <div
-                class="bg-surface-container-low/50 px-4 py-2 border-t border-outline-variant/10 flex items-center justify-between"
+                class="px-4 py-2 border-t border-outline-variant/10 flex items-center justify-between"
+                [class]="protocolFooterBg(c.protocol)"
               >
                 <span
-                  class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/80"
-                  >{{ c.protocol }}</span
-                >
+                  class="text-[10px] font-bold uppercase tracking-widest"
+                  [class]="protocolBadgeColor(c.protocol)"
+                >{{ c.protocol }}</span>
                 <span
                   class="text-[10px] uppercase tracking-widest text-primary opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 font-bold"
                 >

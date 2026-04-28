@@ -13,7 +13,9 @@
   [class.md:pl-64]="!collapsed()"
   [class.md:pl-16]="collapsed()"
 >
-  <router-outlet></router-outlet>
+  <div [@routeFade]="outlet.isActivated">
+    <router-outlet #outlet="outlet"></router-outlet>
+  </div>
 </main>
 <app-confirm-dialog></app-confirm-dialog>
 <app-toast-container></app-toast-container>
