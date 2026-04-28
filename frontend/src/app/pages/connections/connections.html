@@ -205,7 +205,11 @@
 @if (showDrawer()) {
   <app-drawer
     [title]="form().id ? 'Edit Connection' : 'New Connection'"
-    [subtitle]="form().id ? 'Update connection settings below.' : 'Fill in the details to create a new remote connection.'"
+    [subtitle]="
+      form().id
+        ? 'Update connection settings below.'
+        : 'Fill in the details to create a new remote connection.'
+    "
     (closed)="closeDrawer()"
   >
     <!-- Mascot -->
@@ -290,7 +294,9 @@
             type="text"
             placeholder="Or enter new address (e.g., 10.0.0.5)"
             [ngModel]="form().newHostAddress"
-            (ngModelChange)="patch('newHostAddress', $event); patch('hostId', ''); mascotState.set('typing')"
+            (ngModelChange)="
+              patch('newHostAddress', $event); patch('hostId', ''); mascotState.set('typing')
+            "
             (blur)="mascotState.set('idle')"
             name="newHostAddress"
             [disabled]="form().hostId !== ''"
@@ -366,7 +372,11 @@
               "
             >
               # {{ tag }}
-              <button type="button" (click)="removeTag(tag)" class="hover:opacity-70 transition-opacity">
+              <button
+                type="button"
+                (click)="removeTag(tag)"
+                class="hover:opacity-70 transition-opacity"
+              >
                 <span class="material-symbols-outlined text-[12px]">close</span>
               </button>
             </span>
@@ -393,8 +403,7 @@
         <summary
           class="flex items-center gap-2 text-xs font-semibold text-on-surface-variant uppercase tracking-widest cursor-pointer list-none select-none py-2"
         >
-          <span
-            class="material-symbols-outlined text-sm group-open:rotate-90 transition-transform"
+          <span class="material-symbols-outlined text-sm group-open:rotate-90 transition-transform"
             >chevron_right</span
           >
           Advanced Settings (JSON)
@@ -411,23 +420,44 @@
           ></textarea>
 
           <!-- Format guide -->
-          <div class="rounded-lg border border-outline-variant/30 bg-surface-container/40 text-xs overflow-hidden">
-            <div class="flex items-center gap-1.5 px-3 py-2 border-b border-outline-variant/20 text-on-surface-variant/80 font-medium">
+          <div
+            class="rounded-lg border border-outline-variant/30 bg-surface-container/40 text-xs overflow-hidden"
+          >
+            <div
+              class="flex items-center gap-1.5 px-3 py-2 border-b border-outline-variant/20 text-on-surface-variant/80 font-medium"
+            >
               <span class="material-symbols-outlined text-sm">code</span>
               Protocol examples
             </div>
-            <div class="grid md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-outline-variant/20">
+            <div
+              class="grid md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-outline-variant/20"
+            >
               <div class="p-3">
-                <p class="text-[10px] font-bold uppercase tracking-widest text-primary/80 mb-1.5">RDP</p>
-                <pre class="font-mono text-[11px] text-on-surface-variant/70 leading-relaxed whitespace-pre">{{ settingsExamples.rdp }}</pre>
+                <p class="text-[10px] font-bold uppercase tracking-widest text-primary/80 mb-1.5">
+                  RDP
+                </p>
+                <pre
+                  class="font-mono text-[11px] text-on-surface-variant/70 leading-relaxed whitespace-pre"
+                  >{{ settingsExamples.rdp }}</pre
+                >
               </div>
               <div class="p-3">
-                <p class="text-[10px] font-bold uppercase tracking-widest text-secondary/80 mb-1.5">SSH</p>
-                <pre class="font-mono text-[11px] text-on-surface-variant/70 leading-relaxed whitespace-pre">{{ settingsExamples.ssh }}</pre>
+                <p class="text-[10px] font-bold uppercase tracking-widest text-secondary/80 mb-1.5">
+                  SSH
+                </p>
+                <pre
+                  class="font-mono text-[11px] text-on-surface-variant/70 leading-relaxed whitespace-pre"
+                  >{{ settingsExamples.ssh }}</pre
+                >
               </div>
               <div class="p-3">
-                <p class="text-[10px] font-bold uppercase tracking-widest text-tertiary/80 mb-1.5">VNC</p>
-                <pre class="font-mono text-[11px] text-on-surface-variant/70 leading-relaxed whitespace-pre">{{ settingsExamples.vnc }}</pre>
+                <p class="text-[10px] font-bold uppercase tracking-widest text-tertiary/80 mb-1.5">
+                  VNC
+                </p>
+                <pre
+                  class="font-mono text-[11px] text-on-surface-variant/70 leading-relaxed whitespace-pre"
+                  >{{ settingsExamples.vnc }}</pre
+                >
               </div>
             </div>
           </div>
@@ -451,4 +481,3 @@
     </form>
   </app-drawer>
 }
-
