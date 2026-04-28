@@ -1,0 +1,23 @@
+/* Render guacd's canvas at native pixels — no smoothing, no blur. */
+:host ::ng-deep canvas {
+  image-rendering: pixelated;
+  image-rendering: -webkit-optimize-contrast;
+}
+
+/* The page chrome is not editable; suppress any stray browser text caret
+   that would otherwise blink on header text when nothing is focused. */
+:host header,
+:host header * {
+  caret-color: transparent;
+}
+
+:host {
+  caret-color: transparent;
+}
+
+/* But always allow the caret inside real form controls (modals, etc.). */
+:host ::ng-deep input,
+:host ::ng-deep textarea,
+:host ::ng-deep [contenteditable='true'] {
+  caret-color: auto;
+}
