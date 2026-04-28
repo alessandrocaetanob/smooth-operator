@@ -78,7 +78,7 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
   readonly connection = computed<Connection | null>(() => {
     const id = this.connectionId();
     if (!id) return null;
-    return this.connections.list().find((c) => c.id === id) ?? null;
+    return this.connections.listAsMap().get(id) ?? null;
   });
 
   readonly mascotState = computed<MascotState>(() => {
