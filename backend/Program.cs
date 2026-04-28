@@ -5,9 +5,6 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Identity.Web;
 using Microsoft.AspNetCore.RateLimiting;
 using System.Threading.RateLimiting;
-using Microsoft.AspNetCore.HttpOverrides;
-using System.Net;
-using IPNetwork = System.Net.IPNetwork;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -115,21 +112,6 @@ builder.Services.AddRateLimiter(options =>
             }));
 });
 
-// Trust the X-Forwarded-For / X-Forwarded-Proto headers sent by the nginx reverse-proxy
-// container so that the "auth" rate-limiting policy partitions by the real client IP
-// rather than the nginx container address.  Restrict trust to RFC-1918 private ranges
-// (the docker bridge networks live inside these ranges).
-builder.Services.Configure<ForwardedHeadersOptions>(options =>
-{
-    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-    // Clear the default localhost-only allow-list and replace it with all RFC-1918
-    // private address ranges, which covers any docker bridge subnet.
-    options.KnownProxies.Clear();
-    options.KnownIPNetworks.Add(new IPNetwork(IPAddress.Parse("10.0.0.0"), 8));
-    options.KnownIPNetworks.Add(new IPNetwork(IPAddress.Parse("172.16.0.0"), 12));
-    options.KnownIPNetworks.Add(new IPNetwork(IPAddress.Parse("192.168.0.0"), 16));
-});
-
 // Add health checks
 builder.Services.AddHealthChecks()
     .AddNpgSql(builder.Configuration.GetConnectionString("DefaultConnection") ?? "")
@@ -187,9 +169,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-// UseForwardedHeaders must come before UseHttpsRedirection so that the
-// X-Forwarded-Proto header is visible when the HTTPS redirect decision is made.
-app.UseForwardedHeaders();
 app.UseHttpsRedirection();
 app.UseRateLimiter();
 app.UseAuthentication();
