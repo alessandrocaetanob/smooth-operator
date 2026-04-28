@@ -193,7 +193,11 @@ export class GuacamoleClientService {
         this.zone.run(() => {
           this._hostClipboard.set(buffer);
         });
-        if (typeof navigator !== 'undefined' && navigator.clipboard && 'writeText' in navigator.clipboard) {
+        if (
+          typeof navigator !== 'undefined' &&
+          navigator.clipboard &&
+          'writeText' in navigator.clipboard
+        ) {
           navigator.clipboard.writeText(buffer).catch(() => {
             // Browser denied access (no gesture); modal fallback exposes hostClipboard().
           });
@@ -243,15 +247,21 @@ export class GuacamoleClientService {
 
     // Mouse + touch — both wired to the display element.
     const mouse = new Guacamole.Mouse(el);
-    mouse.onmousedown = mouse.onmouseup = mouse.onmousemove = (state) => {
-      if (this.client) this.client.sendMouseState(state);
-    };
+    mouse.onmousedown =
+      mouse.onmouseup =
+      mouse.onmousemove =
+        (state) => {
+          if (this.client) this.client.sendMouseState(state);
+        };
     this.mouse = mouse;
 
     const touch = new Guacamole.Mouse.Touchscreen(el);
-    touch.onmousedown = touch.onmouseup = touch.onmousemove = (state) => {
-      if (this.client) this.client.sendMouseState(state);
-    };
+    touch.onmousedown =
+      touch.onmouseup =
+      touch.onmousemove =
+        (state) => {
+          if (this.client) this.client.sendMouseState(state);
+        };
     this.touch = touch;
 
     // Keyboard is bound to the document so the canvas need not be focused.

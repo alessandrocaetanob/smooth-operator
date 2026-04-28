@@ -82,11 +82,18 @@ export class ConnectingState implements OnInit, OnDestroy {
     }
     // Make sure the connection list is populated so we can show the name.
     if (this.connections.list().length === 0) {
-      this.connections.reload().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({ error: () => {} });
+      this.connections
+        .reload()
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({ error: () => {} });
     }
     // Don't restart a connection that's already in flight for the same target
     // (e.g., happens during route transition into ActiveSession on reconnect).
-    if (this.state() !== 'connecting' && this.state() !== 'waiting' && this.state() !== 'connected') {
+    if (
+      this.state() !== 'connecting' &&
+      this.state() !== 'waiting' &&
+      this.state() !== 'connected'
+    ) {
       this.guac.connect(id).catch(() => {
         // Errors land in service.error and surface in the log feed.
       });
