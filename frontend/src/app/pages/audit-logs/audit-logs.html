@@ -91,8 +91,8 @@
               <span class="ml-2 text-xs text-on-surface-variant">{{ l.resourceId }}</span>
             </td>
             <td class="px-4 py-3 text-on-surface-variant">{{ l.ipAddress }}</td>
-            <td class="px-4 py-3 text-on-surface-variant max-w-md truncate" [title]="l.details">
-              {{ l.details }}
+          <td class="px-4 py-3 text-on-surface-variant max-w-[280px]">
+              <div class="text-xs truncate" [title]="l.details">{{ l.details }}</div>
             </td>
           </tr>
         } @empty {
