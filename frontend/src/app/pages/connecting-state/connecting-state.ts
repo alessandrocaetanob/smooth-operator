@@ -51,11 +51,11 @@ export class ConnectingState implements OnInit, OnDestroy {
       case 'connected':
         return 'connected';
       case 'error':
-        return 'error';
+        return 'crashed';
       case 'requesting-ticket':
       case 'connecting':
       case 'waiting':
-        return 'loading';
+        return 'thinking';
       default:
         return 'thinking';
     }
