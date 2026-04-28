@@ -34,7 +34,7 @@ const EMPTY_FORM: FormState = {
   hostId: '',
   connectionGroupId: '',
   credentialId: '',
-  settings: '{}',
+  settings: '',
   newHostAddress: '',
   tags: [],
 };
@@ -88,6 +88,17 @@ export class Connections implements OnInit {
   readonly activeTagFilter = signal('');
 
   readonly protocols = ['rdp', 'ssh', 'vnc'];
+
+  /** Placeholder for the Advanced Settings textarea — protocol-specific */
+  readonly settingsPlaceholder = computed(() => {
+    const proto = this.form().protocol as keyof typeof this.settingsExamples;
+    return this.settingsExamples[proto] ?? this.settingsExamples.rdp;
+  });
+  readonly settingsExamples = {
+    rdp: '{\n  "port": 3389,\n  "security": "nla",\n  "ignore-cert": true,\n  "width": 1920,\n  "height": 1080\n}',
+    ssh: '{\n  "port": 22,\n  "terminal-type": "xterm",\n  "command": "/bin/bash"\n}',
+    vnc: '{\n  "port": 5900,\n  "encoding": "zrle",\n  "read-only": false\n}',
+  };
 
   /** All unique tags across all connections, sorted */
   readonly allTags = computed(() => {
