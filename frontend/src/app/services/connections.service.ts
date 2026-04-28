@@ -36,7 +36,7 @@ export class ConnectionsService {
   private readonly _loading = signal(false);
 
   readonly list = this._list.asReadonly();
-  readonly listAsMap = computed(() => new Map(this._list().map(c => [c.id, c])));
+  readonly listAsMap = computed(() => new Map(this._list().map((c) => [c.id, c])));
   readonly loading = this._loading.asReadonly();
 
   reload(): Observable<Connection[]> {
