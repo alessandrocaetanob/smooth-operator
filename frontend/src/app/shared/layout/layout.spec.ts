@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { ActivatedRoute } from '@angular/router';
+import { provideAnimations } from '@angular/platform-browser/animations';
 import { Layout } from './layout';
 import { of } from 'rxjs';
 
@@ -13,6 +14,7 @@ describe('Layout', () => {
       imports: [Layout],
       providers: [
         provideRouter([]),
+        provideAnimations(),
         {
           provide: ActivatedRoute,
           useValue: {

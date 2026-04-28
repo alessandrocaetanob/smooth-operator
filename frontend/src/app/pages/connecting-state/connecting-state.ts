@@ -4,6 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { GuacamoleClientService, GuacState } from '../../services/guacamole.service';
 import { ConnectionsService, Connection } from '../../services/connections.service';
+import { Mascot, MascotState } from '../../shared/mascot/mascot';
 
 interface Step {
   key: GuacState;
@@ -19,7 +20,7 @@ const STEP_ORDER: Step[] = [
 
 @Component({
   selector: 'app-connecting-state',
-  imports: [CommonModule],
+  imports: [CommonModule, Mascot],
   templateUrl: './connecting-state.html',
   styleUrl: './connecting-state.css',
 })
@@ -43,6 +44,24 @@ export class ConnectingState implements OnInit, OnDestroy {
     return this.connections.listAsMap().get(id) ?? null;
   });
   readonly connectionId = computed(() => this.route.snapshot.paramMap.get('id'));
+
+  readonly mascotState = computed<MascotState>(() => {
+    const s = this.state();
+    switch (s) {
+      case 'connected':
+        return 'connected';
+      case 'error':
+        return 'crashed';
+      case 'disconnected':
+        return this.errorMsg() ? 'crashed' : 'thinking';
+      case 'requesting-ticket':
+      case 'connecting':
+      case 'waiting':
+        return 'thinking';
+      default:
+        return 'thinking';
+    }
+  });
 
   readonly statusLabel = computed<string>(() => {
     const s = this.state();

@@ -10,6 +10,8 @@
   [class.state-thinking]="effectiveState === 'thinking'"
   [class.state-wave]="effectiveState === 'wave'"
   [class.state-sleep]="effectiveState === 'sleep'"
+  [class.state-connected]="effectiveState === 'connected'"
+  [class.state-crashed]="effectiveState === 'crashed'"
 >
   <svg
     viewBox="0 0 200 220"
@@ -52,15 +54,20 @@
       fill="var(--mascot-screen)"
       stroke="var(--mascot-screen-stroke)"
       stroke-width="1.5"
+      class="face-screen"
     />
 
     <!-- Scan-line overlay (decorative) -->
     <rect x="50" y="62" width="100" height="76" rx="16" fill="url(#scanlines)" opacity="0.06" />
 
-    <!-- Eyes — open (hidden when password or sleep) -->
+    <!-- Eyes — open (hidden when password, sleep, or crashed) -->
     <g
       class="eyes-open"
-      [style.opacity]="effectiveState !== 'password' && effectiveState !== 'sleep' ? '1' : '0'"
+      [style.opacity]="
+        effectiveState !== 'password' && effectiveState !== 'sleep' && effectiveState !== 'crashed'
+          ? '1'
+          : '0'
+      "
     >
       <!-- Left pupil -->
       <ellipse
@@ -173,7 +180,9 @@
       stroke-width="3"
       fill="none"
       stroke-linecap="round"
-      [style.opacity]="['idle', 'typing', 'wave', 'success'].includes(effectiveState) ? '1' : '0'"
+      [style.opacity]="
+        ['idle', 'typing', 'wave', 'success', 'connected'].includes(effectiveState) ? '1' : '0'
+      "
     />
     <!-- Mouth — worried arc -->
     <path
@@ -183,7 +192,11 @@
       stroke-width="3"
       fill="none"
       stroke-linecap="round"
-      [style.opacity]="effectiveState === 'password' || effectiveState === 'error' ? '1' : '0'"
+      [style.opacity]="
+        effectiveState === 'password' || effectiveState === 'error' || effectiveState === 'crashed'
+          ? '1'
+          : '0'
+      "
     />
     <!-- Mouth — flat line (thinking / loading / sleep) -->
     <path
@@ -242,5 +255,125 @@
         <rect width="100" height="2" fill="white" />
       </pattern>
     </defs>
+
+    <!-- Connected state: sparkle particles that burst outward -->
+    <g class="sparkles" [style.opacity]="effectiveState === 'connected' ? '1' : '0'">
+      <!-- 8 sparkle dots at cardinal and diagonal positions, animated outward -->
+      <circle cx="100" cy="14" r="4" fill="var(--mascot-antenna)" class="sparkle sp-n" />
+      <circle cx="155" cy="35" r="3" fill="var(--mascot-eye)" class="sparkle sp-ne" />
+      <circle cx="175" cy="100" r="4" fill="var(--mascot-hand)" class="sparkle sp-e" />
+      <circle cx="155" cy="165" r="3" fill="var(--mascot-antenna)" class="sparkle sp-se" />
+      <circle cx="100" cy="185" r="4" fill="var(--mascot-eye)" class="sparkle sp-s" />
+      <circle cx="45" cy="165" r="3" fill="var(--mascot-hand)" class="sparkle sp-sw" />
+      <circle cx="25" cy="100" r="4" fill="var(--mascot-antenna)" class="sparkle sp-w" />
+      <circle cx="45" cy="35" r="3" fill="var(--mascot-eye)" class="sparkle sp-nw" />
+    </g>
+
+    <!-- Thinking state: floating thought dots -->
+    <g class="think-dots" [style.opacity]="effectiveState === 'thinking' ? '1' : '0'">
+      <circle cx="150" cy="54" r="3" fill="var(--mascot-eye)" class="think-dot td-1" />
+      <circle cx="162" cy="41" r="4.5" fill="var(--mascot-eye)" class="think-dot td-2" />
+      <circle cx="178" cy="26" r="6" fill="var(--mascot-eye)" class="think-dot td-3" />
+    </g>
+
+    <!-- Crashed state: X eyes -->
+    <g class="eyes-crashed" [style.opacity]="effectiveState === 'crashed' ? '1' : '0'">
+      <!-- Left X -->
+      <line
+        x1="65"
+        y1="91"
+        x2="83"
+        y2="109"
+        stroke="var(--mascot-eye)"
+        stroke-width="3.5"
+        stroke-linecap="round"
+        class="crash-x-line"
+      />
+      <line
+        x1="83"
+        y1="91"
+        x2="65"
+        y2="109"
+        stroke="var(--mascot-eye)"
+        stroke-width="3.5"
+        stroke-linecap="round"
+        class="crash-x-line"
+      />
+      <!-- Right X -->
+      <line
+        x1="117"
+        y1="91"
+        x2="135"
+        y2="109"
+        stroke="var(--mascot-eye)"
+        stroke-width="3.5"
+        stroke-linecap="round"
+        class="crash-x-line"
+      />
+      <line
+        x1="135"
+        y1="91"
+        x2="117"
+        y2="109"
+        stroke="var(--mascot-eye)"
+        stroke-width="3.5"
+        stroke-linecap="round"
+        class="crash-x-line"
+      />
+    </g>
+
+    <!-- Crashed state: energy sparks burst outward -->
+    <g class="crash-sparks" [style.opacity]="effectiveState === 'crashed' ? '1' : '0'">
+      <line
+        x1="36"
+        y1="56"
+        x2="22"
+        y2="42"
+        stroke="var(--mascot-antenna)"
+        stroke-width="2.5"
+        stroke-linecap="round"
+        class="crash-spark cs-1"
+      />
+      <line
+        x1="164"
+        y1="56"
+        x2="178"
+        y2="42"
+        stroke="var(--mascot-antenna)"
+        stroke-width="2.5"
+        stroke-linecap="round"
+        class="crash-spark cs-2"
+      />
+      <line
+        x1="100"
+        y1="48"
+        x2="100"
+        y2="30"
+        stroke="var(--mascot-antenna)"
+        stroke-width="2.5"
+        stroke-linecap="round"
+        class="crash-spark cs-3"
+      />
+      <line
+        x1="52"
+        y1="66"
+        x2="36"
+        y2="56"
+        stroke="var(--mascot-antenna)"
+        stroke-width="2"
+        stroke-linecap="round"
+        class="crash-spark cs-4"
+      />
+      <line
+        x1="148"
+        y1="66"
+        x2="164"
+        y2="56"
+        stroke="var(--mascot-antenna)"
+        stroke-width="2"
+        stroke-linecap="round"
+        class="crash-spark cs-5"
+      />
+    </g>
   </svg>
 </div>

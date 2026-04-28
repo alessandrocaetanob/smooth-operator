@@ -10,7 +10,9 @@ export type MascotState =
   | 'error'
   | 'thinking'
   | 'wave'
-  | 'sleep';
+  | 'sleep'
+  | 'connected'
+  | 'crashed';
 
 @Component({
   selector: 'app-mascot',

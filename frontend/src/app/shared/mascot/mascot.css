@@ -138,7 +138,8 @@
 
 /* No live blinking when the mascot is asleep or hands cover the eyes */
 .state-sleep .eye,
-.state-password .eye {
+.state-password .eye,
+.state-crashed .eye {
   animation: none;
 }
 
@@ -150,6 +151,159 @@
   }
   50% {
     transform: translateY(-7px);
+  }
+}
+
+/* ---- Thinking dots ---- */
+.think-dots {
+  transition: opacity 0.3s ease;
+}
+.think-dot {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.state-thinking .think-dot {
+  animation: think-dot-pulse 1.8s ease-in-out infinite;
+}
+.state-thinking .td-1 {
+  animation-delay: 0s;
+}
+.state-thinking .td-2 {
+  animation-delay: 0.25s;
+}
+.state-thinking .td-3 {
+  animation-delay: 0.5s;
+}
+
+@keyframes think-dot-pulse {
+  0%,
+  100% {
+    opacity: 0.15;
+    transform: translateY(3px);
+  }
+  50% {
+    opacity: 0.9;
+    transform: translateY(-4px);
+  }
+}
+
+/* ---- Crashed state ---- */
+.state-crashed .mascot-svg {
+  animation: crashed-fall 0.55s cubic-bezier(0.36, 0.07, 0.19, 0.97) forwards;
+  filter: drop-shadow(0 0 12px rgba(255, 71, 87, 0.55));
+}
+
+.eyes-crashed {
+  transition: opacity 0.1s ease;
+}
+.crash-x-line {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.state-crashed .crash-x-line {
+  animation: x-slam 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.state-crashed .face-screen {
+  animation: screen-flicker 0.7s steps(1, end) forwards;
+}
+
+.crash-sparks {
+  transition: opacity 0.1s ease;
+}
+.crash-spark {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.state-crashed .crash-spark {
+  animation: spark-fly 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.state-crashed .cs-1 {
+  animation-delay: 0ms;
+}
+.state-crashed .cs-2 {
+  animation-delay: 60ms;
+}
+.state-crashed .cs-3 {
+  animation-delay: 30ms;
+}
+.state-crashed .cs-4 {
+  animation-delay: 90ms;
+}
+.state-crashed .cs-5 {
+  animation-delay: 45ms;
+}
+
+@keyframes crashed-fall {
+  0% {
+    transform: rotate(0deg) translateY(0);
+  }
+  25% {
+    transform: rotate(-6deg) translateY(-4px);
+  }
+  55% {
+    transform: rotate(15deg) translateY(7px);
+  }
+  80% {
+    transform: rotate(11deg) translateY(5px);
+  }
+  100% {
+    transform: rotate(12deg) translateY(6px);
+  }
+}
+
+@keyframes screen-flicker {
+  0% {
+    opacity: 1;
+  }
+  15% {
+    opacity: 0.1;
+  }
+  30% {
+    opacity: 0.8;
+  }
+  45% {
+    opacity: 0;
+  }
+  60% {
+    opacity: 0.5;
+  }
+  75% {
+    opacity: 0.1;
+  }
+  100% {
+    opacity: 0.18;
+  }
+}
+
+@keyframes x-slam {
+  0% {
+    transform: scale(0) rotate(-20deg);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.2) rotate(4deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+@keyframes spark-fly {
+  0% {
+    opacity: 1;
+    transform: scale(1) translate(0, 0);
+  }
+  60% {
+    opacity: 0.9;
+    transform: scale(1.2) translate(4px, -4px);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.3) translate(8px, -8px);
   }
 }
 
@@ -274,13 +428,98 @@
   }
 }
 
+/* ---- Connected state ---- */
+
+/* Container does a triumphant bounce + the whole mascot glows */
+.state-connected .mascot-container {
+  animation: success-bounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  filter: drop-shadow(0 0 14px rgba(179, 197, 255, 0.7));
+}
+
+/* Sparkle group visibility */
+.sparkles {
+  transition: opacity 0.2s ease;
+}
+
+.sparkle {
+  transform-origin: 100px 100px; /* SVG centre */
+  opacity: 0;
+  transform-box: fill-box;
+}
+
+/* Each sparkle flies outward along its own direction vector */
+.state-connected .sparkle {
+  animation: sparkle-burst 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.state-connected .sp-n {
+  animation-delay: 0ms;
+  --dx: 0px;
+  --dy: -30px;
+}
+.state-connected .sp-ne {
+  animation-delay: 50ms;
+  --dx: 22px;
+  --dy: -22px;
+}
+.state-connected .sp-e {
+  animation-delay: 30ms;
+  --dx: 30px;
+  --dy: 0px;
+}
+.state-connected .sp-se {
+  animation-delay: 80ms;
+  --dx: 22px;
+  --dy: 22px;
+}
+.state-connected .sp-s {
+  animation-delay: 20ms;
+  --dx: 0px;
+  --dy: 30px;
+}
+.state-connected .sp-sw {
+  animation-delay: 60ms;
+  --dx: -22px;
+  --dy: 22px;
+}
+.state-connected .sp-w {
+  animation-delay: 40ms;
+  --dx: -30px;
+  --dy: 0px;
+}
+.state-connected .sp-nw {
+  animation-delay: 10ms;
+  --dx: -22px;
+  --dy: -22px;
+}
+
+@keyframes sparkle-burst {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1.2);
+  }
+  60% {
+    opacity: 0.9;
+    transform: translate(var(--dx), var(--dy)) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(var(--dx) * 2), calc(var(--dy) * 2)) scale(0);
+  }
+}
+
 /* ---- Reduced motion guard ---- */
 @media (prefers-reduced-motion: reduce) {
   .mascot-container,
   .mascot-svg,
   .antenna-bulb,
   .chest-dot,
-  .eye {
+  .eye,
+  .sparkle,
+  .think-dot,
+  .crash-x-line,
+  .crash-spark,
+  .face-screen {
     animation: none !important;
     transition: none !important;
   }

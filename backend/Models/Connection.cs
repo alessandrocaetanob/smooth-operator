@@ -22,6 +22,9 @@ namespace Backend.Models
         // M2M for direct assignments
         public ICollection<User> Users { get; set; } = new List<User>();
 
+        // Tags for filtering/categorising connections
+        public ICollection<ConnectionTag> Tags { get; set; } = new List<ConnectionTag>();
+
         // JSON string to store arbitrary protocol-specific settings (like domain, security mode, ignore-cert, etc.)
         public string Settings { get; set; } = "{}";
     }

@@ -100,11 +100,16 @@
         }
 
         <button
-          class="btn-primary w-full justify-center py-2.5 mt-app-xs"
+          class="btn-primary w-full justify-center py-2.5 mt-app-xs gap-2"
           type="submit"
           [disabled]="submitting() || form.invalid"
         >
-          {{ submitting() ? 'Signing in…' : 'Sign In' }}
+          @if (submitting()) {
+            <app-spinner size="sm" color="white"></app-spinner>
+            Signing in…
+          } @else {
+            Sign In
+          }
         </button>
       </form>
 

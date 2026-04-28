@@ -9,10 +9,11 @@ import {
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { ThemeToggle } from '../../shared/theme-toggle/theme-toggle';
+import { Spinner } from '../../shared/spinner/spinner';
 
 @Component({
   selector: 'app-first-access',
-  imports: [ReactiveFormsModule, ThemeToggle],
+  imports: [ReactiveFormsModule, ThemeToggle, Spinner],
   templateUrl: './first-access.html',
   styleUrl: './first-access.css',
 })

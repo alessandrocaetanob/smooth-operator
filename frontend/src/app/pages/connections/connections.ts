@@ -13,6 +13,8 @@ import { Vault, VaultsService } from '../../services/vaults.service';
 import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { Mascot, MascotState } from '../../shared/mascot/mascot';
+import { Drawer } from '../../shared/drawer/drawer';
+import { Spinner } from '../../shared/spinner/spinner';
 
 interface FormState {
   id: string | null;
@@ -23,6 +25,7 @@ interface FormState {
   credentialId: string;
   settings: string;
   newHostAddress: string;
+  tags: string[];
 }
 
 const EMPTY_FORM: FormState = {
@@ -32,13 +35,24 @@ const EMPTY_FORM: FormState = {
   hostId: '',
   connectionGroupId: '',
   credentialId: '',
-  settings: '{}',
+  settings: '',
   newHostAddress: '',
+  tags: [],
 };
+
+/** Simple deterministic color bucket for tag chips */
+const TAG_PALETTES = [
+  'bg-primary/10 text-primary border-primary/20',
+  'bg-secondary/10 text-secondary border-secondary/20',
+  'bg-tertiary/10 text-tertiary border-tertiary/20',
+  'bg-amber-500/10 text-amber-600 border-amber-500/20 dark:text-amber-400',
+  'bg-violet-500/10 text-violet-600 border-violet-500/20 dark:text-violet-400',
+  'bg-rose-500/10 text-rose-600 border-rose-500/20 dark:text-rose-400',
+];
 
 @Component({
   selector: 'app-connections',
-  imports: [FormsModule, Mascot],
+  imports: [FormsModule, Mascot, Drawer, Spinner],
   templateUrl: './connections.html',
   styleUrl: './connections.css',
 })
@@ -62,12 +76,64 @@ export class Connections implements OnInit {
 
   readonly loading = signal(false);
   readonly errorMessage = signal<string | null>(null);
-  readonly showForm = signal(false);
+  readonly showDrawer = signal(false);
   readonly form = signal<FormState>({ ...EMPTY_FORM });
   readonly busy = signal(false);
   readonly mascotState = signal<MascotState>('idle');
+  readonly tagInputValue = signal('');
+
+  // Search & filter
+  readonly searchQuery = signal('');
+  readonly activeTagFilter = signal('');
 
   readonly protocols = ['rdp', 'ssh', 'vnc'];
+
+  /** Placeholder for the Advanced Settings textarea — protocol-specific */
+  readonly settingsPlaceholder = computed(() => {
+    const proto = this.form().protocol as keyof typeof this.settingsExamples;
+    return this.settingsExamples[proto] ?? this.settingsExamples.rdp;
+  });
+  readonly settingsExamples = {
+    rdp: '{\n  "port": 3389,\n  "security": "nla",\n  "ignore-cert": true,\n  "width": 1920,\n  "height": 1080\n}',
+    ssh: '{\n  "port": 22,\n  "terminal-type": "xterm",\n  "command": "/bin/bash"\n}',
+    vnc: '{\n  "port": 5900,\n  "encoding": "zrle",\n  "read-only": false\n}',
+  };
+
+  /** All unique tags across all connections, sorted */
+  readonly allTags = computed(() => {
+    const tagSet = new Set<string>();
+    this.connections().forEach((c) => c.tags?.forEach((t) => tagSet.add(t)));
+    return Array.from(tagSet).sort();
+  });
+
+  /** Filtered connection list based on search query and tag filter */
+  readonly filteredConnections = computed(() => {
+    const q = this.searchQuery().toLowerCase().trim();
+    const tagFilter = this.activeTagFilter();
+    const conns = this.connections();
+
+    return conns.filter((c) => {
+      if (tagFilter && !c.tags?.includes(tagFilter)) return false;
+      if (!q) return true;
+      return (
+        c.name.toLowerCase().includes(q) ||
+        c.protocol.toLowerCase().includes(q) ||
+        (c.host?.address?.toLowerCase().includes(q) ?? false) ||
+        (c.host?.name?.toLowerCase().includes(q) ?? false) ||
+        c.tags?.some((t) => t.toLowerCase().includes(q))
+      );
+    });
+  });
+
+  readonly resultCount = computed(() => {
+    const total = this.connections().length;
+    const filtered = this.filteredConnections().length;
+    return total === filtered ? total : filtered;
+  });
+
+  readonly isFiltered = computed(
+    () => this.searchQuery().trim().length > 0 || this.activeTagFilter().length > 0,
+  );
 
   ngOnInit(): void {
     this.refresh();
@@ -92,7 +158,7 @@ export class Connections implements OnInit {
 
   newConnection(): void {
     this.form.set({ ...EMPTY_FORM });
-    this.showForm.set(true);
+    this.showDrawer.set(true);
   }
 
   edit(c: Connection): void {
@@ -105,24 +171,74 @@ export class Connections implements OnInit {
       credentialId: c.credentialId ?? '',
       settings: c.settings || '{}',
       newHostAddress: '',
+      tags: [...(c.tags ?? [])],
     });
-    this.showForm.set(true);
+    this.showDrawer.set(true);
   }
 
-  cancel(): void {
-    this.showForm.set(false);
+  closeDrawer(): void {
+    this.showDrawer.set(false);
     this.form.set({ ...EMPTY_FORM });
+    this.errorMessage.set(null);
+    this.tagInputValue.set('');
+    this.mascotState.set('idle');
   }
 
   patch<K extends keyof FormState>(key: K, value: FormState[K]): void {
     this.form.update((f) => ({ ...f, [key]: value }));
   }
 
+  // ── Tag management ────────────────────────────────────────────────────
+
+  addTagFromInput(): void {
+    const raw = this.tagInputValue().trim().toLowerCase();
+    if (!raw) return;
+    const tags = raw
+      .split(',')
+      .map((t) => t.trim())
+      .filter(Boolean);
+    this.form.update((f) => {
+      const next = Array.from(new Set([...f.tags, ...tags]));
+      return { ...f, tags: next };
+    });
+    this.tagInputValue.set('');
+  }
+
+  onTagInputKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Enter' || event.key === ',') {
+      event.preventDefault();
+      this.addTagFromInput();
+    } else if (event.key === 'Backspace' && !this.tagInputValue()) {
+      this.form.update((f) => ({ ...f, tags: f.tags.slice(0, -1) }));
+    }
+  }
+
+  removeTag(tag: string): void {
+    this.form.update((f) => ({ ...f, tags: f.tags.filter((t) => t !== tag) }));
+  }
+
+  tagColor(tag: string): string {
+    const idx = tag.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % TAG_PALETTES.length;
+    return TAG_PALETTES[idx];
+  }
+
+  // ── Filter bar ────────────────────────────────────────────────────────
+
+  setTagFilter(tag: string): void {
+    this.activeTagFilter.set(this.activeTagFilter() === tag ? '' : tag);
+  }
+
+  clearFilters(): void {
+    this.searchQuery.set('');
+    this.activeTagFilter.set('');
+  }
+
+  // ── Save / Delete ─────────────────────────────────────────────────────
+
   save(): void {
     if (this.busy()) return;
     const f = this.form();
 
-    // We need either an existing hostId or a new host address
     if (
       !f.name.trim() ||
       (!f.hostId && !f.newHostAddress.trim()) ||
@@ -138,15 +254,13 @@ export class Connections implements OnInit {
     this.errorMessage.set(null);
     this.mascotState.set('thinking');
 
-    // Helper to determine host ID stream
     const getHostId$ = (): Observable<string> => {
       if (f.hostId) {
         return of(f.hostId);
       } else {
-        // Create new host inline
-        const newHostName = f.name.trim() + ' Host'; // Fallback name
+        const newHostName = f.name.trim() + ' Host';
         return this.hostsSvc.create({ name: newHostName, address: f.newHostAddress.trim() }).pipe(
-          switchMap(() => this.hostsSvc.reload()), // Reload to get the new host in state
+          switchMap(() => this.hostsSvc.reload()),
           switchMap((hosts) => {
             const created = hosts.find((h) => h.address === f.newHostAddress.trim());
             if (!created) throw new Error('Failed to locate created host');
@@ -166,6 +280,7 @@ export class Connections implements OnInit {
             connectionGroupId: f.connectionGroupId || null,
             credentialId: f.credentialId || null,
             settings: f.settings || '{}',
+            tags: f.tags,
           };
 
           return f.id
@@ -181,7 +296,7 @@ export class Connections implements OnInit {
           this.busy.set(false);
           this.mascotState.set('success');
           this.toastSvc.success(f.id ? 'Connection updated.' : 'Connection created.');
-          setTimeout(() => this.cancel(), 1000); // Give time to see success state
+          setTimeout(() => this.closeDrawer(), 800);
           this.refresh();
         },
         error: (err: any) => {

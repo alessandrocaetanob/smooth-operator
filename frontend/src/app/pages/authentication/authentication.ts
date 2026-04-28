@@ -4,10 +4,11 @@ import { Router } from '@angular/router';
 import { Mascot, MascotState } from '../../shared/mascot/mascot';
 import { ThemeToggle } from '../../shared/theme-toggle/theme-toggle';
 import { AuthService } from '../../services/auth.service';
+import { Spinner } from '../../shared/spinner/spinner';
 
 @Component({
   selector: 'app-authentication',
-  imports: [ReactiveFormsModule, Mascot, ThemeToggle],
+  imports: [ReactiveFormsModule, Mascot, ThemeToggle, Spinner],
   templateUrl: './authentication.html',
   styleUrl: './authentication.css',
 })
