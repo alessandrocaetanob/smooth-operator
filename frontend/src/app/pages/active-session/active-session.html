@@ -2,7 +2,6 @@
 <header
   class="bg-slate-950/80 backdrop-blur-md fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 h-16 border-b border-white/10 shrink-0 font-inter tracking-tight text-sm"
 >
-  <!-- Left: Brand & Connection Status -->
   <div class="flex items-center gap-6">
     <div class="flex items-center gap-3">
       <app-mascot [isSmall]="true" [state]="mascotState()"></app-mascot>
@@ -15,44 +14,32 @@
     <div
       class="flex items-center gap-3 bg-surface-container-high px-3 py-1.5 rounded-full border border-white/5"
     >
-      <div class="w-2.5 h-2.5 rounded-full bg-tertiary status-pulse"></div>
+      <div
+        class="w-2.5 h-2.5 rounded-full"
+        [class.bg-tertiary]="state() === 'connected'"
+        [class.bg-amber-400]="state() === 'connecting' || state() === 'waiting'"
+        [class.bg-error]="state() === 'error' || state() === 'disconnected'"
+        [class.status-pulse]="state() === 'connected'"
+      ></div>
       <span class="font-body-sm text-body-sm text-on-surface"
-        >Connected to:
-        <span class="font-mono text-mono text-secondary-fixed">Production-Web-01</span></span
+        >{{ state() === 'connected' ? 'Connected to' : 'Session' }}:
+        <span class="font-mono text-mono text-secondary-fixed">{{
+          remoteName() || connection()?.name || connectionId()
+        }}</span></span
       >
     </div>
   </div>
-  <!-- Center: Timer (Optional/Subtle) -->
-  <div class="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 text-on-surface-variant">
-    <span class="material-symbols-outlined text-sm">schedule</span>
-    <span class="font-mono text-mono">02:14:36</span>
-  </div>
-  <!-- Right: Actions -->
   <div class="flex items-center gap-4">
-    <div class="flex items-center gap-2 mr-4 border-r border-white/10 pr-4">
-      <button
-        class="p-2 text-on-surface-variant hover:text-on-surface hover:bg-white/5 rounded-full transition-colors active:scale-95 duration-200"
-      >
-        <span class="material-symbols-outlined">sensors</span>
-      </button>
-      <button
-        class="p-2 text-on-surface-variant hover:text-on-surface hover:bg-white/5 rounded-full transition-colors active:scale-95 duration-200"
-      >
-        <span class="material-symbols-outlined">notifications</span>
-      </button>
-    </div>
-    <button
-      class="p-2 text-on-surface-variant hover:text-on-surface hover:bg-white/5 rounded-full transition-colors active:scale-95 duration-200"
-    >
-      <span class="material-symbols-outlined">settings</span>
-    </button>
     <button
       class="p-2 text-on-surface-variant hover:text-on-surface hover:bg-white/5 rounded-full transition-colors active:scale-95 duration-200 mr-2"
+      title="Toggle fullscreen"
+      (click)="toggleFullscreen()"
     >
       <span class="material-symbols-outlined">fullscreen</span>
     </button>
     <button
       class="bg-error-container text-on-error-container font-body-sm text-body-sm px-4 py-2 rounded flex items-center gap-2 hover:bg-error hover:text-on-error transition-colors border border-error/20 hover:shadow-[0_0_12px_rgba(255,180,171,0.3)]"
+      (click)="terminate()"
     >
       <span class="material-symbols-outlined text-sm">power_settings_new</span>
       Terminate Session
@@ -60,127 +47,211 @@
   </div>
 </header>
 
-<!-- Minimized Side Navigation -->
-<aside
-  class="bg-slate-950/90 backdrop-blur-xl fixed left-0 top-16 bottom-0 w-16 flex flex-col z-40 border-r border-white/10 shadow-2xl shadow-blue-900/20 font-inter text-xs font-medium uppercase tracking-widest"
->
-  <div class="flex-1 py-4 flex flex-col gap-2">
-    <a
-      class="flex items-center justify-center p-3 text-outline hover:bg-on-surface/5 hover:text-on-surface transition-all active:scale-95 duration-200 group"
-      href="#"
-      title="The Vault"
-    >
-      <span class="material-symbols-outlined group-hover:translate-x-1 duration-300"
-        >dashboard</span
-      >
-    </a>
-    <a
-      class="flex items-center justify-center p-3 bg-primary/10 text-primary border-l-2 border-primary transition-all active:scale-95 duration-200 group"
-      href="#"
-      title="Connections"
-    >
-      <span class="material-symbols-outlined group-hover:translate-x-1 duration-300">hub</span>
-    </a>
-    <a
-      class="flex items-center justify-center p-3 text-outline hover:bg-on-surface/5 hover:text-on-surface transition-all active:scale-95 duration-200 group"
-      href="#"
-      title="Admin"
-    >
-      <span class="material-symbols-outlined group-hover:translate-x-1 duration-300"
-        >admin_panel_settings</span
-      >
-    </a>
-    <a
-      class="flex items-center justify-center p-3 text-outline hover:bg-on-surface/5 hover:text-on-surface transition-all active:scale-95 duration-200 group"
-      href="#"
-      title="Audit Logs"
-    >
-      <span class="material-symbols-outlined group-hover:translate-x-1 duration-300"
-        >receipt_long</span
-      >
-    </a>
-  </div>
-  <div class="py-4 flex flex-col gap-2 border-t border-white/10">
-    <a
-      class="flex items-center justify-center p-3 text-outline hover:bg-on-surface/5 hover:text-on-surface transition-all active:scale-95 duration-200 group"
-      href="#"
-      title="Settings"
-    >
-      <span class="material-symbols-outlined group-hover:translate-x-1 duration-300">settings</span>
-    </a>
-    <a
-      class="flex items-center justify-center p-3 text-outline hover:bg-on-surface/5 hover:text-on-surface transition-all active:scale-95 duration-200 group"
-      href="#"
-      title="Support"
-    >
-      <span class="material-symbols-outlined group-hover:translate-x-1 duration-300">help</span>
-    </a>
-  </div>
-</aside>
-
 <!-- Main Workspace -->
-<main class="flex-1 relative flex overflow-hidden w-full h-[calc(100vh-4rem)] mt-16 md:ml-16">
-  <!-- Canvas Container (Simulated Desktop/Terminal) -->
-  <div class="flex-1 bg-black relative flex items-center justify-center p-4">
-    <!-- Simulated Terminal Output for Visual Interest -->
+<main class="flex-1 relative flex overflow-hidden w-full h-[calc(100vh-4rem)] mt-16">
+  <div class="flex-1 bg-black relative flex items-center justify-center p-2">
     <div
-      class="absolute inset-0 p-6 font-mono text-mono text-tertiary/70 opacity-50 pointer-events-none flex flex-col gap-1 z-0"
-    >
-      <div>[user@Production-Web-01 ~]$ tail -f /var/log/syslog</div>
-      <div>Mar 15 14:22:01 web01 systemd[1]: Starting system activity accounting tool...</div>
-      <div>
-        Mar 15 14:22:01 web01 systemd[1]: sysstat-collect.service: Deactivated successfully.
+      #display
+      class="w-full h-full flex items-center justify-center overflow-hidden bg-black select-none focus:outline-none"
+      tabindex="0"
+    ></div>
+
+    @if (state() !== 'connected') {
+      <div
+        class="absolute inset-0 flex items-center justify-center bg-black/70 z-20 backdrop-blur-sm"
+      >
+        <div class="text-center">
+          <div
+            class="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"
+          ></div>
+          <p class="font-mono text-on-surface-variant text-sm">
+            {{ state() === 'error' ? 'Connection lost' : 'Reconnecting display...' }}
+          </p>
+        </div>
       </div>
-      <div>Mar 15 14:22:01 web01 systemd[1]: Finished system activity accounting tool.</div>
-      <div>
-        Mar 15 14:25:01 web01 CRON[12345]: (root) CMD (command -v debian-sa1 &gt; /dev/null
-        &amp;&amp; debian-sa1 1 1)
-      </div>
-      <div class="animate-pulse mt-2">_</div>
-    </div>
-    <!-- The actual canvas would go here. We use an image to simulate it visually -->
-    <div
-      class="relative w-full h-full max-w-6xl max-h-[800px] rounded border border-white/10 shadow-[0_0_40px_rgba(0,0,0,0.8)] overflow-hidden z-10"
-    >
-      <img
-        alt="Remote Terminal Session"
-        class="w-full h-full object-cover opacity-80"
-        data-alt="Dark, high-contrast terminal interface with colorful code syntax highlighting, simulating a complex Linux server environment"
-        src="https://lh3.googleusercontent.com/aida-public/AB6AXuCh5HufEljYjn-1jW9hqZ0elCUxSCFm5mbfqdohpBN3U9rodeU7a7wXXTvPbAm-2oX1bz7qbCoopbFZsC6LRZ-0goLgZPuW_A2tEQ1DegiLJX1WJKvLb_aYNirEB3AGsMnMCx5r6yqS_EYPIdmwj_A-rCAMGCbSCfyFnRQnF8k0ph5B_J7KOpn8y86WVTEmKCBx5ooMV14J6ydqeCaOFORcsdCATjQFRPy9v-R5Rn5wEN2iPsBatkT9ZJsndTPQxqDCkRzP7YbSo4Y"
-      />
-    </div>
+    }
   </div>
-  <!-- Floating Side Toolbar (Collapsed by default, shown here slightly peeked out) -->
+
+  <!-- Floating Toolbar -->
   <aside class="absolute right-0 top-1/2 -translate-y-1/2 mr-4 flex flex-col gap-2 z-30">
     <div
       class="glass-panel rounded-full p-2 flex flex-col gap-3 shadow-[0_8px_32px_rgba(0,0,0,0.5)]"
     >
       <button
-        class="p-3 rounded-full text-outline hover:text-inverse-primary hover:bg-inverse-primary/10 transition-colors group relative"
+        class="p-3 rounded-full text-outline hover:text-inverse-primary hover:bg-inverse-primary/10 transition-colors"
         title="Capture Screen"
+        (click)="takeScreenshot()"
       >
         <span class="material-symbols-outlined">screenshot</span>
       </button>
       <div class="h-px w-6 bg-white/10 mx-auto"></div>
       <button
-        class="p-3 rounded-full text-outline hover:text-inverse-primary hover:bg-inverse-primary/10 transition-colors group relative"
+        class="p-3 rounded-full text-outline hover:text-inverse-primary hover:bg-inverse-primary/10 transition-colors"
         title="Send Ctrl+Alt+Del"
+        (click)="sendCtrlAltDel()"
+      >
+        <span class="material-symbols-outlined">restart_alt</span>
+      </button>
+      <button
+        class="p-3 rounded-full text-outline hover:text-inverse-primary hover:bg-inverse-primary/10 transition-colors"
+        title="Send Key Combo"
+        (click)="openKeyComboModal()"
       >
         <span class="material-symbols-outlined">keyboard</span>
       </button>
       <button
-        class="p-3 rounded-full text-outline hover:text-inverse-primary hover:bg-inverse-primary/10 transition-colors group relative"
+        class="p-3 rounded-full text-outline hover:text-inverse-primary hover:bg-inverse-primary/10 transition-colors"
         title="Shared Clipboard"
+        (click)="openClipboardModal()"
       >
         <span class="material-symbols-outlined">content_paste</span>
       </button>
       <div class="h-px w-6 bg-white/10 mx-auto"></div>
       <button
-        class="p-3 rounded-full text-outline hover:text-inverse-primary hover:bg-inverse-primary/10 transition-colors group relative"
-        title="System Info"
+        class="p-3 rounded-full text-outline hover:text-inverse-primary hover:bg-inverse-primary/10 transition-colors"
+        title="Toggle fullscreen"
+        (click)="toggleFullscreen()"
       >
-        <span class="material-symbols-outlined">info</span>
+        <span class="material-symbols-outlined">fullscreen</span>
       </button>
     </div>
   </aside>
+
+  <!-- Key combo modal -->
+  @if (showKeyComboModal()) {
+    <div
+      data-guac-modal-open="true"
+      class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      (click)="closeKeyComboModal()"
+    >
+      <div
+        class="glass-card rounded-xl w-full max-w-lg p-6 relative"
+        (click)="$event.stopPropagation()"
+      >
+        <h2 class="text-lg font-semibold mb-4">Send Key Combo</h2>
+
+        <div class="flex gap-2 mb-4 flex-wrap">
+          <button
+            class="px-3 py-1.5 rounded border text-sm font-inter tracking-wider"
+            [class.bg-primary]="comboCtrl()"
+            [class.text-on-primary]="comboCtrl()"
+            [class.border-primary]="comboCtrl()"
+            [class.border-outline]="!comboCtrl()"
+            (click)="toggleModifier('ctrl')"
+          >
+            Ctrl
+          </button>
+          <button
+            class="px-3 py-1.5 rounded border text-sm font-inter tracking-wider"
+            [class.bg-primary]="comboAlt()"
+            [class.text-on-primary]="comboAlt()"
+            [class.border-primary]="comboAlt()"
+            [class.border-outline]="!comboAlt()"
+            (click)="toggleModifier('alt')"
+          >
+            Alt
+          </button>
+          <button
+            class="px-3 py-1.5 rounded border text-sm font-inter tracking-wider"
+            [class.bg-primary]="comboShift()"
+            [class.text-on-primary]="comboShift()"
+            [class.border-primary]="comboShift()"
+            [class.border-outline]="!comboShift()"
+            (click)="toggleModifier('shift')"
+          >
+            Shift
+          </button>
+          <button
+            class="px-3 py-1.5 rounded border text-sm font-inter tracking-wider"
+            [class.bg-primary]="comboSuper()"
+            [class.text-on-primary]="comboSuper()"
+            [class.border-primary]="comboSuper()"
+            [class.border-outline]="!comboSuper()"
+            (click)="toggleModifier('super')"
+          >
+            Win/Cmd
+          </button>
+        </div>
+
+        <p class="text-xs text-on-surface-variant mb-2 tracking-widest">KEY</p>
+        <div class="grid grid-cols-6 gap-2 mb-6 max-h-56 overflow-y-auto">
+          @for (key of comboKeys; track key.keysym) {
+            <button
+              class="px-2 py-1.5 rounded border text-xs font-mono"
+              [class.bg-primary]="comboKey().keysym === key.keysym"
+              [class.text-on-primary]="comboKey().keysym === key.keysym"
+              [class.border-primary]="comboKey().keysym === key.keysym"
+              [class.border-outline]="comboKey().keysym !== key.keysym"
+              (click)="selectComboKey(key)"
+            >
+              {{ key.label }}
+            </button>
+          }
+        </div>
+
+        <div class="flex justify-end gap-3">
+          <button
+            class="px-4 py-2 border border-outline rounded text-sm"
+            (click)="closeKeyComboModal()"
+          >
+            Cancel
+          </button>
+          <button
+            class="px-4 py-2 bg-primary text-on-primary rounded text-sm"
+            (click)="sendKeyCombo()"
+          >
+            Send
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Clipboard modal -->
+  @if (showClipboardModal()) {
+    <div
+      data-guac-modal-open="true"
+      class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      (click)="closeClipboardModal()"
+    >
+      <div
+        class="glass-card rounded-xl w-full max-w-xl p-6 relative"
+        (click)="$event.stopPropagation()"
+      >
+        <h2 class="text-lg font-semibold mb-2">Shared Clipboard</h2>
+        <p class="text-xs text-on-surface-variant mb-4">
+          Edit and push to host, or copy current host clipboard locally.
+        </p>
+        <textarea
+          rows="6"
+          class="w-full bg-surface-container border border-outline rounded p-3 font-mono text-sm text-on-surface focus:outline-none focus:border-primary"
+          [ngModel]="clipboardDraft()"
+          (ngModelChange)="clipboardDraft.set($event)"
+        ></textarea>
+        <div class="flex justify-between items-center mt-4">
+          <button
+            class="text-sm text-primary hover:underline disabled:text-outline disabled:no-underline"
+            [disabled]="!hostClipboard()"
+            (click)="copyHostClipboardLocally()"
+          >
+            Copy host clipboard locally
+          </button>
+          <div class="flex gap-3">
+            <button
+              class="px-4 py-2 border border-outline rounded text-sm"
+              (click)="closeClipboardModal()"
+            >
+              Close
+            </button>
+            <button
+              class="px-4 py-2 bg-primary text-on-primary rounded text-sm"
+              (click)="pushClipboardToHost()"
+            >
+              Push to host
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
 </main>

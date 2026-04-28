@@ -29,7 +29,7 @@ export class Vault implements OnInit {
   }
 
   connect(id: string): void {
-    this.router.navigate(['/session'], { queryParams: { id } });
+    this.router.navigate(['/connecting', id]);
   }
 
   protocolIcon(protocol: string): string {

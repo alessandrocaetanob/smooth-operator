@@ -35,7 +35,8 @@ export const routes: Routes = [
   { path: 'login', component: Authentication, canActivate: [loginGuard] },
   { path: 'first-access', component: FirstAccess, canActivate: [setupGuard] },
   { path: 'invite/:token', component: Invite },
-  { path: 'session', component: ActiveSession, canActivate: [authGuard] },
+  { path: 'session/:id', component: ActiveSession, canActivate: [authGuard] },
+  { path: 'connecting/:id', component: ConnectingState, canActivate: [authGuard] },
   {
     path: '',
     component: Layout,
@@ -49,7 +50,6 @@ export const routes: Routes = [
       { path: 'empty', component: EmptyState },
       { path: 'search', component: SearchResults },
       { path: 'profile', component: Profile },
-      { path: 'connecting', component: ConnectingState },
       {
         path: 'settings',
         component: Settings,
