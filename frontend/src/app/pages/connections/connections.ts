@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { forkJoin, Observable } from 'rxjs';
+import { forkJoin, Observable, of } from 'rxjs';
+import { switchMap, catchError } from 'rxjs/operators';
 import {
   Connection,
   ConnectionsService,
@@ -11,6 +12,7 @@ import { CredentialsService, Credential } from '../../services/credentials.servi
 import { Vault, VaultsService } from '../../services/vaults.service';
 import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog.service';
 import { ToastService } from '../../shared/toast/toast.service';
+import { Mascot, MascotState } from '../../shared/mascot/mascot';
 
 interface FormState {
   id: string | null;
@@ -20,6 +22,7 @@ interface FormState {
   connectionGroupId: string;
   credentialId: string;
   settings: string;
+  newHostAddress: string;
 }
 
 const EMPTY_FORM: FormState = {
@@ -30,11 +33,12 @@ const EMPTY_FORM: FormState = {
   connectionGroupId: '',
   credentialId: '',
   settings: '{}',
+  newHostAddress: '',
 };
 
 @Component({
   selector: 'app-connections',
-  imports: [FormsModule],
+  imports: [FormsModule, Mascot],
   templateUrl: './connections.html',
   styleUrl: './connections.css',
 })
@@ -61,6 +65,7 @@ export class Connections implements OnInit {
   readonly showForm = signal(false);
   readonly form = signal<FormState>({ ...EMPTY_FORM });
   readonly busy = signal(false);
+  readonly mascotState = signal<MascotState>('idle');
 
   readonly protocols = ['rdp', 'ssh', 'vnc'];
 
@@ -99,6 +104,7 @@ export class Connections implements OnInit {
       connectionGroupId: c.connectionGroupId ?? '',
       credentialId: c.credentialId ?? '',
       settings: c.settings || '{}',
+      newHostAddress: '',
     });
     this.showForm.set(true);
   }
@@ -115,37 +121,77 @@ export class Connections implements OnInit {
   save(): void {
     if (this.busy()) return;
     const f = this.form();
-    if (!f.name.trim() || !f.hostId || !f.protocol || !f.connectionGroupId) {
+
+    // We need either an existing hostId or a new host address
+    if (
+      !f.name.trim() ||
+      (!f.hostId && !f.newHostAddress.trim()) ||
+      !f.protocol ||
+      !f.connectionGroupId
+    ) {
       this.errorMessage.set('Name, host, protocol and vault are required.');
+      this.mascotState.set('error');
       return;
     }
-    const payload: CreateConnectionPayload = {
-      name: f.name.trim(),
-      protocol: f.protocol,
-      hostId: f.hostId,
-      connectionGroupId: f.connectionGroupId || null,
-      credentialId: f.credentialId || null,
-      settings: f.settings || '{}',
-    };
+
     this.busy.set(true);
     this.errorMessage.set(null);
-    const obs: Observable<unknown> = f.id
-      ? this.connectionsSvc.update(f.id, payload)
-      : this.connectionsSvc.create(payload);
-    obs.subscribe({
-      next: () => {
-        this.busy.set(false);
-        this.toastSvc.success(f.id ? 'Connection updated.' : 'Connection created.');
-        this.cancel();
-        this.refresh();
-      },
-      error: (err: any) => {
-        this.busy.set(false);
-        const msg = this.toMessage(err) || 'Save failed.';
-        this.errorMessage.set(msg);
-        this.toastSvc.error(msg);
-      },
-    });
+    this.mascotState.set('thinking');
+
+    // Helper to determine host ID stream
+    const getHostId$ = (): Observable<string> => {
+      if (f.hostId) {
+        return of(f.hostId);
+      } else {
+        // Create new host inline
+        const newHostName = f.name.trim() + ' Host'; // Fallback name
+        return this.hostsSvc.create({ name: newHostName, address: f.newHostAddress.trim() }).pipe(
+          switchMap(() => this.hostsSvc.reload()), // Reload to get the new host in state
+          switchMap((hosts) => {
+            const created = hosts.find((h) => h.address === f.newHostAddress.trim());
+            if (!created) throw new Error('Failed to locate created host');
+            return of(created.id);
+          }),
+        );
+      }
+    };
+
+    getHostId$()
+      .pipe(
+        switchMap((resolvedHostId) => {
+          const payload: CreateConnectionPayload = {
+            name: f.name.trim(),
+            protocol: f.protocol,
+            hostId: resolvedHostId,
+            connectionGroupId: f.connectionGroupId || null,
+            credentialId: f.credentialId || null,
+            settings: f.settings || '{}',
+          };
+
+          return f.id
+            ? this.connectionsSvc.update(f.id, payload)
+            : this.connectionsSvc.create(payload);
+        }),
+        catchError((err) => {
+          throw err;
+        }),
+      )
+      .subscribe({
+        next: () => {
+          this.busy.set(false);
+          this.mascotState.set('success');
+          this.toastSvc.success(f.id ? 'Connection updated.' : 'Connection created.');
+          setTimeout(() => this.cancel(), 1000); // Give time to see success state
+          this.refresh();
+        },
+        error: (err: any) => {
+          this.busy.set(false);
+          this.mascotState.set('error');
+          const msg = this.toMessage(err) || 'Save failed.';
+          this.errorMessage.set(msg);
+          this.toastSvc.error(msg);
+        },
+      });
   }
 
   async remove(c: Connection): Promise<void> {

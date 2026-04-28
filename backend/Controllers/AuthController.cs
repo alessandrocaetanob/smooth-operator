@@ -79,6 +79,7 @@ namespace Backend.Controllers
         // be used for self-signup once the application has been initialised.
         [HttpPost("setup")]
         [AllowAnonymous]
+        [EnableRateLimiting("auth")]
         public async Task<IActionResult> Setup([FromBody] RegisterRequest request)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
