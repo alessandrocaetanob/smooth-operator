@@ -45,7 +45,7 @@ export const routes: Routes = [
       { path: 'vault', component: Vault },
       { path: 'my-access', component: MyAccess },
       { path: 'connections', component: Connections, canActivate: [connectionManagerGuard] },
-      { path: 'hosts', component: Hosts, canActivate: [connectionManagerGuard] },
+      { path: 'hosts', redirectTo: 'connections', pathMatch: 'full' },
       { path: 'credentials', component: Credentials, canActivate: [connectionManagerGuard] },
       { path: 'empty', component: EmptyState },
       { path: 'search', component: SearchResults },
