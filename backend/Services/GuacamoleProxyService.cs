@@ -208,7 +208,12 @@ namespace Backend.Services
                 Action = "connection.started",
                 ResourceType = "Connection",
                 ResourceId = connectionId.ToString(),
-                Details = $"{{\"host\":\"{connection.Host.Name}\",\"protocol\":\"{connection.Protocol}\",\"sessionId\":\"{sessionId}\"}}",
+                Details = JsonSerializer.Serialize(new
+                {
+                    host = connection.Host.Name,
+                    protocol = connection.Protocol,
+                    sessionId = sessionId
+                }),
                 IpAddress = ipAddress
             });
             await dbContext.SaveChangesAsync();
@@ -534,7 +539,13 @@ namespace Backend.Services
         {
             private readonly Stream _stream;
             private readonly byte[] _buf = new byte[16 * 1024];
+            // _charBuf is the same size as _buf: UTF-8 decoding can produce at most
+            // 1 UTF-16 char per input byte (multi-byte sequences always map to fewer
+            // chars than bytes, including 4-byte sequences that produce 2 chars from
+            // 4 bytes), so the output can never exceed the byte count.
+            private readonly char[] _charBuf = new char[16 * 1024];
             private readonly StringBuilder _pending = new();
+            private readonly Decoder _decoder = Encoding.UTF8.GetDecoder();
 
             public GuacInstructionReader(Stream stream) { _stream = stream; }
 
@@ -553,7 +564,8 @@ namespace Backend.Services
 
                     int n = await _stream.ReadAsync(_buf.AsMemory(0, _buf.Length), ct);
                     if (n == 0) return null;
-                    _pending.Append(Encoding.UTF8.GetString(_buf, 0, n));
+                    int charCount = _decoder.GetChars(_buf, 0, n, _charBuf, 0);
+                    _pending.Append(_charBuf, 0, charCount);
                 }
             }
 
@@ -572,7 +584,8 @@ namespace Backend.Services
 
                     int n = await _stream.ReadAsync(_buf.AsMemory(0, _buf.Length), ct);
                     if (n == 0) return null;
-                    _pending.Append(Encoding.UTF8.GetString(_buf, 0, n));
+                    int charCount = _decoder.GetChars(_buf, 0, n, _charBuf, 0);
+                    _pending.Append(_charBuf, 0, charCount);
                 }
             }
 

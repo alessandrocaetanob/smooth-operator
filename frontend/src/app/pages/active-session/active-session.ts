@@ -1,6 +1,7 @@
 import {
   AfterViewInit,
   Component,
+  EffectRef,
   ElementRef,
   Injector,
   OnDestroy,
@@ -105,6 +106,7 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
   readonly clipboardDraft = signal('');
 
   private mounted = false;
+  private displayEffect: EffectRef | null = null;
   private readonly injector = inject(Injector);
 
   constructor() {
@@ -146,11 +148,14 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
     } else if (this.displayRef) {
       // Wait until connected, then attach.
       runInInjectionContext(this.injector, () => {
-        const stop = effect(
-          (onCleanup) => {
-            if (this.guac.isConnected() && this.displayRef) {
+        // Use a local flag so the effect body is idempotent and we avoid
+        // calling destroy() on the EffectRef from within its own callback.
+        let attached = false;
+        this.displayEffect = effect(
+          () => {
+            if (!attached && this.guac.isConnected() && this.displayRef) {
+              attached = true;
               this.guac.attachDisplay(this.displayRef.nativeElement);
-              onCleanup(() => stop.destroy());
             }
           },
           { manualCleanup: true },
@@ -161,6 +166,8 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.mounted = false;
+    this.displayEffect?.destroy();
+    this.displayEffect = null;
   }
 
   // Toolbar actions ----------------------------------------------------------

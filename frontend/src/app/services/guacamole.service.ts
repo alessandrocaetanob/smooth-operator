@@ -329,8 +329,7 @@ export class GuacamoleClientService {
     const w = Math.max(320, Math.floor(this.displayHost.clientWidth));
     const h = Math.max(240, Math.floor(this.displayHost.clientHeight));
     const display = this.client.getDisplay();
-    // Ask guacd to render natively at the host's pixel dimensions. We
-    // intentionally do NOT call display.scale() here — scaling the canvas
+    // Explicitly reset scale to 1 rather than scaling to fit. Scaling the canvas
     // via CSS transforms causes blurry/washed-out text in SSH terminals.
     // guacd will re-render at the new size and our canvas stays 1:1.
     display.scale(1);
@@ -477,30 +476,11 @@ export class GuacamoleClientService {
         /* swallow */
       }
     }
-    if (this.keyboard) {
-      try {
-        this.keyboard.reset();
-      } catch {
-        /* swallow */
-      }
-    }
-    if (this.resizeListener) {
-      window.removeEventListener('resize', this.resizeListener);
-      this.resizeListener = null;
-    }
-    if (this.pasteListener) {
-      document.removeEventListener('paste', this.pasteListener);
-      this.pasteListener = null;
-    }
-    if (this.displayHost) {
-      while (this.displayHost.firstChild) this.displayHost.removeChild(this.displayHost.firstChild);
-    }
+    // Neutralize keyboard callbacks so the orphaned document listener becomes
+    // a no-op even after we drop our reference.
+    this.detachDisplay();
     this.client = null;
     this.tunnel = null;
-    this.keyboard = null;
-    this.mouse = null;
-    this.touch = null;
-    this.displayHost = null;
     this.currentConnectionId = null;
     this.setState('disconnected');
   }

@@ -30,6 +30,8 @@ export class ConnectingState implements OnInit, OnDestroy {
   private readonly connections = inject(ConnectionsService);
   private readonly destroyRef = inject(DestroyRef);
 
+  private navTimerId: ReturnType<typeof setTimeout> | null = null;
+
   readonly steps = STEP_ORDER;
   readonly state = this.guac.state;
   readonly progress = this.guac.progress;
@@ -69,7 +71,7 @@ export class ConnectingState implements OnInit, OnDestroy {
       const id = this.connectionId();
       if (s === 'connected' && id) {
         // Defer to next macrotask so the bound view reflects READY before nav.
-        setTimeout(() => this.router.navigate(['/session', id]), 350);
+        this.navTimerId = setTimeout(() => this.router.navigate(['/session', id]), 350);
       }
     });
   }
@@ -101,6 +103,10 @@ export class ConnectingState implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    if (this.navTimerId !== null) {
+      clearTimeout(this.navTimerId);
+      this.navTimerId = null;
+    }
     // We don't disconnect on destroy because navigating to /session/:id
     // mounts ActiveSession which keeps using the same client instance.
   }
