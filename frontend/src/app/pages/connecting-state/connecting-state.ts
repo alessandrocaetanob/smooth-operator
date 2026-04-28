@@ -40,7 +40,7 @@ export class ConnectingState implements OnInit, OnDestroy {
   readonly connection = computed<Connection | null>(() => {
     const id = this.connectionId();
     if (!id) return null;
-    return this.connections.list().find((c) => c.id === id) ?? null;
+    return this.connections.listAsMap().get(id) ?? null;
   });
   readonly connectionId = computed(() => this.route.snapshot.paramMap.get('id'));
 
