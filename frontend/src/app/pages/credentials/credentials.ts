@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   Credential,
@@ -9,7 +9,6 @@ import {
 import { AuthService } from '../../services/auth.service';
 import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog.service';
 import { ToastService } from '../../shared/toast/toast.service';
-import { Drawer } from '../../shared/drawer/drawer';
 
 interface FormState {
   id: string | null;
@@ -31,7 +30,7 @@ const EMPTY_FORM: FormState = {
 
 @Component({
   selector: 'app-credentials',
-  imports: [FormsModule, Drawer],
+  imports: [FormsModule],
   templateUrl: './credentials.html',
   styleUrl: './credentials.css',
 })
@@ -45,27 +44,13 @@ export class Credentials implements OnInit {
   readonly canManageCredentials = this.auth.canManageCredentials;
   readonly loading = signal(false);
   readonly errorMessage = signal<string | null>(null);
-  readonly showDrawer = signal(false);
+  readonly showForm = signal(false);
   readonly form = signal<FormState>({ ...EMPTY_FORM });
   readonly busy = signal(false);
   readonly generatingSsh = signal(false);
   readonly showPublicKey = signal(false);
   readonly generatedPublicKey = signal<string>('');
   readonly sshKeyAlgorithm = signal<'rsa' | 'ecdsa'>('rsa');
-  readonly searchQuery = signal('');
-
-  readonly filteredCredentials = computed(() => {
-    const q = this.searchQuery().toLowerCase().trim();
-    if (!q) return this.credentials();
-    return this.credentials().filter(
-      (c) =>
-        c.name.toLowerCase().includes(q) ||
-        c.username.toLowerCase().includes(q) ||
-        c.credentialType.toLowerCase().includes(q),
-    );
-  });
-
-  readonly isFiltered = computed(() => this.searchQuery().trim().length > 0);
 
   readonly types = [
     { value: 'password', label: 'Password' },
@@ -91,8 +76,7 @@ export class Credentials implements OnInit {
   newCredential(): void {
     if (!this.canManageCredentials()) return;
     this.form.set({ ...EMPTY_FORM });
-    this.errorMessage.set(null);
-    this.showDrawer.set(true);
+    this.showForm.set(true);
   }
 
   edit(c: Credential): void {
@@ -105,8 +89,7 @@ export class Credentials implements OnInit {
       credentialType: c.credentialType,
       publicKey: c.publicKey || '',
     });
-    this.errorMessage.set(null);
-    this.showDrawer.set(true);
+    this.showForm.set(true);
   }
 
   generateSshKey(): void {
@@ -146,16 +129,11 @@ export class Credentials implements OnInit {
   }
 
   cancel(): void {
-    this.showDrawer.set(false);
+    this.showForm.set(false);
     this.showPublicKey.set(false);
     this.generatedPublicKey.set('');
     this.sshKeyAlgorithm.set('rsa');
     this.form.set({ ...EMPTY_FORM });
-    this.errorMessage.set(null);
-  }
-
-  closeDrawer(): void {
-    this.cancel();
   }
 
   patch<K extends keyof FormState>(key: K, value: FormState[K]): void {

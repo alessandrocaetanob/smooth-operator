@@ -18,9 +18,8 @@ jobs:
           fetch-depth: 0
 
       - name: Check PR title
-        env:
-          PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
+          PR_TITLE="${{ github.event.pull_request.title }}"
           if [[ ! "$PR_TITLE" =~ ^(feat|fix|docs|style|refactor|perf|test|chore|ci|build|revert)(\(.+\))?: ]]; then
             echo "❌ PR title must follow conventional commits format:"
             echo "   type(scope?): description"
@@ -31,10 +30,8 @@ jobs:
           echo "✅ PR title follows conventional commits format"
 
       - name: Check PR description
-        env:
-          PR_BODY: ${{ github.event.pull_request.body }}
         run: |
-          if [ -z "$PR_BODY" ]; then
+          if [ -z "${{ github.event.pull_request.body }}" ]; then
             echo "❌ PR description is empty. Please provide a description."
             exit 1
           fi

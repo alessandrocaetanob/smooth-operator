@@ -293,23 +293,6 @@
   --animate-antenna-pulse: antenna-pulse 2s ease-in-out infinite alternate;
 }
 
-@keyframes drawer-in {
-  from {
-    transform: translateX(100%);
-  }
-  to {
-    transform: translateX(0);
-  }
-}
-@keyframes drawer-out {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(100%);
-  }
-}
-
 /* ============================================================
    KEYFRAMES (referenced by --animate-* above)
    ============================================================ */
@@ -562,11 +545,6 @@
    COMPONENTS — Reusable semantic utilities
    ============================================================ */
 @layer components {
-  /* ── Page shell ──────────────────────────────────────────────────────── */
-  .page-shell {
-    @apply max-w-[1440px] mx-auto px-6 md:px-8 py-6 md:py-8;
-  }
-
   .btn-primary {
     @apply flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-widest
            text-on-primary-container bg-primary-container hover:bg-primary rounded-lg

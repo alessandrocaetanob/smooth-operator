@@ -14,7 +14,6 @@ namespace Backend.Data
         public DbSet<ConnectionGroup> ConnectionGroups { get; set; } = null!;
         public DbSet<Credential> Credentials { get; set; } = null!;
         public DbSet<Connection> Connections { get; set; } = null!;
-        public DbSet<ConnectionTag> ConnectionTags { get; set; } = null!;
         public DbSet<AuditLog> AuditLogs { get; set; } = null!;
         public DbSet<Invitation> Invitations { get; set; } = null!;
         public DbSet<SmtpSettings> SmtpSettings { get; set; } = null!;

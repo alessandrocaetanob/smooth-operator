@@ -50,20 +50,6 @@
             }
           </a>
         </li>
-        <li>
-          <a
-            routerLink="/hosts"
-            routerLinkActive="bg-primary-container/15 text-primary border-l-primary"
-            class="nav-link"
-            [class.justify-center]="collapsed()"
-            [attr.title]="collapsed() ? 'Known Hosts' : null"
-          >
-            <span class="material-symbols-outlined" aria-hidden="true">dns</span>
-            @if (!collapsed()) {
-              <span>Known Hosts</span>
-            }
-          </a>
-        </li>
       }
       @if (canViewCredentials()) {
         <li>

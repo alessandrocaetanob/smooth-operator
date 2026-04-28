@@ -21,7 +21,6 @@ namespace Backend.DTOs
         public Guid? CredentialId { get; set; }
         public Guid? ConnectionGroupId { get; set; }
         public string Settings { get; set; } = "{}";
-        public List<string> Tags { get; set; } = new();
 
         // Navigation properties (optional for responses)
         public HostDto? Host { get; set; }
@@ -46,8 +45,6 @@ namespace Backend.DTOs
 
         [RegularExpression(@"^\{.*\}$", ErrorMessage = "Settings must be a valid JSON object")]
         public string Settings { get; set; } = "{}";
-
-        public List<string> Tags { get; set; } = new();
     }
 
     public class HostDto

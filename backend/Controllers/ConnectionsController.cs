@@ -37,7 +37,6 @@ namespace Backend.Controllers
             CredentialId = c.CredentialId,
             ConnectionGroupId = c.ConnectionGroupId,
             Settings = c.Settings,
-            Tags = c.Tags.Select(t => t.Tag).ToList(),
             Host = c.Host == null ? null : new HostDto
             {
                 Id = c.Host.Id,
@@ -62,8 +61,7 @@ namespace Backend.Controllers
             var scopedQuery = _access.ApplyConnectionScope(
                 _context.Connections
                     .Include(c => c.Host)
-                    .Include(c => c.ConnectionGroup)
-                    .Include(c => c.Tags),
+                    .Include(c => c.ConnectionGroup),
                 profile);
 
             var connections = await scopedQuery
@@ -82,8 +80,7 @@ namespace Backend.Controllers
             var connection = await _access.ApplyConnectionScope(
                     _context.Connections
                         .Include(c => c.Host)
-                        .Include(c => c.ConnectionGroup)
-                        .Include(c => c.Tags),
+                        .Include(c => c.ConnectionGroup),
                     profile)
                 .FirstOrDefaultAsync(c => c.Id == id);
 
@@ -116,12 +113,7 @@ namespace Backend.Controllers
                 HostId = dto.HostId,
                 CredentialId = dto.CredentialId,
                 ConnectionGroupId = dto.ConnectionGroupId,
-                Settings = dto.Settings,
-                Tags = dto.Tags
-                    .Where(t => !string.IsNullOrWhiteSpace(t))
-                    .Distinct(StringComparer.OrdinalIgnoreCase)
-                    .Select(t => new ConnectionTag { Tag = t.Trim().ToLowerInvariant() })
-                    .ToList()
+                Settings = dto.Settings
             };
 
             _context.Connections.Add(connection);
@@ -137,8 +129,7 @@ namespace Backend.Controllers
                 HostId = connection.HostId,
                 CredentialId = connection.CredentialId,
                 ConnectionGroupId = connection.ConnectionGroupId,
-                Settings = connection.Settings,
-                Tags = connection.Tags.Select(t => t.Tag).ToList()
+                Settings = connection.Settings
             });
         }
 
@@ -154,9 +145,7 @@ namespace Backend.Controllers
             var profile = await _access.GetCurrentProfileAsync(User);
             if (profile == null) return Unauthorized();
 
-            var connection = await _context.Connections
-                .Include(c => c.Tags)
-                .FirstOrDefaultAsync(c => c.Id == id);
+            var connection = await _context.Connections.FindAsync(id);
             if (connection == null)
             {
                 return NotFound();
@@ -175,14 +164,6 @@ namespace Backend.Controllers
             connection.CredentialId = dto.CredentialId;
             connection.ConnectionGroupId = dto.ConnectionGroupId;
             connection.Settings = dto.Settings;
-
-            // Replace tags
-            _context.RemoveRange(connection.Tags);
-            connection.Tags = dto.Tags
-                .Where(t => !string.IsNullOrWhiteSpace(t))
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .Select(t => new ConnectionTag { Tag = t.Trim().ToLowerInvariant(), ConnectionId = id })
-                .ToList();
 
             try
             {

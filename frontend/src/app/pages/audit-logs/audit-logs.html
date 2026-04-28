@@ -62,7 +62,7 @@
     </div>
   </form>
 
-  <div class="glass-card rounded-lg overflow-x-auto">
+  <div class="glass-card rounded-lg overflow-hidden">
     <table class="w-full text-sm">
       <thead class="bg-white/5 text-[11px] uppercase tracking-widest text-on-surface-variant">
         <tr>
@@ -91,8 +91,8 @@
               <span class="ml-2 text-xs text-on-surface-variant">{{ l.resourceId }}</span>
             </td>
             <td class="px-4 py-3 text-on-surface-variant">{{ l.ipAddress }}</td>
-            <td class="px-4 py-3 text-on-surface-variant max-w-[280px]">
-              <div class="text-xs truncate" [title]="l.details">{{ l.details }}</div>
+            <td class="px-4 py-3 text-on-surface-variant max-w-md truncate" [title]="l.details">
+              {{ l.details }}
             </td>
           </tr>
         } @empty {

@@ -119,28 +119,6 @@ namespace Backend.Migrations
                     b.ToTable("ConnectionGroups");
                 });
 
-            modelBuilder.Entity("Backend.Models.ConnectionTag", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<Guid>("ConnectionId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Tag")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ConnectionId");
-
-                    b.ToTable("ConnectionTags");
-                });
-
             modelBuilder.Entity("Backend.Models.Credential", b =>
                 {
                     b.Property<Guid>("Id")
@@ -521,17 +499,6 @@ namespace Backend.Migrations
                     b.Navigation("ParentGroup");
                 });
 
-            modelBuilder.Entity("Backend.Models.ConnectionTag", b =>
-                {
-                    b.HasOne("Backend.Models.Connection", "Connection")
-                        .WithMany("Tags")
-                        .HasForeignKey("ConnectionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Connection");
-                });
-
             modelBuilder.Entity("Backend.Models.Invitation", b =>
                 {
                     b.HasOne("Backend.Models.User", "User")
@@ -641,11 +608,6 @@ namespace Backend.Migrations
                         .HasForeignKey("MembersId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("Backend.Models.Connection", b =>
-                {
-                    b.Navigation("Tags");
                 });
 
             modelBuilder.Entity("Backend.Models.ConnectionGroup", b =>

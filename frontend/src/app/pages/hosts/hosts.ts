@@ -1,10 +1,9 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HostsService, AppHost, CreateHostPayload } from '../../services/hosts.service';
 import { AuthService } from '../../services/auth.service';
 import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog.service';
 import { ToastService } from '../../shared/toast/toast.service';
-import { Drawer } from '../../shared/drawer/drawer';
 
 interface FormState {
   id: string | null;
@@ -20,7 +19,7 @@ const EMPTY_FORM: FormState = {
 
 @Component({
   selector: 'app-hosts',
-  imports: [FormsModule, Drawer],
+  imports: [FormsModule],
   templateUrl: './hosts.html',
   styleUrl: './hosts.css',
 })
@@ -34,20 +33,9 @@ export class Hosts implements OnInit {
   readonly canManageConnections = this.auth.canManageConnections;
   readonly loading = signal(false);
   readonly errorMessage = signal<string | null>(null);
-  readonly showDrawer = signal(false);
+  readonly showForm = signal(false);
   readonly form = signal<FormState>({ ...EMPTY_FORM });
   readonly busy = signal(false);
-  readonly searchQuery = signal('');
-
-  readonly filteredHosts = computed(() => {
-    const q = this.searchQuery().toLowerCase().trim();
-    if (!q) return this.hosts();
-    return this.hosts().filter(
-      (h) => h.name.toLowerCase().includes(q) || h.address.toLowerCase().includes(q),
-    );
-  });
-
-  readonly isFiltered = computed(() => this.searchQuery().trim().length > 0);
 
   ngOnInit(): void {
     this.refresh();
@@ -68,21 +56,22 @@ export class Hosts implements OnInit {
   newHost(): void {
     if (!this.canManageConnections()) return;
     this.form.set({ ...EMPTY_FORM });
-    this.errorMessage.set(null);
-    this.showDrawer.set(true);
+    this.showForm.set(true);
   }
 
   edit(h: AppHost): void {
     if (!this.canManageConnections()) return;
-    this.form.set({ id: h.id, name: h.name, address: h.address });
-    this.errorMessage.set(null);
-    this.showDrawer.set(true);
+    this.form.set({
+      id: h.id,
+      name: h.name,
+      address: h.address,
+    });
+    this.showForm.set(true);
   }
 
-  closeDrawer(): void {
-    this.showDrawer.set(false);
+  cancel(): void {
+    this.showForm.set(false);
     this.form.set({ ...EMPTY_FORM });
-    this.errorMessage.set(null);
   }
 
   patch<K extends keyof FormState>(key: K, value: FormState[K]): void {
@@ -100,7 +89,10 @@ export class Hosts implements OnInit {
     this.busy.set(true);
     this.errorMessage.set(null);
 
-    const payload: CreateHostPayload = { name: f.name.trim(), address: f.address.trim() };
+    const payload: CreateHostPayload = {
+      name: f.name.trim(),
+      address: f.address.trim(),
+    };
 
     if (f.id) {
       this.svc.update(f.id, payload).subscribe({
@@ -145,7 +137,7 @@ export class Hosts implements OnInit {
   private done(): void {
     this.busy.set(false);
     this.toastSvc.success('Host saved.');
-    this.closeDrawer();
+    this.cancel();
     this.refresh();
   }
 

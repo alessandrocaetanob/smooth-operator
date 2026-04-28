@@ -17,7 +17,6 @@ export interface Connection {
   credentialId?: string | null;
   connectionGroupId?: string | null;
   settings: string;
-  tags: string[];
   host?: ConnectionHostRef | null;
 }
 
@@ -28,7 +27,6 @@ export interface CreateConnectionPayload {
   credentialId?: string | null;
   connectionGroupId?: string | null;
   settings?: string;
-  tags?: string[];
 }
 
 @Injectable({ providedIn: 'root' })
@@ -81,7 +79,6 @@ export class ConnectionsService {
       credentialId: pick<string>(raw, 'credentialId', 'CredentialId') ?? null,
       connectionGroupId: pick<string>(raw, 'connectionGroupId', 'ConnectionGroupId') ?? null,
       settings: pickOr(raw, '{}', 'settings', 'Settings'),
-      tags: (pick<any[]>(raw, 'tags', 'Tags') ?? []).filter((t: any) => typeof t === 'string'),
       host: host
         ? {
             id: pickOr(host, '', 'id', 'Id'),
