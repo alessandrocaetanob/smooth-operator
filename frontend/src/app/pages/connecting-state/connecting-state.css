@@ -1,18 +1,18 @@
 /* Dot-matrix scan background */
 .scan-bg {
-  background-image: radial-gradient(
-    circle,
-    rgba(0, 102, 255, 0.18) 1px,
-    transparent 1px
-  );
+  background-image: radial-gradient(circle, rgba(0, 102, 255, 0.18) 1px, transparent 1px);
   background-size: 28px 28px;
   background-position: center center;
   animation: bg-scroll 12s linear infinite;
 }
 
 @keyframes bg-scroll {
-  from { background-position: 0 0; }
-  to   { background-position: 28px 28px; }
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 28px 28px;
+  }
 }
 
 /* Pulsing status indicator dot */
@@ -21,8 +21,13 @@
 }
 
 @keyframes pulse-dot {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0.3; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
 }
 
 /* Shimmer for the progress bar */
@@ -31,8 +36,12 @@
 }
 
 @keyframes shimmer {
-  0%   { transform: translateX(-200%); }
-  100% { transform: translateX(200%); }
+  0% {
+    transform: translateX(-200%);
+  }
+  100% {
+    transform: translateX(200%);
+  }
 }
 
 /* Scale-in entrance for the card */
@@ -41,8 +50,14 @@
 }
 
 @keyframes scale-in {
-  from { transform: scale(0.92); opacity: 0; }
-  to   { transform: scale(1);    opacity: 1; }
+  from {
+    transform: scale(0.92);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 /* Generic fade-in for labels */
@@ -51,8 +66,14 @@
 }
 
 @keyframes fade-in {
-  from { opacity: 0; transform: translateY(4px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Slide-up for error banner */
@@ -61,8 +82,14 @@
 }
 
 @keyframes slide-up {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Step active glow */
@@ -77,6 +104,10 @@
 }
 
 @keyframes pulse-glow {
-  from { box-shadow: 0 0 10px rgba(0, 102, 255, 0.3); }
-  to   { box-shadow: 0 0 20px rgba(0, 102, 255, 0.7); }
+  from {
+    box-shadow: 0 0 10px rgba(0, 102, 255, 0.3);
+  }
+  to {
+    box-shadow: 0 0 20px rgba(0, 102, 255, 0.7);
+  }
 }

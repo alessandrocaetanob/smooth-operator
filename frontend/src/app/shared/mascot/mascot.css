@@ -166,9 +166,15 @@
 .state-thinking .think-dot {
   animation: think-dot-pulse 1.8s ease-in-out infinite;
 }
-.state-thinking .td-1 { animation-delay: 0s;    }
-.state-thinking .td-2 { animation-delay: 0.25s; }
-.state-thinking .td-3 { animation-delay: 0.5s;  }
+.state-thinking .td-1 {
+  animation-delay: 0s;
+}
+.state-thinking .td-2 {
+  animation-delay: 0.25s;
+}
+.state-thinking .td-3 {
+  animation-delay: 0.5s;
+}
 
 @keyframes think-dot-pulse {
   0%,
@@ -213,40 +219,92 @@
 .state-crashed .crash-spark {
   animation: spark-fly 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
-.state-crashed .cs-1 { animation-delay: 0ms;  }
-.state-crashed .cs-2 { animation-delay: 60ms; }
-.state-crashed .cs-3 { animation-delay: 30ms; }
-.state-crashed .cs-4 { animation-delay: 90ms; }
-.state-crashed .cs-5 { animation-delay: 45ms; }
+.state-crashed .cs-1 {
+  animation-delay: 0ms;
+}
+.state-crashed .cs-2 {
+  animation-delay: 60ms;
+}
+.state-crashed .cs-3 {
+  animation-delay: 30ms;
+}
+.state-crashed .cs-4 {
+  animation-delay: 90ms;
+}
+.state-crashed .cs-5 {
+  animation-delay: 45ms;
+}
 
 @keyframes crashed-fall {
-  0%   { transform: rotate(0deg)   translateY(0);  }
-  25%  { transform: rotate(-6deg)  translateY(-4px); }
-  55%  { transform: rotate(15deg)  translateY(7px); }
-  80%  { transform: rotate(11deg)  translateY(5px); }
-  100% { transform: rotate(12deg)  translateY(6px); }
+  0% {
+    transform: rotate(0deg) translateY(0);
+  }
+  25% {
+    transform: rotate(-6deg) translateY(-4px);
+  }
+  55% {
+    transform: rotate(15deg) translateY(7px);
+  }
+  80% {
+    transform: rotate(11deg) translateY(5px);
+  }
+  100% {
+    transform: rotate(12deg) translateY(6px);
+  }
 }
 
 @keyframes screen-flicker {
-  0%   { opacity: 1;   }
-  15%  { opacity: 0.1; }
-  30%  { opacity: 0.8; }
-  45%  { opacity: 0;   }
-  60%  { opacity: 0.5; }
-  75%  { opacity: 0.1; }
-  100% { opacity: 0.18; }
+  0% {
+    opacity: 1;
+  }
+  15% {
+    opacity: 0.1;
+  }
+  30% {
+    opacity: 0.8;
+  }
+  45% {
+    opacity: 0;
+  }
+  60% {
+    opacity: 0.5;
+  }
+  75% {
+    opacity: 0.1;
+  }
+  100% {
+    opacity: 0.18;
+  }
 }
 
 @keyframes x-slam {
-  0%   { transform: scale(0) rotate(-20deg); opacity: 0; }
-  60%  { transform: scale(1.2) rotate(4deg); opacity: 1; }
-  100% { transform: scale(1)   rotate(0deg); opacity: 1; }
+  0% {
+    transform: scale(0) rotate(-20deg);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.2) rotate(4deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
 }
 
 @keyframes spark-fly {
-  0%   { opacity: 1; transform: scale(1)   translate(0, 0);       }
-  60%  { opacity: 0.9; transform: scale(1.2) translate(4px, -4px); }
-  100% { opacity: 0; transform: scale(0.3) translate(8px, -8px);  }
+  0% {
+    opacity: 1;
+    transform: scale(1) translate(0, 0);
+  }
+  60% {
+    opacity: 0.9;
+    transform: scale(1.2) translate(4px, -4px);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.3) translate(8px, -8px);
+  }
 }
 
 @keyframes sleep-pulse {
@@ -394,14 +452,46 @@
   animation: sparkle-burst 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
-.state-connected .sp-n  { animation-delay: 0ms;   --dx: 0px;    --dy: -30px; }
-.state-connected .sp-ne { animation-delay: 50ms;  --dx: 22px;   --dy: -22px; }
-.state-connected .sp-e  { animation-delay: 30ms;  --dx: 30px;   --dy: 0px;   }
-.state-connected .sp-se { animation-delay: 80ms;  --dx: 22px;   --dy: 22px;  }
-.state-connected .sp-s  { animation-delay: 20ms;  --dx: 0px;    --dy: 30px;  }
-.state-connected .sp-sw { animation-delay: 60ms;  --dx: -22px;  --dy: 22px;  }
-.state-connected .sp-w  { animation-delay: 40ms;  --dx: -30px;  --dy: 0px;   }
-.state-connected .sp-nw { animation-delay: 10ms;  --dx: -22px;  --dy: -22px; }
+.state-connected .sp-n {
+  animation-delay: 0ms;
+  --dx: 0px;
+  --dy: -30px;
+}
+.state-connected .sp-ne {
+  animation-delay: 50ms;
+  --dx: 22px;
+  --dy: -22px;
+}
+.state-connected .sp-e {
+  animation-delay: 30ms;
+  --dx: 30px;
+  --dy: 0px;
+}
+.state-connected .sp-se {
+  animation-delay: 80ms;
+  --dx: 22px;
+  --dy: 22px;
+}
+.state-connected .sp-s {
+  animation-delay: 20ms;
+  --dx: 0px;
+  --dy: 30px;
+}
+.state-connected .sp-sw {
+  animation-delay: 60ms;
+  --dx: -22px;
+  --dy: 22px;
+}
+.state-connected .sp-w {
+  animation-delay: 40ms;
+  --dx: -30px;
+  --dy: 0px;
+}
+.state-connected .sp-nw {
+  animation-delay: 10ms;
+  --dx: -22px;
+  --dy: -22px;
+}
 
 @keyframes sparkle-burst {
   0% {

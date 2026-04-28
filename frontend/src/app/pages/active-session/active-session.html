@@ -87,7 +87,10 @@
     [class.toolbar-hidden]="!toolbarVisible()"
   >
     <!-- Collapse toggle -->
-    <div class="tool-btn-wrap" [attr.data-label]="toolbarCollapsed() ? 'Expand toolbar' : 'Collapse toolbar'">
+    <div
+      class="tool-btn-wrap"
+      [attr.data-label]="toolbarCollapsed() ? 'Expand toolbar' : 'Collapse toolbar'"
+    >
       <button class="tool-btn" (click)="toggleToolbarCollapse()">
         <span class="material-symbols-outlined text-base">{{
           toolbarCollapsed() ? 'chevron_left' : 'chevron_right'
@@ -216,9 +219,7 @@
         </div>
 
         <div class="flex justify-end gap-3">
-          <button class="btn-ghost px-4 py-2 text-sm" (click)="closeKeyComboModal()">
-            Cancel
-          </button>
+          <button class="btn-ghost px-4 py-2 text-sm" (click)="closeKeyComboModal()">Cancel</button>
           <button
             class="btn-primary px-5 py-2 text-sm min-w-[100px] flex items-center justify-center gap-2"
             [disabled]="comboSent()"
@@ -264,7 +265,9 @@
             [ngModel]="clipboardDraft()"
             (ngModelChange)="clipboardDraft.set($event)"
           ></textarea>
-          <div class="absolute bottom-2 right-3 text-xs text-white/20 font-mono select-none pointer-events-none">
+          <div
+            class="absolute bottom-2 right-3 text-xs text-white/20 font-mono select-none pointer-events-none"
+          >
             {{ clipboardDraft().length }} chars
           </div>
         </div>

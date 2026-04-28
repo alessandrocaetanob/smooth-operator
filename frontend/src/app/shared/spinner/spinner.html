@@ -14,7 +14,7 @@
     [attr.stroke-width]="strokeWidth"
     stroke-linecap="round"
     class="arc arc--cw"
-    [style.stroke-dasharray]="(r * 2 * 3.14159 * 0.7) + ' ' + (r * 2 * 3.14159 * 0.3)"
+    [style.stroke-dasharray]="r * 2 * 3.14159 * 0.7 + ' ' + r * 2 * 3.14159 * 0.3"
   />
   <!-- Inner arc: counter-clockwise (drawn at 65% radius) -->
   <circle
@@ -24,6 +24,6 @@
     [attr.stroke-width]="strokeWidth * 0.8"
     stroke-linecap="round"
     class="arc arc--ccw"
-    [style.stroke-dasharray]="(r * 0.6 * 2 * 3.14159 * 0.5) + ' ' + (r * 0.6 * 2 * 3.14159 * 0.5)"
+    [style.stroke-dasharray]="r * 0.6 * 2 * 3.14159 * 0.5 + ' ' + r * 0.6 * 2 * 3.14159 * 0.5"
   />
 </svg>

@@ -31,15 +31,22 @@
         </div>
 
         <div class="flex-1 min-w-0">
-          <h3 id="dialog-title" class="text-sm font-semibold text-on-surface uppercase tracking-widest">
+          <h3
+            id="dialog-title"
+            class="text-sm font-semibold text-on-surface uppercase tracking-widest"
+          >
             {{ req.title }}
           </h3>
-          <p class="text-sm text-on-surface-variant mt-2 whitespace-pre-line leading-relaxed">{{ req.message }}</p>
+          <p class="text-sm text-on-surface-variant mt-2 whitespace-pre-line leading-relaxed">
+            {{ req.message }}
+          </p>
 
           @if (tone() === 'danger' && isCountingDown()) {
             <div class="mt-3 flex items-center gap-2 text-error/80">
               <span class="material-symbols-outlined text-sm">timer</span>
-              <span class="font-mono text-[11px] font-semibold tracking-widest">CONFIRM IN 3 SECONDS…</span>
+              <span class="font-mono text-[11px] font-semibold tracking-widest"
+                >CONFIRM IN 3 SECONDS…</span
+              >
             </div>
           }
 
@@ -62,10 +69,13 @@
                   preserveAspectRatio="none"
                   xmlns="http://www.w3.org/2000/svg"
                   aria-hidden="true"
-                  style="border-radius: 8px; overflow: visible;"
+                  style="border-radius: 8px; overflow: visible"
                 >
                   <rect
-                    x="2" y="2" width="96" height="96"
+                    x="2"
+                    y="2"
+                    width="96"
+                    height="96"
                     rx="7"
                     fill="none"
                     stroke="rgb(var(--color-error))"
@@ -73,7 +83,7 @@
                     vector-effect="non-scaling-stroke"
                     stroke-dasharray="376"
                     stroke-dashoffset="0"
-                    style="animation: countdown-rect 3s linear forwards;"
+                    style="animation: countdown-rect 3s linear forwards"
                     pathLength="376"
                   />
                 </svg>
@@ -99,4 +109,3 @@
     </div>
   </div>
 }
-
