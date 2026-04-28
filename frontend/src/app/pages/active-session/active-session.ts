@@ -13,12 +13,14 @@ import {
   runInInjectionContext,
   signal,
 } from '@angular/core';
+
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { GuacamoleClientService, Keysyms } from '../../services/guacamole.service';
 import { ConnectionsService, Connection } from '../../services/connections.service';
 import { Mascot, MascotState } from '../../shared/mascot/mascot';
+import { Spinner } from '../../shared/spinner/spinner';
 
 interface KeyOption {
   label: string;
@@ -56,7 +58,7 @@ const COMBO_KEYS: KeyOption[] = [
 
 @Component({
   selector: 'app-active-session',
-  imports: [CommonModule, FormsModule, Mascot],
+  imports: [CommonModule, FormsModule, Mascot, Spinner],
   templateUrl: './active-session.html',
   styleUrl: './active-session.css',
 })
@@ -87,6 +89,8 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
       case 'requesting-ticket':
       case 'waiting':
         return 'loading';
+      case 'connected':
+        return this.mascotConnectedFlash() ? 'connected' : 'idle';
       case 'error':
       case 'disconnected':
         return 'error';
@@ -105,9 +109,49 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
   readonly comboKey = signal<KeyOption>(COMBO_KEYS[0]);
   readonly clipboardDraft = signal('');
 
+  // Session timer
+  readonly connectedAt = signal<number | null>(null);
+  readonly elapsedSeconds = signal(0);
+  readonly formattedElapsed = computed(() => {
+    const s = this.elapsedSeconds();
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const sec = s % 60;
+    if (h > 0)
+      return `${h}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+    return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+  });
+
+  // Protocol badge
+  readonly protocol = computed(() => (this.connection()?.protocol ?? '').toUpperCase());
+
+  // Mascot sparkle flash on first connect (3 s)
+  readonly mascotConnectedFlash = signal(false);
+
+  // Toolbar auto-hide (fades after 3 s inactivity)
+  readonly toolbarVisible = signal(true);
+  readonly toolbarCollapsed = signal(false);
+
+  // Modal feedback
+  readonly clipboardPushed = signal(false);
+  readonly comboSent = signal(false);
+
+  // Live key combo preview
+  readonly comboPreview = computed(() => {
+    const mods: string[] = [];
+    if (this.comboCtrl()) mods.push('Ctrl');
+    if (this.comboAlt()) mods.push('Alt');
+    if (this.comboShift()) mods.push('Shift');
+    if (this.comboSuper()) mods.push('⊞ Win');
+    return [...mods, this.comboKey().label].join(' + ');
+  });
+
   private mounted = false;
   private displayEffect: EffectRef | null = null;
   private readonly injector = inject(Injector);
+  private sessionStarted = false;
+  private timerInterval: ReturnType<typeof setInterval> | null = null;
+  private toolbarHideTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
     // If the client gets disconnected (or errors after connection),
@@ -120,6 +164,26 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
         if (this.mounted) {
           this.router.navigate(['/connecting', id]);
         }
+      }
+    });
+
+    // Session timer + mascot sparkle on first successful connect.
+    effect(() => {
+      const s = this.state();
+      if (s === 'connected') {
+        if (!this.sessionStarted) {
+          this.sessionStarted = true;
+          const start = Date.now();
+          this.connectedAt.set(start);
+          this.mascotConnectedFlash.set(true);
+          setTimeout(() => this.mascotConnectedFlash.set(false), 3000);
+          this.timerInterval = setInterval(() => {
+            this.elapsedSeconds.set(Math.floor((Date.now() - start) / 1000));
+          }, 1000);
+        }
+      } else if (s === 'disconnected' || s === 'error') {
+        this.sessionStarted = false;
+        this.stopSessionTimer();
       }
     });
   }
@@ -162,12 +226,16 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
         );
       });
     }
+    // Kick off the toolbar auto-hide timer from mount.
+    this.onCanvasMouseMove();
   }
 
   ngOnDestroy(): void {
     this.mounted = false;
     this.displayEffect?.destroy();
     this.displayEffect = null;
+    this.stopSessionTimer();
+    if (this.toolbarHideTimer) clearTimeout(this.toolbarHideTimer);
   }
 
   // Toolbar actions ----------------------------------------------------------
@@ -190,7 +258,11 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
     if (this.comboSuper()) syms.push(Keysyms.SuperLeft);
     syms.push(this.comboKey().keysym);
     this.guac.sendKeyCombo(syms);
-    this.closeKeyComboModal();
+    this.comboSent.set(true);
+    setTimeout(() => {
+      this.comboSent.set(false);
+      this.closeKeyComboModal();
+    }, 900);
   }
 
   selectComboKey(key: KeyOption): void {
@@ -207,7 +279,11 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
   pushClipboardToHost(): void {
     const text = this.clipboardDraft();
     if (text) this.guac.pasteToHost(text);
-    this.closeClipboardModal();
+    this.clipboardPushed.set(true);
+    setTimeout(() => {
+      this.clipboardPushed.set(false);
+      this.closeClipboardModal();
+    }, 1200);
   }
   copyHostClipboardLocally(): void {
     const text = this.hostClipboard();
@@ -258,6 +334,25 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
       case 'super':
         this.comboSuper.update((v) => !v);
         break;
+    }
+  }
+
+  // ── Toolbar auto-hide ──────────────────────────────────────────────────────
+  onCanvasMouseMove(): void {
+    if (!this.toolbarVisible()) this.toolbarVisible.set(true);
+    if (this.toolbarHideTimer) clearTimeout(this.toolbarHideTimer);
+    this.toolbarHideTimer = setTimeout(() => this.toolbarVisible.set(false), 3000);
+  }
+
+  toggleToolbarCollapse(): void {
+    this.toolbarCollapsed.update((v) => !v);
+  }
+
+  // ── Timer ─────────────────────────────────────────────────────────────────
+  private stopSessionTimer(): void {
+    if (this.timerInterval) {
+      clearInterval(this.timerInterval);
+      this.timerInterval = null;
     }
   }
 }
