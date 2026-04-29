@@ -1,11 +1,11 @@
-import { DatePipe } from '@angular/common';
+import { DatePipe, SlicePipe } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { AuditLogQuery, AuditLogsService } from '../../services/audit-logs.service';
+import { AuditLogEntry, AuditLogQuery, AuditLogsService } from '../../services/audit-logs.service';
 
 @Component({
   selector: 'app-audit-logs',
-  imports: [FormsModule, DatePipe],
+  imports: [FormsModule, DatePipe, SlicePipe],
   templateUrl: './audit-logs.html',
   styleUrl: './audit-logs.css',
 })
@@ -14,6 +14,38 @@ export class AuditLogs implements OnInit {
 
   readonly result = this.svc.result;
   readonly loading = signal(false);
+
+  readonly selectedEntry = signal<AuditLogEntry | null>(null);
+
+  selectEntry(entry: AuditLogEntry): void {
+    this.selectedEntry.set(entry);
+  }
+
+  closeDetail(): void {
+    this.selectedEntry.set(null);
+  }
+
+  actionCategory(action: string): string {
+    if (!action) return 'action-default';
+    const a = action.toLowerCase();
+    if (a.includes('fail') || a.includes('error') || a.includes('denied')) return 'action-error';
+    if (a.startsWith('connection.ticket')) return 'action-ticket';
+    if (a.startsWith('connection.')) return 'action-connection';
+    if (a.startsWith('user.')) return 'action-user';
+    if (a.startsWith('invite.')) return 'action-invite';
+    if (a.startsWith('system.')) return 'action-system';
+    return 'action-default';
+  }
+
+  formattedDetails(details: string): string {
+    try {
+      const parsed = JSON.parse(details);
+      if (Object.keys(parsed).length === 0) return '(no details)';
+      return JSON.stringify(parsed, null, 2);
+    } catch {
+      return details || '(no details)';
+    }
+  }
 
   readonly user = signal('');
   readonly action = signal('');

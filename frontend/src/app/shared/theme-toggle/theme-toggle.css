@@ -1,3 +1,10 @@
+/* Host must be flex so it participates correctly in parent flex rows
+   without baseline-alignment drift. */
+:host {
+  display: flex;
+  align-items: center;
+}
+
 /* Floating variant gets a soft accent ring on focus to confirm it's interactive
    on top of the ambient glass background. */
 .theme-toggle-floating:focus-visible {

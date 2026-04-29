@@ -130,6 +130,26 @@
   cursor: pointer;
 }
 
+/* Theme toggle inside the session header — matches tool-btn-sm exactly */
+:host header app-theme-toggle button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px;
+  border-radius: 8px;
+  border: 1px solid rgb(var(--color-outline-variant) / 0.3);
+  color: rgb(var(--color-on-surface-variant) / 0.6);
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+:host header app-theme-toggle button:hover {
+  background: rgb(var(--color-on-surface) / 0.08);
+  border-color: rgb(var(--color-outline-variant) / 0.5);
+  color: rgb(var(--color-on-surface) / 0.9);
+}
+
 /* Minimize / icon-only header button */
 .tool-btn-sm {
   display: flex;

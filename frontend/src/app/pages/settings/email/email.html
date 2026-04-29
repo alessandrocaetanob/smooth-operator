@@ -7,194 +7,241 @@
     </p>
   </div>
 
+  <!-- Status banner -->
   @if (current()?.configured) {
-    <div
-      class="mb-4 p-3 border border-tertiary/40 bg-tertiary/10 rounded text-sm text-tertiary flex items-center gap-2"
-    >
-      <span class="material-symbols-outlined text-base">check_circle</span>
-      SMTP relay is configured{{ current()?.enabled ? ' and enabled.' : ' but disabled.' }}
+    <div class="status-banner status-ok mb-6">
+      <span class="material-symbols-outlined">check_circle</span>
+      <div>
+        <p class="font-medium">SMTP relay configured</p>
+        <p class="text-xs opacity-70">
+          {{ current()?.enabled ? 'Active — the system will send emails.' : 'Configured but currently disabled.' }}
+        </p>
+      </div>
     </div>
   } @else {
-    <div
-      class="mb-4 p-3 border border-amber-500/40 bg-amber-500/10 rounded text-sm text-amber-300 flex items-center gap-2"
-    >
-      <span class="material-symbols-outlined text-base">warning</span>
-      No SMTP relay configured. Invitation links will need to be shared manually.
+    <div class="status-banner status-warn mb-6">
+      <span class="material-symbols-outlined">warning</span>
+      <div>
+        <p class="font-medium">No SMTP relay configured</p>
+        <p class="text-xs opacity-70">Invitation and password-reset links must be shared manually.</p>
+      </div>
     </div>
   }
 
   @if (message()) {
-    <div class="mb-4 p-3 border border-tertiary/40 bg-tertiary/10 rounded text-sm text-tertiary">
+    <div class="feedback-banner feedback-success mb-4">
+      <span class="material-symbols-outlined text-base">check_circle</span>
       {{ message() }}
     </div>
   }
   @if (error()) {
-    <div class="mb-4 p-3 border border-error/40 bg-error/10 rounded text-sm text-error">
+    <div class="feedback-banner feedback-error mb-4">
+      <span class="material-symbols-outlined text-base">error</span>
       {{ error() }}
     </div>
   }
 
   <form (ngSubmit)="save()" class="space-y-4 max-w-2xl">
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-      <div class="md:col-span-2">
-        <label class="block text-xs uppercase tracking-widest text-on-surface-variant mb-1"
-          >Host</label
-        >
-        <input
-          type="text"
-          [ngModel]="host()"
-          (ngModelChange)="host.set($event)"
-          name="host"
-          placeholder="smtp.sendgrid.net"
-          required
-          class="w-full input-field"
-        />
-      </div>
-      <div>
-        <label class="block text-xs uppercase tracking-widest text-on-surface-variant mb-1"
-          >Port</label
-        >
-        <input
-          type="number"
-          min="1"
-          max="65535"
-          [ngModel]="port()"
-          (ngModelChange)="port.set($event)"
-          name="port"
-          required
-          class="w-full input-field"
-        />
-      </div>
-    </div>
 
-    <div class="flex items-center gap-6">
-      <label class="flex items-center gap-2 text-sm text-on-surface-variant">
-        <input
-          type="checkbox"
-          [ngModel]="useSsl()"
-          (ngModelChange)="useSsl.set($event)"
-          name="useSsl"
-        />
-        Use SSL/TLS
-      </label>
-      <label class="flex items-center gap-2 text-sm text-on-surface-variant">
-        <input
-          type="checkbox"
-          [ngModel]="enabled()"
-          (ngModelChange)="enabled.set($event)"
-          name="enabled"
-        />
-        Enabled
-      </label>
-    </div>
-
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-      <div>
-        <label class="block text-xs uppercase tracking-widest text-on-surface-variant mb-1"
-          >Username</label
-        >
-        <input
-          type="text"
-          [ngModel]="username()"
-          (ngModelChange)="username.set($event)"
-          name="username"
-          placeholder="apikey or SMTP user"
-          class="w-full input-field"
-        />
+    <!-- Card: Server Connection -->
+    <div class="settings-card">
+      <div class="settings-card-header">
+        <span class="material-symbols-outlined settings-card-icon">dns</span>
+        <h3 class="settings-card-title">Server connection</h3>
       </div>
-      <div>
-        <label class="block text-xs uppercase tracking-widest text-on-surface-variant mb-1">
-          Password
-          @if (current()?.hasPassword) {
-            <span class="ml-2 normal-case tracking-normal text-[10px] text-outline"
-              >(leave blank to keep)</span
-            >
-          }
-        </label>
-        <input
-          type="password"
-          [ngModel]="password()"
-          (ngModelChange)="password.set($event)"
-          name="password"
-          [placeholder]="current()?.hasPassword ? '••••••••' : 'SMTP password / API key'"
-          [disabled]="clearPassword()"
-          class="w-full input-field disabled:opacity-50"
-        />
-        @if (current()?.hasPassword) {
-          <label class="flex items-center gap-2 text-xs text-on-surface-variant mt-1">
+      <div class="settings-card-body">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+          <div class="md:col-span-2">
+            <label class="settings-label">Host</label>
+            <input
+              type="text"
+              [ngModel]="host()"
+              (ngModelChange)="host.set($event)"
+              name="host"
+              placeholder="smtp.sendgrid.net"
+              required
+              class="w-full input-field"
+            />
+          </div>
+          <div>
+            <label class="settings-label">Port</label>
+            <input
+              type="number"
+              min="1"
+              max="65535"
+              [ngModel]="port()"
+              (ngModelChange)="port.set($event)"
+              name="port"
+              required
+              class="w-full input-field"
+            />
+          </div>
+        </div>
+        <label class="toggle-row">
+          <span class="relative inline-flex items-center">
             <input
               type="checkbox"
-              [ngModel]="clearPassword()"
-              (ngModelChange)="clearPassword.set($event)"
-              name="clearPassword"
+              class="sr-only"
+              [ngModel]="useSsl()"
+              (ngModelChange)="useSsl.set($event)"
+              name="useSsl"
             />
-            Clear stored password
-          </label>
-        }
+            <span class="toggle-track" [class.toggle-on]="useSsl()">
+              <span class="toggle-thumb" [class.toggle-thumb-on]="useSsl()"></span>
+            </span>
+          </span>
+          <span>Use SSL/TLS</span>
+          <span class="toggle-hint">Recommended for port 465 (SMTPS) and most cloud relays</span>
+        </label>
       </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-      <div>
-        <label class="block text-xs uppercase tracking-widest text-on-surface-variant mb-1"
-          >From address</label
-        >
-        <input
-          type="email"
-          [ngModel]="fromAddress()"
-          (ngModelChange)="fromAddress.set($event)"
-          name="fromAddress"
-          placeholder="no-reply@example.com"
-          required
-          class="w-full input-field"
-        />
+    <!-- Card: Authentication -->
+    <div class="settings-card">
+      <div class="settings-card-header">
+        <span class="material-symbols-outlined settings-card-icon">key</span>
+        <h3 class="settings-card-title">Authentication</h3>
       </div>
-      <div>
-        <label class="block text-xs uppercase tracking-widest text-on-surface-variant mb-1"
-          >From name</label
-        >
-        <input
-          type="text"
-          [ngModel]="fromName()"
-          (ngModelChange)="fromName.set($event)"
-          name="fromName"
-          placeholder="Smooth Operator"
-          class="w-full input-field"
-        />
+      <div class="settings-card-body">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <label class="settings-label">Username</label>
+            <input
+              type="text"
+              [ngModel]="username()"
+              (ngModelChange)="username.set($event)"
+              name="username"
+              placeholder="apikey or SMTP user"
+              class="w-full input-field"
+            />
+          </div>
+          <div>
+            <label class="settings-label">
+              Password
+              @if (current()?.hasPassword) {
+                <span class="settings-label-hint">(leave blank to keep)</span>
+              }
+            </label>
+            <input
+              type="password"
+              [ngModel]="password()"
+              (ngModelChange)="password.set($event)"
+              name="password"
+              [placeholder]="current()?.hasPassword ? '••••••••' : 'SMTP password / API key'"
+              [disabled]="clearPassword()"
+              class="w-full input-field disabled:opacity-50"
+            />
+            @if (current()?.hasPassword) {
+              <label class="flex items-center gap-2 text-xs text-on-surface-variant mt-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  [ngModel]="clearPassword()"
+                  (ngModelChange)="clearPassword.set($event)"
+                  name="clearPassword"
+                  class="accent-error"
+                />
+                Clear stored password
+              </label>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card: Sender Identity -->
+    <div class="settings-card">
+      <div class="settings-card-header">
+        <span class="material-symbols-outlined settings-card-icon">alternate_email</span>
+        <h3 class="settings-card-title">Sender identity</h3>
+      </div>
+      <div class="settings-card-body">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+          <div>
+            <label class="settings-label">From address</label>
+            <input
+              type="email"
+              [ngModel]="fromAddress()"
+              (ngModelChange)="fromAddress.set($event)"
+              name="fromAddress"
+              placeholder="no-reply@example.com"
+              required
+              class="w-full input-field"
+            />
+          </div>
+          <div>
+            <label class="settings-label">From name</label>
+            <input
+              type="text"
+              [ngModel]="fromName()"
+              (ngModelChange)="fromName.set($event)"
+              name="fromName"
+              placeholder="Smooth Operator"
+              class="w-full input-field"
+            />
+          </div>
+        </div>
+        <label class="toggle-row">
+          <span class="relative inline-flex items-center">
+            <input
+              type="checkbox"
+              class="sr-only"
+              [ngModel]="enabled()"
+              (ngModelChange)="enabled.set($event)"
+              name="enabled"
+            />
+            <span class="toggle-track" [class.toggle-on]="enabled()">
+              <span class="toggle-thumb" [class.toggle-thumb-on]="enabled()"></span>
+            </span>
+          </span>
+          <span>Relay enabled</span>
+          <span class="toggle-hint">When disabled, emails are not sent even if SMTP is configured</span>
+        </label>
       </div>
     </div>
 
     <div class="flex justify-end">
       <button type="submit" [disabled]="busy()" class="btn-primary">
+        <span class="material-symbols-outlined text-sm" aria-hidden="true">save</span>
         {{ busy() ? 'Saving…' : 'Save SMTP settings' }}
       </button>
     </div>
   </form>
 
-  <div class="mt-10 pt-6 border-t border-outline-variant/20 max-w-2xl">
-    <h3 class="text-sm font-semibold text-on-surface uppercase tracking-widest mb-3">
-      Send test email
-    </h3>
-    <p class="text-xs text-on-surface-variant mb-3">
-      Sends a test message using the currently saved settings.
-    </p>
-    <div class="flex gap-2">
-      <input
-        type="email"
-        [ngModel]="testTo()"
-        (ngModelChange)="testTo.set($event)"
-        name="testTo"
-        placeholder="recipient@example.com"
-        class="flex-1 input-field"
-      />
-      <button
-        type="button"
-        (click)="sendTest()"
-        [disabled]="testBusy() || !current()?.configured"
-        class="btn-secondary"
-      >
-        {{ testBusy() ? 'Sending…' : 'Send test' }}
-      </button>
+  <!-- Test Email -->
+  <div class="settings-card max-w-2xl mt-6">
+    <div class="settings-card-header">
+      <span class="material-symbols-outlined settings-card-icon">send</span>
+      <h3 class="settings-card-title">Send test email</h3>
+    </div>
+    <div class="settings-card-body">
+      <p class="text-xs text-on-surface-variant mb-3">
+        Sends a test message using the currently saved settings.
+      </p>
+      <div class="flex gap-2">
+        <input
+          type="email"
+          [ngModel]="testTo()"
+          (ngModelChange)="testTo.set($event)"
+          name="testTo"
+          placeholder="recipient@example.com"
+          class="flex-1 input-field"
+        />
+        <button
+          type="button"
+          (click)="sendTest()"
+          [disabled]="testBusy() || !current()?.configured"
+          class="btn-secondary whitespace-nowrap"
+        >
+          <span class="material-symbols-outlined text-sm" aria-hidden="true">send</span>
+          {{ testBusy() ? 'Sending…' : 'Send test' }}
+        </button>
+      </div>
+      @if (!current()?.configured) {
+        <p class="text-xs text-amber-400/70 mt-2 flex items-center gap-1">
+          <span class="material-symbols-outlined" style="font-size: 13px">info</span>
+          Save valid SMTP settings first to enable this.
+        </p>
+      }
     </div>
   </div>
 </div>

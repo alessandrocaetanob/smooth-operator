@@ -3,66 +3,122 @@
     <h2 class="text-lg font-semibold text-on-surface">Audit Log Retention</h2>
     <p class="text-sm text-on-surface-variant mt-1">
       Control how long audit log entries are kept in the database. A daily background job purges
-      entries older than the configured retention window. Set to <strong>0</strong> to keep audit
-      logs forever.
+      entries older than the configured retention window.
     </p>
   </div>
 
   @if (message()) {
-    <div class="mb-4 p-3 border border-tertiary/40 bg-tertiary/10 rounded text-sm text-tertiary">
+    <div class="mb-4 p-3 border border-tertiary/40 bg-tertiary/10 rounded-lg text-sm text-tertiary flex items-center gap-2">
+      <span class="material-symbols-outlined text-base">check_circle</span>
       {{ message() }}
     </div>
   }
   @if (error()) {
-    <div class="mb-4 p-3 border border-error/40 bg-error/10 rounded text-sm text-error">
+    <div class="mb-4 p-3 border border-error/40 bg-error/10 rounded-lg text-sm text-error flex items-center gap-2">
+      <span class="material-symbols-outlined text-base">error</span>
       {{ error() }}
     </div>
   }
 
-  <form (ngSubmit)="save()" class="space-y-4 max-w-xl">
-    <div>
-      <label for="retentionDays" class="block text-sm font-medium text-on-surface mb-1">
-        Retention period (days)
-      </label>
-      <input
-        id="retentionDays"
-        type="number"
-        min="0"
-        max="3650"
-        step="1"
-        [ngModel]="retentionDays()"
-        (ngModelChange)="retentionDays.set($event)"
-        name="retentionDays"
-        class="w-full md:w-48 px-3 py-2 rounded border border-outline-variant/40 bg-surface text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/40"
-        [disabled]="loading() || busy()"
-      />
-      <p class="text-xs text-on-surface-variant mt-1">
-        @if (retentionDays() === 0) {
-          Logs are kept forever (recommended for compliance).
-        } @else {
-          Logs older than {{ retentionDays() }} day(s) will be deleted on the next daily run.
-        }
-      </p>
+  <form (ngSubmit)="save()" class="space-y-4 max-w-2xl">
+
+    <!-- Retention window card -->
+    <div class="retention-card">
+      <div class="retention-card-header">
+        <span class="material-symbols-outlined" style="color: rgb(var(--color-primary)); font-size: 20px">schedule</span>
+        <h3 class="text-sm font-semibold text-on-surface">Retention window</h3>
+      </div>
+      <div class="p-5">
+        <p class="text-xs uppercase tracking-widest text-on-surface-variant mb-3 font-semibold">Quick select</p>
+        <div class="flex flex-wrap gap-2 mb-5">
+          @for (p of presets; track p.days) {
+            <button
+              type="button"
+              class="preset-chip"
+              [class.preset-chip-active]="retentionDays() === p.days"
+              (click)="selectPreset(p.days)"
+              [disabled]="loading() || busy()"
+            >
+              {{ p.label }}
+            </button>
+          }
+        </div>
+
+        <div class="flex items-end gap-4">
+          <div class="max-w-[180px]">
+            <label for="retentionDays" class="block text-xs uppercase tracking-widest text-on-surface-variant mb-2 font-semibold">
+              Custom (days)
+            </label>
+            <input
+              id="retentionDays"
+              type="number"
+              min="0"
+              max="3650"
+              step="1"
+              [ngModel]="retentionDays()"
+              (ngModelChange)="retentionDays.set($event)"
+              name="retentionDays"
+              class="w-full input-field"
+              [disabled]="loading() || busy()"
+            />
+          </div>
+          <div class="retention-description pb-2">
+            @if (retentionDays() === 0) {
+              <span class="material-symbols-outlined text-tertiary" style="font-size: 16px">all_inclusive</span>
+              <span class="text-tertiary text-sm font-medium">Kept forever</span>
+            } @else {
+              <span class="material-symbols-outlined text-amber-400" style="font-size: 16px">schedule</span>
+              <span class="text-on-surface-variant text-sm">Purged after <strong class="text-on-surface">{{ retentionDays() }}</strong> day(s)</span>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Compliance reference card -->
+    <div class="retention-card">
+      <div class="retention-card-header">
+        <span class="material-symbols-outlined" style="color: rgb(var(--color-secondary)); font-size: 20px">verified_user</span>
+        <h3 class="text-sm font-semibold text-on-surface">Compliance reference</h3>
+      </div>
+      <div class="p-4">
+        <div class="compliance-grid">
+          <div class="compliance-tier">
+            <span class="compliance-tier-label">SOC 2</span>
+            <span class="compliance-tier-value">365 days</span>
+            <span class="compliance-tier-desc">Security event logs</span>
+          </div>
+          <div class="compliance-divider"></div>
+          <div class="compliance-tier">
+            <span class="compliance-tier-label">ISO 27001</span>
+            <span class="compliance-tier-value">365 days</span>
+            <span class="compliance-tier-desc">Access &amp; change records</span>
+          </div>
+          <div class="compliance-divider"></div>
+          <div class="compliance-tier">
+            <span class="compliance-tier-label">HIPAA</span>
+            <span class="compliance-tier-value">2,190 days</span>
+            <span class="compliance-tier-desc">6 years of PHI access logs</span>
+          </div>
+        </div>
+        <p class="text-xs text-on-surface-variant/50 mt-3">
+          Set to <strong class="text-on-surface-variant/80">0</strong> to keep logs forever — the safest option for compliance.
+        </p>
+      </div>
     </div>
 
     <div class="flex items-center gap-2">
-      <button
-        type="submit"
-        class="btn-primary px-4 py-2 rounded text-sm font-medium"
-        [disabled]="loading() || busy()"
-      >
-        @if (busy()) {
-          Saving…
-        } @else {
-          Save
-        }
+      <button type="submit" class="btn-primary" [disabled]="loading() || busy()">
+        <span class="material-symbols-outlined text-sm" aria-hidden="true">save</span>
+        {{ busy() ? 'Saving…' : 'Save' }}
       </button>
       <button
         type="button"
-        class="px-4 py-2 rounded text-sm font-medium border border-outline-variant/40 text-on-surface hover:bg-surface-variant/40"
+        class="btn-ghost"
         (click)="refresh()"
         [disabled]="loading() || busy()"
       >
+        <span class="material-symbols-outlined text-sm" aria-hidden="true">undo</span>
         Reset
       </button>
     </div>
