@@ -129,6 +129,26 @@
   cursor: pointer;
 }
 
+/* Minimize / icon-only header button */
+.tool-btn-sm {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.45);
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tool-btn-sm:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.22);
+  color: rgba(255, 255, 255, 0.85);
+}
+
 .terminate-btn:hover {
   background: rgba(239, 68, 68, 0.22);
   border-color: rgba(239, 68, 68, 0.4);

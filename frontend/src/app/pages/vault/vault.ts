@@ -1,6 +1,7 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { catchError, forkJoin, of } from 'rxjs';
 import { Connection, ConnectionsService } from '../../services/connections.service';
 import { AuthService } from '../../services/auth.service';
 import { VaultsService } from '../../services/vaults.service';
@@ -30,6 +31,11 @@ export class Vault implements OnInit {
   // State for sidebar filtering
   readonly selectedVaultId = signal<string | null>(null);
 
+  // Last-connected timestamps (connectionId → ISO string)
+  private readonly _lastConnectedMap = signal<Map<string, string>>(new Map());
+  // Reachability per connection: 'unknown' | 'up' | 'down'
+  private readonly _reachabilityMap = signal<Map<string, 'unknown' | 'up' | 'down'>>(new Map());
+
   // Compute a map of unique Vaults (Groups) from actual VaultsService
   readonly vaultsMap = computed(() => {
     const map = new Map<string, string>();
@@ -50,8 +56,54 @@ export class Vault implements OnInit {
   }
 
   refresh(): void {
-    this.connections.reload().subscribe({ error: () => {} });
-    this.vaultsSvc.reload().subscribe({ error: () => {} });
+    // Reset reachability on each refresh so stale dots don't linger
+    this._reachabilityMap.set(new Map());
+    this._lastConnectedMap.set(new Map());
+
+    forkJoin({
+      connections: this.connections.reload().pipe(catchError(() => of(null))),
+      vaults: this.vaultsSvc.reload().pipe(catchError(() => of(null))),
+    }).subscribe({
+      next: ({ connections }) => {
+        if (connections !== null) {
+          this.loadLastConnected();
+          this.probeAll();
+        }
+      },
+    });
+  }
+
+  private loadLastConnected(): void {
+    this.connections.getLastConnected().subscribe({
+      next: (rows) => {
+        const m = new Map<string, string>();
+        for (const r of rows) {
+          if (r.connectionId && r.lastConnectedAt) m.set(r.connectionId, r.lastConnectedAt);
+        }
+        this._lastConnectedMap.set(m);
+      },
+      error: () => {},
+    });
+  }
+
+  private probeAll(): void {
+    const ids = this.list().map((c) => c.id);
+    // Mark all as unknown first so the dots appear immediately
+    this._reachabilityMap.update((m) => {
+      const next = new Map(m);
+      for (const id of ids) next.set(id, 'unknown');
+      return next;
+    });
+    for (const id of ids) {
+      this.connections.probeConnection(id).subscribe({
+        next: ({ reachable }) => {
+          this._reachabilityMap.update((m) => new Map(m).set(id, reachable ? 'up' : 'down'));
+        },
+        error: () => {
+          this._reachabilityMap.update((m) => new Map(m).set(id, 'down'));
+        },
+      });
+    }
   }
 
   selectVault(id: string | null): void {
@@ -64,6 +116,36 @@ export class Vault implements OnInit {
 
   connect(id: string): void {
     this.router.navigate(['/connecting', id]);
+  }
+
+  downloadFile(connection: Connection, event: MouseEvent): void {
+    event.stopPropagation();
+    const format = (connection.protocol || 'rdp').toLowerCase() as 'rdp' | 'ssh' | 'vnc';
+    const supported: ('rdp' | 'ssh' | 'vnc')[] = ['rdp', 'ssh', 'vnc'];
+    this.connections
+      .downloadConnectionFile(connection.id, supported.includes(format) ? format : 'rdp')
+      .subscribe({ error: () => {} });
+  }
+
+  lastConnectedLabel(id: string): string | null {
+    const iso = this._lastConnectedMap().get(id);
+    if (!iso) return null;
+    const ts = new Date(iso).getTime();
+    if (!Number.isFinite(ts)) return null;
+    const diff = Math.max(0, Date.now() - ts);
+    const minutes = Math.floor(diff / 60_000);
+    if (minutes < 1) return 'just now';
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    if (days < 30) return `${days}d ago`;
+    const months = Math.floor(days / 30);
+    return `${months}mo ago`;
+  }
+
+  reachability(id: string): 'unknown' | 'up' | 'down' {
+    return this._reachabilityMap().get(id) ?? 'unknown';
   }
 
   protocolIcon(protocol: string): string {

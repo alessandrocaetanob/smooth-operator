@@ -1,0 +1,27 @@
+@if (minimizedSessions().length > 0) {
+  <div class="session-bar">
+    @for (session of minimizedSessions(); track session.connectionId) {
+      <div class="session-chip">
+        <button
+          class="chip-restore"
+          (click)="restore(session)"
+          [title]="'Restore: ' + connectionName(session)"
+          type="button"
+        >
+          <span class="live-dot"></span>
+          <span class="chip-name">{{ connectionName(session) }}</span>
+          <span class="chip-timer">{{ session.formattedElapsed() }}</span>
+        </button>
+        <button
+          class="chip-close"
+          (click)="close(session, $event)"
+          title="Terminate session"
+          type="button"
+          aria-label="Terminate session"
+        >
+          ✕
+        </button>
+      </div>
+    }
+  </div>
+}

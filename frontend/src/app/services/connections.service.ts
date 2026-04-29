@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { Observable, tap } from 'rxjs';
+import { Observable, map, tap } from 'rxjs';
 import { pick, pickOr } from './json-utils';
 
 export interface ConnectionHostRef {
@@ -70,6 +70,46 @@ export class ConnectionsService {
 
   remove(id: string): Observable<void> {
     return this.http.delete<void>(`/api/connections/${id}`);
+  }
+
+  downloadConnectionFile(id: string, format: 'rdp' | 'ssh' | 'vnc'): Observable<void> {
+    return this.http
+      .get(`/api/connections/${id}/file?format=${format}`, {
+        responseType: 'blob',
+        observe: 'response',
+      })
+      .pipe(
+        map((response) => {
+          const blob = response.body;
+          if (!blob) return;
+          const contentDisposition = response.headers.get('content-disposition') ?? '';
+          const match = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+          const filename = match ? match[1].replace(/['"]/g, '') : `connection.${format}`;
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          URL.revokeObjectURL(url);
+        }),
+      ) as Observable<void>;
+  }
+
+  getLastConnected(): Observable<{ connectionId: string; lastConnectedAt: string }[]> {
+    return this.http.get<any[]>('/api/connections/my-last-connected').pipe(
+      map((rows) =>
+        (rows ?? []).map((r) => ({
+          connectionId: pickOr(r, '', 'connectionId', 'ConnectionId'),
+          lastConnectedAt: pickOr(r, '', 'lastConnectedAt', 'LastConnectedAt'),
+        })),
+      ),
+    );
+  }
+
+  probeConnection(id: string): Observable<{ reachable: boolean }> {
+    return this.http.get<{ reachable: boolean }>(`/api/connections/${id}/probe`);
   }
 
   private normalize(raw: any): Connection {

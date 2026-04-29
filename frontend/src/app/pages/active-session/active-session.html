@@ -48,6 +48,13 @@
   </div>
 
   <div class="flex items-center gap-2">
+    <button
+      class="tool-btn-sm"
+      (click)="minimize()"
+      title="Minimize session (keep connection alive)"
+    >
+      <span class="material-symbols-outlined text-sm">minimize</span>
+    </button>
     <button class="terminate-btn" (click)="terminate()" title="Terminate session">
       <span class="material-symbols-outlined text-sm">power_settings_new</span>
       Terminate

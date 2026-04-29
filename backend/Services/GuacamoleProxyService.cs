@@ -200,7 +200,47 @@ namespace Backend.Services
                 return;
             }
 
-            // Audit log - connection started
+            // Pre-flight: verify the target host is reachable before involving guacd.
+            // This prevents black-screen sessions when the remote VM is down.
+            var defaultPort = (connection.Protocol ?? "rdp").ToLowerInvariant() switch
+            {
+                "ssh" => 22,
+                "vnc" => 5900,
+                "telnet" => 23,
+                _ => 3389
+            };
+            var targetHost = connection.Host.Address;
+            var targetPort = int.TryParse(
+                ParseSettings(connection.Settings).GetValueOrDefault("port"),
+                out var parsedPort) ? parsedPort : defaultPort;
+
+            using var probeCts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            if (!await ProbeHostAsync(targetHost, targetPort, probeCts.Token))
+            {
+                var unreachableMsg = $"Host {targetHost}:{targetPort} is not reachable";
+                _logger.LogWarning("Pre-flight check failed for connection {ConnectionId}: {Message}", connectionId, unreachableMsg);
+
+                dbContext.AuditLogs.Add(new AuditLog
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = dbUser.Id,
+                    Action = "connection.host_unreachable",
+                    ResourceType = "Connection",
+                    ResourceId = connectionId.ToString(),
+                    Details = $"{{\"host\":{JsonSerializer.Serialize(targetHost)},\"port\":{targetPort}}}",
+                    IpAddress = ipAddress
+                });
+                await dbContext.SaveChangesAsync();
+
+                if (webSocket.State == WebSocketState.Open)
+                {
+                    await TrySendGuacErrorAsync(webSocket, unreachableMsg, GuacStatus.UpstreamNotFound);
+                    await webSocket.CloseAsync(WebSocketCloseStatus.InternalServerError, unreachableMsg[..Math.Min(unreachableMsg.Length, 120)], CancellationToken.None);
+                }
+                return;
+            }
+
+            // Audit log - connection started (after probe confirms host is reachable)
             dbContext.AuditLogs.Add(new AuditLog
             {
                 Id = Guid.NewGuid(),
@@ -383,7 +423,25 @@ namespace Backend.Services
             public const int ServerError = 0x0200;
             public const int UpstreamError = 0x0203;
             public const int ResourceNotFound = 0x0204;
+            public const int UpstreamNotFound = 0x0205;
             public const int ClientForbidden = 0x0301;
+        }
+
+        // Returns true when the TCP port is open (or if the connection attempt
+        // times out in a way that still indicates the host is alive). Returns
+        // false when the host is unreachable, refused, or the probe times out.
+        private static async Task<bool> ProbeHostAsync(string host, int port, CancellationToken ct)
+        {
+            try
+            {
+                using var probe = new TcpClient();
+                await probe.ConnectAsync(host, port, ct);
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
         }
 
         private async Task TrySendGuacErrorAsync(WebSocket webSocket, string message, int code)
