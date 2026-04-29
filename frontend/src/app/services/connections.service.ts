@@ -72,35 +72,39 @@ export class ConnectionsService {
     return this.http.delete<void>(`/api/connections/${id}`);
   }
 
-  downloadConnectionFile(id: string, format: 'rdp' | 'ssh' | 'vnc'): void {
-    this.http
+  downloadConnectionFile(id: string, format: 'rdp' | 'ssh' | 'vnc'): Observable<void> {
+    return this.http
       .get(`/api/connections/${id}/file?format=${format}`, {
         responseType: 'blob',
         observe: 'response',
       })
-      .subscribe((response) => {
-        const blob = response.body;
-        if (!blob) return;
-        const contentDisposition = response.headers.get('content-disposition') ?? '';
-        const match = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
-        const filename = match ? match[1].replace(/['"]/g, '') : `connection.${format}`;
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        URL.revokeObjectURL(url);
-      });
+      .pipe(
+        map((response) => {
+          const blob = response.body;
+          if (!blob) return;
+          const contentDisposition = response.headers.get('content-disposition') ?? '';
+          const match = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+          const filename = match ? match[1].replace(/['"]/g, '') : `connection.${format}`;
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          URL.revokeObjectURL(url);
+        }),
+      ) as Observable<void>;
   }
 
   getLastConnected(): Observable<{ connectionId: string; lastConnectedAt: string }[]> {
     return this.http.get<any[]>('/api/connections/my-last-connected').pipe(
-      map((rows) => (rows ?? []).map((r) => ({
-        connectionId: pickOr(r, '', 'connectionId', 'ConnectionId'),
-        lastConnectedAt: pickOr(r, '', 'lastConnectedAt', 'LastConnectedAt'),
-      }))),
+      map((rows) =>
+        (rows ?? []).map((r) => ({
+          connectionId: pickOr(r, '', 'connectionId', 'ConnectionId'),
+          lastConnectedAt: pickOr(r, '', 'lastConnectedAt', 'LastConnectedAt'),
+        })),
+      ),
     );
   }
 

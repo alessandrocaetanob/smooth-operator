@@ -3,10 +3,7 @@ import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { map } from 'rxjs/operators';
 import { CommonModule } from '@angular/common';
-import {
-  GuacamoleSessionManagerService,
-  GuacState,
-} from '../../services/guacamole.service';
+import { GuacamoleSessionManagerService, GuacState } from '../../services/guacamole.service';
 import { ConnectionsService, Connection } from '../../services/connections.service';
 import { Mascot, MascotState } from '../../shared/mascot/mascot';
 

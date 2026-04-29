@@ -135,12 +135,7 @@ export class GuacamoleSession {
    */
   async connect(): Promise<void> {
     const s = this._state();
-    if (
-      s === 'requesting-ticket' ||
-      s === 'connecting' ||
-      s === 'waiting' ||
-      s === 'connected'
-    ) {
+    if (s === 'requesting-ticket' || s === 'connecting' || s === 'waiting' || s === 'connected') {
       return this.connectPromise ?? Promise.resolve();
     }
     if (this.client) {

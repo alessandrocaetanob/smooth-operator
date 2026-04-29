@@ -5,6 +5,7 @@ import { ConnectionsService } from '../../services/connections.service';
 
 @Component({
   selector: 'app-session-bar',
+  standalone: true,
   imports: [],
   templateUrl: './session-bar.html',
   styleUrl: './session-bar.css',

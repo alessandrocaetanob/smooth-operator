@@ -131,7 +131,8 @@
                   >
                     <span
                       [class]="
-                        'material-symbols-outlined transition-colors ' + protocolIconColor(c.protocol)
+                        'material-symbols-outlined transition-colors ' +
+                        protocolIconColor(c.protocol)
                       "
                     >
                       {{ protocolIcon(c.protocol) }}
@@ -144,7 +145,13 @@
                     [class.bg-red-500]="reachability(c.id) === 'down'"
                     [class.bg-on-surface-variant]="reachability(c.id) === 'unknown'"
                     [class.opacity-30]="reachability(c.id) === 'unknown'"
-                    [title]="reachability(c.id) === 'up' ? 'Host reachable' : reachability(c.id) === 'down' ? 'Host unreachable' : 'Checking…'"
+                    [title]="
+                      reachability(c.id) === 'up'
+                        ? 'Host reachable'
+                        : reachability(c.id) === 'down'
+                          ? 'Host unreachable'
+                          : 'Checking…'
+                    "
                   ></span>
                 </div>
                 <div class="min-w-0 flex-1">
@@ -157,7 +164,9 @@
                     {{ c.host?.address || '—' }}
                   </div>
                   @if (lastConnectedLabel(c.id)) {
-                    <div class="text-[10px] text-on-surface-variant/50 mt-0.5 flex items-center gap-1">
+                    <div
+                      class="text-[10px] text-on-surface-variant/50 mt-0.5 flex items-center gap-1"
+                    >
                       <span class="material-symbols-outlined text-[10px]">history</span>
                       {{ lastConnectedLabel(c.id) }}
                     </div>
@@ -190,7 +199,9 @@
                     class="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-on-surface/10 focus:outline-none focus:ring-1 focus:ring-primary"
                     aria-label="Download connection file"
                   >
-                    <span class="material-symbols-outlined text-[14px] text-on-surface-variant">download</span>
+                    <span class="material-symbols-outlined text-[14px] text-on-surface-variant"
+                      >download</span
+                    >
                   </button>
                 </div>
               </div>

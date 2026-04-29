@@ -1,7 +1,7 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { forkJoin } from 'rxjs';
+import { catchError, forkJoin, of } from 'rxjs';
 import { Connection, ConnectionsService } from '../../services/connections.service';
 import { AuthService } from '../../services/auth.service';
 import { VaultsService } from '../../services/vaults.service';
@@ -61,14 +61,15 @@ export class Vault implements OnInit {
     this._lastConnectedMap.set(new Map());
 
     forkJoin({
-      connections: this.connections.reload(),
-      vaults: this.vaultsSvc.reload(),
+      connections: this.connections.reload().pipe(catchError(() => of(null))),
+      vaults: this.vaultsSvc.reload().pipe(catchError(() => of(null))),
     }).subscribe({
-      next: () => {
-        this.loadLastConnected();
-        this.probeAll();
+      next: ({ connections }) => {
+        if (connections !== null) {
+          this.loadLastConnected();
+          this.probeAll();
+        }
       },
-      error: () => {},
     });
   }
 
@@ -121,13 +122,17 @@ export class Vault implements OnInit {
     event.stopPropagation();
     const format = (connection.protocol || 'rdp').toLowerCase() as 'rdp' | 'ssh' | 'vnc';
     const supported: ('rdp' | 'ssh' | 'vnc')[] = ['rdp', 'ssh', 'vnc'];
-    this.connections.downloadConnectionFile(connection.id, supported.includes(format) ? format : 'rdp');
+    this.connections
+      .downloadConnectionFile(connection.id, supported.includes(format) ? format : 'rdp')
+      .subscribe({ error: () => {} });
   }
 
   lastConnectedLabel(id: string): string | null {
     const iso = this._lastConnectedMap().get(id);
     if (!iso) return null;
-    const diff = Date.now() - new Date(iso).getTime();
+    const ts = new Date(iso).getTime();
+    if (!Number.isFinite(ts)) return null;
+    const diff = Math.max(0, Date.now() - ts);
     const minutes = Math.floor(diff / 60_000);
     if (minutes < 1) return 'just now';
     if (minutes < 60) return `${minutes}m ago`;

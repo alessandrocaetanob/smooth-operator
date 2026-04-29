@@ -200,42 +200,14 @@ namespace Backend.Services
                 return;
             }
 
-            // Audit log - connection started
-            dbContext.AuditLogs.Add(new AuditLog
-            {
-                Id = Guid.NewGuid(),
-                UserId = dbUser.Id,
-                Action = "connection.started",
-                ResourceType = "Connection",
-                ResourceId = connectionId.ToString(),
-                Details = JsonSerializer.Serialize(new
-                {
-                    host = connection.Host.Name,
-                    protocol = connection.Protocol,
-                    sessionId = sessionId
-                }),
-                IpAddress = ipAddress
-            });
-            await dbContext.SaveChangesAsync();
-
-            // Register session in Redis
-            var db = _redis.GetDatabase();
-            await db.HashSetAsync($"session:{sessionId}", new HashEntry[]
-            {
-                new HashEntry("UserId", dbUser.Id.ToString()),
-                new HashEntry("ConnectionId", connectionId.ToString()),
-                new HashEntry("StartTime", DateTime.UtcNow.ToString("O"))
-            });
-            await db.KeyExpireAsync($"session:{sessionId}", TimeSpan.FromHours(24));
-
             // Pre-flight: verify the target host is reachable before involving guacd.
             // This prevents black-screen sessions when the remote VM is down.
             var defaultPort = (connection.Protocol ?? "rdp").ToLowerInvariant() switch
             {
-                "ssh"    => 22,
-                "vnc"    => 5900,
+                "ssh" => 22,
+                "vnc" => 5900,
                 "telnet" => 23,
-                _        => 3389
+                _ => 3389
             };
             var targetHost = connection.Host.Address;
             var targetPort = int.TryParse(
@@ -267,6 +239,34 @@ namespace Backend.Services
                 }
                 return;
             }
+
+            // Audit log - connection started (after probe confirms host is reachable)
+            dbContext.AuditLogs.Add(new AuditLog
+            {
+                Id = Guid.NewGuid(),
+                UserId = dbUser.Id,
+                Action = "connection.started",
+                ResourceType = "Connection",
+                ResourceId = connectionId.ToString(),
+                Details = JsonSerializer.Serialize(new
+                {
+                    host = connection.Host.Name,
+                    protocol = connection.Protocol,
+                    sessionId = sessionId
+                }),
+                IpAddress = ipAddress
+            });
+            await dbContext.SaveChangesAsync();
+
+            // Register session in Redis
+            var db = _redis.GetDatabase();
+            await db.HashSetAsync($"session:{sessionId}", new HashEntry[]
+            {
+                new HashEntry("UserId", dbUser.Id.ToString()),
+                new HashEntry("ConnectionId", connectionId.ToString()),
+                new HashEntry("StartTime", DateTime.UtcNow.ToString("O"))
+            });
+            await db.KeyExpireAsync($"session:{sessionId}", TimeSpan.FromHours(24));
 
             using var tcpClient = new TcpClient();
             var connectionSuccessful = false;
@@ -438,11 +438,7 @@ namespace Backend.Services
                 await probe.ConnectAsync(host, port, ct);
                 return true;
             }
-            catch (OperationCanceledException)
-            {
-                return false;
-            }
-            catch (SocketException)
+            catch (Exception)
             {
                 return false;
             }

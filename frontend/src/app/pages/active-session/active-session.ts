@@ -234,13 +234,17 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
     this.mounted = false;
     this.displayEffect?.destroy();
     this.displayEffect = null;
-    // Detach display bindings (keyboard/mouse listeners) without disconnecting.
-    // The session stays alive so it can be restored from the session bar.
-    const id = this.connectionId();
-    if (id) {
-      this.sessionManager.get(id)?.detachDisplay();
-    }
     if (this.toolbarHideTimer) clearTimeout(this.toolbarHideTimer);
+    const id = this.connectionId();
+    if (!id) return;
+    const session = this.sessionManager.get(id);
+    if (session?.minimized()) {
+      // Detach display bindings only — session stays alive in the session bar.
+      session.detachDisplay();
+    } else {
+      // User navigated away without minimizing — clean up the session.
+      this.sessionManager.destroy(id);
+    }
   }
 
   // Toolbar actions ----------------------------------------------------------
@@ -360,5 +364,3 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
     this.toolbarCollapsed.update((v) => !v);
   }
 }
-
-
