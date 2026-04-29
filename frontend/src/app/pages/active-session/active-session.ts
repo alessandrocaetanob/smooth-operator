@@ -15,9 +15,15 @@ import {
 } from '@angular/core';
 
 import { ActivatedRoute, Router } from '@angular/router';
+import { map } from 'rxjs/operators';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { GuacamoleClientService, Keysyms } from '../../services/guacamole.service';
+import {
+  GuacamoleSessionManagerService,
+  GuacamoleSession,
+  Keysyms,
+} from '../../services/guacamole.service';
 import { ConnectionsService, Connection } from '../../services/connections.service';
 import { Mascot, MascotState } from '../../shared/mascot/mascot';
 import { Spinner } from '../../shared/spinner/spinner';
@@ -65,18 +71,30 @@ const COMBO_KEYS: KeyOption[] = [
 export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
-  private readonly guac = inject(GuacamoleClientService);
+  private readonly sessionManager = inject(GuacamoleSessionManagerService);
   private readonly connections = inject(ConnectionsService);
 
   @ViewChild('display', { static: false }) displayRef?: ElementRef<HTMLDivElement>;
 
-  readonly state = this.guac.state;
-  readonly progress = this.guac.progress;
-  readonly errorMsg = this.guac.error;
-  readonly hostClipboard = this.guac.hostClipboard;
-  readonly remoteName = this.guac.displayName;
+  // Reactive route param — correctly handles navigating between session IDs.
+  readonly connectionId = toSignal(this.route.paramMap.pipe(map((p) => p.get('id'))), {
+    initialValue: this.route.snapshot.paramMap.get('id'),
+  });
 
-  readonly connectionId = computed(() => this.route.snapshot.paramMap.get('id'));
+  // Computed signals that proxy through the session for this connectionId.
+  private readonly session = computed<GuacamoleSession | null>(() => {
+    const id = this.connectionId();
+    if (!id) return null;
+    return this.sessionManager.sessions().get(id) ?? null;
+  });
+
+  readonly state = computed(() => this.session()?.state() ?? ('idle' as const));
+  readonly progress = computed(() => this.session()?.progress() ?? 0);
+  readonly errorMsg = computed(() => this.session()?.error() ?? null);
+  readonly hostClipboard = computed(() => this.session()?.hostClipboard() ?? '');
+  readonly remoteName = computed(() => this.session()?.displayName() ?? null);
+  readonly formattedElapsed = computed(() => this.session()?.formattedElapsed() ?? '00:00');
+
   readonly connection = computed<Connection | null>(() => {
     const id = this.connectionId();
     if (!id) return null;
@@ -109,18 +127,6 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
   readonly comboKey = signal<KeyOption>(COMBO_KEYS[0]);
   readonly clipboardDraft = signal('');
 
-  // Session timer
-  readonly connectedAt = signal<number | null>(null);
-  readonly elapsedSeconds = signal(0);
-  readonly formattedElapsed = computed(() => {
-    const s = this.elapsedSeconds();
-    const h = Math.floor(s / 3600);
-    const m = Math.floor((s % 3600) / 60);
-    const sec = s % 60;
-    if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
-    return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
-  });
-
   // Protocol badge
   readonly protocol = computed(() => (this.connection()?.protocol ?? '').toUpperCase());
 
@@ -148,41 +154,37 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
   private mounted = false;
   private displayEffect: EffectRef | null = null;
   private readonly injector = inject(Injector);
-  private sessionStarted = false;
-  private timerInterval: ReturnType<typeof setInterval> | null = null;
+  private mascotFlashStarted = false;
   private toolbarHideTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
-    // If the client gets disconnected (or errors after connection),
-    // bounce the user back to the ConnectingState page so they see the log.
+    // On error: go to connecting page so the user sees logs and can retry.
+    // On clean disconnect (no error message): session ended normally — go back to vault.
     effect(() => {
       const s = this.state();
       const id = this.connectionId();
       if (!id) return;
-      if (s === 'error' || s === 'disconnected') {
+      if (s === 'error') {
         if (this.mounted) {
           this.router.navigate(['/connecting', id]);
+        }
+      } else if (s === 'disconnected') {
+        if (this.mounted) {
+          const hasError = !!this.errorMsg();
+          this.router.navigate(hasError ? ['/connecting', id] : ['/vault']);
         }
       }
     });
 
-    // Session timer + mascot sparkle on first successful connect.
+    // Mascot sparkle flash on first successful connect (3 s, UI only).
     effect(() => {
       const s = this.state();
-      if (s === 'connected') {
-        if (!this.sessionStarted) {
-          this.sessionStarted = true;
-          const start = Date.now();
-          this.connectedAt.set(start);
-          this.mascotConnectedFlash.set(true);
-          setTimeout(() => this.mascotConnectedFlash.set(false), 3000);
-          this.timerInterval = setInterval(() => {
-            this.elapsedSeconds.set(Math.floor((Date.now() - start) / 1000));
-          }, 1000);
-        }
+      if (s === 'connected' && !this.mascotFlashStarted) {
+        this.mascotFlashStarted = true;
+        this.mascotConnectedFlash.set(true);
+        setTimeout(() => this.mascotConnectedFlash.set(false), 3000);
       } else if (s === 'disconnected' || s === 'error') {
-        this.sessionStarted = false;
-        this.stopSessionTimer();
+        this.mascotFlashStarted = false;
       }
     });
   }
@@ -198,7 +200,8 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
     }
     // If user landed here via deep link without going through /connecting, kick
     // off the connect flow now.
-    if (this.state() === 'idle' || this.state() === 'disconnected') {
+    const s = this.state();
+    if (s === 'idle' || s === 'disconnected') {
       this.router.navigate(['/connecting', id]);
       return;
     }
@@ -206,26 +209,24 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
 
   ngAfterViewInit(): void {
     this.mounted = true;
-    if (this.displayRef && this.guac.isConnected()) {
-      this.guac.attachDisplay(this.displayRef.nativeElement);
+    const session = this.session();
+    if (this.displayRef && session?.isConnected()) {
+      session.attachDisplay(this.displayRef.nativeElement);
     } else if (this.displayRef) {
-      // Wait until connected, then attach.
       runInInjectionContext(this.injector, () => {
-        // Use a local flag so the effect body is idempotent and we avoid
-        // calling destroy() on the EffectRef from within its own callback.
         let attached = false;
         this.displayEffect = effect(
           () => {
-            if (!attached && this.guac.isConnected() && this.displayRef) {
+            const s = this.session();
+            if (!attached && s?.isConnected() && this.displayRef) {
               attached = true;
-              this.guac.attachDisplay(this.displayRef.nativeElement);
+              s.attachDisplay(this.displayRef.nativeElement);
             }
           },
           { manualCleanup: true },
         );
       });
     }
-    // Kick off the toolbar auto-hide timer from mount.
     this.onCanvasMouseMove();
   }
 
@@ -233,13 +234,18 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
     this.mounted = false;
     this.displayEffect?.destroy();
     this.displayEffect = null;
-    this.stopSessionTimer();
+    // Detach display bindings (keyboard/mouse listeners) without disconnecting.
+    // The session stays alive so it can be restored from the session bar.
+    const id = this.connectionId();
+    if (id) {
+      this.sessionManager.get(id)?.detachDisplay();
+    }
     if (this.toolbarHideTimer) clearTimeout(this.toolbarHideTimer);
   }
 
   // Toolbar actions ----------------------------------------------------------
   sendCtrlAltDel(): void {
-    this.guac.sendKeyCombo([Keysyms.ControlLeft, Keysyms.AltLeft, Keysyms.Delete]);
+    this.session()?.sendKeyCombo([Keysyms.ControlLeft, Keysyms.AltLeft, Keysyms.Delete]);
   }
 
   openKeyComboModal(): void {
@@ -256,7 +262,7 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
     if (this.comboShift()) syms.push(Keysyms.ShiftLeft);
     if (this.comboSuper()) syms.push(Keysyms.SuperLeft);
     syms.push(this.comboKey().keysym);
-    this.guac.sendKeyCombo(syms);
+    this.session()?.sendKeyCombo(syms);
     this.comboSent.set(true);
     setTimeout(() => {
       this.comboSent.set(false);
@@ -277,7 +283,7 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
   }
   pushClipboardToHost(): void {
     const text = this.clipboardDraft();
-    if (text) this.guac.pasteToHost(text);
+    if (text) this.session()?.pasteToHost(text);
     this.clipboardPushed.set(true);
     setTimeout(() => {
       this.clipboardPushed.set(false);
@@ -293,7 +299,7 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
   }
 
   takeScreenshot(): void {
-    const url = this.guac.captureScreenshot();
+    const url = this.session()?.captureScreenshot();
     if (!url) return;
     const a = document.createElement('a');
     a.href = url;
@@ -313,9 +319,16 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
+  /** Minimize session: detach display, keep WS alive, go to vault. */
+  minimize(): void {
+    const id = this.connectionId();
+    if (id) this.sessionManager.minimize(id);
+    this.router.navigate(['/vault']);
+  }
+
   terminate(): void {
-    this.guac.disconnect();
-    this.guac.reset();
+    const id = this.connectionId();
+    if (id) this.sessionManager.destroy(id);
     this.router.navigate(['/vault']);
   }
 
@@ -346,12 +359,6 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
   toggleToolbarCollapse(): void {
     this.toolbarCollapsed.update((v) => !v);
   }
-
-  // ── Timer ─────────────────────────────────────────────────────────────────
-  private stopSessionTimer(): void {
-    if (this.timerInterval) {
-      clearInterval(this.timerInterval);
-      this.timerInterval = null;
-    }
-  }
 }
+
+

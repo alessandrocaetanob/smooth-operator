@@ -1,8 +1,12 @@
 import { Component, DestroyRef, OnDestroy, OnInit, computed, effect, inject } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
+import { map } from 'rxjs/operators';
 import { CommonModule } from '@angular/common';
-import { GuacamoleClientService, GuacState } from '../../services/guacamole.service';
+import {
+  GuacamoleSessionManagerService,
+  GuacState,
+} from '../../services/guacamole.service';
 import { ConnectionsService, Connection } from '../../services/connections.service';
 import { Mascot, MascotState } from '../../shared/mascot/mascot';
 
@@ -27,23 +31,46 @@ const STEP_ORDER: Step[] = [
 export class ConnectingState implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
-  private readonly guac = inject(GuacamoleClientService);
+  private readonly sessionManager = inject(GuacamoleSessionManagerService);
   private readonly connections = inject(ConnectionsService);
   private readonly destroyRef = inject(DestroyRef);
 
   private navTimerId: ReturnType<typeof setTimeout> | null = null;
 
   readonly steps = STEP_ORDER;
-  readonly state = this.guac.state;
-  readonly progress = this.guac.progress;
-  readonly logs = this.guac.logs;
-  readonly errorMsg = this.guac.error;
+
+  // Reactive route param — reactive to param changes without component re-creation.
+  readonly connectionId = toSignal(this.route.paramMap.pipe(map((p) => p.get('id'))), {
+    initialValue: this.route.snapshot.paramMap.get('id'),
+  });
+
+  // Read session signals via the manager map so reactivity is maintained.
+  readonly state = computed(() => {
+    const id = this.connectionId();
+    if (!id) return 'idle' as GuacState;
+    return this.sessionManager.sessions().get(id)?.state() ?? ('idle' as GuacState);
+  });
+  readonly progress = computed(() => {
+    const id = this.connectionId();
+    if (!id) return 0;
+    return this.sessionManager.sessions().get(id)?.progress() ?? 0;
+  });
+  readonly logs = computed(() => {
+    const id = this.connectionId();
+    if (!id) return [];
+    return this.sessionManager.sessions().get(id)?.logs() ?? [];
+  });
+  readonly errorMsg = computed(() => {
+    const id = this.connectionId();
+    if (!id) return null;
+    return this.sessionManager.sessions().get(id)?.error() ?? null;
+  });
+
   readonly connection = computed<Connection | null>(() => {
     const id = this.connectionId();
     if (!id) return null;
     return this.connections.listAsMap().get(id) ?? null;
   });
-  readonly connectionId = computed(() => this.route.snapshot.paramMap.get('id'));
 
   readonly mascotState = computed<MascotState>(() => {
     const s = this.state();
@@ -89,7 +116,6 @@ export class ConnectingState implements OnInit, OnDestroy {
       const s = this.state();
       const id = this.connectionId();
       if (s === 'connected' && id) {
-        // Defer to next macrotask so the bound view reflects READY before nav.
         this.navTimerId = setTimeout(() => this.router.navigate(['/session', id]), 350);
       }
     });
@@ -101,22 +127,17 @@ export class ConnectingState implements OnInit, OnDestroy {
       this.router.navigate(['/vault']);
       return;
     }
-    // Make sure the connection list is populated so we can show the name.
     if (this.connections.list().length === 0) {
       this.connections
         .reload()
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({ error: () => {} });
     }
-    // Don't restart a connection that's already in flight for the same target
-    // (e.g., happens during route transition into ActiveSession on reconnect).
-    if (
-      this.state() !== 'connecting' &&
-      this.state() !== 'waiting' &&
-      this.state() !== 'connected'
-    ) {
-      this.guac.connect(id).catch(() => {
-        // Errors land in service.error and surface in the log feed.
+    const session = this.sessionManager.getOrCreate(id);
+    const s = session.state();
+    if (s !== 'connecting' && s !== 'waiting' && s !== 'connected' && s !== 'requesting-ticket') {
+      session.connect().catch(() => {
+        // Errors land in session.error() and surface in the log feed.
       });
     }
   }
@@ -126,22 +147,22 @@ export class ConnectingState implements OnInit, OnDestroy {
       clearTimeout(this.navTimerId);
       this.navTimerId = null;
     }
-    // We don't disconnect on destroy because navigating to /session/:id
-    // mounts ActiveSession which keeps using the same client instance.
+    // Don't disconnect on destroy — navigating to /session/:id reuses the session.
   }
 
   cancel(): void {
-    this.guac.disconnect();
-    this.guac.reset();
+    const id = this.connectionId();
+    if (id) this.sessionManager.destroy(id);
     this.router.navigate(['/vault']);
   }
 
   retry(): void {
     const id = this.connectionId();
     if (!id) return;
-    this.guac.disconnect();
-    this.guac.reset();
-    this.guac.connect(id).catch(() => {});
+    const session = this.sessionManager.getOrCreate(id);
+    session.disconnect();
+    session.reset();
+    session.connect().catch(() => {});
   }
 
   isStepDone(step: Step): boolean {

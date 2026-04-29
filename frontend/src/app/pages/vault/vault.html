@@ -122,19 +122,30 @@
               class="scan-card group flex flex-col text-left glass-card rounded-xl p-0 hover:border-primary/40 transition-all duration-200 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/5 overflow-hidden focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-surface"
             >
               <div class="p-4 flex items-start gap-3 flex-1">
-                <div
-                  [class]="
-                    'w-10 h-10 rounded-lg border flex items-center justify-center shrink-0 transition-colors ' +
-                    protocolIconBg(c.protocol)
-                  "
-                >
-                  <span
+                <div class="relative shrink-0">
+                  <div
                     [class]="
-                      'material-symbols-outlined transition-colors ' + protocolIconColor(c.protocol)
+                      'w-10 h-10 rounded-lg border flex items-center justify-center transition-colors ' +
+                      protocolIconBg(c.protocol)
                     "
                   >
-                    {{ protocolIcon(c.protocol) }}
-                  </span>
+                    <span
+                      [class]="
+                        'material-symbols-outlined transition-colors ' + protocolIconColor(c.protocol)
+                      "
+                    >
+                      {{ protocolIcon(c.protocol) }}
+                    </span>
+                  </div>
+                  <!-- Reachability dot -->
+                  <span
+                    class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border border-surface-container ring-[1.5px] ring-surface-container"
+                    [class.bg-green-500]="reachability(c.id) === 'up'"
+                    [class.bg-red-500]="reachability(c.id) === 'down'"
+                    [class.bg-on-surface-variant]="reachability(c.id) === 'unknown'"
+                    [class.opacity-30]="reachability(c.id) === 'unknown'"
+                    [title]="reachability(c.id) === 'up' ? 'Host reachable' : reachability(c.id) === 'down' ? 'Host unreachable' : 'Checking…'"
+                  ></span>
                 </div>
                 <div class="min-w-0 flex-1">
                   <div
@@ -145,6 +156,12 @@
                   <div class="text-xs text-on-surface-variant font-mono truncate mt-0.5 opacity-70">
                     {{ c.host?.address || '—' }}
                   </div>
+                  @if (lastConnectedLabel(c.id)) {
+                    <div class="text-[10px] text-on-surface-variant/50 mt-0.5 flex items-center gap-1">
+                      <span class="material-symbols-outlined text-[10px]">history</span>
+                      {{ lastConnectedLabel(c.id) }}
+                    </div>
+                  }
                 </div>
               </div>
               <div
@@ -160,11 +177,22 @@
                   "
                   >{{ c.protocol }}</span
                 >
-                <span
-                  class="text-[10px] uppercase tracking-widest text-primary opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 font-bold"
-                >
-                  Connect <span class="material-symbols-outlined text-[12px]">arrow_forward</span>
-                </span>
+                <div class="flex items-center gap-2">
+                  <span
+                    class="text-[10px] uppercase tracking-widest text-primary opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 font-bold"
+                  >
+                    Connect <span class="material-symbols-outlined text-[12px]">arrow_forward</span>
+                  </span>
+                  <button
+                    type="button"
+                    title="Download connection file"
+                    (click)="downloadFile(c, $event)"
+                    class="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-on-surface/10 focus:outline-none focus:ring-1 focus:ring-primary"
+                    aria-label="Download connection file"
+                  >
+                    <span class="material-symbols-outlined text-[14px] text-on-surface-variant">download</span>
+                  </button>
+                </div>
               </div>
             </button>
           }

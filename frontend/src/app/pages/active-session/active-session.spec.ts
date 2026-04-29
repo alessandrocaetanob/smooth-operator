@@ -3,6 +3,7 @@ import { provideRouter } from '@angular/router';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { of } from 'rxjs';
 import { describe, it, expect, beforeEach } from 'vitest';
 
 import { ActiveSession } from './active-session';
@@ -12,6 +13,7 @@ describe('ActiveSession', () => {
   let fixture: ComponentFixture<ActiveSession>;
 
   beforeEach(async () => {
+    const paramMap = convertToParamMap({ id: 'test-id' });
     await TestBed.configureTestingModule({
       imports: [ActiveSession],
       providers: [
@@ -20,7 +22,10 @@ describe('ActiveSession', () => {
         provideHttpClientTesting(),
         {
           provide: ActivatedRoute,
-          useValue: { snapshot: { paramMap: convertToParamMap({ id: 'test-id' }) } },
+          useValue: {
+            snapshot: { paramMap },
+            paramMap: of(paramMap),
+          },
         },
       ],
     }).compileComponents();
