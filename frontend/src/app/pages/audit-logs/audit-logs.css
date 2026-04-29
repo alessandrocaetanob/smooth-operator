@@ -29,26 +29,26 @@
 
 .action-connection {
   background: rgb(var(--color-tertiary) / 0.12);
-  color: rgb(var(--color-tertiary-fixed-dim));
-  border-color: rgb(var(--color-tertiary) / 0.3);
+  color: rgb(var(--color-tertiary));
+  border-color: rgb(var(--color-tertiary) / 0.35);
 }
 
 .action-ticket {
   background: rgb(var(--color-secondary) / 0.12);
-  color: rgb(var(--color-secondary-fixed-dim));
-  border-color: rgb(var(--color-secondary) / 0.3);
+  color: rgb(var(--color-secondary));
+  border-color: rgb(var(--color-secondary) / 0.35);
 }
 
 .action-user {
   background: rgb(var(--color-primary) / 0.12);
-  color: rgb(var(--color-primary-fixed-dim));
-  border-color: rgb(var(--color-primary) / 0.3);
+  color: rgb(var(--color-primary));
+  border-color: rgb(var(--color-primary) / 0.35);
 }
 
 .action-invite {
   background: rgba(168, 85, 247, 0.12);
-  color: rgba(196, 148, 253, 0.9);
-  border-color: rgba(168, 85, 247, 0.3);
+  color: rgb(147 51 234);
+  border-color: rgba(168, 85, 247, 0.35);
 }
 
 .action-system {
