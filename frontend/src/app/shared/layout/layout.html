@@ -1,3 +1,11 @@
+<!-- Skip to main content (screen reader / keyboard navigation) -->
+<a
+  href="#main-content"
+  class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:px-4 focus:py-2 focus:rounded-lg focus:bg-primary focus:text-on-primary focus:text-sm focus:font-semibold focus:shadow-lg focus:outline-none"
+>
+  Skip to main content
+</a>
+
 <!-- Ambient background layer (decorative, behind everything) -->
 <div class="ambient-bg" aria-hidden="true">
   <div class="ambient-blob ambient-blob--primary"></div>
@@ -9,6 +17,7 @@
 <app-top-nav-bar></app-top-nav-bar>
 <app-side-nav-bar></app-side-nav-bar>
 <main
+  id="main-content"
   class="pt-16 min-h-screen transition-[padding] duration-300 ease-out relative z-[1]"
   [class.md:pl-64]="!collapsed()"
   [class.md:pl-16]="collapsed()"

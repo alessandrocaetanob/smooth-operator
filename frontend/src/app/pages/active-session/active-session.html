@@ -1,17 +1,17 @@
 <!-- ── Session Header ──────────────────────────────────────────────────── -->
 <header
-  class="session-header fixed top-0 left-0 w-full z-50 flex justify-between items-center px-5 h-12 border-b border-white/5 shrink-0"
+  class="session-header fixed top-0 left-0 w-full z-50 flex justify-between items-center px-5 h-12 shrink-0"
 >
   <div class="flex items-center gap-4">
     <!-- Logo -->
-    <div class="flex items-center gap-2.5">
+   <div class="flex items-center gap-2.5">
       <app-mascot [isSmall]="true" [state]="mascotState()"></app-mascot>
-      <span class="text-sm font-black tracking-tighter text-white uppercase logo-glow"
+      <span class="text-sm font-black tracking-tighter text-on-surface uppercase logo-glow"
         >Smooth Operator</span
       >
     </div>
 
-    <div class="h-5 w-px bg-white/10"></div>
+    <div class="h-5 w-px bg-outline-variant/30"></div>
 
     <!-- Connection status pill -->
     <div class="flex items-center gap-2">
@@ -21,7 +21,7 @@
         [class.connecting]="state() === 'connecting' || state() === 'waiting'"
         [class.error]="state() === 'error' || state() === 'disconnected'"
       ></div>
-      <span class="text-xs text-white/45">
+      <span class="text-xs text-on-surface-variant/60">
         {{
           state() === 'connected'
             ? 'Connected to'
@@ -30,7 +30,7 @@
               : 'Connecting to'
         }}
       </span>
-      <span class="text-xs font-mono font-semibold text-white/85">
+      <span class="text-xs font-mono font-semibold text-on-surface/90">
         {{ remoteName() || connection()?.name || connectionId() }}
       </span>
       @if (protocol()) {
@@ -48,15 +48,16 @@
   </div>
 
   <div class="flex items-center gap-2">
+    <app-theme-toggle aria-label="Toggle theme"></app-theme-toggle>
     <button
       class="tool-btn-sm"
       (click)="minimize()"
-      title="Minimize session (keep connection alive)"
+      aria-label="Minimize session (keep connection alive)"
     >
-      <span class="material-symbols-outlined text-sm">minimize</span>
+      <span class="material-symbols-outlined text-sm" aria-hidden="true">minimize</span>
     </button>
-    <button class="terminate-btn" (click)="terminate()" title="Terminate session">
-      <span class="material-symbols-outlined text-sm">power_settings_new</span>
+    <button class="terminate-btn" (click)="terminate()" aria-label="Terminate session">
+      <span class="material-symbols-outlined text-sm" aria-hidden="true">power_settings_new</span>
       Terminate
     </button>
   </div>
@@ -98,8 +99,13 @@
       class="tool-btn-wrap"
       [attr.data-label]="toolbarCollapsed() ? 'Expand toolbar' : 'Collapse toolbar'"
     >
-      <button class="tool-btn" (click)="toggleToolbarCollapse()">
-        <span class="material-symbols-outlined text-base">{{
+      <button
+        class="tool-btn"
+        (click)="toggleToolbarCollapse()"
+        [attr.aria-label]="toolbarCollapsed() ? 'Expand toolbar' : 'Collapse toolbar'"
+        [attr.aria-expanded]="!toolbarCollapsed()"
+      >
+        <span class="material-symbols-outlined text-base" aria-hidden="true">{{
           toolbarCollapsed() ? 'chevron_left' : 'chevron_right'
         }}</span>
       </button>
@@ -110,6 +116,8 @@
       class="glass-panel rounded-2xl p-2 flex flex-col gap-1 shadow-[0_8px_32px_rgba(0,0,0,0.5)] transition-all duration-300"
       [class.toolbar-body-collapsed]="toolbarCollapsed()"
     >
+      <div class="h-px w-6 bg-outline-variant/20 mx-auto"></div>
+
       <!-- Health dot -->
       <div class="flex justify-center py-1.5">
         <div
@@ -120,39 +128,39 @@
         ></div>
       </div>
 
-      <div class="h-px w-6 bg-white/10 mx-auto"></div>
+      <div class="h-px w-6 bg-outline-variant/20 mx-auto"></div>
 
       <div class="tool-btn-wrap" data-label="Screenshot">
-        <button class="tool-btn" (click)="takeScreenshot()">
-          <span class="material-symbols-outlined text-lg">screenshot</span>
+        <button class="tool-btn" (click)="takeScreenshot()" aria-label="Take screenshot">
+          <span class="material-symbols-outlined text-lg" aria-hidden="true">screenshot</span>
         </button>
       </div>
 
-      <div class="h-px w-6 bg-white/10 mx-auto"></div>
+      <div class="h-px w-6 bg-outline-variant/20 mx-auto"></div>
 
       <div class="tool-btn-wrap" data-label="Ctrl+Alt+Del">
-        <button class="tool-btn" (click)="sendCtrlAltDel()">
-          <span class="material-symbols-outlined text-lg">restart_alt</span>
+        <button class="tool-btn" (click)="sendCtrlAltDel()" aria-label="Send Ctrl+Alt+Del">
+          <span class="material-symbols-outlined text-lg" aria-hidden="true">restart_alt</span>
         </button>
       </div>
 
       <div class="tool-btn-wrap" data-label="Key combo">
-        <button class="tool-btn" (click)="openKeyComboModal()">
-          <span class="material-symbols-outlined text-lg">keyboard</span>
+        <button class="tool-btn" (click)="openKeyComboModal()" aria-label="Send key combo">
+          <span class="material-symbols-outlined text-lg" aria-hidden="true">keyboard</span>
         </button>
       </div>
 
       <div class="tool-btn-wrap" data-label="Clipboard">
-        <button class="tool-btn" (click)="openClipboardModal()">
-          <span class="material-symbols-outlined text-lg">content_paste</span>
+        <button class="tool-btn" (click)="openClipboardModal()" aria-label="Clipboard sync">
+          <span class="material-symbols-outlined text-lg" aria-hidden="true">content_paste</span>
         </button>
       </div>
 
-      <div class="h-px w-6 bg-white/10 mx-auto"></div>
+      <div class="h-px w-6 bg-outline-variant/20 mx-auto"></div>
 
       <div class="tool-btn-wrap" data-label="Fullscreen">
-        <button class="tool-btn" (click)="toggleFullscreen()">
-          <span class="material-symbols-outlined text-lg">fullscreen</span>
+        <button class="tool-btn" (click)="toggleFullscreen()" aria-label="Toggle fullscreen">
+          <span class="material-symbols-outlined text-lg" aria-hidden="true">fullscreen</span>
         </button>
       </div>
     </div>
@@ -164,19 +172,23 @@
       data-guac-modal-open="true"
       class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
       (click)="closeKeyComboModal()"
+      (keydown.escape)="closeKeyComboModal()"
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="key-combo-title"
         class="glass-card rounded-xl w-full max-w-lg p-6 relative"
         (click)="$event.stopPropagation()"
       >
-        <h2 class="text-base font-semibold mb-3 flex items-center gap-2">
-          <span class="material-symbols-outlined text-sm text-primary">keyboard</span>
+        <h2 id="key-combo-title" class="text-base font-semibold mb-3 flex items-center gap-2">
+          <span class="material-symbols-outlined text-sm text-primary" aria-hidden="true">keyboard</span>
           Send Key Combo
         </h2>
 
         <!-- Live combo preview -->
-        <div class="combo-preview mb-4">
-          <span class="material-symbols-outlined text-sm opacity-40">keyboard_alt</span>
+        <div class="combo-preview mb-4" aria-live="polite">
+          <span class="material-symbols-outlined text-sm opacity-40" aria-hidden="true">keyboard_alt</span>
           {{ comboPreview() }}
         </div>
 
@@ -185,6 +197,7 @@
           <button
             class="modifier-key"
             [class.modifier-active]="comboCtrl()"
+            [attr.aria-pressed]="comboCtrl()"
             (click)="toggleModifier('ctrl')"
           >
             Ctrl
@@ -192,6 +205,7 @@
           <button
             class="modifier-key"
             [class.modifier-active]="comboAlt()"
+            [attr.aria-pressed]="comboAlt()"
             (click)="toggleModifier('alt')"
           >
             Alt
@@ -199,6 +213,7 @@
           <button
             class="modifier-key"
             [class.modifier-active]="comboShift()"
+            [attr.aria-pressed]="comboShift()"
             (click)="toggleModifier('shift')"
           >
             Shift
@@ -206,18 +221,20 @@
           <button
             class="modifier-key"
             [class.modifier-active]="comboSuper()"
+            [attr.aria-pressed]="comboSuper()"
             (click)="toggleModifier('super')"
           >
             ⊞ Win
           </button>
         </div>
 
-        <p class="text-xs text-white/30 mb-2 tracking-widest uppercase">Key</p>
+        <p class="text-xs text-on-surface-variant/40 mb-2 tracking-widest uppercase">Key</p>
         <div class="grid grid-cols-6 gap-1.5 mb-5 max-h-52 overflow-y-auto">
           @for (key of comboKeys; track key.keysym) {
             <button
               class="combo-key-btn"
               [class.combo-key-selected]="comboKey().keysym === key.keysym"
+              [attr.aria-pressed]="comboKey().keysym === key.keysym"
               (click)="selectComboKey(key)"
             >
               {{ key.label }}
@@ -233,10 +250,10 @@
             (click)="sendKeyCombo()"
           >
             @if (comboSent()) {
-              <span class="material-symbols-outlined text-sm">check</span>
+              <span class="material-symbols-outlined text-sm" aria-hidden="true">check</span>
               Sent!
             } @else {
-              <span class="material-symbols-outlined text-sm">send</span>
+              <span class="material-symbols-outlined text-sm" aria-hidden="true">send</span>
               Send
             }
           </button>
@@ -251,16 +268,20 @@
       data-guac-modal-open="true"
       class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
       (click)="closeClipboardModal()"
+      (keydown.escape)="closeClipboardModal()"
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="clipboard-title"
         class="glass-card rounded-xl w-full max-w-xl p-6 relative"
         (click)="$event.stopPropagation()"
       >
-        <h2 class="text-base font-semibold mb-1 flex items-center gap-2">
-          <span class="material-symbols-outlined text-sm text-primary">content_paste</span>
+        <h2 id="clipboard-title" class="text-base font-semibold mb-1 flex items-center gap-2">
+          <span class="material-symbols-outlined text-sm text-primary" aria-hidden="true">content_paste</span>
           Shared Clipboard
         </h2>
-        <p class="text-xs text-white/40 mb-4">
+        <p class="text-xs text-on-surface-variant/50 mb-4">
           Edit and push to host, or copy current host clipboard locally.
         </p>
 
@@ -268,12 +289,14 @@
         <div class="relative">
           <textarea
             rows="6"
-            class="w-full bg-black/50 border border-white/10 rounded-lg p-3 font-mono text-sm text-white/80 focus:outline-none focus:border-primary/50 resize-none leading-relaxed"
+            class="w-full bg-surface-container border border-outline-variant/30 rounded-lg p-3 font-mono text-sm text-on-surface/85 focus:outline-none focus:border-primary/50 resize-none leading-relaxed"
             [ngModel]="clipboardDraft()"
             (ngModelChange)="clipboardDraft.set($event)"
+            aria-label="Clipboard content"
           ></textarea>
           <div
-            class="absolute bottom-2 right-3 text-xs text-white/20 font-mono select-none pointer-events-none"
+            class="absolute bottom-2 right-3 text-xs text-on-surface-variant/30 font-mono select-none pointer-events-none"
+            aria-hidden="true"
           >
             {{ clipboardDraft().length }} chars
           </div>
@@ -285,7 +308,7 @@
             [disabled]="!hostClipboard()"
             (click)="copyHostClipboardLocally()"
           >
-            <span class="material-symbols-outlined text-sm">download</span>
+            <span class="material-symbols-outlined text-sm" aria-hidden="true">download</span>
             Copy host clipboard
           </button>
           <div class="flex gap-3">
@@ -298,10 +321,10 @@
               (click)="pushClipboardToHost()"
             >
               @if (clipboardPushed()) {
-                <span class="material-symbols-outlined text-sm">check</span>
+                <span class="material-symbols-outlined text-sm" aria-hidden="true">check</span>
                 Pushed!
               } @else {
-                <span class="material-symbols-outlined text-sm">send</span>
+                <span class="material-symbols-outlined text-sm" aria-hidden="true">send</span>
                 Push to host
               }
             </button>

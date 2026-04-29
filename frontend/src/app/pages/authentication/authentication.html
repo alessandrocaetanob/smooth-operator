@@ -65,6 +65,15 @@
             autocomplete="email"
             (input)="onEmailInput($event)"
           />
+          @if (form.controls.email.invalid && form.controls.email.touched) {
+            <p class="mt-1 text-xs text-error">
+              @if (form.controls.email.errors?.['required']) {
+                Email is required.
+              } @else {
+                Enter a valid email address.
+              }
+            </p>
+          }
         </div>
         <div>
           <div class="flex justify-between items-center mb-app-xs">
@@ -75,7 +84,7 @@
             >
             <a
               class="font-label-caps text-label-caps text-primary-fixed-dim hover:underline"
-              href="#"
+              routerLink="/forgot-password"
               >Forgot?</a
             >
           </div>
@@ -89,6 +98,9 @@
             (focus)="onPasswordFocus()"
             (blur)="onPasswordBlur()"
           />
+          @if (form.controls.password.invalid && form.controls.password.touched) {
+            <p class="mt-1 text-xs text-error">Password is required.</p>
+          }
         </div>
 
         @if (errorMessage()) {
