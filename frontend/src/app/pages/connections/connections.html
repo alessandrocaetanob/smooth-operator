@@ -300,8 +300,10 @@
             </select>
           </div>
           <input
+            id="connectionNewHostAddress"
             type="text"
             placeholder="Or enter new address (e.g., 10.0.0.5)"
+            aria-label="New host address"
             [ngModel]="form().newHostAddress"
             (ngModelChange)="
               patch('newHostAddress', $event); patch('hostId', ''); mascotState.set('typing')
@@ -372,7 +374,9 @@
 
       <!-- Tags -->
       <div class="space-y-1.5">
-        <label class="text-xs font-semibold text-on-surface-variant uppercase tracking-widest"
+        <label
+          class="text-xs font-semibold text-on-surface-variant uppercase tracking-widest"
+          for="connectionTagInput"
           >Tags</label
         >
         <!-- Tag chips display + input -->
@@ -398,6 +402,7 @@
           }
           <input
             #tagInput
+            id="connectionTagInput"
             type="text"
             placeholder="Add tag… (Enter or comma)"
             [ngModel]="tagInputValue()"
@@ -425,12 +430,14 @@
         </summary>
         <div class="mt-2 space-y-3">
           <textarea
+            id="connectionSettings"
             rows="5"
             [placeholder]="settingsPlaceholder()"
             [ngModel]="form().settings"
             (ngModelChange)="patch('settings', $event); mascotState.set('typing')"
             (blur)="mascotState.set('idle')"
             name="settings"
+            aria-label="Advanced settings (JSON)"
             class="input-field font-mono text-xs w-full resize-y"
           ></textarea>
 
