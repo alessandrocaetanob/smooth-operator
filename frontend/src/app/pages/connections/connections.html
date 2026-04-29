@@ -229,10 +229,13 @@
     <form (ngSubmit)="save()" class="space-y-5">
       <!-- Display Name -->
       <div class="space-y-1.5">
-        <label class="text-xs font-semibold text-on-surface-variant uppercase tracking-widest"
+        <label
+          class="text-xs font-semibold text-on-surface-variant uppercase tracking-widest"
+          for="connectionName"
           >Display Name</label
         >
         <input
+          id="connectionName"
           type="text"
           placeholder="e.g. Production DB Server"
           [ngModel]="form().name"
@@ -246,7 +249,9 @@
 
       <!-- Protocol -->
       <div class="space-y-1.5">
-        <label class="text-xs font-semibold text-on-surface-variant uppercase tracking-widest"
+        <label
+          class="text-xs font-semibold text-on-surface-variant uppercase tracking-widest"
+          for="connectionProtocol"
           >Protocol</label
         >
         <div class="relative">
@@ -255,6 +260,7 @@
             >swap_calls</span
           >
           <select
+            id="connectionProtocol"
             [ngModel]="form().protocol"
             (ngModelChange)="patch('protocol', $event)"
             name="protocol"
@@ -269,7 +275,9 @@
 
       <!-- Target Host -->
       <div class="space-y-1.5">
-        <label class="text-xs font-semibold text-on-surface-variant uppercase tracking-widest"
+        <label
+          class="text-xs font-semibold text-on-surface-variant uppercase tracking-widest"
+          for="connectionTargetHost"
           >Target Host</label
         >
         <div class="space-y-2">
@@ -279,6 +287,7 @@
               >dns</span
             >
             <select
+              id="connectionTargetHost"
               [ngModel]="form().hostId"
               (ngModelChange)="patch('hostId', $event); patch('newHostAddress', '')"
               name="hostId"
@@ -291,8 +300,10 @@
             </select>
           </div>
           <input
+            id="connectionNewHostAddress"
             type="text"
             placeholder="Or enter new address (e.g., 10.0.0.5)"
+            aria-label="New host address"
             [ngModel]="form().newHostAddress"
             (ngModelChange)="
               patch('newHostAddress', $event); patch('hostId', ''); mascotState.set('typing')
@@ -308,7 +319,9 @@
 
       <!-- Vault / Group -->
       <div class="space-y-1.5">
-        <label class="text-xs font-semibold text-on-surface-variant uppercase tracking-widest"
+        <label
+          class="text-xs font-semibold text-on-surface-variant uppercase tracking-widest"
+          for="connectionVaultGroup"
           >Vault / Group</label
         >
         <div class="relative">
@@ -317,6 +330,7 @@
             >folder_managed</span
           >
           <select
+            id="connectionVaultGroup"
             [ngModel]="form().connectionGroupId"
             (ngModelChange)="patch('connectionGroupId', $event)"
             name="connectionGroupId"
@@ -333,7 +347,9 @@
 
       <!-- Credentials -->
       <div class="space-y-1.5">
-        <label class="text-xs font-semibold text-on-surface-variant uppercase tracking-widest"
+        <label
+          class="text-xs font-semibold text-on-surface-variant uppercase tracking-widest"
+          for="connectionCredentials"
           >Credentials</label
         >
         <div class="relative">
@@ -342,6 +358,7 @@
             >key</span
           >
           <select
+            id="connectionCredentials"
             [ngModel]="form().credentialId"
             (ngModelChange)="patch('credentialId', $event)"
             name="credentialId"
@@ -357,7 +374,9 @@
 
       <!-- Tags -->
       <div class="space-y-1.5">
-        <label class="text-xs font-semibold text-on-surface-variant uppercase tracking-widest"
+        <label
+          class="text-xs font-semibold text-on-surface-variant uppercase tracking-widest"
+          for="connectionTagInput"
           >Tags</label
         >
         <!-- Tag chips display + input -->
@@ -383,6 +402,7 @@
           }
           <input
             #tagInput
+            id="connectionTagInput"
             type="text"
             placeholder="Add tag… (Enter or comma)"
             [ngModel]="tagInputValue()"
@@ -410,12 +430,14 @@
         </summary>
         <div class="mt-2 space-y-3">
           <textarea
+            id="connectionSettings"
             rows="5"
             [placeholder]="settingsPlaceholder()"
             [ngModel]="form().settings"
             (ngModelChange)="patch('settings', $event); mascotState.set('typing')"
             (blur)="mascotState.set('idle')"
             name="settings"
+            aria-label="Advanced settings (JSON)"
             class="input-field font-mono text-xs w-full resize-y"
           ></textarea>
 
