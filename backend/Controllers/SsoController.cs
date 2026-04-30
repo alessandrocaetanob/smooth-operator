@@ -23,6 +23,7 @@ namespace Backend.Controllers
         private readonly ISsoUserProvisioningService _provisioning;
         private readonly IAuditService _audit;
         private readonly ILogger<SsoController> _logger;
+        private readonly SsoUrlHelper _urls;
 
         public SsoController(
             ISsoProviderService providers,
@@ -30,7 +31,8 @@ namespace Backend.Controllers
             ISamlFlowService saml,
             ISsoUserProvisioningService provisioning,
             IAuditService audit,
-            ILogger<SsoController> logger)
+            ILogger<SsoController> logger,
+            SsoUrlHelper urls)
         {
             _providers = providers;
             _oidc = oidc;
@@ -38,6 +40,7 @@ namespace Backend.Controllers
             _provisioning = provisioning;
             _audit = audit;
             _logger = logger;
+            _urls = urls;
         }
 
         /// <summary>Public probe consumed by the login page to render the SSO button.</summary>
@@ -68,8 +71,8 @@ namespace Backend.Controllers
             {
                 var url = p.Type switch
                 {
-                    SsoProviderType.Oidc => await _oidc.BuildAuthorizationUrlAsync(SsoUrlHelper.CallbackUrl(Request), safeReturn),
-                    SsoProviderType.Saml => await _saml.BuildAuthnRequestUrlAsync(SsoUrlHelper.AcsUrl(Request), safeReturn),
+                    SsoProviderType.Oidc => await _oidc.BuildAuthorizationUrlAsync(_urls.CallbackUrl(Request), safeReturn),
+                    SsoProviderType.Saml => await _saml.BuildAuthnRequestUrlAsync(_urls.AcsUrl(Request), safeReturn),
                     _ => throw new InvalidOperationException("Unknown SSO provider type.")
                 };
                 return Redirect(url);
@@ -79,7 +82,7 @@ namespace Backend.Controllers
                 _logger.LogError(ex, "Failed to build SSO authorization URL");
                 await _audit.WriteAsync("sso.login_failed", "sso", "",
                     new { stage = "initiate", error = ex.Message, providerType = p.Type.ToString() });
-                return Redirect(SsoUrlHelper.FinalizeErrorUrl(Request, "initiate_failed"));
+                return Redirect(_urls.FinalizeErrorUrl(Request, "initiate_failed"));
             }
         }
 
@@ -92,28 +95,28 @@ namespace Backend.Controllers
             {
                 await _audit.WriteAsync("sso.login_failed", "sso", "",
                     new { stage = "callback", reason = "idp_error", error });
-                return Redirect(SsoUrlHelper.FinalizeErrorUrl(Request, error!));
+                return Redirect(_urls.FinalizeErrorUrl(Request, error!));
             }
 
             try
             {
-                var (identity, returnUrl) = await _oidc.HandleCallbackAsync(code ?? "", state ?? "", SsoUrlHelper.CallbackUrl(Request));
+                var (identity, returnUrl) = await _oidc.HandleCallbackAsync(code ?? "", state ?? "", _urls.CallbackUrl(Request));
                 var result = await _provisioning.ProvisionOrLinkAsync(SsoProviderType.Oidc, identity.ExternalId, identity.Email, identity.Name);
-                return Redirect(SsoUrlHelper.FinalizeUrl(Request, result.Token, returnUrl));
+                return Redirect(_urls.FinalizeUrl(Request, result.Token, returnUrl));
             }
             catch (UnauthorizedAccessException ex)
             {
                 _logger.LogWarning(ex, "OIDC callback rejected");
                 await _audit.WriteAsync("sso.login_failed", "sso", "",
                     new { stage = "callback", reason = ex.Message, providerType = "Oidc" });
-                return Redirect(SsoUrlHelper.FinalizeErrorUrl(Request, "unauthorized"));
+                return Redirect(_urls.FinalizeErrorUrl(Request, "unauthorized"));
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "OIDC callback failed");
                 await _audit.WriteAsync("sso.login_failed", "sso", "",
                     new { stage = "callback", reason = "exception", error = ex.Message, providerType = "Oidc" });
-                return Redirect(SsoUrlHelper.FinalizeErrorUrl(Request, "callback_failed"));
+                return Redirect(_urls.FinalizeErrorUrl(Request, "callback_failed"));
             }
         }
 
@@ -126,21 +129,21 @@ namespace Backend.Controllers
             {
                 var (identity, returnUrl) = await _saml.HandleAssertionAsync(Request);
                 var result = await _provisioning.ProvisionOrLinkAsync(SsoProviderType.Saml, identity.ExternalId, identity.Email, identity.Name);
-                return Redirect(SsoUrlHelper.FinalizeUrl(Request, result.Token, returnUrl));
+                return Redirect(_urls.FinalizeUrl(Request, result.Token, returnUrl));
             }
             catch (UnauthorizedAccessException ex)
             {
                 _logger.LogWarning(ex, "SAML ACS rejected");
                 await _audit.WriteAsync("sso.login_failed", "sso", "",
                     new { stage = "acs", reason = ex.Message, providerType = "Saml" });
-                return Redirect(SsoUrlHelper.FinalizeErrorUrl(Request, "unauthorized"));
+                return Redirect(_urls.FinalizeErrorUrl(Request, "unauthorized"));
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "SAML ACS failed");
                 await _audit.WriteAsync("sso.login_failed", "sso", "",
                     new { stage = "acs", reason = "exception", error = ex.Message, providerType = "Saml" });
-                return Redirect(SsoUrlHelper.FinalizeErrorUrl(Request, "acs_failed"));
+                return Redirect(_urls.FinalizeErrorUrl(Request, "acs_failed"));
             }
         }
 
@@ -156,7 +159,7 @@ namespace Backend.Controllers
 
             try
             {
-                var xml = await _saml.GetSpMetadataAsync(SsoUrlHelper.AcsUrl(Request), SsoUrlHelper.MetadataUrl(Request));
+                var xml = await _saml.GetSpMetadataAsync(_urls.AcsUrl(Request), _urls.MetadataUrl(Request));
                 return Content(xml, "application/samlmetadata+xml");
             }
             catch (Exception ex)

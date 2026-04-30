@@ -94,16 +94,18 @@ describe('SsoSettingsService', () => {
   });
 
   it('upsertOidc() PUTs to /api/settings/sso/oidc', () => {
-    svc.upsertOidc({
-      name: 'n',
-      authority: 'https://x',
-      clientId: 'c',
-      clientSecret: 's',
-      scopes: 'openid',
-      subjectClaim: 'sub',
-      emailClaim: 'email',
-      nameClaim: 'name',
-    }).subscribe();
+    svc
+      .upsertOidc({
+        name: 'n',
+        authority: 'https://x',
+        clientId: 'c',
+        clientSecret: 's',
+        scopes: 'openid',
+        subjectClaim: 'sub',
+        emailClaim: 'email',
+        nameClaim: 'name',
+      })
+      .subscribe();
     const req = http.expectOne('/api/settings/sso/oidc');
     expect(req.request.method).toBe('PUT');
     expect(req.request.body.name).toBe('n');

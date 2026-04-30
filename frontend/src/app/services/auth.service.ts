@@ -244,10 +244,10 @@ export class AuthService {
 
   private isJwtExpired(token: string): boolean {
     const payload = this.jwtPayload(token);
-    if (!payload || typeof payload['exp'] !== 'number') return false;
+    if (!payload || typeof payload['exp'] !== 'number') return true;
     // Treat 5s before server expiry as already expired so guards fail-fast
     // instead of letting an about-to-die token through.
-    return payload['exp'] * 1000 < Date.now() - 5_000;
+    return payload['exp'] * 1000 < Date.now() + 5_000;
   }
 
   private readStoredToken(): string | null {

@@ -35,6 +35,7 @@ builder.Services.AddScoped<IOidcFlowService, OidcFlowService>();
 builder.Services.AddScoped<ISamlFlowService, SamlFlowService>();
 builder.Services.AddScoped<ISsoUserProvisioningService, SsoUserProvisioningService>();
 builder.Services.AddScoped<ISsoConnectionTester, SsoConnectionTester>();
+builder.Services.AddScoped<SsoUrlHelper>();
 builder.Services.AddHttpClient();
 
 // Local JWT (HS256) is the only token format we accept on the wire — even SSO

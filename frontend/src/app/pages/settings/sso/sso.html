@@ -39,12 +39,7 @@
           }}</span>
           {{ current()?.isEnabled ? 'Disable' : 'Enable' }}
         </button>
-        <button
-          type="button"
-          (click)="runTest()"
-          [disabled]="testBusy()"
-          class="btn-secondary"
-        >
+        <button type="button" (click)="runTest()" [disabled]="testBusy()" class="btn-secondary">
           <span class="material-symbols-outlined text-sm" aria-hidden="true">network_check</span>
           {{ testBusy() ? 'Testing…' : 'Test connection' }}
         </button>
@@ -93,9 +88,7 @@
       <div>
         <p>{{ tr.message }}</p>
         @if (tr.details) {
-          <pre class="mt-2 text-xs opacity-80 whitespace-pre-wrap">{{
-            tr.details | json
-          }}</pre>
+          <pre class="mt-2 text-xs opacity-80 whitespace-pre-wrap">{{ tr.details | json }}</pre>
         }
       </div>
     </div>
@@ -196,6 +189,7 @@
                 (ngModelChange)="oidcClientSecret.set($event)"
                 name="oidcClientSecret"
                 [placeholder]="current()?.oidc?.hasClientSecret ? '••••••••' : 'Required'"
+                [required]="!current()?.oidc?.hasClientSecret"
                 class="w-full input-field"
               />
             </div>
@@ -315,6 +309,7 @@
               name="samlSpCertificate"
               rows="6"
               placeholder="-----BEGIN CERTIFICATE-----&#10;…&#10;-----END CERTIFICATE-----"
+              required
               class="w-full input-field font-mono text-xs"
             ></textarea>
           </div>
@@ -420,7 +415,9 @@
                 class="flex-1 input-field font-mono text-xs"
               />
               <button type="button" (click)="copyMetadataUrl()" class="btn-secondary">
-                <span class="material-symbols-outlined text-sm" aria-hidden="true">content_copy</span>
+                <span class="material-symbols-outlined text-sm" aria-hidden="true"
+                  >content_copy</span
+                >
                 Copy
               </button>
             </div>

@@ -1,38 +1,53 @@
 using System;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 
 namespace Backend.Services.Sso
 {
     /// <summary>
-    /// Helpers for safely building same-origin URLs used by the SSO flows.
-    /// Trust X-Forwarded-* headers because Program.cs configures
-    /// <see cref="Microsoft.AspNetCore.Builder.ForwardedHeadersExtensions.UseForwardedHeaders"/>.
+    /// Injectable helper for building URLs used by the SSO flows.
+    /// Base origin is sourced from FRONTEND_URL / APP_URL configuration so
+    /// the constructed URIs are not attacker-controllable via the Host header
+    /// (guards against host-header injection when AllowedHosts is permissive).
+    /// Falls back to req.Scheme://req.Host only when no base URL is configured.
     /// </summary>
-    public static class SsoUrlHelper
+    public class SsoUrlHelper
     {
-        public static string Origin(HttpRequest req) =>
-            $"{req.Scheme}://{req.Host}";
+        private readonly string _baseUrl;
 
-        public static string CallbackUrl(HttpRequest req) =>
+        public SsoUrlHelper(IConfiguration config)
+        {
+            _baseUrl = (config["FRONTEND_URL"] ?? config["APP_URL"] ?? "").TrimEnd('/');
+        }
+
+        private string Origin(HttpRequest req) =>
+            string.IsNullOrEmpty(_baseUrl) ? $"{req.Scheme}://{req.Host}" : _baseUrl;
+
+        public string CallbackUrl(HttpRequest req) =>
             $"{Origin(req)}/api/auth/sso/callback";
 
-        public static string AcsUrl(HttpRequest req) =>
+        public string AcsUrl(HttpRequest req) =>
             $"{Origin(req)}/api/auth/sso/acs";
 
-        public static string MetadataUrl(HttpRequest req) =>
+        public string MetadataUrl(HttpRequest req) =>
             $"{Origin(req)}/api/auth/sso/metadata";
 
-        public static string FinalizeUrl(HttpRequest req, string token, string returnUrl)
+        /// <summary>
+        /// Builds the finalize redirect URL with the JWT in the URL fragment
+        /// (after #) rather than a query parameter to reduce token exposure in
+        /// browser history, reverse-proxy logs, and Referer headers.
+        /// </summary>
+        public string FinalizeUrl(HttpRequest req, string token, string returnUrl)
         {
             var encodedToken = Uri.EscapeDataString(token);
             var encodedReturn = Uri.EscapeDataString(returnUrl);
-            return $"{Origin(req)}/auth/sso/finalize?token={encodedToken}&returnUrl={encodedReturn}";
+            return $"{Origin(req)}/auth/sso/finalize#token={encodedToken}&returnUrl={encodedReturn}";
         }
 
-        public static string FinalizeErrorUrl(HttpRequest req, string error)
+        public string FinalizeErrorUrl(HttpRequest req, string error)
         {
             var encoded = Uri.EscapeDataString(error);
-            return $"{Origin(req)}/auth/sso/finalize?error={encoded}";
+            return $"{Origin(req)}/auth/sso/finalize#error={encoded}";
         }
 
         /// <summary>

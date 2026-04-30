@@ -194,7 +194,11 @@ export class SsoSettings implements OnInit {
 
   remove(): void {
     if (this.deleteBusy()) return;
-    if (!confirm('Delete the configured SSO provider? Users with active SSO links will keep their accounts but will need to re-link after a new provider is configured.')) {
+    if (
+      !confirm(
+        'Delete the configured SSO provider? Users with active SSO links will keep their accounts but will need to re-link after a new provider is configured.',
+      )
+    ) {
       return;
     }
     this.deleteBusy.set(true);

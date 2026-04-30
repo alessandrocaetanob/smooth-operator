@@ -105,8 +105,7 @@ export const routes: Routes = [
           },
           {
             path: 'sso',
-            loadComponent: () =>
-              import('./pages/settings/sso/sso').then((m) => m.SsoSettings),
+            loadComponent: () => import('./pages/settings/sso/sso').then((m) => m.SsoSettings),
           },
           {
             path: 'retention',

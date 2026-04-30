@@ -180,7 +180,7 @@ namespace Backend.Controllers
             await _audit.WriteAsync("sso.tested", "sso", "",
                 new { success = result.Success, message = result.Message });
             if (!result.Success) return BadRequest(new { message = result.Message, details = result.Details });
-            return Ok(new { message = result.Message, details = result.Details });
+            return Ok(new { success = true, message = result.Message, details = result.Details });
         }
     }
 }

@@ -16,7 +16,8 @@ export class SsoFinalize implements OnInit {
   readonly errorMessage = signal<string | null>(null);
 
   ngOnInit(): void {
-    const params = this.route.snapshot.queryParamMap;
+    const fragment = this.route.snapshot.fragment ?? '';
+    const params = new URLSearchParams(fragment);
     const error = params.get('error');
     const token = params.get('token');
     const returnUrl = params.get('returnUrl') || '/vault';
