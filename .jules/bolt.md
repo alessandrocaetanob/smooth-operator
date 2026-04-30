@@ -10,3 +10,6 @@
 ## 2026-04-27 - SLN Configuration Error
 **Learning:** The smooth-operator.sln file contained a duplicate project entry for the 'backend' folder, which causes dotnet restore to fail with MSB5004.
 **Action:** Removed the duplicate Solution Folder entry for 'backend' to restore successful builds.
+## 2026-04-30 - O(N) Array Filter in Computed Signals inside Loops
+**Learning:** Using an O(N) array `.filter()` inside a computed signal or method that is called from an Angular `@for` loop creates an O(M*N) performance bottleneck. In this codebase, `getConnectionsForVault` was doing exactly this on every change detection cycle.
+**Action:** Replaced the filtering logic with a single `computed` signal (`vaultConnectionCounts`) that iterates over the connections list once to build a lookup map of counts per vault. The template now performs an O(1) map lookup `vaultConnectionCounts().get(v.key)`, eliminating the bottleneck.
