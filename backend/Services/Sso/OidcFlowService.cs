@@ -173,6 +173,7 @@ namespace Backend.Services.Sso
             };
 
             var handler = new JwtSecurityTokenHandler();
+            handler.InboundClaimTypeMap.Clear(); // Keep original JWT claim names (sub, email, name) unremapped
             var principal = handler.ValidateToken(idToken, validationParameters, out var validated);
 
             if (!string.IsNullOrEmpty(expectedNonce))
