@@ -148,6 +148,35 @@
           <h3 class="settings-card-title">OIDC provider</h3>
         </div>
         <div class="settings-card-body space-y-3">
+          <!-- IdP registration info -->
+          <div class="rounded-lg border border-primary/20 bg-primary/5 p-3 text-sm space-y-2">
+            <p class="font-medium text-on-surface flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-base text-primary">info</span>
+              Register this app in your identity provider
+            </p>
+            <p class="text-xs text-on-surface-variant">
+              When creating the app / client in your IdP (Entra ID, Okta, Keycloak, etc.), add the
+              following as an allowed <strong>Redirect URI</strong>:
+            </p>
+            <div class="flex items-center gap-2">
+              <code
+                class="flex-1 block bg-surface-container border border-outline-variant/40 px-2 py-1 rounded text-xs font-mono break-all"
+                >{{ callbackUrl() }}</code
+              >
+              <button
+                type="button"
+                (click)="copyCallbackUrl()"
+                title="Copy redirect URI"
+                class="shrink-0 p-1.5 rounded hover:bg-on-surface/5 text-on-surface-variant hover:text-on-surface transition-colors"
+              >
+                <span class="material-symbols-outlined text-base">content_copy</span>
+              </button>
+            </div>
+            <p class="text-xs text-on-surface-variant">
+              For <strong>Entra ID</strong>: App registrations → your app → Authentication → Add
+              platform → Web → paste the URL above.
+            </p>
+          </div>
           <div>
             <label class="settings-label">Authority (issuer)</label>
             <input
@@ -252,6 +281,58 @@
           <h3 class="settings-card-title">SAML 2.0 provider</h3>
         </div>
         <div class="settings-card-body space-y-3">
+          <!-- IdP registration info -->
+          <div class="rounded-lg border border-primary/20 bg-primary/5 p-3 text-sm space-y-2">
+            <p class="font-medium text-on-surface flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-base text-primary">info</span>
+              Register this app in your identity provider
+            </p>
+            <p class="text-xs text-on-surface-variant">
+              When configuring the SP (service provider) in your IdP, use these URLs:
+            </p>
+            <div class="space-y-1.5">
+              <div>
+                <p class="text-xs font-medium text-on-surface-variant mb-1">
+                  ACS URL (Assertion Consumer Service)
+                </p>
+                <div class="flex items-center gap-2">
+                  <code
+                    class="flex-1 block bg-surface-container border border-outline-variant/40 px-2 py-1 rounded text-xs font-mono break-all"
+                    >{{ acsUrl() }}</code
+                  >
+                  <button
+                    type="button"
+                    (click)="copyAcsUrl()"
+                    title="Copy ACS URL"
+                    class="shrink-0 p-1.5 rounded hover:bg-on-surface/5 text-on-surface-variant hover:text-on-surface transition-colors"
+                  >
+                    <span class="material-symbols-outlined text-base">content_copy</span>
+                  </button>
+                </div>
+              </div>
+              <div>
+                <p class="text-xs font-medium text-on-surface-variant mb-1">SP Metadata URL</p>
+                <div class="flex items-center gap-2">
+                  <code
+                    class="flex-1 block bg-surface-container border border-outline-variant/40 px-2 py-1 rounded text-xs font-mono break-all"
+                    >{{ metadataUrl() }}</code
+                  >
+                  <button
+                    type="button"
+                    (click)="copyMetadataUrl()"
+                    title="Copy metadata URL"
+                    class="shrink-0 p-1.5 rounded hover:bg-on-surface/5 text-on-surface-variant hover:text-on-surface transition-colors"
+                  >
+                    <span class="material-symbols-outlined text-base">content_copy</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <p class="text-xs text-on-surface-variant">
+              Most IdPs can auto-import SP settings from the metadata URL. Use the ACS URL as the
+              <strong>Reply URL</strong> when importing manually.
+            </p>
+          </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <label class="settings-label">SP entity ID</label>

@@ -54,6 +54,8 @@ export class SsoSettings implements OnInit {
   readonly samlWantResponseSigned = signal(true);
 
   readonly metadataUrl = computed(() => `${window.location.origin}/api/auth/sso/metadata`);
+  readonly callbackUrl = computed(() => `${window.location.origin}/api/auth/sso/callback`);
+  readonly acsUrl = computed(() => `${window.location.origin}/api/auth/sso/acs`);
   readonly hasProvider = computed(() => !!this.current()?.type);
   readonly providerLabel = computed(() => {
     const c = this.current();
@@ -244,6 +246,20 @@ export class SsoSettings implements OnInit {
   copyMetadataUrl(): void {
     navigator.clipboard?.writeText(this.metadataUrl()).then(
       () => this.message.set('Metadata URL copied to clipboard.'),
+      () => this.error.set('Could not copy to clipboard.'),
+    );
+  }
+
+  copyCallbackUrl(): void {
+    navigator.clipboard?.writeText(this.callbackUrl()).then(
+      () => this.message.set('Redirect URI copied to clipboard.'),
+      () => this.error.set('Could not copy to clipboard.'),
+    );
+  }
+
+  copyAcsUrl(): void {
+    navigator.clipboard?.writeText(this.acsUrl()).then(
+      () => this.message.set('ACS URL copied to clipboard.'),
       () => this.error.set('Could not copy to clipboard.'),
     );
   }
