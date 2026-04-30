@@ -197,7 +197,8 @@ export class Connections implements OnInit {
     const settingsObj = this.parseSettings(c.settings || '{}');
     this.termColorScheme.set(settingsObj['color-scheme'] ?? 'gray-black');
     this.termFontName.set(settingsObj['font-name'] ?? 'monospace');
-    this.termFontSize.set(Number(settingsObj['font-size'] ?? 12));
+    const rawFontSize = Number(settingsObj['font-size']);
+    this.termFontSize.set(Number.isFinite(rawFontSize) ? rawFontSize : 12);
 
     // Strip terminal appearance keys from displayed settings
     if (c.protocol === 'ssh') {
@@ -213,7 +214,7 @@ export class Connections implements OnInit {
       hostId: c.hostId,
       connectionGroupId: c.connectionGroupId ?? '',
       credentialId: c.credentialId ?? '',
-      settings: Object.keys(settingsObj).length ? JSON.stringify(settingsObj, null, 2) : (c.settings || '{}'),
+      settings: Object.keys(settingsObj).length ? JSON.stringify(settingsObj, null, 2) : '{}',
       newHostAddress: '',
       tags: [...(c.tags ?? [])],
     });

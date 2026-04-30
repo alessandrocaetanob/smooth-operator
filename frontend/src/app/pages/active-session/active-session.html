@@ -4,7 +4,7 @@
 >
   <div class="flex items-center gap-4">
     <!-- Logo -->
-   <div class="flex items-center gap-2.5">
+    <div class="flex items-center gap-2.5">
       <app-mascot [isSmall]="true" [state]="mascotState()"></app-mascot>
       <span class="text-sm font-black tracking-tighter text-on-surface uppercase logo-glow"
         >Smooth Operator</span
@@ -182,13 +182,17 @@
         (click)="$event.stopPropagation()"
       >
         <h2 id="key-combo-title" class="text-base font-semibold mb-3 flex items-center gap-2">
-          <span class="material-symbols-outlined text-sm text-primary" aria-hidden="true">keyboard</span>
+          <span class="material-symbols-outlined text-sm text-primary" aria-hidden="true"
+            >keyboard</span
+          >
           Send Key Combo
         </h2>
 
         <!-- Live combo preview -->
         <div class="combo-preview mb-4" aria-live="polite">
-          <span class="material-symbols-outlined text-sm opacity-40" aria-hidden="true">keyboard_alt</span>
+          <span class="material-symbols-outlined text-sm opacity-40" aria-hidden="true"
+            >keyboard_alt</span
+          >
           {{ comboPreview() }}
         </div>
 
@@ -278,7 +282,9 @@
         (click)="$event.stopPropagation()"
       >
         <h2 id="clipboard-title" class="text-base font-semibold mb-1 flex items-center gap-2">
-          <span class="material-symbols-outlined text-sm text-primary" aria-hidden="true">content_paste</span>
+          <span class="material-symbols-outlined text-sm text-primary" aria-hidden="true"
+            >content_paste</span
+          >
           Shared Clipboard
         </h2>
         <p class="text-xs text-on-surface-variant/50 mb-4">

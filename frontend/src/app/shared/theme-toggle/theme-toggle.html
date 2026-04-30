@@ -28,9 +28,11 @@
   <button
     type="button"
     (click)="toggle()"
-    [class]="compact
-      ? 'compact-btn'
-      : 'p-2 rounded-md text-on-surface-variant hover:text-on-surface hover:bg-on-surface/5 transition-colors btn-interactive'"
+    [class]="
+      compact
+        ? 'compact-btn'
+        : 'p-2 rounded-md text-on-surface-variant hover:text-on-surface hover:bg-on-surface/5 transition-colors btn-interactive'
+    "
     [attr.aria-label]="
       themeService.theme() === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'
     "

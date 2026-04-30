@@ -1,5 +1,5 @@
 import { DatePipe, SlicePipe } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AuditLogEntry, AuditLogQuery, AuditLogsService } from '../../services/audit-logs.service';
 
@@ -12,10 +12,21 @@ import { AuditLogEntry, AuditLogQuery, AuditLogsService } from '../../services/a
 export class AuditLogs implements OnInit {
   private readonly svc = inject(AuditLogsService);
 
+  @ViewChild('closeBtn') closeBtnRef?: ElementRef<HTMLButtonElement>;
+
   readonly result = this.svc.result;
   readonly loading = signal(false);
 
   readonly selectedEntry = signal<AuditLogEntry | null>(null);
+
+  constructor() {
+    effect(() => {
+      if (this.selectedEntry()) {
+        // Move focus into the panel so Escape keydown reaches the aside handler
+        setTimeout(() => this.closeBtnRef?.nativeElement.focus(), 0);
+      }
+    });
+  }
 
   selectEntry(entry: AuditLogEntry): void {
     this.selectedEntry.set(entry);

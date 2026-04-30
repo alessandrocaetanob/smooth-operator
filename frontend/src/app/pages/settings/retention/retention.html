@@ -8,28 +8,37 @@
   </div>
 
   @if (message()) {
-    <div class="mb-4 p-3 border border-tertiary/40 bg-tertiary/10 rounded-lg text-sm text-tertiary flex items-center gap-2">
+    <div
+      class="mb-4 p-3 border border-tertiary/40 bg-tertiary/10 rounded-lg text-sm text-tertiary flex items-center gap-2"
+    >
       <span class="material-symbols-outlined text-base">check_circle</span>
       {{ message() }}
     </div>
   }
   @if (error()) {
-    <div class="mb-4 p-3 border border-error/40 bg-error/10 rounded-lg text-sm text-error flex items-center gap-2">
+    <div
+      class="mb-4 p-3 border border-error/40 bg-error/10 rounded-lg text-sm text-error flex items-center gap-2"
+    >
       <span class="material-symbols-outlined text-base">error</span>
       {{ error() }}
     </div>
   }
 
   <form (ngSubmit)="save()" class="space-y-4">
-
     <!-- Retention window card -->
     <div class="retention-card">
       <div class="retention-card-header">
-        <span class="material-symbols-outlined" style="color: rgb(var(--color-primary)); font-size: 20px">schedule</span>
+        <span
+          class="material-symbols-outlined"
+          style="color: rgb(var(--color-primary)); font-size: 20px"
+          >schedule</span
+        >
         <h3 class="text-sm font-semibold text-on-surface">Retention window</h3>
       </div>
       <div class="p-5">
-        <p class="text-xs uppercase tracking-widest text-on-surface-variant mb-3 font-semibold">Quick select</p>
+        <p class="text-xs uppercase tracking-widest text-on-surface-variant mb-3 font-semibold">
+          Quick select
+        </p>
         <div class="flex flex-wrap gap-2 mb-5">
           @for (p of presets; track p.days) {
             <button
@@ -46,7 +55,10 @@
 
         <div class="flex items-end gap-4">
           <div class="max-w-[180px]">
-            <label for="retentionDays" class="block text-xs uppercase tracking-widest text-on-surface-variant mb-2 font-semibold">
+            <label
+              for="retentionDays"
+              class="block text-xs uppercase tracking-widest text-on-surface-variant mb-2 font-semibold"
+            >
               Custom (days)
             </label>
             <input
@@ -64,11 +76,18 @@
           </div>
           <div class="retention-description pb-2">
             @if (retentionDays() === 0) {
-              <span class="material-symbols-outlined text-tertiary" style="font-size: 16px">all_inclusive</span>
+              <span class="material-symbols-outlined text-tertiary" style="font-size: 16px"
+                >all_inclusive</span
+              >
               <span class="text-tertiary text-sm font-medium">Kept forever</span>
             } @else {
-              <span class="material-symbols-outlined text-amber-400" style="font-size: 16px">schedule</span>
-              <span class="text-on-surface-variant text-sm">Purged after <strong class="text-on-surface">{{ retentionDays() }}</strong> day(s)</span>
+              <span class="material-symbols-outlined text-amber-400" style="font-size: 16px"
+                >schedule</span
+              >
+              <span class="text-on-surface-variant text-sm"
+                >Purged after
+                <strong class="text-on-surface">{{ retentionDays() }}</strong> day(s)</span
+              >
             }
           </div>
         </div>
@@ -78,7 +97,11 @@
     <!-- Compliance reference card -->
     <div class="retention-card">
       <div class="retention-card-header">
-        <span class="material-symbols-outlined" style="color: rgb(var(--color-secondary)); font-size: 20px">verified_user</span>
+        <span
+          class="material-symbols-outlined"
+          style="color: rgb(var(--color-secondary)); font-size: 20px"
+          >verified_user</span
+        >
         <h3 class="text-sm font-semibold text-on-surface">Compliance reference</h3>
       </div>
       <div class="p-4">
@@ -102,7 +125,8 @@
           </div>
         </div>
         <p class="text-xs text-on-surface-variant/50 mt-3">
-          Set to <strong class="text-on-surface-variant/80">0</strong> to keep logs forever — the safest option for compliance.
+          Set to <strong class="text-on-surface-variant/80">0</strong> to keep logs forever — the
+          safest option for compliance.
         </p>
       </div>
     </div>
@@ -112,12 +136,7 @@
         <span class="material-symbols-outlined text-sm" aria-hidden="true">save</span>
         {{ busy() ? 'Saving…' : 'Save' }}
       </button>
-      <button
-        type="button"
-        class="btn-ghost"
-        (click)="refresh()"
-        [disabled]="loading() || busy()"
-      >
+      <button type="button" class="btn-ghost" (click)="refresh()" [disabled]="loading() || busy()">
         <span class="material-symbols-outlined text-sm" aria-hidden="true">undo</span>
         Reset
       </button>

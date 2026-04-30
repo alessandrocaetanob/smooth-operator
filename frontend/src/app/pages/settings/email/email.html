@@ -14,7 +14,11 @@
       <div>
         <p class="font-medium">SMTP relay configured</p>
         <p class="text-xs opacity-70">
-          {{ current()?.enabled ? 'Active — the system will send emails.' : 'Configured but currently disabled.' }}
+          {{
+            current()?.enabled
+              ? 'Active — the system will send emails.'
+              : 'Configured but currently disabled.'
+          }}
         </p>
       </div>
     </div>
@@ -23,7 +27,9 @@
       <span class="material-symbols-outlined">warning</span>
       <div>
         <p class="font-medium">No SMTP relay configured</p>
-        <p class="text-xs opacity-70">Invitation and password-reset links must be shared manually.</p>
+        <p class="text-xs opacity-70">
+          Invitation and password-reset links must be shared manually.
+        </p>
       </div>
     </div>
   }
@@ -42,7 +48,6 @@
   }
 
   <form (ngSubmit)="save()" class="space-y-4">
-
     <!-- Card: Server Connection -->
     <div class="settings-card">
       <div class="settings-card-header">
@@ -132,7 +137,9 @@
               class="w-full input-field disabled:opacity-50"
             />
             @if (current()?.hasPassword) {
-              <label class="flex items-center gap-2 text-xs text-on-surface-variant mt-2 cursor-pointer">
+              <label
+                class="flex items-center gap-2 text-xs text-on-surface-variant mt-2 cursor-pointer"
+              >
                 <input
                   type="checkbox"
                   [ngModel]="clearPassword()"
@@ -194,7 +201,9 @@
             </span>
           </span>
           <span>Relay enabled</span>
-          <span class="toggle-hint">When disabled, emails are not sent even if SMTP is configured</span>
+          <span class="toggle-hint"
+            >When disabled, emails are not sent even if SMTP is configured</span
+          >
         </label>
       </div>
     </div>

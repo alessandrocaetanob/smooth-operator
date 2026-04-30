@@ -48,8 +48,9 @@ export class ForgotPassword implements OnInit {
         },
         error: () => {
           this.submitting.set(false);
-          // Show generic success to avoid email enumeration, same as backend
-          this.submitted.set(true);
+          // Transport failure — set error message so the banner renders.
+          // Keep submitted false so the user can retry.
+          this.errorMessage.set('An unexpected error occurred. Please try again.');
         },
       });
   }

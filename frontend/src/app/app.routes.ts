@@ -21,12 +21,14 @@ export const routes: Routes = [
   { path: 'invite/:token', component: Invite },
   {
     path: 'session/:id',
-    loadComponent: () => import('./pages/active-session/active-session').then((m) => m.ActiveSession),
+    loadComponent: () =>
+      import('./pages/active-session/active-session').then((m) => m.ActiveSession),
     canActivate: [authGuard],
   },
   {
     path: 'connecting/:id',
-    loadComponent: () => import('./pages/connecting-state/connecting-state').then((m) => m.ConnectingState),
+    loadComponent: () =>
+      import('./pages/connecting-state/connecting-state').then((m) => m.ConnectingState),
     canActivate: [authGuard],
   },
   {
@@ -35,7 +37,10 @@ export const routes: Routes = [
     canActivate: [authGuard],
     children: [
       { path: 'vault', loadComponent: () => import('./pages/vault/vault').then((m) => m.Vault) },
-      { path: 'my-access', loadComponent: () => import('./pages/my-access/my-access').then((m) => m.MyAccess) },
+      {
+        path: 'my-access',
+        loadComponent: () => import('./pages/my-access/my-access').then((m) => m.MyAccess),
+      },
       {
         path: 'connections',
         loadComponent: () => import('./pages/connections/connections').then((m) => m.Connections),
@@ -51,22 +56,58 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/credentials/credentials').then((m) => m.Credentials),
         canActivate: [connectionManagerGuard],
       },
-      { path: 'empty', loadComponent: () => import('./pages/empty-state/empty-state').then((m) => m.EmptyState) },
-      { path: 'search', loadComponent: () => import('./pages/search-results/search-results').then((m) => m.SearchResults) },
-      { path: 'profile', loadComponent: () => import('./pages/profile/profile').then((m) => m.Profile) },
+      {
+        path: 'empty',
+        loadComponent: () => import('./pages/empty-state/empty-state').then((m) => m.EmptyState),
+      },
+      {
+        path: 'search',
+        loadComponent: () =>
+          import('./pages/search-results/search-results').then((m) => m.SearchResults),
+      },
+      {
+        path: 'profile',
+        loadComponent: () => import('./pages/profile/profile').then((m) => m.Profile),
+      },
       {
         path: 'settings',
         loadComponent: () => import('./pages/settings/settings').then((m) => m.Settings),
         canActivate: [ownerAdminGuard],
         children: [
           { path: '', pathMatch: 'full', redirectTo: 'users' },
-          { path: 'users', loadComponent: () => import('./pages/administration/administration').then((m) => m.Administration) },
-          { path: 'groups', loadComponent: () => import('./pages/settings/groups/groups').then((m) => m.SettingsGroups) },
-          { path: 'vaults', loadComponent: () => import('./pages/settings/vaults/vaults').then((m) => m.SettingsVaults) },
-          { path: 'roles', loadComponent: () => import('./pages/settings/roles/roles').then((m) => m.SettingsRoles) },
-          { path: 'email', loadComponent: () => import('./pages/settings/email/email').then((m) => m.Email) },
-          { path: 'retention', loadComponent: () => import('./pages/settings/retention/retention').then((m) => m.Retention) },
-          { path: 'audit-logs', loadComponent: () => import('./pages/audit-logs/audit-logs').then((m) => m.AuditLogs) },
+          {
+            path: 'users',
+            loadComponent: () =>
+              import('./pages/administration/administration').then((m) => m.Administration),
+          },
+          {
+            path: 'groups',
+            loadComponent: () =>
+              import('./pages/settings/groups/groups').then((m) => m.SettingsGroups),
+          },
+          {
+            path: 'vaults',
+            loadComponent: () =>
+              import('./pages/settings/vaults/vaults').then((m) => m.SettingsVaults),
+          },
+          {
+            path: 'roles',
+            loadComponent: () =>
+              import('./pages/settings/roles/roles').then((m) => m.SettingsRoles),
+          },
+          {
+            path: 'email',
+            loadComponent: () => import('./pages/settings/email/email').then((m) => m.Email),
+          },
+          {
+            path: 'retention',
+            loadComponent: () =>
+              import('./pages/settings/retention/retention').then((m) => m.Retention),
+          },
+          {
+            path: 'audit-logs',
+            loadComponent: () => import('./pages/audit-logs/audit-logs').then((m) => m.AuditLogs),
+          },
         ],
       },
       { path: 'administration', redirectTo: 'settings/users', pathMatch: 'full' },
