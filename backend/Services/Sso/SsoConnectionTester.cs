@@ -43,7 +43,11 @@ namespace Backend.Services.Sso
                     var cfg = await _providers.GetDecryptedOidcAsync()
                         ?? throw new InvalidOperationException("OIDC config could not be decrypted.");
                     var http = _httpFactory.CreateClient("sso-oidc");
-                    var disco = await http.GetDiscoveryDocumentAsync(cfg.Authority);
+                    var disco = await http.GetDiscoveryDocumentAsync(new DiscoveryDocumentRequest
+                    {
+                        Address = cfg.Authority,
+                        Policy = new DiscoveryPolicy { ValidateEndpoints = false }
+                    });
                     if (disco.IsError)
                         return new SsoTestResult(false, $"OIDC discovery failed: {disco.Error}");
                     return new SsoTestResult(true, "OIDC discovery succeeded.", new

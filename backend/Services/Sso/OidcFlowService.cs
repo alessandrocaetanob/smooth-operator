@@ -138,7 +138,11 @@ namespace Backend.Services.Sso
         private async Task<DiscoveryDocumentResponse> GetDiscoveryAsync(string authority)
         {
             var http = _httpFactory.CreateClient("sso-oidc");
-            var disco = await http.GetDiscoveryDocumentAsync(authority);
+            var disco = await http.GetDiscoveryDocumentAsync(new DiscoveryDocumentRequest
+            {
+                Address = authority,
+                Policy = new DiscoveryPolicy { ValidateEndpoints = false }
+            });
             if (disco.IsError) throw new InvalidOperationException($"OIDC discovery failed: {disco.Error}");
             return disco;
         }
