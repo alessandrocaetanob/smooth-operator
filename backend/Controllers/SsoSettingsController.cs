@@ -100,7 +100,9 @@ namespace Backend.Controllers
 
             var cfg = new OidcConfig
             {
-                Authority = req.Authority.Trim().TrimEnd('/'),
+                Authority = req.Authority.Trim()
+                    .TrimEnd('/')
+                    .Replace("/.well-known/openid-configuration", string.Empty, StringComparison.OrdinalIgnoreCase),
                 ClientId = req.ClientId.Trim(),
                 ClientSecret = clientSecret,
                 Scopes = string.IsNullOrWhiteSpace(req.Scopes) ? "openid profile email" : req.Scopes.Trim(),

@@ -150,8 +150,11 @@ namespace Backend.Services.Sso
         private static async Task<System.Security.Claims.ClaimsPrincipal> ValidateIdTokenAsync(
             string idToken, OidcConfig cfg, DiscoveryDocumentResponse disco, string? expectedNonce)
         {
+            // Use disco.Issuer (canonical clean URL) so we never double-append /.well-known/openid-configuration
+            // regardless of what the user typed in the authority field.
+            var metadataAddress = $"{disco.Issuer.TrimEnd('/')}/.well-known/openid-configuration";
             var configManager = new ConfigurationManager<OpenIdConnectConfiguration>(
-                $"{cfg.Authority.TrimEnd('/')}/.well-known/openid-configuration",
+                metadataAddress,
                 new OpenIdConnectConfigurationRetriever(),
                 new HttpDocumentRetriever());
 
