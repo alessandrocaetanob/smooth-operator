@@ -1,8 +1,8 @@
 using Backend.Data;
 using Backend.Services;
+using Backend.Services.Sso;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.Identity.Web;
 using Microsoft.AspNetCore.RateLimiting;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -27,65 +27,29 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IAccessControlService, AccessControlService>();
 builder.Services.AddHostedService<AuditRetentionService>();
 
-// Local JWT (HS256) is the default authentication scheme so the app works without
-// any external identity provider. Entra ID (or any other OIDC provider) is opt-in
-// and only registered when the relevant configuration is present.
-const string LocalScheme = JwtBearerDefaults.AuthenticationScheme;
-const string EntraScheme = "EntraId";
+// SSO services. Single configured provider (OIDC or SAML 2.0) — the app issues
+// its own short-lived HS256 JWT after the IdP flow, so all authenticated requests
+// always go through the local JwtBearer handler regardless of how the user logged in.
+builder.Services.AddScoped<ISsoProviderService, SsoProviderService>();
+builder.Services.AddScoped<IOidcFlowService, OidcFlowService>();
+builder.Services.AddScoped<ISamlFlowService, SamlFlowService>();
+builder.Services.AddScoped<ISsoUserProvisioningService, SsoUserProvisioningService>();
+builder.Services.AddScoped<ISsoConnectionTester, SsoConnectionTester>();
+builder.Services.AddHttpClient();
 
+// Local JWT (HS256) is the only token format we accept on the wire — even SSO
+// users carry a JWT minted by TokenService after the IdP flow completes.
 var tokenService = new TokenService(builder.Configuration);
 builder.Services.AddSingleton<ITokenService>(tokenService);
 
-var entraSection = builder.Configuration.GetSection("AzureAd");
-var entraEnabled = !string.IsNullOrWhiteSpace(entraSection["ClientId"])
-                   && !string.IsNullOrWhiteSpace(entraSection["TenantId"]);
-
-var authBuilder = builder.Services.AddAuthentication(options =>
+builder.Services.AddAuthentication(options =>
 {
-    options.DefaultAuthenticateScheme = LocalScheme;
-    options.DefaultChallengeScheme = LocalScheme;
-});
-
-authBuilder.AddJwtBearer(LocalScheme, options =>
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer(options =>
 {
     options.TokenValidationParameters = tokenService.BuildValidationParameters();
-
-    // When Entra is enabled, hand off tokens whose issuer matches Entra to the Entra handler.
-    if (entraEnabled)
-    {
-        options.ForwardDefaultSelector = ctx =>
-        {
-            var auth = ctx.Request.Headers["Authorization"].ToString();
-            const string bearer = "Bearer ";
-            if (!auth.StartsWith(bearer, StringComparison.OrdinalIgnoreCase))
-            {
-                return LocalScheme;
-            }
-
-            var token = auth.Substring(bearer.Length).Trim();
-            try
-            {
-                var jwt = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler().ReadJwtToken(token);
-                var iss = jwt.Issuer ?? string.Empty;
-                if (iss.Contains("login.microsoftonline.com", StringComparison.OrdinalIgnoreCase)
-                    || iss.Contains("sts.windows.net", StringComparison.OrdinalIgnoreCase))
-                {
-                    return EntraScheme;
-                }
-            }
-            catch
-            {
-                // fall through – local handler will reject malformed tokens
-            }
-            return LocalScheme;
-        };
-    }
 });
-
-if (entraEnabled)
-{
-    authBuilder.AddMicrosoftIdentityWebApi(entraSection, jwtBearerScheme: EntraScheme);
-}
 
 // Add rate limiting
 builder.Services.AddRateLimiter(options =>

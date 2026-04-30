@@ -50,6 +50,15 @@ namespace Backend.Services
 
                 try
                 {
+                    await PurgeExpiredSsoStatesAsync(stoppingToken);
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                {
+                    _logger.LogError(ex, "Expired SSO auth-state purge failed");
+                }
+
+                try
+                {
                     await Task.Delay(PurgeInterval, stoppingToken);
                 }
                 catch (TaskCanceledException) { return; }
@@ -96,6 +105,24 @@ namespace Backend.Services
                     IpAddress = string.Empty,
                 });
                 await db.SaveChangesAsync(ct);
+            }
+        }
+
+        private async Task PurgeExpiredSsoStatesAsync(CancellationToken ct)
+        {
+            using var scope = _scopeFactory.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+            var now = DateTime.UtcNow;
+            var deleted = await db.SsoAuthStates
+                .Where(s => s.ExpiresAt < now)
+                .ExecuteDeleteAsync(ct);
+
+            if (deleted > 0)
+            {
+                _logger.LogInformation(
+                    "SSO auth-state sweep removed {Count} expired rows older than {Now:o}",
+                    deleted, now);
             }
         }
     }

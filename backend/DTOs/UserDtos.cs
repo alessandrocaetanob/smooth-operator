@@ -10,7 +10,8 @@ namespace Backend.DTOs
         public string Email { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
         public bool IsActive { get; set; }
-        public bool LinkedToEntra { get; set; }
+        public bool SsoLinked { get; set; }
+        public string? SsoProviderType { get; set; }
         public bool HasPassword { get; set; }
         public DateTime CreatedAt { get; set; }
         public List<string> Roles { get; set; } = new();

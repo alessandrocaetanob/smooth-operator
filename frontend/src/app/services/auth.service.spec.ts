@@ -29,7 +29,8 @@ describe('AuthService', () => {
         email: 'test@example.com',
         name: 'Test User',
         hasPassword: true,
-        linkedToEntra: false,
+        ssoLinked: false,
+        ssoProviderType: null,
         roles: ['Admin'],
       };
 

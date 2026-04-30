@@ -20,6 +20,10 @@ export const routes: Routes = [
   { path: 'first-access', component: FirstAccess, canActivate: [setupGuard] },
   { path: 'invite/:token', component: Invite },
   {
+    path: 'auth/sso/finalize',
+    loadComponent: () => import('./pages/sso-finalize/sso-finalize').then((m) => m.SsoFinalize),
+  },
+  {
     path: 'session/:id',
     loadComponent: () =>
       import('./pages/active-session/active-session').then((m) => m.ActiveSession),
@@ -98,6 +102,11 @@ export const routes: Routes = [
           {
             path: 'email',
             loadComponent: () => import('./pages/settings/email/email').then((m) => m.Email),
+          },
+          {
+            path: 'sso',
+            loadComponent: () =>
+              import('./pages/settings/sso/sso').then((m) => m.SsoSettings),
           },
           {
             path: 'retention',

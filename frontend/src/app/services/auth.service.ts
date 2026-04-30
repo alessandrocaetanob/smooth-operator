@@ -2,9 +2,15 @@ import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap, of, catchError } from 'rxjs';
 
+export interface SsoInfo {
+  enabled: boolean;
+  type: 'Oidc' | 'Saml';
+  name: string;
+}
+
 export interface Providers {
   local: boolean;
-  entraId: boolean;
+  sso: SsoInfo | null;
 }
 
 export interface SetupStatus {
@@ -17,7 +23,8 @@ export interface UserInfo {
   email: string;
   name: string;
   hasPassword: boolean;
-  linkedToEntra: boolean;
+  ssoLinked: boolean;
+  ssoProviderType: string | null;
   avatarUrl?: string | null;
   roles: string[];
 }
@@ -36,10 +43,10 @@ export class AuthService {
 
   // Backend returns PascalCase by default (no JsonOptions configured), so we
   // normalise on read instead of forcing the server to camelCase.
-  private readonly _token = signal<string | null>(localStorage.getItem(TOKEN_KEY));
+  private readonly _token = signal<string | null>(this.readStoredToken());
   private readonly _setup = signal<SetupStatus>({
     requiresSetup: false,
-    providers: { local: true, entraId: false },
+    providers: { local: true, sso: null },
   });
   private readonly _user = signal<UserInfo | null>(this.userFromStoredToken(this._token()));
 
@@ -48,7 +55,10 @@ export class AuthService {
   readonly providers = computed(() => this._setup().providers);
   readonly requiresSetup = computed(() => this._setup().requiresSetup);
   readonly currentUser = this._user.asReadonly();
-  readonly isAuthenticated = computed(() => !!this._token());
+  readonly isAuthenticated = computed(() => {
+    const t = this._token();
+    return !!t && !this.isJwtExpired(t);
+  });
 
   readonly isOwnerOrAdmin = computed(() => this.hasAnyRole('Owner', 'Admin'));
   readonly isTeamAdmin = computed(() => this.hasRole('TeamAdmin'));
@@ -77,7 +87,7 @@ export class AuthService {
         // moment the API hiccups, which has happened in production.
         const fallback: SetupStatus = {
           requiresSetup: false,
-          providers: { local: true, entraId: false },
+          providers: { local: true, sso: null },
         };
         this._setup.set(fallback);
         return of(fallback);
@@ -132,11 +142,17 @@ export class AuthService {
 
   private normalizeStatus(raw: any): SetupStatus {
     const providers = raw.providers ?? raw.Providers ?? {};
+    const ssoEnabled = providers.sso ?? providers.Sso ?? false;
+    const ssoType = providers.ssoType ?? providers.SsoType ?? null;
+    const ssoName = providers.ssoName ?? providers.SsoName ?? null;
     return {
       requiresSetup: raw.requiresSetup ?? raw.RequiresSetup ?? false,
       providers: {
         local: providers.local ?? providers.Local ?? true,
-        entraId: providers.entraId ?? providers.EntraId ?? false,
+        sso:
+          ssoEnabled && (ssoType === 'Oidc' || ssoType === 'Saml')
+            ? { enabled: true, type: ssoType, name: ssoName ?? 'Single Sign-On' }
+            : null,
       },
     };
   }
@@ -150,7 +166,8 @@ export class AuthService {
       email: raw?.email ?? raw?.Email ?? '',
       name: raw?.name ?? raw?.Name ?? '',
       hasPassword: raw?.hasPassword ?? raw?.HasPassword ?? false,
-      linkedToEntra: raw?.linkedToEntra ?? raw?.LinkedToEntra ?? false,
+      ssoLinked: raw?.ssoLinked ?? raw?.SsoLinked ?? false,
+      ssoProviderType: raw?.ssoProviderType ?? raw?.SsoProviderType ?? null,
       avatarUrl: raw?.avatarUrl ?? raw?.AvatarUrl ?? null,
       roles,
     };
@@ -158,6 +175,19 @@ export class AuthService {
 
   setCurrentUser(user: UserInfo): void {
     this._user.set(user);
+  }
+
+  /**
+   * Accepts a JWT minted by the backend after a successful SSO callback.
+   * Persists it like a normal local-login token; caller is expected to
+   * follow up with `me()` to populate the user signal.
+   */
+  acceptSsoToken(token: string): void {
+    if (!token) return;
+    localStorage.setItem(TOKEN_KEY, token);
+    this._token.set(token);
+    this._user.set(this.userFromStoredToken(token));
+    this._setup.update((s) => ({ ...s, requiresSetup: false }));
   }
 
   private userFromStoredToken(token: string | null): UserInfo | null {
@@ -185,7 +215,8 @@ export class AuthService {
         payload['email'] ??
         '',
       hasPassword: false,
-      linkedToEntra: false,
+      ssoLinked: false,
+      ssoProviderType: null,
       roles: this.normalizeRoles(roleClaim),
     };
   }
@@ -209,6 +240,24 @@ export class AuthService {
     } catch {
       return null;
     }
+  }
+
+  private isJwtExpired(token: string): boolean {
+    const payload = this.jwtPayload(token);
+    if (!payload || typeof payload['exp'] !== 'number') return false;
+    // Treat 5s before server expiry as already expired so guards fail-fast
+    // instead of letting an about-to-die token through.
+    return payload['exp'] * 1000 < Date.now() - 5_000;
+  }
+
+  private readStoredToken(): string | null {
+    const t = localStorage.getItem(TOKEN_KEY);
+    if (!t) return null;
+    if (this.isJwtExpired(t)) {
+      localStorage.removeItem(TOKEN_KEY);
+      return null;
+    }
+    return t;
   }
 
   private normalizeRoles(raw: any): string[] {

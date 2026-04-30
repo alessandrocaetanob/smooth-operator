@@ -10,13 +10,26 @@
     <PackageReference Include="AspNetCore.HealthChecks.NpgSql" Version="9.0.0" />
     <PackageReference Include="AspNetCore.HealthChecks.Redis" Version="9.0.0" />
     <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
+    <PackageReference Include="Duende.IdentityModel" Version="8.1.0" />
+    <PackageReference Include="ITfoxtec.Identity.Saml2" Version="4.17.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.7" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="10.0.7" />
+    <!-- ITfoxtec.Identity.Saml2 pulls Microsoft.IdentityModel.Tokens 8.15.0 transitively
+         while Microsoft.AspNetCore.Authentication.JwtBearer floors JsonWebTokens / Protocols
+         at 8.0.1. The version split causes JsonWebTokens 8.0.1 to call a Base64UrlEncoder
+         overload that doesn't exist in Tokens 8.15.0 (MissingMethodException -> every token
+         is rejected as "invalid_token"). Pin the whole IdentityModel set to 8.15.0. -->
+    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.15.0" />
+    <PackageReference Include="Microsoft.IdentityModel.Protocols" Version="8.15.0" />
+    <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.15.0" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.15.0" />
+    <!-- Pin EFCore.Relational to 10.0.7 to align with EFCore.InMemory used by tests
+         and avoid MSB3277 version conflict against Npgsql.EntityFrameworkCore.PostgreSQL. -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.7" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.7">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.Identity.Web" Version="4.8.0" />
     <PackageReference Include="MailKit" Version="4.16.0" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.1" />
     <PackageReference Include="StackExchange.Redis" Version="2.12.14" />
