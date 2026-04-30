@@ -1,0 +1,38 @@
+---
+sidebar_position: 2
+title: Interactive Swagger UI
+---
+
+# Interactive Swagger UI
+
+The embedded Swagger UI below lets you browse all API endpoints, read request/response schemas, and execute requests directly from your browser.
+
+:::info Prerequisites
+The Swagger UI requires the backend to be running with `ASPNETCORE_ENVIRONMENT=Development`.
+
+With Docker Compose this is already set. Open the app and make sure `http://localhost:5000/swagger` is accessible before using the frame below.
+:::
+
+## Authenticate in Swagger UI
+
+1. Click the **Authorize 🔓** button at the top of the Swagger UI
+2. Log in via `POST /api/auth/login` to get a token
+3. Copy the `token` value from the response
+4. Click **Authorize 🔓**, enter `Bearer <your-token>`, click **Authorize**
+
+All subsequent requests in Swagger will include your token automatically.
+
+---
+
+<iframe
+  src="http://localhost:5000/swagger"
+  className="swagger-iframe"
+  title="Smooth Operator Swagger UI"
+  allow="clipboard-read; clipboard-write"
+/>
+
+---
+
+:::tip Can't see the Swagger UI?
+If the iframe shows an error, open [http://localhost:5000/swagger](http://localhost:5000/swagger) directly in a new tab. The backend container may still be starting up, or `ASPNETCORE_ENVIRONMENT` may not be set to `Development`.
+:::

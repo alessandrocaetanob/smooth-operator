@@ -117,7 +117,21 @@
     </button>
   </div>
 
-  <div class="p-2 border-t border-outline-variant/20">
+  <div class="p-2 border-t border-outline-variant/20 space-y-1">
+    <a
+      [href]="helpUrl"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="w-full flex items-center gap-3 px-3 py-2.5 text-on-surface-variant hover:text-primary hover:bg-primary/5 transition-all rounded-lg"
+      [class.justify-center]="collapsed()"
+      [attr.title]="collapsed() ? 'Help & Documentation' : null"
+      [attr.aria-label]="'Help & Documentation'"
+    >
+      <span class="material-symbols-outlined text-lg" aria-hidden="true">help</span>
+      @if (!collapsed()) {
+        <span>Help</span>
+      }
+    </a>
     <button
       (click)="logout()"
       class="w-full flex items-center gap-3 px-3 py-2.5 text-on-surface-variant hover:text-error hover:bg-error/10 transition-all rounded-lg"
