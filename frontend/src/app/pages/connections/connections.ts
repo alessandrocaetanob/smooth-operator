@@ -1,5 +1,6 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { NgClass } from '@angular/common';
 import { forkJoin, Observable, of } from 'rxjs';
 import { switchMap, catchError } from 'rxjs/operators';
 import {
@@ -28,6 +29,30 @@ interface FormState {
   tags: string[];
 }
 
+interface TermColorScheme {
+  value: string;
+  label: string;
+  preview: string;
+}
+
+const TERM_COLOR_SCHEMES: TermColorScheme[] = [
+  { value: 'gray-black', label: 'Gray / Black', preview: '#111' },
+  { value: 'green-black', label: 'Green / Black', preview: '#0d1a0d' },
+  { value: 'white-black', label: 'White / Black', preview: '#1a1a1a' },
+  { value: 'black-white', label: 'Black / White', preview: '#f5f5f5' },
+  { value: 'solarized-dark', label: 'Solarized Dark', preview: '#002b36' },
+  { value: 'solarized-light', label: 'Solarized Light', preview: '#fdf6e3' },
+];
+
+const TERM_FONT_NAMES = [
+  'monospace',
+  'Courier New',
+  'Consolas',
+  'DejaVu Sans Mono',
+  'Source Code Pro',
+  'Inconsolata',
+];
+
 const EMPTY_FORM: FormState = {
   id: null,
   name: '',
@@ -52,7 +77,7 @@ const TAG_PALETTES = [
 
 @Component({
   selector: 'app-connections',
-  imports: [FormsModule, Mascot, Drawer, Spinner],
+  imports: [FormsModule, NgClass, Mascot, Drawer, Spinner],
   templateUrl: './connections.html',
   styleUrl: './connections.css',
 })
@@ -81,6 +106,13 @@ export class Connections implements OnInit {
   readonly busy = signal(false);
   readonly mascotState = signal<MascotState>('idle');
   readonly tagInputValue = signal('');
+
+  // Terminal appearance (SSH only)
+  readonly termColorScheme = signal('gray-black');
+  readonly termFontName = signal('monospace');
+  readonly termFontSize = signal(12);
+  readonly termColorSchemes = TERM_COLOR_SCHEMES;
+  readonly termFontNames = TERM_FONT_NAMES;
 
   // Search & filter
   readonly searchQuery = signal('');
@@ -162,6 +194,19 @@ export class Connections implements OnInit {
   }
 
   edit(c: Connection): void {
+    const settingsObj = this.parseSettings(c.settings || '{}');
+    this.termColorScheme.set(settingsObj['color-scheme'] ?? 'gray-black');
+    this.termFontName.set(settingsObj['font-name'] ?? 'monospace');
+    const rawFontSize = Number(settingsObj['font-size']);
+    this.termFontSize.set(Number.isFinite(rawFontSize) ? rawFontSize : 12);
+
+    // Strip terminal appearance keys from displayed settings
+    if (c.protocol === 'ssh') {
+      delete settingsObj['color-scheme'];
+      delete settingsObj['font-name'];
+      delete settingsObj['font-size'];
+    }
+
     this.form.set({
       id: c.id,
       name: c.name,
@@ -169,7 +214,7 @@ export class Connections implements OnInit {
       hostId: c.hostId,
       connectionGroupId: c.connectionGroupId ?? '',
       credentialId: c.credentialId ?? '',
-      settings: c.settings || '{}',
+      settings: Object.keys(settingsObj).length ? JSON.stringify(settingsObj, null, 2) : '{}',
       newHostAddress: '',
       tags: [...(c.tags ?? [])],
     });
@@ -182,6 +227,9 @@ export class Connections implements OnInit {
     this.errorMessage.set(null);
     this.tagInputValue.set('');
     this.mascotState.set('idle');
+    this.termColorScheme.set('gray-black');
+    this.termFontName.set('monospace');
+    this.termFontSize.set(12);
   }
 
   patch<K extends keyof FormState>(key: K, value: FormState[K]): void {
@@ -273,13 +321,21 @@ export class Connections implements OnInit {
     getHostId$()
       .pipe(
         switchMap((resolvedHostId) => {
+          let settingsJson = f.settings || '{}';
+          if (f.protocol === 'ssh') {
+            const obj = this.parseSettings(settingsJson);
+            obj['color-scheme'] = this.termColorScheme();
+            obj['font-name'] = this.termFontName();
+            obj['font-size'] = String(this.termFontSize());
+            settingsJson = JSON.stringify(obj);
+          }
           const payload: CreateConnectionPayload = {
             name: f.name.trim(),
             protocol: f.protocol,
             hostId: resolvedHostId,
             connectionGroupId: f.connectionGroupId || null,
             credentialId: f.credentialId || null,
-            settings: f.settings || '{}',
+            settings: settingsJson,
             tags: f.tags,
           };
 
@@ -359,6 +415,14 @@ export class Connections implements OnInit {
   vaultName(id: string | null | undefined): string {
     if (!id) return '—';
     return this.vaultsMap().get(id)?.name ?? '—';
+  }
+
+  private parseSettings(json: string): Record<string, string> {
+    try {
+      return JSON.parse(json) ?? {};
+    } catch {
+      return {};
+    }
   }
 
   private toMessage(err: any): string | null {

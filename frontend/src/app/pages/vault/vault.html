@@ -16,11 +16,9 @@
     <div class="p-2 space-y-1">
       <button
         (click)="selectVault(null)"
-        class="w-full flex items-center justify-between p-2 rounded-lg text-sm text-left transition-colors"
+        class="w-full flex items-center justify-between p-2 rounded-lg text-sm text-left transition-colors hover:bg-on-surface/10"
         [class.bg-primary-container]="!selectedVaultId()"
         [class.text-on-primary-container]="!selectedVaultId()"
-        [class.hover:bg-on-surface]="selectedVaultId()"
-        [class.hover:bg-opacity-5]="selectedVaultId()"
       >
         <span class="flex items-center gap-2">
           <span class="material-symbols-outlined text-[18px]">all_inbox</span>
@@ -32,11 +30,9 @@
       @for (v of vaultsMap() | keyvalue; track v.key) {
         <button
           (click)="selectVault(v.key)"
-          class="w-full flex items-center justify-between p-2 rounded-lg text-sm text-left transition-colors"
+          class="w-full flex items-center justify-between p-2 rounded-lg text-sm text-left transition-colors hover:bg-on-surface/10"
           [class.bg-primary-container]="selectedVaultId() === v.key"
           [class.text-on-primary-container]="selectedVaultId() === v.key"
-          [class.hover:bg-on-surface]="selectedVaultId() !== v.key"
-          [class.hover:bg-opacity-5]="selectedVaultId() !== v.key"
         >
           <span class="flex items-center gap-2 truncate">
             <span class="material-symbols-outlined text-[18px]">folder</span>

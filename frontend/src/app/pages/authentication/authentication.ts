@@ -1,6 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { Mascot, MascotState } from '../../shared/mascot/mascot';
 import { ThemeToggle } from '../../shared/theme-toggle/theme-toggle';
 import { AuthService } from '../../services/auth.service';
@@ -8,7 +8,7 @@ import { Spinner } from '../../shared/spinner/spinner';
 
 @Component({
   selector: 'app-authentication',
-  imports: [ReactiveFormsModule, Mascot, ThemeToggle, Spinner],
+  imports: [ReactiveFormsModule, RouterLink, Mascot, ThemeToggle, Spinner],
   templateUrl: './authentication.html',
   styleUrl: './authentication.css',
 })

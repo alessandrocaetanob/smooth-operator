@@ -6,6 +6,7 @@ import { SystemSettingsService } from '../../../services/system-settings.service
   selector: 'app-retention-settings',
   imports: [FormsModule],
   templateUrl: './retention.html',
+  styleUrl: './retention.css',
 })
 export class Retention implements OnInit {
   private readonly system = inject(SystemSettingsService);
@@ -16,6 +17,19 @@ export class Retention implements OnInit {
   readonly error = signal<string | null>(null);
 
   readonly retentionDays = signal(0);
+
+  readonly presets = [
+    { days: 0, label: 'Forever' },
+    { days: 30, label: '30 days' },
+    { days: 90, label: '90 days' },
+    { days: 180, label: '6 months' },
+    { days: 365, label: '1 year' },
+    { days: 730, label: '2 years' },
+  ];
+
+  selectPreset(days: number): void {
+    this.retentionDays.set(days);
+  }
 
   ngOnInit(): void {
     this.refresh();

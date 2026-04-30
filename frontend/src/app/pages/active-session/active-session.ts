@@ -27,6 +27,7 @@ import {
 import { ConnectionsService, Connection } from '../../services/connections.service';
 import { Mascot, MascotState } from '../../shared/mascot/mascot';
 import { Spinner } from '../../shared/spinner/spinner';
+import { ThemeToggle } from '../../shared/theme-toggle/theme-toggle';
 
 interface KeyOption {
   label: string;
@@ -64,7 +65,7 @@ const COMBO_KEYS: KeyOption[] = [
 
 @Component({
   selector: 'app-active-session',
-  imports: [CommonModule, FormsModule, Mascot, Spinner],
+  imports: [CommonModule, FormsModule, Mascot, Spinner, ThemeToggle],
   templateUrl: './active-session.html',
   styleUrl: './active-session.css',
 })

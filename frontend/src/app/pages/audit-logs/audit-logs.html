@@ -1,4 +1,4 @@
-<div>
+<div class="relative">
   <div class="flex items-center justify-between mb-6">
     <div>
       <h2 class="text-lg font-semibold text-on-surface">Audit Logs</h2>
@@ -6,17 +6,16 @@
         Every authentication and resource change is recorded.
       </p>
     </div>
-    <div class="flex items-center gap-2">
-      <button (click)="exportCsv()" class="btn-ghost">
-        <span class="material-symbols-outlined text-base">download</span>
-        Export CSV
-      </button>
-    </div>
+    <button (click)="exportCsv()" class="btn-ghost">
+      <span class="material-symbols-outlined text-base" aria-hidden="true">download</span>
+      Export CSV
+    </button>
   </div>
 
+  <!-- Filters -->
   <form
     (ngSubmit)="search()"
-    class="grid grid-cols-1 md:grid-cols-5 gap-3 mb-4 p-4 glass-card rounded-lg"
+    class="grid grid-cols-1 md:grid-cols-5 gap-3 mb-4 p-4 glass-card rounded-xl"
   >
     <input
       type="text"
@@ -58,46 +57,74 @@
     />
     <div class="md:col-span-5 flex justify-end gap-2">
       <button type="button" (click)="reset()" class="btn-ghost">Reset</button>
-      <button type="submit" class="btn-primary">Search</button>
+      <button type="submit" class="btn-primary">
+        <span class="material-symbols-outlined text-sm" aria-hidden="true">search</span>
+        Search
+      </button>
     </div>
   </form>
 
-  <div class="glass-card rounded-lg overflow-x-auto">
+  <!-- Table -->
+  <div class="glass-card rounded-xl overflow-x-auto">
     <table class="w-full text-sm">
-      <thead class="bg-white/5 text-[11px] uppercase tracking-widest text-on-surface-variant">
+      <thead
+        class="text-[11px] uppercase tracking-widest text-on-surface-variant border-b border-outline-variant/15"
+      >
         <tr>
-          <th class="text-left px-4 py-3 font-medium">Timestamp</th>
-          <th class="text-left px-4 py-3 font-medium">User</th>
-          <th class="text-left px-4 py-3 font-medium">Action</th>
-          <th class="text-left px-4 py-3 font-medium">Resource</th>
-          <th class="text-left px-4 py-3 font-medium">IP</th>
-          <th class="text-left px-4 py-3 font-medium">Details</th>
+          <th class="text-left px-4 py-3 font-semibold">Timestamp</th>
+          <th class="text-left px-4 py-3 font-semibold">User</th>
+          <th class="text-left px-4 py-3 font-semibold">Action</th>
+          <th class="text-left px-4 py-3 font-semibold">Resource</th>
+          <th class="text-left px-4 py-3 font-semibold">IP</th>
+          <th class="w-10"></th>
         </tr>
       </thead>
       <tbody>
         @for (l of result().items; track l.id) {
-          <tr class="border-t border-white/5 hover:bg-white/5">
-            <td class="px-4 py-3 text-on-surface-variant whitespace-nowrap">
-              {{ l.timestamp | date: 'short' }}
+          <tr
+            class="log-row group"
+            (click)="selectEntry(l)"
+            (keydown.enter)="selectEntry(l)"
+            (keydown.space)="$event.preventDefault(); selectEntry(l)"
+            [class.log-row-selected]="selectedEntry()?.id === l.id"
+            tabindex="0"
+            role="button"
+            [attr.aria-label]="
+              'View details for ' + l.action + ' by ' + (l.userEmail || l.userId || 'unknown')
+            "
+          >
+            <td class="px-4 py-3 text-on-surface-variant/70 whitespace-nowrap font-mono text-xs">
+              {{ l.timestamp | date: 'M/d/yy, h:mm a' }}
             </td>
-            <td class="px-4 py-3 text-on-surface-variant">
+            <td class="px-4 py-3 text-on-surface-variant text-xs">
               {{ l.userEmail || (l.userId ? l.userId : '—') }}
             </td>
-            <td class="px-4 py-3 text-on-surface font-medium">{{ l.action }}</td>
-            <td class="px-4 py-3 text-on-surface-variant">
-              <span class="text-xs uppercase tracking-widest text-outline">{{
-                l.resourceType
-              }}</span>
-              <span class="ml-2 text-xs text-on-surface-variant">{{ l.resourceId }}</span>
+            <td class="px-4 py-3">
+              <span class="action-badge {{ actionCategory(l.action) }}">{{ l.action }}</span>
             </td>
-            <td class="px-4 py-3 text-on-surface-variant">{{ l.ipAddress }}</td>
-            <td class="px-4 py-3 text-on-surface-variant max-w-[280px]">
-              <div class="text-xs truncate" [title]="l.details">{{ l.details }}</div>
+            <td class="px-4 py-3">
+              <span class="resource-type-badge">{{ l.resourceType }}</span>
+              <span class="ml-2 text-xs text-on-surface-variant/50 font-mono"
+                >{{ l.resourceId | slice: 0 : 16 }}{{ l.resourceId.length > 16 ? '…' : '' }}</span
+              >
+            </td>
+            <td class="px-4 py-3 text-on-surface-variant/60 text-xs font-mono">
+              {{ l.ipAddress }}
+            </td>
+            <td class="px-4 py-3">
+              <span
+                class="material-symbols-outlined text-base text-on-surface-variant/30 group-hover:text-primary transition-colors"
+                aria-hidden="true"
+                >chevron_right</span
+              >
             </td>
           </tr>
         } @empty {
           <tr>
-            <td colspan="6" class="px-4 py-8 text-center text-outline">
+            <td colspan="6" class="px-4 py-12 text-center text-on-surface-variant/40">
+              <span class="material-symbols-outlined text-3xl mb-2 block" aria-hidden="true"
+                >receipt_long</span
+              >
               {{ loading() ? 'Loading…' : 'No log entries match the current filters.' }}
             </td>
           </tr>
@@ -106,11 +133,12 @@
     </table>
   </div>
 
+  <!-- Pagination -->
   <div class="flex items-center justify-between mt-4 text-xs text-on-surface-variant">
     <div class="flex items-center gap-3">
       <span>
-        Showing page {{ result().page }} of {{ result().totalPages || 1 }} —
-        {{ result().totalItems }} total
+        Page {{ result().page }} of {{ result().totalPages || 1 }} —
+        {{ result().totalItems }} entries
       </span>
       <label class="flex items-center gap-2">
         <span class="text-outline">Rows:</span>
@@ -128,37 +156,116 @@
         </select>
       </label>
     </div>
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-1">
       <button
         (click)="goToPage(1)"
         [disabled]="result().page <= 1"
-        class="px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded disabled:opacity-30"
+        class="px-3 py-1.5 rounded-lg border border-outline-variant/30 hover:bg-surface-container disabled:opacity-30 transition-colors"
         aria-label="First page"
       >
-        « First
+        «
       </button>
       <button
         (click)="goToPage(result().page - 1)"
         [disabled]="result().page <= 1"
-        class="px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded disabled:opacity-30"
+        class="px-3 py-1.5 rounded-lg border border-outline-variant/30 hover:bg-surface-container disabled:opacity-30 transition-colors"
       >
         Prev
       </button>
       <button
         (click)="goToPage(result().page + 1)"
         [disabled]="result().page >= result().totalPages"
-        class="px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded disabled:opacity-30"
+        class="px-3 py-1.5 rounded-lg border border-outline-variant/30 hover:bg-surface-container disabled:opacity-30 transition-colors"
       >
         Next
       </button>
       <button
         (click)="goToPage(result().totalPages || 1)"
         [disabled]="result().page >= result().totalPages"
-        class="px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded disabled:opacity-30"
+        class="px-3 py-1.5 rounded-lg border border-outline-variant/30 hover:bg-surface-container disabled:opacity-30 transition-colors"
         aria-label="Last page"
       >
-        Last »
+        »
       </button>
     </div>
   </div>
+
+  <!-- Detail slide-over -->
+  @if (selectedEntry()) {
+    <div
+      class="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
+      (click)="closeDetail()"
+      (keydown.escape)="closeDetail()"
+    ></div>
+    <aside
+      class="detail-panel"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="detail-panel-title"
+      (keydown.escape)="closeDetail()"
+    >
+      <!-- Panel header -->
+      <div class="detail-panel-header">
+        <div class="flex items-center gap-3">
+          <h2 id="detail-panel-title" class="sr-only">Audit Log Detail</h2>
+          <span class="action-badge {{ actionCategory(selectedEntry()!.action) }} text-sm">{{
+            selectedEntry()!.action
+          }}</span>
+        </div>
+        <button
+          #closeBtn
+          (click)="closeDetail()"
+          class="btn-ghost !px-2 !py-1"
+          aria-label="Close detail panel"
+        >
+          <span class="material-symbols-outlined text-base" aria-hidden="true">close</span>
+        </button>
+      </div>
+
+      <!-- Panel body -->
+      <div class="detail-panel-body">
+        <!-- Meta grid -->
+        <div class="detail-meta-grid">
+          <div class="detail-meta-item">
+            <span class="detail-meta-label">Timestamp</span>
+            <span class="detail-meta-value font-mono text-xs">{{
+              selectedEntry()!.timestamp | date: 'medium'
+            }}</span>
+          </div>
+          <div class="detail-meta-item">
+            <span class="detail-meta-label">User</span>
+            <span class="detail-meta-value">{{
+              selectedEntry()!.userEmail || selectedEntry()!.userId || '—'
+            }}</span>
+          </div>
+          <div class="detail-meta-item">
+            <span class="detail-meta-label">IP Address</span>
+            <span class="detail-meta-value font-mono">{{ selectedEntry()!.ipAddress || '—' }}</span>
+          </div>
+          <div class="detail-meta-item">
+            <span class="detail-meta-label">Resource type</span>
+            <span class="detail-meta-value">
+              <span class="resource-type-badge">{{ selectedEntry()!.resourceType }}</span>
+            </span>
+          </div>
+          <div class="detail-meta-item md:col-span-2">
+            <span class="detail-meta-label">Resource ID</span>
+            <span class="detail-meta-value font-mono text-xs break-all">{{
+              selectedEntry()!.resourceId || '—'
+            }}</span>
+          </div>
+        </div>
+
+        <!-- Details JSON -->
+        <div class="mt-4">
+          <p
+            class="text-xs uppercase tracking-widest text-on-surface-variant/50 font-semibold mb-2"
+          >
+            Details
+          </p>
+          <pre class="detail-json">{{ formattedDetails(selectedEntry()!.details) }}</pre>
+        </div>
+      </div>
+    </aside>
+  }
 </div>

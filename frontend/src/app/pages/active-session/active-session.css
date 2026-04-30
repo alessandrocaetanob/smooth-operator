@@ -24,9 +24,10 @@
 
 /* ===== SESSION HEADER ===== */
 :host header.session-header {
-  background: rgba(3, 3, 15, 0.96);
+  background: rgb(var(--color-surface-container-lowest) / 0.96);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgb(var(--color-outline-variant) / 0.2);
 }
 
 .logo-glow {
@@ -84,21 +85,21 @@
 }
 
 .proto-rdp {
-  background: rgb(var(--color-primary) / 0.2);
-  color: rgb(var(--color-primary-fixed-dim));
-  border: 1px solid rgb(var(--color-primary) / 0.35);
+  background: rgb(var(--color-primary) / 0.15);
+  color: rgb(var(--color-primary));
+  border: 1px solid rgb(var(--color-primary) / 0.4);
 }
 
 .proto-ssh {
-  background: rgb(var(--color-tertiary) / 0.2);
-  color: rgb(var(--color-tertiary-fixed-dim));
-  border: 1px solid rgb(var(--color-tertiary) / 0.35);
+  background: rgb(var(--color-tertiary) / 0.15);
+  color: rgb(var(--color-tertiary));
+  border: 1px solid rgb(var(--color-tertiary) / 0.4);
 }
 
 .proto-vnc {
-  background: rgb(var(--color-secondary) / 0.2);
-  color: rgb(var(--color-secondary-fixed-dim));
-  border: 1px solid rgb(var(--color-secondary) / 0.35);
+  background: rgb(var(--color-secondary) / 0.15);
+  color: rgb(var(--color-secondary));
+  border: 1px solid rgb(var(--color-secondary) / 0.4);
 }
 
 /* ===== SESSION TIMER ===== */
@@ -107,7 +108,7 @@
   align-items: center;
   gap: 4px;
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.35);
+  color: rgb(var(--color-on-surface-variant) / 0.6);
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.04em;
@@ -136,17 +137,17 @@
   justify-content: center;
   padding: 5px;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.45);
+  border: 1px solid rgb(var(--color-outline-variant) / 0.3);
+  color: rgb(var(--color-on-surface-variant) / 0.6);
   background: transparent;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .tool-btn-sm:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.22);
-  color: rgba(255, 255, 255, 0.85);
+  background: rgb(var(--color-on-surface) / 0.08);
+  border-color: rgb(var(--color-outline-variant) / 0.5);
+  color: rgb(var(--color-on-surface) / 0.9);
 }
 
 .terminate-btn:hover {
@@ -255,7 +256,7 @@
 .tool-btn {
   padding: 10px;
   border-radius: 50%;
-  color: rgba(255, 255, 255, 0.35);
+  color: rgb(var(--color-on-surface-variant) / 0.5);
   border: 1px solid transparent;
   transition: all 0.2s ease;
   cursor: pointer;
@@ -288,18 +289,18 @@
   font-family: var(--font-mono);
   font-size: 13px;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.8);
+  color: rgb(var(--color-on-surface));
   letter-spacing: 0.02em;
 }
 
 .modifier-key {
   padding: 6px 14px;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgb(var(--color-outline-variant) / 0.4);
   font-size: 12px;
   font-family: var(--font-mono);
-  color: rgba(255, 255, 255, 0.55);
-  background: rgba(255, 255, 255, 0.04);
+  color: rgb(var(--color-on-surface-variant) / 0.7);
+  background: rgb(var(--color-on-surface) / 0.04);
   cursor: pointer;
   transition: all 0.15s ease;
   letter-spacing: 0.04em;
@@ -307,7 +308,7 @@
 
 .modifier-key:hover {
   border-color: rgb(var(--color-primary) / 0.4);
-  color: rgba(255, 255, 255, 0.8);
+  color: rgb(var(--color-on-surface) / 0.9);
 }
 
 .modifier-active {
@@ -320,11 +321,11 @@
 .combo-key-btn {
   padding: 6px 4px;
   border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgb(var(--color-outline-variant) / 0.3);
   font-size: 11px;
   font-family: var(--font-mono);
-  color: rgba(255, 255, 255, 0.5);
-  background: rgba(255, 255, 255, 0.03);
+  color: rgb(var(--color-on-surface-variant) / 0.6);
+  background: rgb(var(--color-on-surface) / 0.03);
   cursor: pointer;
   transition: all 0.1s ease;
   line-height: 1;
@@ -332,7 +333,7 @@
 
 .combo-key-btn:hover {
   border-color: rgb(var(--color-primary) / 0.3);
-  color: rgba(255, 255, 255, 0.8);
+  color: rgb(var(--color-on-surface) / 0.9);
   background: rgb(var(--color-primary) / 0.08);
 }
 

@@ -628,8 +628,8 @@
 
   .btn-primary {
     @apply flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-widest
-           text-on-primary-container bg-primary-container hover:bg-primary rounded-lg
-           transition-colors duration-150 disabled:opacity-50 btn-interactive;
+           text-on-primary bg-primary hover:brightness-110 rounded-lg
+           transition-all duration-150 disabled:opacity-50 btn-interactive;
   }
 
   .btn-secondary {

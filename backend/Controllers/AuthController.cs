@@ -449,6 +449,18 @@ namespace Backend.Controllers
             });
         }
 
+        /// <summary>
+        /// Anonymous probe so the login page can inform users whether password-recovery
+        /// emails can be sent. Returns only a boolean — no configuration details leak.
+        /// </summary>
+        [HttpGet("smtp-available")]
+        [AllowAnonymous]
+        public async Task<IActionResult> SmtpAvailable()
+        {
+            var available = await _emailService.IsConfiguredAsync();
+            return Ok(new { available });
+        }
+
         [HttpPost("forgot-password")]
         [AllowAnonymous]
         [EnableRateLimiting("auth")]

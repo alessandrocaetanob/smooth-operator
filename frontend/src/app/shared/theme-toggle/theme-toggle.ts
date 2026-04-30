@@ -20,6 +20,9 @@ export class ThemeToggle {
    */
   @Input() variant: ThemeToggleVariant = 'nav';
 
+  /** Compact size — matches `tool-btn-sm` style for use in the session header. */
+  @Input() compact = false;
+
   toggle(): void {
     this.themeService.toggle();
   }
