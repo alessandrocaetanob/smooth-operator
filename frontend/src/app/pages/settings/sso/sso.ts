@@ -14,6 +14,7 @@ import {
   selector: 'app-sso-settings',
   imports: [FormsModule, JsonPipe],
   templateUrl: './sso.html',
+  styleUrl: './sso.css',
 })
 export class SsoSettings implements OnInit {
   private readonly svc = inject(SsoSettingsService);
@@ -27,6 +28,7 @@ export class SsoSettings implements OnInit {
   readonly message = signal<string | null>(null);
   readonly error = signal<string | null>(null);
   readonly testResult = signal<SsoTestResult | null>(null);
+  readonly confirmingDelete = signal(false);
 
   readonly type = signal<SsoProviderType>('Oidc');
   readonly name = signal('');
@@ -196,14 +198,8 @@ export class SsoSettings implements OnInit {
 
   remove(): void {
     if (this.deleteBusy()) return;
-    if (
-      !confirm(
-        'Delete the configured SSO provider? Users with active SSO links will keep their accounts but will need to re-link after a new provider is configured.',
-      )
-    ) {
-      return;
-    }
     this.deleteBusy.set(true);
+    this.confirmingDelete.set(false);
     this.message.set(null);
     this.error.set(null);
     this.svc.remove().subscribe({

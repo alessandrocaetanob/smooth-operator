@@ -7,55 +7,103 @@
     </p>
   </div>
 
-  <!-- Status banner -->
+  <!-- Provider status card -->
   @if (hasProvider()) {
-    <div
-      class="status-banner mb-6"
-      [class.status-ok]="current()?.isEnabled"
-      [class.status-warn]="!current()?.isEnabled"
-    >
-      <span class="material-symbols-outlined">{{
-        current()?.isEnabled ? 'check_circle' : 'pause_circle'
-      }}</span>
-      <div class="flex-1">
-        <p class="font-medium">{{ providerLabel() }}</p>
-        <p class="text-xs opacity-70">
-          {{
-            current()?.isEnabled
-              ? 'Active — the sign-in page shows the SSO button.'
-              : 'Configured but currently disabled.'
-          }}
-        </p>
+    <div class="settings-card mb-4">
+      <div class="settings-card-body">
+        <div class="flex items-center gap-3">
+          <span
+            class="material-symbols-outlined text-2xl shrink-0"
+            [class.text-tertiary]="current()?.isEnabled"
+            [class.text-on-surface-variant]="!current()?.isEnabled"
+            >{{ current()?.isEnabled ? 'verified_user' : 'shield' }}</span
+          >
+          <div class="flex-1 min-w-0">
+            <p class="font-semibold text-on-surface text-sm">{{ current()?.name }}</p>
+            <p class="text-xs text-on-surface-variant mt-0.5">
+              {{ current()?.type === 'Oidc' ? 'OpenID Connect (OIDC)' : 'SAML 2.0' }}
+            </p>
+          </div>
+          <span
+            class="shrink-0 text-xs font-semibold px-2.5 py-1 rounded-full"
+            [class.bg-tertiary]="current()?.isEnabled"
+            [class.text-on-tertiary]="current()?.isEnabled"
+            [class.bg-surface-container-highest]="!current()?.isEnabled"
+            [class.text-on-surface-variant]="!current()?.isEnabled"
+            >{{ current()?.isEnabled ? 'Enabled' : 'Disabled' }}</span
+          >
+        </div>
       </div>
-      <div class="flex gap-2">
-        <button
-          type="button"
-          (click)="toggle(!current()?.isEnabled)"
-          [disabled]="toggleBusy()"
-          class="btn-secondary"
-        >
-          <span class="material-symbols-outlined text-sm" aria-hidden="true">{{
-            current()?.isEnabled ? 'pause' : 'play_arrow'
-          }}</span>
-          {{ current()?.isEnabled ? 'Disable' : 'Enable' }}
-        </button>
-        <button type="button" (click)="runTest()" [disabled]="testBusy()" class="btn-secondary">
-          <span class="material-symbols-outlined text-sm" aria-hidden="true">network_check</span>
-          {{ testBusy() ? 'Testing…' : 'Test connection' }}
-        </button>
-        <button
-          type="button"
-          (click)="remove()"
-          [disabled]="deleteBusy()"
-          class="btn-secondary text-error"
-        >
-          <span class="material-symbols-outlined text-sm" aria-hidden="true">delete</span>
-          Delete
-        </button>
+    </div>
+
+    <!-- Actions card -->
+    <div class="settings-card mb-4">
+      <div class="settings-card-body">
+        <div class="flex items-center gap-2 flex-wrap">
+          <!-- Enable / Disable -->
+          <button
+            type="button"
+            (click)="toggle(!current()?.isEnabled)"
+            [disabled]="toggleBusy()"
+            [class]="current()?.isEnabled ? 'btn-secondary' : 'btn-primary'"
+          >
+            <span class="material-symbols-outlined text-sm" aria-hidden="true">{{
+              current()?.isEnabled ? 'pause' : 'play_arrow'
+            }}</span>
+            {{ toggleBusy() ? '…' : current()?.isEnabled ? 'Disable' : 'Enable' }}
+          </button>
+
+          <!-- Test -->
+          <button type="button" (click)="runTest()" [disabled]="testBusy()" class="btn-secondary">
+            <span class="material-symbols-outlined text-sm" aria-hidden="true">network_check</span>
+            {{ testBusy() ? 'Testing…' : 'Test connection' }}
+          </button>
+
+          <!-- Spacer -->
+          <div class="flex-1"></div>
+
+          <!-- Delete — inline confirmation -->
+          @if (confirmingDelete()) {
+            <span class="text-xs text-on-surface-variant mr-1">Delete provider?</span>
+            <button type="button" (click)="confirmingDelete.set(false)" class="btn-secondary">
+              Cancel
+            </button>
+            <button type="button" (click)="remove()" [disabled]="deleteBusy()" class="btn-danger">
+              <span class="material-symbols-outlined text-sm" aria-hidden="true">delete</span>
+              {{ deleteBusy() ? 'Deleting…' : 'Confirm delete' }}
+            </button>
+          } @else {
+            <button type="button" (click)="confirmingDelete.set(true)" class="btn-danger">
+              <span class="material-symbols-outlined text-sm" aria-hidden="true">delete</span>
+              Delete
+            </button>
+          }
+        </div>
+
+        <!-- Test result (inline, below actions) -->
+        @if (testResult(); as tr) {
+          <div
+            class="mt-3 feedback-banner"
+            [class.feedback-success]="tr.success"
+            [class.feedback-error]="!tr.success"
+          >
+            <span class="material-symbols-outlined text-base shrink-0">{{
+              tr.success ? 'check_circle' : 'error'
+            }}</span>
+            <div class="min-w-0">
+              <p>{{ tr.message }}</p>
+              @if (tr.details) {
+                <pre class="mt-2 text-xs opacity-80 whitespace-pre-wrap overflow-x-auto">{{
+                  tr.details | json
+                }}</pre>
+              }
+            </div>
+          </div>
+        }
       </div>
     </div>
   } @else {
-    <div class="status-banner status-warn mb-6">
+    <div class="status-banner status-warn mb-4">
       <span class="material-symbols-outlined">info</span>
       <div>
         <p class="font-medium">No SSO provider configured</p>
@@ -74,23 +122,6 @@
     <div class="feedback-banner feedback-error mb-4">
       <span class="material-symbols-outlined text-base">error</span>
       {{ error() }}
-    </div>
-  }
-  @if (testResult(); as tr) {
-    <div
-      class="feedback-banner mb-4"
-      [class.feedback-success]="tr.success"
-      [class.feedback-error]="!tr.success"
-    >
-      <span class="material-symbols-outlined text-base">{{
-        tr.success ? 'check_circle' : 'error'
-      }}</span>
-      <div>
-        <p>{{ tr.message }}</p>
-        @if (tr.details) {
-          <pre class="mt-2 text-xs opacity-80 whitespace-pre-wrap">{{ tr.details | json }}</pre>
-        }
-      </div>
     </div>
   }
 
