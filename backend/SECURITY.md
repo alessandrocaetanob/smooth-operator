@@ -6,7 +6,7 @@ This document outlines the security features implemented in the Smooth Operator 
 
 ### 1. Authentication & Authorization
 
-- **JWT-based Authentication**: Local HS256 JWT is the default auth flow; Azure Entra ID is optional.
+- **JWT-based Authentication**: Local HS256 JWT is the default auth flow. Optional vendor-neutral Single Sign-On (one provider — OIDC or SAML 2.0) is configured at runtime by an admin via `/settings/sso` and stored encrypted in the database (no `appsettings` keys).
 - **Role-Based Access Control**: Four default roles are enforced: `Owner`, `Admin`, `TeamAdmin`, and `User`.
 - **Connection Permission Checks**: Users can only access connections explicitly assigned to them or within assigned vaults.
 - **Active User Validation**: Inactive user accounts cannot authenticate or access resources
@@ -79,13 +79,9 @@ ENCRYPTION_KEY=<64-character-hex-string>
 
 # Frontend URL (for invite links)
 FRONTEND_URL=https://your-frontend-url.com
-
-# Azure Entra ID Configuration
-AzureAd__Instance=https://login.microsoftonline.com/
-AzureAd__Domain=<your-domain>.onmicrosoft.com
-AzureAd__TenantId=<your-tenant-id>
-AzureAd__ClientId=<your-client-id>
 ```
+
+> **SSO** (OIDC or SAML 2.0) is configured at runtime through the admin UI at `/settings/sso`. Provider config (including OIDC client secret and SAML SP private key) is encrypted with `ENCRYPTION_KEY` before being persisted. There are no `AzureAd__*` or other SSO env vars — the legacy Microsoft Entra-only integration was replaced by the generic SSO module.
 
 ### Production Deployment Checklist
 

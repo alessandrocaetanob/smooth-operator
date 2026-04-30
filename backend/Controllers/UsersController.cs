@@ -385,7 +385,8 @@ namespace Backend.Controllers
                 Email = user.Email,
                 Name = user.Name,
                 HasPassword = !string.IsNullOrEmpty(user.PasswordHash),
-                LinkedToEntra = !string.IsNullOrEmpty(user.EntraObjectId),
+                SsoLinked = !string.IsNullOrEmpty(user.ExternalId),
+                SsoProviderType = user.SsoProviderType?.ToString(),
                 AvatarUrl = AuthController.BuildAvatarUrl(user),
                 Roles = user.Roles
                     .Select(r => r.Name)
@@ -426,7 +427,8 @@ namespace Backend.Controllers
                 Email = user.Email,
                 Name = user.Name,
                 HasPassword = !string.IsNullOrEmpty(user.PasswordHash),
-                LinkedToEntra = !string.IsNullOrEmpty(user.EntraObjectId),
+                SsoLinked = !string.IsNullOrEmpty(user.ExternalId),
+                SsoProviderType = user.SsoProviderType?.ToString(),
                 AvatarUrl = null,
                 Roles = user.Roles
                     .Select(r => r.Name)
@@ -442,7 +444,8 @@ namespace Backend.Controllers
             Email = user.Email,
             Name = user.Name,
             IsActive = user.IsActive,
-            LinkedToEntra = !string.IsNullOrEmpty(user.EntraObjectId),
+            SsoLinked = !string.IsNullOrEmpty(user.ExternalId),
+            SsoProviderType = user.SsoProviderType?.ToString(),
             HasPassword = !string.IsNullOrEmpty(user.PasswordHash),
             CreatedAt = user.CreatedAt,
             Roles = user.Roles.Select(r => r.Name).OrderBy(r => r).ToList(),

@@ -45,7 +45,10 @@ namespace Backend.DTOs
         public string Email { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
         public bool HasPassword { get; set; }
-        public bool LinkedToEntra { get; set; }
+        /// <summary>True when the user has been linked to the configured SSO provider (OIDC or SAML).</summary>
+        public bool SsoLinked { get; set; }
+        /// <summary>"Oidc" | "Saml" when SsoLinked is true; null otherwise.</summary>
+        public string? SsoProviderType { get; set; }
         public string? AvatarUrl { get; set; }
         public List<string> Roles { get; set; } = new();
     }

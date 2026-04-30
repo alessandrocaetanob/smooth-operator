@@ -8,7 +8,8 @@ export interface AppUser {
   email: string;
   name: string;
   isActive: boolean;
-  linkedToEntra: boolean;
+  ssoLinked: boolean;
+  ssoProviderType: string | null;
   hasPassword: boolean;
   createdAt: string;
   roles: string[];
@@ -136,7 +137,8 @@ export class UsersService {
       email: pickOr(raw, '', 'email', 'Email'),
       name: pickOr(raw, '', 'name', 'Name'),
       isActive: pickOr(raw, true, 'isActive', 'IsActive'),
-      linkedToEntra: pickOr(raw, false, 'linkedToEntra', 'LinkedToEntra'),
+      ssoLinked: pickOr(raw, false, 'ssoLinked', 'SsoLinked'),
+      ssoProviderType: pickOr(raw, null as string | null, 'ssoProviderType', 'SsoProviderType'),
       hasPassword: pickOr(raw, false, 'hasPassword', 'HasPassword'),
       createdAt: pickOr(raw, '', 'createdAt', 'CreatedAt'),
       roles: pickOr(raw, [] as string[], 'roles', 'Roles'),

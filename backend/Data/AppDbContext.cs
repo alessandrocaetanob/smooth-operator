@@ -20,6 +20,8 @@ namespace Backend.Data
         public DbSet<SmtpSettings> SmtpSettings { get; set; } = null!;
         public DbSet<SystemSettings> SystemSettings { get; set; } = null!;
         public DbSet<UserGroup> UserGroups { get; set; } = null!;
+        public DbSet<SsoProvider> SsoProviders { get; set; } = null!;
+        public DbSet<SsoAuthState> SsoAuthStates { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -73,11 +75,6 @@ namespace Backend.Data
                 .HasForeignKey(cg => cg.ParentGroupId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Enforce unique Entra ID
-            modelBuilder.Entity<User>()
-                .HasIndex(u => u.EntraObjectId)
-                .IsUnique();
-
             modelBuilder.Entity<User>()
                 .HasIndex(u => u.Email)
                 .IsUnique();
@@ -92,6 +89,18 @@ namespace Backend.Data
             modelBuilder.Entity<Invitation>()
                 .HasIndex(i => i.TokenHash)
                 .IsUnique();
+
+            modelBuilder.Entity<User>()
+                .HasIndex(u => u.ExternalId)
+                .IsUnique()
+                .HasFilter("\"ExternalId\" IS NOT NULL");
+
+            modelBuilder.Entity<SsoAuthState>()
+                .HasIndex(s => s.State)
+                .IsUnique();
+
+            modelBuilder.Entity<SsoAuthState>()
+                .HasIndex(s => s.ExpiresAt);
         }
     }
 }

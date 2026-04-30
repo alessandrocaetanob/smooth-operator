@@ -26,14 +26,14 @@
     </div>
     <!-- Authentication Actions -->
     <div class="w-full space-y-app-md mt-app-sm">
-      @if (providers().entraId) {
+      @if (sso(); as sso) {
         <button
           type="button"
           (click)="loginWithSso()"
           class="w-full flex items-center justify-center space-x-app-sm bg-primary-container text-on-primary-container py-app-md px-app-lg rounded-lg font-body-md transition-all duration-200 btn-glow border border-transparent"
         >
           <span class="material-symbols-outlined text-body-lg">login</span>
-          <span>Sign in with SSO</span>
+          <span>Sign in with {{ sso.name }}</span>
         </button>
         <div class="flex items-center w-full py-app-md">
           <div class="flex-grow border-t border-white/10"></div>
@@ -125,20 +125,22 @@
         </button>
       </form>
 
-      @if (providers().entraId) {
+      @if (sso(); as sso) {
         <div
           class="flex items-center justify-center space-x-app-gutter pt-app-md pb-app-sm border-t border-white/10 w-full mt-app-md"
         >
           <span class="font-label-caps text-label-caps text-on-surface-variant"
-            >SUPPORTED SSO PROVIDERS</span
+            >SUPPORTED SSO PROVIDER</span
           >
         </div>
         <div class="flex justify-center space-x-app-md text-on-surface-variant">
           <div
             class="glass-panel p-app-sm rounded flex items-center justify-center hover:bg-white/5 transition-colors cursor-help"
-            title="Microsoft Entra ID"
+            [title]="sso.name"
           >
-            <span class="material-symbols-outlined">window</span>
+            <span class="material-symbols-outlined">{{
+              sso.type === 'Saml' ? 'shield_lock' : 'key'
+            }}</span>
           </div>
         </div>
       }

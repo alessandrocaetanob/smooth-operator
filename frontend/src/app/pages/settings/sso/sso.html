@@ -1,0 +1,551 @@
+<div>
+  <div class="mb-6">
+    <h2 class="text-lg font-semibold text-on-surface">Single Sign-On</h2>
+    <p class="text-sm text-on-surface-variant mt-1">
+      Configure a single OIDC or SAML 2.0 identity provider. Local username/password login always
+      stays available as a fallback.
+    </p>
+  </div>
+
+  <!-- Provider status card -->
+  @if (hasProvider()) {
+    <div class="settings-card mb-4">
+      <div class="settings-card-body">
+        <div class="flex items-center gap-3">
+          <span
+            class="material-symbols-outlined text-2xl shrink-0"
+            [class.text-tertiary]="current()?.isEnabled"
+            [class.text-on-surface-variant]="!current()?.isEnabled"
+            >{{ current()?.isEnabled ? 'verified_user' : 'shield' }}</span
+          >
+          <div class="flex-1 min-w-0">
+            <p class="font-semibold text-on-surface text-sm">{{ current()?.name }}</p>
+            <p class="text-xs text-on-surface-variant mt-0.5">
+              {{ current()?.type === 'Oidc' ? 'OpenID Connect (OIDC)' : 'SAML 2.0' }}
+            </p>
+          </div>
+          <span
+            class="shrink-0 text-xs font-semibold px-2.5 py-1 rounded-full"
+            [class.bg-tertiary]="current()?.isEnabled"
+            [class.text-on-tertiary]="current()?.isEnabled"
+            [class.bg-surface-container-highest]="!current()?.isEnabled"
+            [class.text-on-surface-variant]="!current()?.isEnabled"
+            >{{ current()?.isEnabled ? 'Enabled' : 'Disabled' }}</span
+          >
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions card -->
+    <div class="settings-card mb-4">
+      <div class="settings-card-body">
+        <div class="flex items-center gap-2 flex-wrap">
+          <!-- Enable / Disable -->
+          <button
+            type="button"
+            (click)="toggle(!current()?.isEnabled)"
+            [disabled]="toggleBusy()"
+            [class]="current()?.isEnabled ? 'btn-secondary' : 'btn-primary'"
+          >
+            <span class="material-symbols-outlined text-sm" aria-hidden="true">{{
+              current()?.isEnabled ? 'pause' : 'play_arrow'
+            }}</span>
+            {{ toggleBusy() ? '…' : current()?.isEnabled ? 'Disable' : 'Enable' }}
+          </button>
+
+          <!-- Test -->
+          <button type="button" (click)="runTest()" [disabled]="testBusy()" class="btn-secondary">
+            <span class="material-symbols-outlined text-sm" aria-hidden="true">network_check</span>
+            {{ testBusy() ? 'Testing…' : 'Test connection' }}
+          </button>
+
+          <!-- Spacer -->
+          <div class="flex-1"></div>
+
+          <!-- Delete — inline confirmation -->
+          @if (confirmingDelete()) {
+            <span class="text-xs text-on-surface-variant mr-1">Delete provider?</span>
+            <button type="button" (click)="confirmingDelete.set(false)" class="btn-secondary">
+              Cancel
+            </button>
+            <button type="button" (click)="remove()" [disabled]="deleteBusy()" class="btn-danger">
+              <span class="material-symbols-outlined text-sm" aria-hidden="true">delete</span>
+              {{ deleteBusy() ? 'Deleting…' : 'Confirm delete' }}
+            </button>
+          } @else {
+            <button type="button" (click)="confirmingDelete.set(true)" class="btn-danger">
+              <span class="material-symbols-outlined text-sm" aria-hidden="true">delete</span>
+              Delete
+            </button>
+          }
+        </div>
+
+        <!-- Test result (inline, below actions) -->
+        @if (testResult(); as tr) {
+          <div
+            class="mt-3 feedback-banner"
+            [class.feedback-success]="tr.success"
+            [class.feedback-error]="!tr.success"
+          >
+            <span class="material-symbols-outlined text-base shrink-0">{{
+              tr.success ? 'check_circle' : 'error'
+            }}</span>
+            <div class="min-w-0">
+              <p>{{ tr.message }}</p>
+              @if (tr.details) {
+                <pre class="mt-2 text-xs opacity-80 whitespace-pre-wrap overflow-x-auto">{{
+                  tr.details | json
+                }}</pre>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  } @else {
+    <div class="status-banner status-warn mb-4">
+      <span class="material-symbols-outlined">info</span>
+      <div>
+        <p class="font-medium">No SSO provider configured</p>
+        <p class="text-xs opacity-70">Choose a protocol below and fill in the IdP details.</p>
+      </div>
+    </div>
+  }
+
+  @if (message()) {
+    <div class="feedback-banner feedback-success mb-4">
+      <span class="material-symbols-outlined text-base">check_circle</span>
+      {{ message() }}
+    </div>
+  }
+  @if (error()) {
+    <div class="feedback-banner feedback-error mb-4">
+      <span class="material-symbols-outlined text-base">error</span>
+      {{ error() }}
+    </div>
+  }
+
+  <form (ngSubmit)="save()" class="space-y-4">
+    <!-- Card: Protocol -->
+    <div class="settings-card">
+      <div class="settings-card-header">
+        <span class="material-symbols-outlined settings-card-icon">tune</span>
+        <h3 class="settings-card-title">Protocol</h3>
+      </div>
+      <div class="settings-card-body">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+          <div>
+            <label class="settings-label">Protocol</label>
+            <select
+              [ngModel]="type()"
+              (ngModelChange)="type.set($event)"
+              name="type"
+              class="w-full input-field"
+              [disabled]="hasProvider()"
+            >
+              <option value="Oidc">OpenID Connect (OIDC)</option>
+              <option value="Saml">SAML 2.0</option>
+            </select>
+            @if (hasProvider()) {
+              <p class="text-xs text-on-surface-variant mt-1">
+                Delete the current provider to switch protocols.
+              </p>
+            }
+          </div>
+          <div>
+            <label class="settings-label">Display name</label>
+            <input
+              type="text"
+              [ngModel]="name()"
+              (ngModelChange)="name.set($event)"
+              name="name"
+              placeholder="e.g. Corporate SSO"
+              required
+              class="w-full input-field"
+            />
+            <p class="text-xs text-on-surface-variant mt-1">
+              Shown on the sign-in button (e.g. “Sign in with {{ name() || 'Corporate SSO' }}”).
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- OIDC fields -->
+    @if (type() === 'Oidc') {
+      <div class="settings-card">
+        <div class="settings-card-header">
+          <span class="material-symbols-outlined settings-card-icon">key</span>
+          <h3 class="settings-card-title">OIDC provider</h3>
+        </div>
+        <div class="settings-card-body space-y-3">
+          <!-- IdP registration info -->
+          <div class="rounded-lg border border-primary/20 bg-primary/5 p-3 text-sm space-y-2">
+            <p class="font-medium text-on-surface flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-base text-primary">info</span>
+              Register this app in your identity provider
+            </p>
+            <p class="text-xs text-on-surface-variant">
+              When creating the app / client in your IdP (Entra ID, Okta, Keycloak, etc.), add the
+              following as an allowed <strong>Redirect URI</strong>:
+            </p>
+            <div class="flex items-center gap-2">
+              <code
+                class="flex-1 block bg-surface-container border border-outline-variant/40 px-2 py-1 rounded text-xs font-mono break-all"
+                >{{ callbackUrl() }}</code
+              >
+              <button
+                type="button"
+                (click)="copyCallbackUrl()"
+                title="Copy redirect URI"
+                class="shrink-0 p-1.5 rounded hover:bg-on-surface/5 text-on-surface-variant hover:text-on-surface transition-colors"
+              >
+                <span class="material-symbols-outlined text-base">content_copy</span>
+              </button>
+            </div>
+            <p class="text-xs text-on-surface-variant">
+              For <strong>Entra ID</strong>: App registrations → your app → Authentication → Add
+              platform → Web → paste the URL above.
+            </p>
+          </div>
+          <div>
+            <label class="settings-label">Authority (issuer)</label>
+            <input
+              type="url"
+              [ngModel]="oidcAuthority()"
+              (ngModelChange)="oidcAuthority.set($event)"
+              name="oidcAuthority"
+              placeholder="https://login.example.com/realms/my-realm"
+              required
+              class="w-full input-field"
+            />
+            <p class="text-xs text-on-surface-variant mt-1">
+              The base URL of the IdP. Discovery is fetched from
+              <code>&lt;authority&gt;/.well-known/openid-configuration</code>.
+            </p>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label class="settings-label">Client ID</label>
+              <input
+                type="text"
+                [ngModel]="oidcClientId()"
+                (ngModelChange)="oidcClientId.set($event)"
+                name="oidcClientId"
+                required
+                class="w-full input-field"
+              />
+            </div>
+            <div>
+              <label class="settings-label">
+                Client secret
+                @if (current()?.oidc?.hasClientSecret) {
+                  <span class="settings-label-hint">(leave blank to keep)</span>
+                }
+              </label>
+              <input
+                type="password"
+                [ngModel]="oidcClientSecret()"
+                (ngModelChange)="oidcClientSecret.set($event)"
+                name="oidcClientSecret"
+                [placeholder]="current()?.oidc?.hasClientSecret ? '••••••••' : 'Required'"
+                [required]="!current()?.oidc?.hasClientSecret"
+                class="w-full input-field"
+              />
+            </div>
+          </div>
+          <div>
+            <label class="settings-label">Scopes</label>
+            <input
+              type="text"
+              [ngModel]="oidcScopes()"
+              (ngModelChange)="oidcScopes.set($event)"
+              name="oidcScopes"
+              placeholder="openid profile email"
+              class="w-full input-field"
+            />
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div>
+              <label class="settings-label">Subject claim</label>
+              <input
+                type="text"
+                [ngModel]="oidcSubjectClaim()"
+                (ngModelChange)="oidcSubjectClaim.set($event)"
+                name="oidcSubjectClaim"
+                placeholder="sub"
+                class="w-full input-field"
+              />
+            </div>
+            <div>
+              <label class="settings-label">Email claim</label>
+              <input
+                type="text"
+                [ngModel]="oidcEmailClaim()"
+                (ngModelChange)="oidcEmailClaim.set($event)"
+                name="oidcEmailClaim"
+                placeholder="email"
+                class="w-full input-field"
+              />
+            </div>
+            <div>
+              <label class="settings-label">Name claim</label>
+              <input
+                type="text"
+                [ngModel]="oidcNameClaim()"
+                (ngModelChange)="oidcNameClaim.set($event)"
+                name="oidcNameClaim"
+                placeholder="name"
+                class="w-full input-field"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- SAML fields -->
+    @if (type() === 'Saml') {
+      <div class="settings-card">
+        <div class="settings-card-header">
+          <span class="material-symbols-outlined settings-card-icon">shield_lock</span>
+          <h3 class="settings-card-title">SAML 2.0 provider</h3>
+        </div>
+        <div class="settings-card-body space-y-3">
+          <!-- IdP registration info -->
+          <div class="rounded-lg border border-primary/20 bg-primary/5 p-3 text-sm space-y-2">
+            <p class="font-medium text-on-surface flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-base text-primary">info</span>
+              Register this app in your identity provider
+            </p>
+            <p class="text-xs text-on-surface-variant">
+              When configuring the SP (service provider) in your IdP, use these URLs:
+            </p>
+            <div class="space-y-1.5">
+              <div>
+                <p class="text-xs font-medium text-on-surface-variant mb-1">
+                  ACS URL (Assertion Consumer Service)
+                </p>
+                <div class="flex items-center gap-2">
+                  <code
+                    class="flex-1 block bg-surface-container border border-outline-variant/40 px-2 py-1 rounded text-xs font-mono break-all"
+                    >{{ acsUrl() }}</code
+                  >
+                  <button
+                    type="button"
+                    (click)="copyAcsUrl()"
+                    title="Copy ACS URL"
+                    class="shrink-0 p-1.5 rounded hover:bg-on-surface/5 text-on-surface-variant hover:text-on-surface transition-colors"
+                  >
+                    <span class="material-symbols-outlined text-base">content_copy</span>
+                  </button>
+                </div>
+              </div>
+              <div>
+                <p class="text-xs font-medium text-on-surface-variant mb-1">SP Metadata URL</p>
+                <div class="flex items-center gap-2">
+                  <code
+                    class="flex-1 block bg-surface-container border border-outline-variant/40 px-2 py-1 rounded text-xs font-mono break-all"
+                    >{{ metadataUrl() }}</code
+                  >
+                  <button
+                    type="button"
+                    (click)="copyMetadataUrl()"
+                    title="Copy metadata URL"
+                    class="shrink-0 p-1.5 rounded hover:bg-on-surface/5 text-on-surface-variant hover:text-on-surface transition-colors"
+                  >
+                    <span class="material-symbols-outlined text-base">content_copy</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <p class="text-xs text-on-surface-variant">
+              Most IdPs can auto-import SP settings from the metadata URL. Use the ACS URL as the
+              <strong>Reply URL</strong> when importing manually.
+            </p>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label class="settings-label">SP entity ID</label>
+              <input
+                type="text"
+                [ngModel]="samlSpEntityId()"
+                (ngModelChange)="samlSpEntityId.set($event)"
+                name="samlSpEntityId"
+                placeholder="urn:smooth-operator"
+                required
+                class="w-full input-field"
+              />
+            </div>
+            <div>
+              <label class="settings-label">IdP entity ID</label>
+              <input
+                type="text"
+                [ngModel]="samlIdpEntityId()"
+                (ngModelChange)="samlIdpEntityId.set($event)"
+                name="samlIdpEntityId"
+                required
+                class="w-full input-field"
+              />
+            </div>
+          </div>
+          <div>
+            <label class="settings-label">IdP SSO URL</label>
+            <input
+              type="url"
+              [ngModel]="samlIdpSsoUrl()"
+              (ngModelChange)="samlIdpSsoUrl.set($event)"
+              name="samlIdpSsoUrl"
+              placeholder="https://idp.example.com/saml/sso"
+              required
+              class="w-full input-field"
+            />
+          </div>
+          <div>
+            <label class="settings-label">IdP signing certificate (PEM)</label>
+            <textarea
+              [ngModel]="samlIdpCertificate()"
+              (ngModelChange)="samlIdpCertificate.set($event)"
+              name="samlIdpCertificate"
+              rows="6"
+              placeholder="-----BEGIN CERTIFICATE-----&#10;…&#10;-----END CERTIFICATE-----"
+              required
+              class="w-full input-field font-mono text-xs"
+            ></textarea>
+          </div>
+          <div>
+            <label class="settings-label">SP signing certificate (PEM)</label>
+            <textarea
+              [ngModel]="samlSpCertificate()"
+              (ngModelChange)="samlSpCertificate.set($event)"
+              name="samlSpCertificate"
+              rows="6"
+              placeholder="-----BEGIN CERTIFICATE-----&#10;…&#10;-----END CERTIFICATE-----"
+              required
+              class="w-full input-field font-mono text-xs"
+            ></textarea>
+          </div>
+          <div>
+            <label class="settings-label">
+              SP private key (PEM)
+              @if (current()?.saml?.hasSpPrivateKey) {
+                <span class="settings-label-hint">(leave blank to keep)</span>
+              }
+            </label>
+            <textarea
+              [ngModel]="samlSpPrivateKey()"
+              (ngModelChange)="samlSpPrivateKey.set($event)"
+              name="samlSpPrivateKey"
+              rows="5"
+              [placeholder]="
+                current()?.saml?.hasSpPrivateKey
+                  ? '•••••••• (already stored)'
+                  : '-----BEGIN PRIVATE KEY-----…'
+              "
+              class="w-full input-field font-mono text-xs"
+            ></textarea>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div>
+              <label class="settings-label">NameID format</label>
+              <input
+                type="text"
+                [ngModel]="samlNameIdFormat()"
+                (ngModelChange)="samlNameIdFormat.set($event)"
+                name="samlNameIdFormat"
+                class="w-full input-field"
+              />
+            </div>
+            <div>
+              <label class="settings-label">Email attribute</label>
+              <input
+                type="text"
+                [ngModel]="samlAttributeEmail()"
+                (ngModelChange)="samlAttributeEmail.set($event)"
+                name="samlAttributeEmail"
+                placeholder="email"
+                class="w-full input-field"
+              />
+            </div>
+            <div>
+              <label class="settings-label">Name attribute</label>
+              <input
+                type="text"
+                [ngModel]="samlAttributeName()"
+                (ngModelChange)="samlAttributeName.set($event)"
+                name="samlAttributeName"
+                placeholder="name"
+                class="w-full input-field"
+              />
+            </div>
+          </div>
+          <div class="space-y-2">
+            <label class="toggle-row">
+              <span class="relative inline-flex items-center">
+                <input
+                  type="checkbox"
+                  class="sr-only"
+                  [ngModel]="samlWantAssertionsSigned()"
+                  (ngModelChange)="samlWantAssertionsSigned.set($event)"
+                  name="samlWantAssertionsSigned"
+                />
+                <span class="toggle-track" [class.toggle-on]="samlWantAssertionsSigned()">
+                  <span
+                    class="toggle-thumb"
+                    [class.toggle-thumb-on]="samlWantAssertionsSigned()"
+                  ></span>
+                </span>
+              </span>
+              <span>Require signed assertions</span>
+            </label>
+            <label class="toggle-row">
+              <span class="relative inline-flex items-center">
+                <input
+                  type="checkbox"
+                  class="sr-only"
+                  [ngModel]="samlWantResponseSigned()"
+                  (ngModelChange)="samlWantResponseSigned.set($event)"
+                  name="samlWantResponseSigned"
+                />
+                <span class="toggle-track" [class.toggle-on]="samlWantResponseSigned()">
+                  <span
+                    class="toggle-thumb"
+                    [class.toggle-thumb-on]="samlWantResponseSigned()"
+                  ></span>
+                </span>
+              </span>
+              <span>Require signed responses</span>
+            </label>
+          </div>
+          <div class="border-t border-outline-variant/20 pt-3">
+            <label class="settings-label">SP metadata URL</label>
+            <div class="flex gap-2">
+              <input
+                type="text"
+                [value]="metadataUrl()"
+                readonly
+                class="flex-1 input-field font-mono text-xs"
+              />
+              <button type="button" (click)="copyMetadataUrl()" class="btn-secondary">
+                <span class="material-symbols-outlined text-sm" aria-hidden="true"
+                  >content_copy</span
+                >
+                Copy
+              </button>
+            </div>
+            <p class="text-xs text-on-surface-variant mt-1">
+              Provide this URL to your IdP administrator to register the SP.
+            </p>
+          </div>
+        </div>
+      </div>
+    }
+
+    <div class="flex justify-end">
+      <button type="submit" [disabled]="busy()" class="btn-primary">
+        <span class="material-symbols-outlined text-sm" aria-hidden="true">save</span>
+        {{ busy() ? 'Saving…' : 'Save SSO settings' }}
+      </button>
+    </div>
+  </form>
+</div>

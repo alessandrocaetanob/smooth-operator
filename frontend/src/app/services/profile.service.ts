@@ -37,7 +37,8 @@ export class ProfileService {
       email: raw?.email ?? raw?.Email ?? '',
       name: raw?.name ?? raw?.Name ?? '',
       hasPassword: raw?.hasPassword ?? raw?.HasPassword ?? false,
-      linkedToEntra: raw?.linkedToEntra ?? raw?.LinkedToEntra ?? false,
+      ssoLinked: raw?.ssoLinked ?? raw?.SsoLinked ?? false,
+      ssoProviderType: raw?.ssoProviderType ?? raw?.SsoProviderType ?? null,
       avatarUrl: raw?.avatarUrl ?? raw?.AvatarUrl ?? null,
       roles: Array.isArray(raw?.roles ?? raw?.Roles) ? (raw?.roles ?? raw?.Roles) : [],
     };

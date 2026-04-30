@@ -50,13 +50,16 @@ namespace Backend.Controllers
         public async Task<IActionResult> GetSetupStatus()
         {
             var hasUsers = await _context.Users.AnyAsync();
+            var sso = await _context.SsoProviders.AsNoTracking().FirstOrDefaultAsync(p => p.IsEnabled);
             return Ok(new
             {
                 RequiresSetup = !hasUsers,
                 Providers = new
                 {
                     Local = true,
-                    EntraId = IsEntraEnabled()
+                    Sso = sso != null,
+                    SsoType = sso?.Type.ToString(),
+                    SsoName = sso?.Name
                 }
             });
         }
@@ -64,14 +67,10 @@ namespace Backend.Controllers
         // Backwards-compatible alias used by older clients.
         [HttpGet("providers")]
         [AllowAnonymous]
-        public IActionResult GetProviders()
-            => Ok(new { Local = true, EntraId = IsEntraEnabled() });
-
-        private bool IsEntraEnabled()
+        public async Task<IActionResult> GetProviders()
         {
-            var entraSection = _configuration.GetSection("AzureAd");
-            return !string.IsNullOrWhiteSpace(entraSection["ClientId"])
-                && !string.IsNullOrWhiteSpace(entraSection["TenantId"]);
+            var sso = await _context.SsoProviders.AsNoTracking().FirstOrDefaultAsync(p => p.IsEnabled);
+            return Ok(new { Local = true, Sso = sso != null, SsoType = sso?.Type.ToString(), SsoName = sso?.Name });
         }
 
         // First-time bootstrap: creates the very first (root/owner) user.
@@ -236,89 +235,8 @@ namespace Backend.Controllers
             return Ok(BuildAuthResponse(user));
         }
 
-        // Exchanges an Entra ID bearer token for an application JWT, JIT-provisioning
-        // the user if needed. Only usable when Entra ID is configured.
-        [HttpPost("login/entra")]
-        [Authorize(AuthenticationSchemes = "EntraId")]
-        public async Task<IActionResult> LoginWithEntra()
-        {
-            var objectId = User.FindFirstValue("http://schemas.microsoft.com/identity/claims/objectidentifier")
-                           ?? User.FindFirstValue("oid");
-
-            var email = User.FindFirstValue(ClaimTypes.Email)
-                        ?? User.FindFirstValue("preferred_username")
-                        ?? User.FindFirstValue("upn");
-
-            var name = User.FindFirstValue(ClaimTypes.Name)
-                       ?? User.FindFirstValue("name");
-
-            if (string.IsNullOrEmpty(email))
-            {
-                return BadRequest("Could not determine user email from token.");
-            }
-
-            email = email.Trim().ToLowerInvariant();
-
-            var user = await _context.Users
-                .Include(u => u.Roles)
-                .FirstOrDefaultAsync(u =>
-                (objectId != null && u.EntraObjectId == objectId) || u.Email == email);
-
-            if (user == null)
-            {
-                var defaultUserRole = await RequireRoleAsync(
-                    AppRoles.User,
-                    "Can use connections in assigned vaults.");
-
-                user = new User
-                {
-                    Id = Guid.NewGuid(),
-                    Email = email,
-                    Name = name ?? email,
-                    EntraObjectId = objectId,
-                    IsActive = true,
-                    CreatedAt = DateTime.UtcNow
-                };
-                user.Roles.Add(defaultUserRole);
-                _context.Users.Add(user);
-                _context.AuditLogs.Add(new AuditLog
-                {
-                    Id = Guid.NewGuid(),
-                    UserId = user.Id,
-                    Action = "user.provisioned",
-                    ResourceType = "User",
-                    ResourceId = user.Id.ToString(),
-                    Details = "{\"provider\":\"entra_id\"}",
-                    IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? ""
-                });
-                await _context.SaveChangesAsync();
-            }
-            else if (objectId != null && user.EntraObjectId != objectId)
-            {
-                user.EntraObjectId = objectId;
-                if (string.IsNullOrEmpty(user.Name) && !string.IsNullOrEmpty(name))
-                {
-                    user.Name = name;
-                }
-                await _context.SaveChangesAsync();
-            }
-
-            if (user.Roles.Count == 0)
-            {
-                var defaultUserRole = await RequireRoleAsync(
-                    AppRoles.User,
-                    "Can use connections in assigned vaults.");
-                user.Roles.Add(defaultUserRole);
-                await _context.SaveChangesAsync();
-            }
-
-            if (!user.IsActive)
-            {
-                return StatusCode(403, new { message = "User account is disabled." });
-            }
-
-            return Ok(BuildAuthResponse(user));
-        }
+        // Exchanges for the application JWT happen via /api/auth/sso/callback
+        // (OIDC) or /api/auth/sso/acs (SAML); see SsoController.
 
         [HttpGet("me")]
         [Authorize]
@@ -341,7 +259,8 @@ namespace Backend.Controllers
                 Email = user.Email,
                 Name = user.Name,
                 HasPassword = !string.IsNullOrEmpty(user.PasswordHash),
-                LinkedToEntra = !string.IsNullOrEmpty(user.EntraObjectId),
+                SsoLinked = !string.IsNullOrEmpty(user.ExternalId),
+                SsoProviderType = user.SsoProviderType?.ToString(),
                 AvatarUrl = BuildAvatarUrl(user),
                 Roles = user.Roles
                     .Select(r => r.Name)
@@ -492,7 +411,8 @@ namespace Backend.Controllers
                 Email = user.Email,
                 Name = user.Name,
                 HasPassword = !string.IsNullOrEmpty(user.PasswordHash),
-                LinkedToEntra = !string.IsNullOrEmpty(user.EntraObjectId),
+                SsoLinked = !string.IsNullOrEmpty(user.ExternalId),
+                SsoProviderType = user.SsoProviderType?.ToString(),
                 AvatarUrl = BuildAvatarUrl(user),
                 Roles = user.Roles
                     .Select(r => r.Name)

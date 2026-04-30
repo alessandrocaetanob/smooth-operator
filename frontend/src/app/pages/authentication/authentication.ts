@@ -18,6 +18,7 @@ export class Authentication {
   private readonly router = inject(Router);
 
   readonly providers = this.auth.providers;
+  readonly sso = computed(() => this.providers().sso);
   readonly submitting = signal(false);
   readonly errorMessage = signal<string | null>(null);
   readonly isPasswordFocused = signal(false);
@@ -71,7 +72,9 @@ export class Authentication {
   }
 
   loginWithSso(): void {
-    // Placeholder until the OIDC redirect flow is implemented in the SPA.
-    this.errorMessage.set('SSO flow is not yet wired up in the frontend.');
+    // Backend mints the JWT and redirects the browser to /auth/sso/finalize?token=...
+    // The finalize page completes the handoff and routes the user into the app.
+    const returnUrl = '/vault';
+    window.location.href = `/api/auth/sso/initiate?returnUrl=${encodeURIComponent(returnUrl)}`;
   }
 }
