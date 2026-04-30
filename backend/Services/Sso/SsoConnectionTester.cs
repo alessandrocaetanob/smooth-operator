@@ -63,7 +63,8 @@ namespace Backend.Services.Sso
                 {
                     var cfg = await _providers.GetDecryptedSamlAsync()
                         ?? throw new InvalidOperationException("SAML config could not be decrypted.");
-                    if (!Uri.TryCreate(cfg.IdpSsoUrl, UriKind.Absolute, out _))
+                    if (!Uri.TryCreate(cfg.IdpSsoUrl, UriKind.Absolute, out var ssoUri)
+                        || (ssoUri.Scheme != Uri.UriSchemeHttps && ssoUri.Scheme != Uri.UriSchemeHttp))
                         return new SsoTestResult(false, "IdpSsoUrl is not a valid absolute URL.");
 
                     try
