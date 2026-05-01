@@ -46,12 +46,23 @@ export class Vault implements OnInit {
   });
 
   // Performance optimization: O(1) lookups for template bindings
+  readonly connectionsByVault = computed(() => {
+    const map = new Map<string, Connection[]>();
+    for (const c of this.list()) {
+      if (c.connectionGroupId != null) {
+        if (!map.has(c.connectionGroupId)) {
+          map.set(c.connectionGroupId, []);
+        }
+        map.get(c.connectionGroupId)!.push(c);
+      }
+    }
+    return map;
+  });
+
   readonly vaultConnectionCounts = computed(() => {
     const counts = new Map<string, number>();
-    this.list().forEach((c) => {
-      if (c.connectionGroupId) {
-        counts.set(c.connectionGroupId, (counts.get(c.connectionGroupId) || 0) + 1);
-      }
+    this.connectionsByVault().forEach((connections, vaultId) => {
+      counts.set(vaultId, connections.length);
     });
     return counts;
   });
@@ -59,7 +70,7 @@ export class Vault implements OnInit {
   readonly filteredConnections = computed(() => {
     const vaultId = this.selectedVaultId();
     if (!vaultId) return this.list();
-    return this.list().filter((c) => c.connectionGroupId === vaultId);
+    return this.connectionsByVault().get(vaultId) ?? [];
   });
 
   ngOnInit(): void {
