@@ -32,10 +32,6 @@ context(
 
 For later messages in the same session, call `context` first before doing more work.
 
-Before inventing a workflow from memory, check whether ContextStream already surfaced relevant skills, docs, lessons, or decisions for the task.
-Use `skill(action="list")`, `memory(action="list_docs")`, `session(action="get_lessons")`, and `memory(action="decisions")` when the task is unfamiliar or likely already documented.
-Reuse the current `project_id` returned by `init` or `context` for project-scoped docs, events, and skills instead of guessing.
-
 ### 2. Plan multi-step work
 
 Capture a persistent plan:
@@ -141,3 +137,23 @@ memory(
 - Use `search(mode="keyword")` for exact symbols or strings
 - Use `search(mode="pattern")` for glob or regex-style lookup
 - Use local reads only after search narrows the file set
+
+## Quick Reference
+
+| Need | Tool |
+|------|------|
+| Relevant project context | `context(user_message="...")` |
+| Code discovery | `search(mode="auto", query="...")` |
+| Persistent plan | `session(action="capture_plan")` |
+| Task status | `memory(action="update_task")` |
+| Decision capture | `session(action="capture", event_type="decision")` |
+| Update skill by name | `skill(action="update", name="...", instruction_body="...", change_summary="...")` |
+| Past context | `session(action="recall", query="...")` |
+| Lessons | `session(action="get_lessons", query="...")` |
+
+## Anti-Patterns
+
+- Do not store trivial file reads or command output as memory
+- Do not skip `context(...)` on later turns
+- Do not use local file scanning before `search(...)`; for stale/not-indexed projects, wait ~20s for refresh and retry first, then local fallback is allowed
+- Do not use editor-only task lists as the persistent record; mirror important work in ContextStream
