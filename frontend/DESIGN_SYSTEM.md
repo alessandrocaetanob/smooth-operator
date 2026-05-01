@@ -24,6 +24,7 @@
 **Operator Glass** is the design language of Smooth Operator. It draws inspiration from secure operations centres — dark, glassmorphic surfaces, precise typography, and deliberate motion that communicates system state.
 
 **Key principles:**
+
 - **Glass layers** — panels and cards use frosted-glass effects (`glass-panel`, `glass-card`) that adapt between light and dark themes.
 - **Token-first** — every color, spacing, and type choice must reference a design token (CSS custom property) rather than a hardcoded value.
 - **Accessibility-baseline** — WCAG AA contrast, `:focus-visible` rings, reduced-motion respected.
@@ -36,6 +37,7 @@
 ### Switching Mechanism
 
 Themes are managed by `ThemeService` (`frontend/src/app/services/theme.service.ts`):
+
 - Adds/removes the `.dark` class on `<html>`.
 - Persists preference to `localStorage`.
 - Falls back to `prefers-color-scheme` on first visit.
@@ -65,43 +67,43 @@ This format supports Tailwind opacity modifiers: `text-primary/70`, `bg-primary/
 
 ### Color Token Reference
 
-| Token | Tailwind Class | Purpose |
-|---|---|---|
-| `--color-background` | `bg-background` | Page background |
-| `--color-surface` | `bg-surface` | Card/panel surface |
-| `--color-surface-dim` | `bg-surface-dim` | Recessed surface |
-| `--color-surface-bright` | `bg-surface-bright` | Elevated surface |
-| `--color-surface-variant` | `bg-surface-variant` | Alternate surface |
-| `--color-surface-container` | `bg-surface-container` | Input backgrounds, table rows |
-| `--color-surface-container-low` | `bg-surface-container-low` | Subtle container |
-| `--color-surface-container-high` | `bg-surface-container-high` | Hover state backgrounds |
-| `--color-on-surface` | `text-on-surface` | Primary body text |
-| `--color-on-surface-variant` | `text-on-surface-variant` | Secondary / helper text |
-| `--color-outline` | `text-outline` | Placeholders, disabled text, subtle borders |
-| `--color-outline-variant` | `border-outline-variant` | Dividers and light borders |
-| `--color-primary` | `text-primary` / `bg-primary` | Interactive elements, focus rings |
-| `--color-primary-container` | `bg-primary-container` | Filled button backgrounds |
-| `--color-on-primary` | `text-on-primary` | Text on primary fill |
-| `--color-on-primary-container` | `text-on-primary-container` | Text on primary-container fill |
-| `--color-secondary` | `text-secondary` | Secondary accent (cyan) |
-| `--color-tertiary` | `text-tertiary` | Success / status accent (green) |
-| `--color-error` | `text-error` | Error messages, danger buttons |
-| `--color-error-container` | `bg-error-container` | Error background fills |
-| `--color-on-error` | `text-on-error` | Text on error fill |
+| Token                            | Tailwind Class                | Purpose                                     |
+| -------------------------------- | ----------------------------- | ------------------------------------------- |
+| `--color-background`             | `bg-background`               | Page background                             |
+| `--color-surface`                | `bg-surface`                  | Card/panel surface                          |
+| `--color-surface-dim`            | `bg-surface-dim`              | Recessed surface                            |
+| `--color-surface-bright`         | `bg-surface-bright`           | Elevated surface                            |
+| `--color-surface-variant`        | `bg-surface-variant`          | Alternate surface                           |
+| `--color-surface-container`      | `bg-surface-container`        | Input backgrounds, table rows               |
+| `--color-surface-container-low`  | `bg-surface-container-low`    | Subtle container                            |
+| `--color-surface-container-high` | `bg-surface-container-high`   | Hover state backgrounds                     |
+| `--color-on-surface`             | `text-on-surface`             | Primary body text                           |
+| `--color-on-surface-variant`     | `text-on-surface-variant`     | Secondary / helper text                     |
+| `--color-outline`                | `text-outline`                | Placeholders, disabled text, subtle borders |
+| `--color-outline-variant`        | `border-outline-variant`      | Dividers and light borders                  |
+| `--color-primary`                | `text-primary` / `bg-primary` | Interactive elements, focus rings           |
+| `--color-primary-container`      | `bg-primary-container`        | Filled button backgrounds                   |
+| `--color-on-primary`             | `text-on-primary`             | Text on primary fill                        |
+| `--color-on-primary-container`   | `text-on-primary-container`   | Text on primary-container fill              |
+| `--color-secondary`              | `text-secondary`              | Secondary accent (cyan)                     |
+| `--color-tertiary`               | `text-tertiary`               | Success / status accent (green)             |
+| `--color-error`                  | `text-error`                  | Error messages, danger buttons              |
+| `--color-error-container`        | `bg-error-container`          | Error background fills                      |
+| `--color-on-error`               | `text-on-error`               | Text on error fill                          |
 
 ### Mascot CSS Variables
 
 The mascot's color skin switches with the active theme:
 
-| Variable | Description |
-|---|---|
-| `--mascot-chassis` | Body frame fill |
-| `--mascot-chassis-stroke` | Body frame border |
-| `--mascot-screen` | Screen / visor fill |
-| `--mascot-screen-stroke` | Screen / visor border |
-| `--mascot-eye` | Pupil color |
-| `--mascot-hand` | Hand / arm color |
-| `--mascot-antenna` | Antenna bulb color |
+| Variable                  | Description           |
+| ------------------------- | --------------------- |
+| `--mascot-chassis`        | Body frame fill       |
+| `--mascot-chassis-stroke` | Body frame border     |
+| `--mascot-screen`         | Screen / visor fill   |
+| `--mascot-screen-stroke`  | Screen / visor border |
+| `--mascot-eye`            | Pupil color           |
+| `--mascot-hand`           | Hand / arm color      |
+| `--mascot-antenna`        | Antenna bulb color    |
 
 ---
 
@@ -109,16 +111,16 @@ The mascot's color skin switches with the active theme:
 
 **Typeface:** [Inter](https://rsms.me/inter/) — loaded via Google Fonts in `index.html`.
 
-| Scale | Tailwind Class | Size | Weight | Line Height | Letter Spacing |
-|---|---|---|---|---|---|
-| Heading 1 | `text-h1` | 40px | 700 | 1.2 | −0.02em |
-| Heading 2 | `text-h2` | 32px | 600 | 1.2 | −0.01em |
-| Heading 3 | `text-h3` | 24px | 600 | 1.3 | — |
-| Body Large | `text-body-lg` | 18px | 400 | 1.6 | — |
-| Body Medium | `text-body-md` | 16px | 400 | 1.6 | — |
-| Body Small | `text-body-sm` | 14px | 400 | 1.5 | — |
-| Label Caps | `text-label-caps` | 12px | 600 | 1.0 | 0.05em |
-| Monospace | `text-mono` | 14px | 400 | 1.5 | — |
+| Scale       | Tailwind Class    | Size | Weight | Line Height | Letter Spacing |
+| ----------- | ----------------- | ---- | ------ | ----------- | -------------- |
+| Heading 1   | `text-h1`         | 40px | 700    | 1.2         | −0.02em        |
+| Heading 2   | `text-h2`         | 32px | 600    | 1.2         | −0.01em        |
+| Heading 3   | `text-h3`         | 24px | 600    | 1.3         | —              |
+| Body Large  | `text-body-lg`    | 18px | 400    | 1.6         | —              |
+| Body Medium | `text-body-md`    | 16px | 400    | 1.6         | —              |
+| Body Small  | `text-body-sm`    | 14px | 400    | 1.5         | —              |
+| Label Caps  | `text-label-caps` | 12px | 600    | 1.0         | 0.05em         |
+| Monospace   | `text-mono`       | 14px | 400    | 1.5         | —              |
 
 **Note:** Page section headers (`page-header` component) use `text-xs font-bold uppercase tracking-widest`. This is the `text-label-caps` pattern expressed with Tailwind utilities rather than the semantic scale class.
 
@@ -130,15 +132,15 @@ The mascot's color skin switches with the active theme:
 
 ### Named Spacing Tokens
 
-| Token | Tailwind | Value | Use |
-|---|---|---|---|
-| `xs` | `p-xs`, `gap-xs` | 4px | Tight padding, icon gaps |
-| `sm` | `p-sm`, `gap-sm` | 8px | Small gaps, icon margins |
-| `md` | `p-md`, `gap-md` | 16px | Standard padding |
-| `lg` | `p-lg`, `gap-lg` | 24px | Section padding |
-| `xl` | `p-xl`, `gap-xl` | 40px | Major section gaps |
-| `margin` | `mx-margin` | 32px | Page horizontal margins |
-| `gutter` | `gap-gutter` | 24px | Grid column gutters |
+| Token    | Tailwind         | Value | Use                      |
+| -------- | ---------------- | ----- | ------------------------ |
+| `xs`     | `p-xs`, `gap-xs` | 4px   | Tight padding, icon gaps |
+| `sm`     | `p-sm`, `gap-sm` | 8px   | Small gaps, icon margins |
+| `md`     | `p-md`, `gap-md` | 16px  | Standard padding         |
+| `lg`     | `p-lg`, `gap-lg` | 24px  | Section padding          |
+| `xl`     | `p-xl`, `gap-xl` | 40px  | Major section gaps       |
+| `margin` | `mx-margin`      | 32px  | Page horizontal margins  |
+| `gutter` | `gap-gutter`     | 24px  | Grid column gutters      |
 
 ### Container
 
@@ -146,12 +148,12 @@ Maximum content width: `1440px` (token: `container-max`). Applied to page layout
 
 ### Border Radii
 
-| Token | Value | Use |
-|---|---|---|
-| Default | 4px | Small chips, badges |
-| `rounded-lg` | 8px | Buttons, inputs, list items |
-| `rounded-xl` | 12px | Cards, panels, dialogs |
-| `rounded-2xl` | 16px | Large modals |
+| Token          | Value  | Use                         |
+| -------------- | ------ | --------------------------- |
+| Default        | 4px    | Small chips, badges         |
+| `rounded-lg`   | 8px    | Buttons, inputs, list items |
+| `rounded-xl`   | 12px   | Cards, panels, dialogs      |
+| `rounded-2xl`  | 16px   | Large modals                |
 | `rounded-full` | 9999px | Avatars, pills, status dots |
 
 ---
@@ -162,47 +164,47 @@ Defined in `@layer utilities` in `styles.css`.
 
 ### Glass Effects
 
-| Class | Description |
-|---|---|
+| Class         | Description                                                                                          |
+| ------------- | ---------------------------------------------------------------------------------------------------- |
 | `glass-panel` | Elevated glass surface. Use for floating elements: modals, dialogs, nav bar, header. Higher opacity. |
-| `glass-card` | Recessed glass surface. Use for content panels, table wrappers, section cards. Lower opacity. |
+| `glass-card`  | Recessed glass surface. Use for content panels, table wrappers, section cards. Lower opacity.        |
 
 Both use `--glass-blur: 12px` backdrop blur and theme-aware `--glass-*-bg` / `--glass-*-border` CSS variables that auto-switch between light and dark.
 
 ### Glow Effects
 
-| Class | Description |
-|---|---|
-| `primary-glow` | Static box-shadow glow on an element |
-| `primary-glow-hover` | Glow appears only on `:hover` |
-| `text-glow` | Text shadow glow — for headings |
-| `status-pulse` | Animated radial pulse — used on status indicator dots |
+| Class                | Description                                           |
+| -------------------- | ----------------------------------------------------- |
+| `primary-glow`       | Static box-shadow glow on an element                  |
+| `primary-glow-hover` | Glow appears only on `:hover`                         |
+| `text-glow`          | Text shadow glow — for headings                       |
+| `status-pulse`       | Animated radial pulse — used on status indicator dots |
 
 ### Interactive States
 
-| Class | Description |
-|---|---|
+| Class             | Description                                                                                                                     |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | `btn-interactive` | Lift-on-hover (`translateY(-1px)`) and press (`scale(0.97)`) micro-interactions. Automatically included in all `btn-*` classes. |
 
 ### Skeleton Loading
 
-| Class | Description |
-|---|---|
+| Class      | Description                                                                                        |
+| ---------- | -------------------------------------------------------------------------------------------------- |
 | `skeleton` | Animated shimmer gradient for placeholder content. Apply to `<div>` placeholders while data loads. |
 
 ### CSS Animation Helpers
 
 Apply these directly in HTML for Tailwind keyframe animations:
 
-| Class | Effect | Duration |
-|---|---|---|
-| `animate-slide-up` | Fade + translateY(12px → 0) | 300ms |
-| `animate-slide-in-right` | Fade + translateX(16px → 0) | 300ms |
-| `animate-scale-in` | Fade + scale(0.95 → 1) | 250ms |
-| `animate-fade-in` | Fade opacity(0 → 1) | 300ms |
-| `animate-float` | Continuous vertical float (−6px) | 4s |
-| `animate-shimmer` | Skeleton shimmer sweep | 2.5s |
-| `animate-pulse-glow` | Radial glow pulse | 2s |
+| Class                    | Effect                           | Duration |
+| ------------------------ | -------------------------------- | -------- |
+| `animate-slide-up`       | Fade + translateY(12px → 0)      | 300ms    |
+| `animate-slide-in-right` | Fade + translateX(16px → 0)      | 300ms    |
+| `animate-scale-in`       | Fade + scale(0.95 → 1)           | 250ms    |
+| `animate-fade-in`        | Fade opacity(0 → 1)              | 300ms    |
+| `animate-float`          | Continuous vertical float (−6px) | 4s       |
+| `animate-shimmer`        | Skeleton shimmer sweep           | 2.5s     |
+| `animate-pulse-glow`     | Radial glow pulse                | 2s       |
 
 ---
 
@@ -212,26 +214,27 @@ Defined in `@layer components` in `styles.css`. These are the canonical button a
 
 ### Buttons
 
-| Class | Use Case | Examples |
-|---|---|---|
-| `btn-primary` | Main call-to-action, form submit | Save, Connect, Invite |
-| `btn-secondary` | Alternative action with border | Edit, Export, Filter |
-| `btn-ghost` | Tertiary / cancel action — minimal visual weight | Cancel, Dismiss, Close |
-| `btn-danger` | Destructive actions requiring confirmation | Delete, Revoke, Kick |
+| Class           | Use Case                                         | Examples               |
+| --------------- | ------------------------------------------------ | ---------------------- |
+| `btn-primary`   | Main call-to-action, form submit                 | Save, Connect, Invite  |
+| `btn-secondary` | Alternative action with border                   | Edit, Export, Filter   |
+| `btn-ghost`     | Tertiary / cancel action — minimal visual weight | Cancel, Dismiss, Close |
+| `btn-danger`    | Destructive actions requiring confirmation       | Delete, Revoke, Kick   |
 
 All `btn-*` classes include `flex items-center gap-2` — icons placed before text are naturally aligned.
 
 For full-width centered buttons (e.g., auth form submit), add `w-full justify-center`:
+
 ```html
 <button class="btn-primary w-full justify-center py-2.5 mt-xs">Sign in</button>
 ```
 
 ### Inputs
 
-| Class | Use Case |
-|---|---|
-| `input-field` | Text, email, password, number `<input>` elements |
-| `select-field` | `<select>` dropdowns |
+| Class          | Use Case                                         |
+| -------------- | ------------------------------------------------ |
+| `input-field`  | Text, email, password, number `<input>` elements |
+| `select-field` | `<select>` dropdowns                             |
 
 Both include a focus ring via `focus:border-primary` and adapt to both themes via `bg-surface-container`.
 
@@ -264,7 +267,11 @@ Wraps content in a `glass-card` panel with a consistent header. Props: `title?`,
 ### `app-empty-state-card`
 
 ```html
-<app-empty-state-card icon="hub" title="No connections" message="Add your first connection to get started." />
+<app-empty-state-card
+  icon="hub"
+  title="No connections"
+  message="Add your first connection to get started."
+/>
 ```
 
 Centered empty state with icon, title, and optional message. Display when a list has no items.
@@ -304,7 +311,7 @@ const confirmed = await this.confirmDialog.open({
   title: 'Delete Connection',
   message: 'This cannot be undone.',
   confirmLabel: 'Delete',
-  tone: 'danger',   // 'default' | 'danger'
+  tone: 'danger', // 'default' | 'danger'
 });
 ```
 
@@ -344,17 +351,17 @@ The mascot is an animated robot that communicates system state. Drive it via `[s
 <app-mascot [state]="mascotState()" />
 ```
 
-| State | Meaning | When to Use |
-|---|---|---|
-| `idle` | Neutral, eyes open, gentle float | Default — any screen with no active process |
-| `typing` | Eyes animated, alert posture | User is actively filling a form field |
-| `password` | Eyes closed / shielded | Password field is focused |
-| `loading` | Antenna pulse, processing | API call in progress |
-| `success` | Positive, raised hand or glow | Action completed successfully |
-| `error` | Distress signal | Action failed / error state displayed |
-| `thinking` | Pensive, slow antenna pulse | Background processing / indeterminate wait |
-| `wave` | Greeting wave | Login success, welcome screens, first visit |
-| `sleep` | Eyes closed, dormant | Session idle timeout, session expired |
+| State      | Meaning                          | When to Use                                 |
+| ---------- | -------------------------------- | ------------------------------------------- |
+| `idle`     | Neutral, eyes open, gentle float | Default — any screen with no active process |
+| `typing`   | Eyes animated, alert posture     | User is actively filling a form field       |
+| `password` | Eyes closed / shielded           | Password field is focused                   |
+| `loading`  | Antenna pulse, processing        | API call in progress                        |
+| `success`  | Positive, raised hand or glow    | Action completed successfully               |
+| `error`    | Distress signal                  | Action failed / error state displayed       |
+| `thinking` | Pensive, slow antenna pulse      | Background processing / indeterminate wait  |
+| `wave`     | Greeting wave                    | Login success, welcome screens, first visit |
+| `sleep`    | Eyes closed, dormant             | Session idle timeout, session expired       |
 
 **Small variant** — use `[isSmall]="true"` for the nav-bar mascot. Keep small variants in `idle` or simple nav-context states only.
 
@@ -370,22 +377,24 @@ The mascot is an animated robot that communicates system state. Drive it via `[s
 
 Imported from `frontend/src/app/shared/animations.ts`. Declare in the component's `animations: []` array.
 
-| Export | Trigger Name | Use |
-|---|---|---|
-| `fadeIn` | `@fadeIn` | Conditional blocks (`@if`), overlay backdrops |
-| `scaleIn` | `@scaleIn` | Dialogs, popovers, modals |
-| `slideUp` | `@slideUp` | Page sections entering view |
-| `slideInFromRight` | `@slideInFromRight` | Side panels, drawer content |
-| `listStagger` | `@listStagger` | List containers — staggers child enters by 40ms |
-| `routeFade` | `@routeFade` | Route outlet wrapper in `app.component.html` |
-| `toastEnter` | `@toastEnter` | Toast notifications |
+| Export             | Trigger Name        | Use                                             |
+| ------------------ | ------------------- | ----------------------------------------------- |
+| `fadeIn`           | `@fadeIn`           | Conditional blocks (`@if`), overlay backdrops   |
+| `scaleIn`          | `@scaleIn`          | Dialogs, popovers, modals                       |
+| `slideUp`          | `@slideUp`          | Page sections entering view                     |
+| `slideInFromRight` | `@slideInFromRight` | Side panels, drawer content                     |
+| `listStagger`      | `@listStagger`      | List containers — staggers child enters by 40ms |
+| `routeFade`        | `@routeFade`        | Route outlet wrapper in `app.component.html`    |
+| `toastEnter`       | `@toastEnter`       | Toast notifications                             |
 
 **Usage:**
+
 ```ts
 // component.ts
 import { scaleIn } from '../shared/animations';
 @Component({ animations: [scaleIn] })
 ```
+
 ```html
 <!-- component.html -->
 <div @scaleIn>...</div>
@@ -395,15 +404,15 @@ import { scaleIn } from '../shared/animations';
 
 Apply via `animate-*` classes in HTML. Keyframes defined in `tailwind.config.js`.
 
-| Class | Keyframe | Use |
-|---|---|---|
-| `animate-float` | `float` | Mascot idle floating |
-| `animate-fade-in` | `fade-in` | Static fade in |
-| `animate-slide-up` | `slide-up` | Static slide + fade |
-| `animate-scale-in` | `scale-in` | Static scale + fade |
-| `animate-slide-in-right` | `slide-in-right` | Static right-slide |
-| `animate-shimmer` | `shimmer` | Skeleton loading sweep |
-| `animate-pulse-glow` | `pulse-glow` | Status dot pulse |
+| Class                    | Keyframe         | Use                    |
+| ------------------------ | ---------------- | ---------------------- |
+| `animate-float`          | `float`          | Mascot idle floating   |
+| `animate-fade-in`        | `fade-in`        | Static fade in         |
+| `animate-slide-up`       | `slide-up`       | Static slide + fade    |
+| `animate-scale-in`       | `scale-in`       | Static scale + fade    |
+| `animate-slide-in-right` | `slide-in-right` | Static right-slide     |
+| `animate-shimmer`        | `shimmer`        | Skeleton loading sweep |
+| `animate-pulse-glow`     | `pulse-glow`     | Status dot pulse       |
 
 ### Guideline: Angular vs Tailwind
 
@@ -435,17 +444,18 @@ This applies to all interactive elements in both themes. **Do not suppress `outl
 
 ### ARIA Patterns
 
-| Pattern | Implementation |
-|---|---|
-| Dialog | `role="dialog"` + `aria-modal="true"` + `aria-labelledby="<h-id>"` + auto-focus confirm + Escape-to-close via `@HostListener` |
-| Toggle button | Dynamic `[attr.aria-label]` that changes with state (e.g., `'Switch to light mode'` / `'Switch to dark mode'`) |
-| Menu button | `aria-haspopup="true"` + `[attr.aria-expanded]="menuOpen"` |
-| Decorative icons | `aria-hidden="true"` on `<span class="material-symbols-outlined">` when adjacent to visible text |
-| Presentational SVG | `aria-hidden="true"` on `<svg>` — already applied to mascot |
+| Pattern            | Implementation                                                                                                                |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| Dialog             | `role="dialog"` + `aria-modal="true"` + `aria-labelledby="<h-id>"` + auto-focus confirm + Escape-to-close via `@HostListener` |
+| Toggle button      | Dynamic `[attr.aria-label]` that changes with state (e.g., `'Switch to light mode'` / `'Switch to dark mode'`)                |
+| Menu button        | `aria-haspopup="true"` + `[attr.aria-expanded]="menuOpen"`                                                                    |
+| Decorative icons   | `aria-hidden="true"` on `<span class="material-symbols-outlined">` when adjacent to visible text                              |
+| Presentational SVG | `aria-hidden="true"` on `<svg>` — already applied to mascot                                                                   |
 
 ### Keyboard Navigation
 
 All interactive elements are reachable via Tab. The confirm dialog:
+
 - Auto-focuses the confirm button on open (via `effect()` + `queueMicrotask`).
 - Closes on `Escape`.
 - Tab cycles naturally within the two dialog buttons.
@@ -465,6 +475,7 @@ All interactive elements are reachable via Tab. The confirm dialog:
 **Icon set:** [Google Material Symbols Outlined](https://fonts.google.com/icons) — loaded via Google Fonts CDN in `index.html`.
 
 **Usage:**
+
 ```html
 <span class="material-symbols-outlined" aria-hidden="true">settings</span>
 ```
@@ -481,6 +492,7 @@ When an icon is the **sole accessible label** (icon-only button with no adjacent
 ```
 
 **Variation settings** — icons support fill, weight, grade, and optical-size axes:
+
 ```html
 <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">star</span>
 ```
@@ -518,8 +530,10 @@ Default variation (`FILL` 0, `wght` 400) is set globally in `styles.css`.
 
 ```html
 <!-- ✅ DO — use glass utilities -->
-<div class="glass-card rounded-xl p-4">...</div>     <!-- content panel -->
-<div class="glass-panel rounded-xl p-6">...</div>    <!-- floating dialog/modal -->
+<div class="glass-card rounded-xl p-4">...</div>
+<!-- content panel -->
+<div class="glass-panel rounded-xl p-6">...</div>
+<!-- floating dialog/modal -->
 
 <!-- ❌ DON'T — use hardcoded glassmorphism -->
 <div class="bg-slate-800/60 backdrop-blur-md border border-white/10 rounded-xl p-4">...</div>

@@ -10,3 +10,6 @@
 ## 2026-04-27 - SLN Configuration Error
 **Learning:** The smooth-operator.sln file contained a duplicate project entry for the 'backend' folder, which causes dotnet restore to fail with MSB5004.
 **Action:** Removed the duplicate Solution Folder entry for 'backend' to restore successful builds.
+## 2026-05-01 - O(N) Array filtering in Angular Templates
+**Learning:** Using O(N) array methods like `.filter()` inside Angular components (e.g., `getConnectionsForVault` called inside a `@for` loop) causes O(M*N) performance bottlenecks during change detection.
+**Action:** Transformed reference arrays into a lookup Map via a shared `computed(() => new Map(...))` signal to provide O(1) lookups for multiple iterations.
