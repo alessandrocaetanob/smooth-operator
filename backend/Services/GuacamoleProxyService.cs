@@ -261,8 +261,6 @@ namespace Backend.Services
             });
             await dbContext.SaveChangesAsync();
 
-            _metrics.RecordConnectionStarted();
-
             // Register session in Redis
             var db = _redis.GetDatabase();
             await db.HashSetAsync($"session:{sessionId}", new HashEntry[]
@@ -275,6 +273,7 @@ namespace Backend.Services
 
             using var tcpClient = new TcpClient();
             var connectionSuccessful = false;
+            var sessionMetricRecorded = false;
             string? failureReason = null;
             try
             {
@@ -332,6 +331,8 @@ namespace Backend.Services
                 connectArgs.AddRange(paramValues);
                 await SendGuacMessage(networkStream, BuildGuacInstruction(connectArgs.ToArray()));
 
+                _metrics.RecordConnectionStarted();
+                sessionMetricRecorded = true;
                 connectionSuccessful = true;
 
                 // Bidirectional proxy with proper instruction framing on the guacd→ws side.
@@ -396,6 +397,10 @@ namespace Backend.Services
                         IpAddress = ipAddress
                     });
                     await dbContext.SaveChangesAsync();
+                }
+
+                if (sessionMetricRecorded)
+                {
                     _metrics.RecordConnectionEnded();
                 }
 

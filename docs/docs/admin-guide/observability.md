@@ -42,7 +42,7 @@ This starts four additional containers:
 The backend exposes a Prometheus-compatible metrics endpoint:
 
 ```
-http://<host>:8080/metrics
+http://<host>:5000/metrics
 ```
 
 ### Scrape configuration
@@ -66,8 +66,8 @@ scrape_configs:
 | `smooth_operator_active_sessions` | Gauge | Currently open RDP/SSH sessions |
 | `smooth_operator_connections_started_total` | Counter | Total connections ever opened |
 | `smooth_operator_audit_events_total{action}` | Counter | Audit events per action type |
-| `http_requests_total` | Counter | HTTP request count (from ASP.NET Core middleware) |
-| `http_request_duration_seconds` | Histogram | HTTP response time histogram |
+| `http_requests_received_total` | Counter | HTTP request count (from ASP.NET Core middleware) |
+| `http_request_duration_seconds_bucket` | Histogram | HTTP response time histogram buckets |
 
 ---
 

@@ -185,6 +185,7 @@ namespace Backend.Controllers
 
             if (user == null || string.IsNullOrEmpty(user.PasswordHash))
             {
+                _metrics.RecordLoginAttempt("failure");
                 return Unauthorized(new { message = invalid });
             }
 
@@ -198,6 +199,7 @@ namespace Backend.Controllers
 
             if (!user.IsActive)
             {
+                _metrics.RecordLoginAttempt("failure");
                 return StatusCode(403, new { message = "User account is disabled." });
             }
 

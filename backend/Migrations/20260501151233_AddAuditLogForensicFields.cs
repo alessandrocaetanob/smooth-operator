@@ -21,7 +21,7 @@ namespace Backend.Migrations
                 table: "AuditLogs",
                 type: "text",
                 nullable: false,
-                defaultValue: "");
+                defaultValue: "success");
 
             migrationBuilder.AddColumn<string>(
                 name: "UserAgent",
