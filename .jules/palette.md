@@ -1,3 +1,3 @@
-## 2026-04-29 - Missing `for` Attributes on Custom Selects
-**Learning:** Found multiple instances where the `<label>` element lacked a corresponding `for` attribute referencing an `id` on the `<select>` or `<input>`. While they were visually styled correctly, they were not programmatically associated, preventing screen readers from correctly identifying the fields and blocking users from clicking labels to focus fields.
-**Action:** Always ensure that form fields explicitly connect labels to inputs using `for` and `id` tags to maintain keyboard accessibility and screen reader support.
+## 2024-05-01 - Form Accessibility
+**Learning:** Found some Angular forms without proper explicit labels. Using `[ngModel]` or `formControlName` without an `id` on the input element prevents labels from being properly connected if the label uses the `for` attribute, causing issues with screen reader compatibility and keyboard navigation.
+**Action:** Always verify that input fields have an `id` matching their label's `for` attribute in Angular templates.

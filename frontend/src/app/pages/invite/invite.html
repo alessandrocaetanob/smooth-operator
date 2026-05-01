@@ -48,10 +48,13 @@
         <form (ngSubmit)="submit()" class="space-y-4">
           @if (p.type !== 'password_reset') {
             <div>
-              <label class="block text-xs uppercase tracking-widest text-on-surface-variant mb-1"
+              <label
+                for="invite-name"
+                class="block text-xs uppercase tracking-widest text-on-surface-variant mb-1"
                 >Full name</label
               >
               <input
+                id="invite-name"
                 type="text"
                 [ngModel]="name()"
                 (ngModelChange)="name.set($event)"
@@ -62,10 +65,14 @@
             </div>
           }
           <div>
-            <label class="block text-xs uppercase tracking-widest text-on-surface-variant mb-1">
+            <label
+              for="invite-password"
+              class="block text-xs uppercase tracking-widest text-on-surface-variant mb-1"
+            >
               {{ p.type === 'password_reset' ? 'New Password' : 'Password' }}
             </label>
             <input
+              id="invite-password"
               type="password"
               [ngModel]="password()"
               (ngModelChange)="password.set($event)"
@@ -76,10 +83,13 @@
             />
           </div>
           <div>
-            <label class="block text-xs uppercase tracking-widest text-on-surface-variant mb-1"
+            <label
+              for="invite-confirm"
+              class="block text-xs uppercase tracking-widest text-on-surface-variant mb-1"
               >Confirm password</label
             >
             <input
+              id="invite-confirm"
               type="password"
               [ngModel]="confirm()"
               (ngModelChange)="confirm.set($event)"
