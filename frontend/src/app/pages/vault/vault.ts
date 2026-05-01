@@ -45,6 +45,17 @@ export class Vault implements OnInit {
     return map;
   });
 
+  // Performance optimization: O(1) lookups for template bindings
+  readonly vaultConnectionCounts = computed(() => {
+    const counts = new Map<string, number>();
+    this.list().forEach((c) => {
+      if (c.connectionGroupId) {
+        counts.set(c.connectionGroupId, (counts.get(c.connectionGroupId) || 0) + 1);
+      }
+    });
+    return counts;
+  });
+
   readonly filteredConnections = computed(() => {
     const vaultId = this.selectedVaultId();
     if (!vaultId) return this.list();
@@ -108,10 +119,6 @@ export class Vault implements OnInit {
 
   selectVault(id: string | null): void {
     this.selectedVaultId.set(id);
-  }
-
-  getConnectionsForVault(vaultId: string): Connection[] {
-    return this.list().filter((c) => c.connectionGroupId === vaultId);
   }
 
   connect(id: string): void {
