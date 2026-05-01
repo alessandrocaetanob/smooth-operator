@@ -33,10 +33,10 @@ public class SsoUserProvisioningServiceTests
 
     private sealed class FakeAuditService : IAuditService
     {
-        public List<(string Action, string ResourceType, string ResourceId, object? Details)> Events { get; } = new();
-        public Task WriteAsync(string action, string resourceType, string resourceId, object? details = null)
+        public List<(string Action, string ResourceType, string? ResourceId, object? Details, string Outcome)> Events { get; } = new();
+        public Task WriteAsync(string action, string resourceType, string? resourceId = null, object? details = null, string outcome = "success")
         {
-            Events.Add((action, resourceType, resourceId, details));
+            Events.Add((action, resourceType, resourceId, details, outcome));
             return Task.CompletedTask;
         }
     }

@@ -15,6 +15,9 @@ namespace Backend.DTOs
         public string ResourceId { get; set; } = string.Empty;
         public string Details { get; set; } = string.Empty;
         public string IpAddress { get; set; } = string.Empty;
+        public string? UserAgent { get; set; }
+        public string? CorrelationId { get; set; }
+        public string Outcome { get; set; } = "success";
     }
 
     public class PagedResult<T>

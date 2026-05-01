@@ -20,6 +20,8 @@ export class SideNavBar {
   readonly canAccessSettings = this.auth.canAccessSettings;
   readonly collapsed = this.layout.collapsed;
 
+  readonly helpUrl = 'http://localhost:3000';
+
   toggleCollapsed(): void {
     this.layout.toggle();
   }

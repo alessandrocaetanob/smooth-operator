@@ -59,6 +59,14 @@ export class Vault implements OnInit {
     return map;
   });
 
+  readonly vaultConnectionCounts = computed(() => {
+    const counts = new Map<string, number>();
+    this.connectionsByVault().forEach((connections, vaultId) => {
+      counts.set(vaultId, connections.length);
+    });
+    return counts;
+  });
+
   readonly filteredConnections = computed(() => {
     const vaultId = this.selectedVaultId();
     if (!vaultId) return this.list();
@@ -122,10 +130,6 @@ export class Vault implements OnInit {
 
   selectVault(id: string | null): void {
     this.selectedVaultId.set(id);
-  }
-
-  getConnectionsForVault(vaultId: string): Connection[] {
-    return this.connectionsByVault().get(vaultId) ?? [];
   }
 
   connect(id: string): void {

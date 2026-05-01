@@ -12,6 +12,10 @@ namespace Backend.Models
         public string ResourceId { get; set; } = string.Empty;
         public string Details { get; set; } = string.Empty; // JSON metadata
         public string IpAddress { get; set; } = string.Empty;
+        public string? UserAgent { get; set; }
+        public string? CorrelationId { get; set; }
+        /// <summary>Outcome of the audited operation: "success" or "failure".</summary>
+        public string Outcome { get; set; } = "success";
 
         public User? User { get; set; }
     }

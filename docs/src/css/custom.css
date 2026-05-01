@@ -1,0 +1,70 @@
+/* Smooth Operator — Operator Glass design system colors (Material Design 3 purple) */
+
+:root {
+  /* Primary: Material Design purple */
+  --ifm-color-primary: #6750a4;
+  --ifm-color-primary-dark: #5b459b;
+  --ifm-color-primary-darker: #563f93;
+  --ifm-color-primary-darkest: #463279;
+  --ifm-color-primary-light: #735bad;
+  --ifm-color-primary-lighter: #7861b0;
+  --ifm-color-primary-lightest: #8b77bc;
+
+  --ifm-code-font-size: 95%;
+  --ifm-font-family-base: 'Inter', system-ui, -apple-system, sans-serif;
+  --ifm-heading-font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  --docusaurus-highlighted-code-line-bg: rgba(103, 80, 164, 0.08);
+
+  --ifm-navbar-background-color: rgba(255, 251, 254, 0.9);
+  --ifm-navbar-shadow: 0 1px 0 rgba(103, 80, 164, 0.1);
+}
+
+[data-theme='dark'] {
+  /* In dark mode use the lighter surface variant */
+  --ifm-color-primary: #d0bcff;
+  --ifm-color-primary-dark: #c2a8ff;
+  --ifm-color-primary-darker: #bb9fff;
+  --ifm-color-primary-darkest: #a880ff;
+  --ifm-color-primary-light: #dcceff;
+  --ifm-color-primary-lighter: #e3d7ff;
+  --ifm-color-primary-lightest: #ede8ff;
+
+  --docusaurus-highlighted-code-line-bg: rgba(208, 188, 255, 0.08);
+  --ifm-background-color: #141218;
+  --ifm-background-surface-color: #1d1b20;
+  --ifm-navbar-background-color: rgba(20, 18, 24, 0.9);
+}
+
+/* Navbar blur effect */
+.navbar {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Sidebar category spacing */
+.menu__list-item-collapsible {
+  font-weight: 600;
+}
+
+/* Code block improvements */
+.prism-code {
+  border-radius: 8px;
+}
+
+/* Hero button gradient */
+.button--primary {
+  background: linear-gradient(135deg, #6750a4, #8b5cf6);
+  border-color: transparent;
+}
+.button--primary:hover {
+  background: linear-gradient(135deg, #5b459b, #7c3aed);
+  border-color: transparent;
+}
+
+/* API iframe */
+.swagger-iframe {
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 8px;
+  width: 100%;
+  min-height: 800px;
+}

@@ -38,7 +38,7 @@
             <span class="material-symbols-outlined text-[18px]">folder</span>
             <span class="truncate">{{ v.value }}</span>
           </span>
-          <span class="text-xs opacity-60">{{ getConnectionsForVault(v.key).length }}</span>
+          <span class="text-xs opacity-60">{{ vaultConnectionCounts().get(v.key) || 0 }}</span>
         </button>
       }
     </div>

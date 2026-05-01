@@ -34,12 +34,13 @@ namespace Backend.Controllers
             [FromQuery] string? action = null,
             [FromQuery] string? resourceType = null,
             [FromQuery] DateTime? from = null,
-            [FromQuery] DateTime? to = null)
+            [FromQuery] DateTime? to = null,
+            [FromQuery] string? outcome = null)
         {
             page = Math.Max(1, page);
             pageSize = Math.Clamp(pageSize, 1, 200);
 
-            var q = BuildQuery(user, action, resourceType, from, to);
+            var q = BuildQuery(user, action, resourceType, from, to, outcome);
 
             var total = await q.CountAsync();
             var rows = await q
@@ -57,7 +58,10 @@ namespace Backend.Controllers
                     ResourceType = l.ResourceType,
                     ResourceId = l.ResourceId,
                     Details = l.Details,
-                    IpAddress = l.IpAddress
+                    IpAddress = l.IpAddress,
+                    UserAgent = l.UserAgent,
+                    CorrelationId = l.CorrelationId,
+                    Outcome = l.Outcome
                 })
                 .ToListAsync();
 
@@ -76,9 +80,10 @@ namespace Backend.Controllers
             [FromQuery] string? action = null,
             [FromQuery] string? resourceType = null,
             [FromQuery] DateTime? from = null,
-            [FromQuery] DateTime? to = null)
+            [FromQuery] DateTime? to = null,
+            [FromQuery] string? outcome = null)
         {
-            var rows = await BuildQuery(user, action, resourceType, from, to)
+            var rows = await BuildQuery(user, action, resourceType, from, to, outcome)
                 .OrderByDescending(l => l.Timestamp)
                 .Take(10000)
                 .Select(l => new
@@ -90,12 +95,15 @@ namespace Backend.Controllers
                     l.ResourceType,
                     l.ResourceId,
                     l.IpAddress,
+                    l.UserAgent,
+                    l.CorrelationId,
+                    l.Outcome,
                     l.Details
                 })
                 .ToListAsync();
 
             var sb = new StringBuilder();
-            sb.AppendLine("timestamp,user_email,user_name,action,resource_type,resource_id,ip_address,details");
+            sb.AppendLine("timestamp,user_email,user_name,action,resource_type,resource_id,ip_address,user_agent,correlation_id,outcome,details");
             foreach (var r in rows)
             {
                 sb.Append(r.Timestamp.ToString("o", CultureInfo.InvariantCulture)).Append(',');
@@ -105,13 +113,16 @@ namespace Backend.Controllers
                 sb.Append(Csv(r.ResourceType)).Append(',');
                 sb.Append(Csv(r.ResourceId)).Append(',');
                 sb.Append(Csv(r.IpAddress)).Append(',');
+                sb.Append(Csv(r.UserAgent)).Append(',');
+                sb.Append(Csv(r.CorrelationId)).Append(',');
+                sb.Append(Csv(r.Outcome)).Append(',');
                 sb.AppendLine(Csv(r.Details));
             }
 
             return File(Encoding.UTF8.GetBytes(sb.ToString()), "text/csv", "audit-logs.csv");
         }
 
-        private IQueryable<Models.AuditLog> BuildQuery(string? user, string? action, string? resourceType, DateTime? from, DateTime? to)
+        private IQueryable<Models.AuditLog> BuildQuery(string? user, string? action, string? resourceType, DateTime? from, DateTime? to, string? outcome = null)
         {
             var q = _context.AuditLogs.Include(l => l.User).AsQueryable();
             if (!string.IsNullOrWhiteSpace(user))
@@ -130,6 +141,8 @@ namespace Backend.Controllers
                 var term = resourceType.Trim();
                 q = q.Where(l => l.ResourceType == term);
             }
+            if (!string.IsNullOrWhiteSpace(outcome))
+                q = q.Where(l => l.Outcome == outcome.Trim().ToLower());
             if (from.HasValue) q = q.Where(l => l.Timestamp >= from.Value);
             if (to.HasValue) q = q.Where(l => l.Timestamp <= to.Value);
             return q;
