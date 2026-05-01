@@ -116,6 +116,11 @@ export const routes: Routes = [
             path: 'audit-logs',
             loadComponent: () => import('./pages/audit-logs/audit-logs').then((m) => m.AuditLogs),
           },
+          {
+            path: 'integrations',
+            loadComponent: () =>
+              import('./pages/settings/integrations/integrations').then((m) => m.Integrations),
+          },
         ],
       },
       { path: 'administration', redirectTo: 'settings/users', pathMatch: 'full' },

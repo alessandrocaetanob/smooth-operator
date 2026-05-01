@@ -26,6 +26,7 @@ namespace Backend.Services
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly IEncryptionService _encryptionService;
         private readonly IConnectionMultiplexer _redis;
+        private readonly IAppMetrics _metrics;
 
         private static readonly TimeSpan TicketTtl = TimeSpan.FromSeconds(30);
 
@@ -33,13 +34,15 @@ namespace Backend.Services
             ILogger<GuacamoleProxyService> logger,
             IConfiguration configuration,
             IServiceScopeFactory scopeFactory,
-            IEncryptionService encryptionService)
+            IEncryptionService encryptionService,
+            IAppMetrics metrics)
         {
             _logger = logger;
             _guacdHost = configuration["Guacd:Host"] ?? "guacd";
             _guacdPort = int.Parse(configuration["Guacd:Port"] ?? "4822");
             _scopeFactory = scopeFactory;
             _encryptionService = encryptionService;
+            _metrics = metrics;
 
             var redisConnectionString = configuration.GetConnectionString("Redis") ?? "localhost:6379";
             _redis = ConnectionMultiplexer.Connect(redisConnectionString);
@@ -258,6 +261,8 @@ namespace Backend.Services
             });
             await dbContext.SaveChangesAsync();
 
+            _metrics.RecordConnectionStarted();
+
             // Register session in Redis
             var db = _redis.GetDatabase();
             await db.HashSetAsync($"session:{sessionId}", new HashEntry[]
@@ -391,6 +396,7 @@ namespace Backend.Services
                         IpAddress = ipAddress
                     });
                     await dbContext.SaveChangesAsync();
+                    _metrics.RecordConnectionEnded();
                 }
 
                 // Surface the cause to the Guacamole client. Sending a Guacamole

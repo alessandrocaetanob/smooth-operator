@@ -48,6 +48,10 @@ export class AuditLogs implements OnInit {
     return 'action-default';
   }
 
+  outcomeBadgeClass(outcome: string): string {
+    return outcome === 'failure' ? 'outcome-badge-failure' : 'outcome-badge-success';
+  }
+
   formattedDetails(details: string): string {
     try {
       const parsed = JSON.parse(details);
@@ -63,6 +67,7 @@ export class AuditLogs implements OnInit {
   readonly resourceType = signal('');
   readonly from = signal('');
   readonly to = signal('');
+  readonly outcome = signal('');
   readonly page = signal(1);
   readonly pageSize = signal(25);
 
@@ -87,6 +92,7 @@ export class AuditLogs implements OnInit {
     this.resourceType.set('');
     this.from.set('');
     this.to.set('');
+    this.outcome.set('');
     this.search();
   }
 
@@ -143,6 +149,7 @@ export class AuditLogs implements OnInit {
     if (this.resourceType().trim()) q.resourceType = this.resourceType().trim();
     if (this.from()) q.from = new Date(this.from()).toISOString();
     if (this.to()) q.to = new Date(this.to()).toISOString();
+    if (this.outcome()) q.outcome = this.outcome();
     return q;
   }
 }

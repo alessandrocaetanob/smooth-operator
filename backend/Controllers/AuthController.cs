@@ -1,5 +1,4 @@
 using System;
-using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -26,6 +25,8 @@ namespace Backend.Controllers
         private readonly IInviteService _inviteService;
         private readonly IEmailService _emailService;
         private readonly IHostEnvironment _environment;
+        private readonly IAuditService _audit;
+        private readonly IAppMetrics _metrics;
 
         public AuthController(
             AppDbContext context,
@@ -33,7 +34,9 @@ namespace Backend.Controllers
             ITokenService tokenService,
             IInviteService inviteService,
             IEmailService emailService,
-            IHostEnvironment environment)
+            IHostEnvironment environment,
+            IAuditService audit,
+            IAppMetrics metrics)
         {
             _context = context;
             _configuration = configuration;
@@ -41,6 +44,8 @@ namespace Backend.Controllers
             _inviteService = inviteService;
             _emailService = emailService;
             _environment = environment;
+            _audit = audit;
+            _metrics = metrics;
         }
 
         // Lets the frontend discover which login methods are enabled and whether
@@ -107,17 +112,9 @@ namespace Backend.Controllers
             user.Roles.Add(ownerRole);
 
             _context.Users.Add(user);
-            _context.AuditLogs.Add(new AuditLog
-            {
-                Id = Guid.NewGuid(),
-                UserId = user.Id,
-                Action = "user.bootstrap",
-                ResourceType = "User",
-                ResourceId = user.Id.ToString(),
-                Details = "{\"provider\":\"local\",\"role\":\"Owner\"}",
-                IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? ""
-            });
             await _context.SaveChangesAsync();
+            await _audit.WriteAsync("user.bootstrap", "User", user.Id.ToString(),
+                new { provider = "local", role = "Owner" });
 
             return Ok(BuildAuthResponse(user));
         }
@@ -164,17 +161,9 @@ namespace Backend.Controllers
             user.Roles.Add(defaultUserRole);
 
             _context.Users.Add(user);
-            _context.AuditLogs.Add(new AuditLog
-            {
-                Id = Guid.NewGuid(),
-                UserId = user.Id,
-                Action = "user.registered",
-                ResourceType = "User",
-                ResourceId = user.Id.ToString(),
-                Details = "{\"provider\":\"local\"}",
-                IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? ""
-            });
             await _context.SaveChangesAsync();
+            await _audit.WriteAsync("user.registered", "User", user.Id.ToString(),
+                new { provider = "local" });
 
             return Ok(BuildAuthResponse(user));
         }
@@ -201,17 +190,9 @@ namespace Backend.Controllers
 
             if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
             {
-                _context.AuditLogs.Add(new AuditLog
-                {
-                    Id = Guid.NewGuid(),
-                    UserId = user.Id,
-                    Action = "user.login_failed",
-                    ResourceType = "User",
-                    ResourceId = user.Id.ToString(),
-                    Details = "{\"provider\":\"local\"}",
-                    IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? ""
-                });
-                await _context.SaveChangesAsync();
+                await _audit.WriteAsync("user.login_failed", "User", user.Id.ToString(),
+                    new { provider = "local" }, outcome: "failure");
+                _metrics.RecordLoginAttempt("failure");
                 return Unauthorized(new { message = invalid });
             }
 
@@ -220,17 +201,9 @@ namespace Backend.Controllers
                 return StatusCode(403, new { message = "User account is disabled." });
             }
 
-            _context.AuditLogs.Add(new AuditLog
-            {
-                Id = Guid.NewGuid(),
-                UserId = user.Id,
-                Action = "user.login",
-                ResourceType = "User",
-                ResourceId = user.Id.ToString(),
-                Details = "{\"provider\":\"local\"}",
-                IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? ""
-            });
-            await _context.SaveChangesAsync();
+            await _audit.WriteAsync("user.login", "User", user.Id.ToString(),
+                new { provider = "local" });
+            _metrics.RecordLoginAttempt("success");
 
             return Ok(BuildAuthResponse(user));
         }
@@ -341,23 +314,13 @@ namespace Backend.Controllers
                 emailError = result.Error;
             }
 
-            _context.AuditLogs.Add(new AuditLog
+            await _audit.WriteAsync("user.invited", "User", user.Id.ToString(), new
             {
-                Id = Guid.NewGuid(),
-                UserId = adminUser?.Id,
-                Action = "user.invited",
-                ResourceType = "User",
-                ResourceId = user.Id.ToString(),
-                Details = System.Text.Json.JsonSerializer.Serialize(new
-                {
-                    email = user.Email,
-                    name = user.Name,
-                    role = requestedRole,
-                    emailSent
-                }),
-                IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? ""
+                email = user.Email,
+                name = user.Name,
+                role = requestedRole,
+                emailSent
             });
-            await _context.SaveChangesAsync();
 
             return Ok(new
             {
@@ -396,6 +359,8 @@ namespace Backend.Controllers
                 var (_, _, resetUrl) = await _inviteService.CreateAsync(
                     user.Id, InviteService.TypePasswordReset, TimeSpan.FromHours(2), null);
                 await _emailService.SendPasswordResetAsync(user.Email, user.Name, resetUrl);
+                await _audit.WriteAsync("password.reset_requested", "User", user.Id.ToString(),
+                    new { provider = "local" });
             }
 
             return Ok(new { Message = "If the account exists, a reset link has been sent." });

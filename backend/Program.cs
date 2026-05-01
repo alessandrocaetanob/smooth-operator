@@ -1,4 +1,5 @@
 using Backend.Data;
+using Backend.Middleware;
 using Backend.Services;
 using Backend.Services.Sso;
 using Microsoft.EntityFrameworkCore;
@@ -8,8 +9,17 @@ using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.HttpOverrides;
 using System.Net;
 using IPNetwork = System.Net.IPNetwork;
+using Serilog;
+using Serilog.Formatting.Json;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Exporter;
+using Prometheus;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Replace default logging with Serilog — reads config from "Serilog" section.
+builder.Host.UseSerilog((ctx, lc) => lc.ReadFrom.Configuration(ctx.Configuration));
 
 // Add services to the container.
 builder.Services.AddEndpointsApiExplorer();
@@ -20,6 +30,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddSingleton<IEncryptionService, EncryptionService>();
 builder.Services.AddSingleton<GuacamoleProxyService>();
+builder.Services.AddSingleton<IAppMetrics, AppMetrics>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IAuditService, AuditService>();
 builder.Services.AddScoped<IInviteService, InviteService>();
@@ -102,6 +113,19 @@ builder.Services.AddHealthChecks()
 
 builder.Services.AddControllers();
 
+// OpenTelemetry distributed tracing — exports to Tempo via OTLP.
+var otelEndpoint = builder.Configuration["Otel:Endpoint"];
+if (!string.IsNullOrWhiteSpace(otelEndpoint))
+{
+    builder.Services.AddOpenTelemetry()
+        .ConfigureResource(r => r.AddService(
+            builder.Configuration["Otel:ServiceName"] ?? "smooth-operator-backend"))
+        .WithTracing(tracing => tracing
+            .AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddOtlpExporter(o => o.Endpoint = new Uri(otelEndpoint)));
+}
+
 var app = builder.Build();
 
 // Apply any pending EF Core migrations on startup so the schema is always in
@@ -155,12 +179,28 @@ if (app.Environment.IsDevelopment())
 // UseForwardedHeaders must come before UseHttpsRedirection so that the
 // X-Forwarded-Proto header is visible when the HTTPS redirect decision is made.
 app.UseForwardedHeaders();
+
+// Security + observability middleware — ordered before routing.
+app.UseMiddleware<SecurityHeadersMiddleware>();
+app.UseMiddleware<CorrelationIdMiddleware>();
+app.UseSerilogRequestLogging(opts =>
+{
+    opts.EnrichDiagnosticContext = (diag, ctx) =>
+    {
+        diag.Set("CorrelationId", ctx.Items["CorrelationId"]);
+        diag.Set("UserId", ctx.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value);
+    };
+});
+
 app.UseHttpsRedirection();
+app.UseRouting();
+app.UseHttpMetrics();
 app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.MapHealthChecks("/health");
+app.MapMetrics("/metrics");
 
 app.Run();
 

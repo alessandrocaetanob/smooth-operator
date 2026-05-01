@@ -15,7 +15,7 @@
   <!-- Filters -->
   <form
     (ngSubmit)="search()"
-    class="grid grid-cols-1 md:grid-cols-5 gap-3 mb-4 p-4 glass-card rounded-xl"
+    class="grid grid-cols-1 md:grid-cols-6 gap-3 mb-4 p-4 glass-card rounded-xl"
   >
     <input
       type="text"
@@ -55,7 +55,18 @@
       name="to"
       class="input-field"
     />
-    <div class="md:col-span-5 flex justify-end gap-2">
+    <select
+      [ngModel]="outcome()"
+      (ngModelChange)="outcome.set($event)"
+      name="outcome"
+      class="input-field"
+      aria-label="Filter by outcome"
+    >
+      <option value="">All outcomes</option>
+      <option value="success">Success</option>
+      <option value="failure">Failure</option>
+    </select>
+    <div class="md:col-span-6 flex justify-end gap-2">
       <button type="button" (click)="reset()" class="btn-ghost">Reset</button>
       <button type="submit" class="btn-primary">
         <span class="material-symbols-outlined text-sm" aria-hidden="true">search</span>
@@ -76,6 +87,7 @@
           <th class="text-left px-4 py-3 font-semibold">Action</th>
           <th class="text-left px-4 py-3 font-semibold">Resource</th>
           <th class="text-left px-4 py-3 font-semibold">IP</th>
+          <th class="text-left px-4 py-3 font-semibold">Outcome</th>
           <th class="w-10"></th>
         </tr>
       </thead>
@@ -112,6 +124,9 @@
               {{ l.ipAddress }}
             </td>
             <td class="px-4 py-3">
+              <span class="outcome-badge {{ outcomeBadgeClass(l.outcome) }}">{{ l.outcome }}</span>
+            </td>
+            <td class="px-4 py-3">
               <span
                 class="material-symbols-outlined text-base text-on-surface-variant/30 group-hover:text-primary transition-colors"
                 aria-hidden="true"
@@ -121,7 +136,7 @@
           </tr>
         } @empty {
           <tr>
-            <td colspan="6" class="px-4 py-12 text-center text-on-surface-variant/40">
+            <td colspan="7" class="px-4 py-12 text-center text-on-surface-variant/40">
               <span class="material-symbols-outlined text-3xl mb-2 block" aria-hidden="true"
                 >receipt_long</span
               >
@@ -252,6 +267,26 @@
             <span class="detail-meta-label">Resource ID</span>
             <span class="detail-meta-value font-mono text-xs break-all">{{
               selectedEntry()!.resourceId || '—'
+            }}</span>
+          </div>
+          <div class="detail-meta-item">
+            <span class="detail-meta-label">Outcome</span>
+            <span class="detail-meta-value">
+              <span class="outcome-badge {{ outcomeBadgeClass(selectedEntry()!.outcome) }}">{{
+                selectedEntry()!.outcome
+              }}</span>
+            </span>
+          </div>
+          <div class="detail-meta-item md:col-span-2">
+            <span class="detail-meta-label">Correlation ID</span>
+            <span class="detail-meta-value font-mono text-xs break-all select-all">{{
+              selectedEntry()!.correlationId || '—'
+            }}</span>
+          </div>
+          <div class="detail-meta-item md:col-span-2">
+            <span class="detail-meta-label">User Agent</span>
+            <span class="detail-meta-value font-mono text-xs break-all">{{
+              selectedEntry()!.userAgent || '—'
             }}</span>
           </div>
         </div>
