@@ -151,7 +151,7 @@
       "description": "Total number of HTTP requests handled in the last hour.",
       "gridPos": { "x": 0, "y": 4, "w": 6, "h": 4 },
       "datasource": { "type": "prometheus", "uid": "Prometheus" },
-      "targets": [{ "expr": "increase(http_requests_received_total[1h])", "legendFormat": "total", "refId": "A" }],
+      "targets": [{ "expr": "sum(increase(http_requests_received_total[1h]))", "legendFormat": "total", "refId": "A" }],
       "options": {
         "reduceOptions": { "values": false, "calcs": ["lastNotNull"], "fields": "" },
         "orientation": "auto",

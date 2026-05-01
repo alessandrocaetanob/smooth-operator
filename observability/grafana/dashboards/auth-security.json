@@ -14,7 +14,7 @@
       "description": "Total login attempts (successful + failed) in the last 24 hours.",
       "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 },
       "datasource": { "type": "prometheus", "uid": "Prometheus" },
-      "targets": [{ "expr": "increase(smooth_operator_login_attempts_total[24h])", "legendFormat": "total", "refId": "A" }],
+      "targets": [{ "expr": "sum(increase(smooth_operator_login_attempts_total[24h]))", "legendFormat": "total", "refId": "A" }],
       "options": {
         "reduceOptions": { "values": false, "calcs": ["lastNotNull"], "fields": "" },
         "orientation": "auto",
@@ -73,7 +73,7 @@
       "description": "Percentage of login attempts that succeeded in the last 24 hours.",
       "gridPos": { "x": 12, "y": 0, "w": 6, "h": 4 },
       "datasource": { "type": "prometheus", "uid": "Prometheus" },
-      "targets": [{ "expr": "100 * increase(smooth_operator_login_attempts_total{outcome=\"success\"}[24h]) / clamp_min(increase(smooth_operator_login_attempts_total[24h]), 1)", "legendFormat": "success %", "refId": "A" }],
+      "targets": [{ "expr": "100 * sum(increase(smooth_operator_login_attempts_total{outcome=\"success\"}[24h])) / clamp_min(sum(increase(smooth_operator_login_attempts_total[24h])), 1)", "legendFormat": "success %", "refId": "A" }],
       "options": {
         "reduceOptions": { "values": false, "calcs": ["lastNotNull"], "fields": "" },
         "orientation": "auto",

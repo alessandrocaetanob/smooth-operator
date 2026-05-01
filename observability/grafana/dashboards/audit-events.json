@@ -14,7 +14,7 @@
       "description": "Total number of audit events recorded across all action types in the last 24 hours.",
       "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 },
       "datasource": { "type": "prometheus", "uid": "Prometheus" },
-      "targets": [{ "expr": "increase(smooth_operator_audit_events_total[24h])", "legendFormat": "events", "refId": "A" }],
+      "targets": [{ "expr": "sum(increase(smooth_operator_audit_events_total[24h]))", "legendFormat": "events", "refId": "A" }],
       "options": {
         "reduceOptions": { "values": false, "calcs": ["lastNotNull"], "fields": "" },
         "orientation": "auto",
@@ -40,7 +40,7 @@
       "description": "Audit events with a failed outcome in the last 24 hours. High values may indicate an attack.",
       "gridPos": { "x": 6, "y": 0, "w": 6, "h": 4 },
       "datasource": { "type": "prometheus", "uid": "Prometheus" },
-      "targets": [{ "expr": "increase(smooth_operator_audit_events_total{action=~\".*failed.*|.*invalid.*|.*error.*\"}[24h])", "legendFormat": "failures", "refId": "A" }],
+      "targets": [{ "expr": "sum(increase(smooth_operator_audit_events_total{action=~\".*failed.*|.*invalid.*|.*error.*\"}[24h]))", "legendFormat": "failures", "refId": "A" }],
       "options": {
         "reduceOptions": { "values": false, "calcs": ["lastNotNull"], "fields": "" },
         "orientation": "auto",
@@ -73,7 +73,7 @@
       "description": "Login attempts, SSO flows, and token operations in the last 24 hours.",
       "gridPos": { "x": 12, "y": 0, "w": 6, "h": 4 },
       "datasource": { "type": "prometheus", "uid": "Prometheus" },
-      "targets": [{ "expr": "increase(smooth_operator_audit_events_total{action=~\"user\\..*\"}[24h])", "legendFormat": "auth events", "refId": "A" }],
+      "targets": [{ "expr": "sum(increase(smooth_operator_audit_events_total{action=~\"user\\..*\"}[24h]))", "legendFormat": "auth events", "refId": "A" }],
       "options": {
         "reduceOptions": { "values": false, "calcs": ["lastNotNull"], "fields": "" },
         "orientation": "auto",
@@ -133,7 +133,7 @@
       "description": "Distribution of audit events by action type in the last 24 hours.",
       "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 },
       "datasource": { "type": "prometheus", "uid": "Prometheus" },
-      "targets": [{ "expr": "topk(10, increase(smooth_operator_audit_events_total[24h]))", "legendFormat": "{{action}}", "refId": "A" }],
+      "targets": [{ "expr": "topk(10, increase(smooth_operator_audit_events_total[24h]))", "legendFormat": "{{action}}", "refId": "A", "instant": true, "range": false }],
       "options": {
         "orientation": "horizontal",
         "xTickLabelRotation": 0,
@@ -162,8 +162,8 @@
       "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 },
       "datasource": { "type": "prometheus", "uid": "Prometheus" },
       "targets": [
-        { "expr": "increase(smooth_operator_audit_events_total{action!~\".*failed.*|.*invalid.*|.*error.*\"}[24h])", "legendFormat": "Success", "refId": "A" },
-        { "expr": "increase(smooth_operator_audit_events_total{action=~\".*failed.*|.*invalid.*|.*error.*\"}[24h])", "legendFormat": "Failures", "refId": "B" }
+        { "expr": "sum(increase(smooth_operator_audit_events_total{action!~\".*failed.*|.*invalid.*|.*error.*\"}[24h]))", "legendFormat": "Success", "refId": "A" },
+        { "expr": "sum(increase(smooth_operator_audit_events_total{action=~\".*failed.*|.*invalid.*|.*error.*\"}[24h]))", "legendFormat": "Failures", "refId": "B" }
       ],
       "options": {
         "reduceOptions": { "values": false, "calcs": ["lastNotNull"], "fields": "" },
