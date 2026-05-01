@@ -1,0 +1,406 @@
+<div>
+  <div class="mb-6">
+    <h2 class="text-lg font-semibold text-on-surface">Observability Integrations</h2>
+    <p class="text-sm text-on-surface-variant mt-1">
+      Connect your own monitoring stack using the endpoints below. The built-in observability stack
+      (Grafana, Prometheus, Loki, Tempo) is optional — start it with
+      <code class="font-mono text-xs bg-surface-variant px-1 py-0.5 rounded"
+        >docker compose --profile observability up -d</code
+      >.
+    </p>
+  </div>
+
+  <!-- Tab bar -->
+  <nav class="flex gap-1 border-b border-outline-variant/20 mb-6">
+    <button
+      (click)="setTab('prometheus')"
+      [class.text-primary]="activeTab() === 'prometheus'"
+      [class.border-primary]="activeTab() === 'prometheus'"
+      [class.text-on-surface-variant]="activeTab() !== 'prometheus'"
+      [class.border-transparent]="activeTab() !== 'prometheus'"
+      class="flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 hover:text-on-surface transition-colors"
+    >
+      <span class="material-symbols-outlined text-base">query_stats</span>
+      Prometheus Metrics
+    </button>
+    <button
+      (click)="setTab('otlp')"
+      [class.text-primary]="activeTab() === 'otlp'"
+      [class.border-primary]="activeTab() === 'otlp'"
+      [class.text-on-surface-variant]="activeTab() !== 'otlp'"
+      [class.border-transparent]="activeTab() !== 'otlp'"
+      class="flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 hover:text-on-surface transition-colors"
+    >
+      <span class="material-symbols-outlined text-base">timeline</span>
+      OpenTelemetry (OTLP)
+    </button>
+    <button
+      (click)="setTab('loki')"
+      [class.text-primary]="activeTab() === 'loki'"
+      [class.border-primary]="activeTab() === 'loki'"
+      [class.text-on-surface-variant]="activeTab() !== 'loki'"
+      [class.border-transparent]="activeTab() !== 'loki'"
+      class="flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 hover:text-on-surface transition-colors"
+    >
+      <span class="material-symbols-outlined text-base">receipt_long</span>
+      Loki Logs
+    </button>
+    <button
+      (click)="setTab('grafana')"
+      [class.text-primary]="activeTab() === 'grafana'"
+      [class.border-primary]="activeTab() === 'grafana'"
+      [class.text-on-surface-variant]="activeTab() !== 'grafana'"
+      [class.border-transparent]="activeTab() !== 'grafana'"
+      class="flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 hover:text-on-surface transition-colors"
+    >
+      <span class="material-symbols-outlined text-base">dashboard</span>
+      Grafana
+    </button>
+  </nav>
+
+  <!-- Prometheus tab -->
+  @if (activeTab() === 'prometheus') {
+    <div class="space-y-4">
+      <!-- Metrics Endpoint -->
+      <div class="settings-card">
+        <div class="settings-card-header">
+          <span class="material-symbols-outlined settings-card-icon">query_stats</span>
+          <h3 class="settings-card-title">Metrics endpoint</h3>
+        </div>
+        <div class="settings-card-body">
+          <p class="text-sm text-on-surface-variant mb-4">
+            Prometheus-compatible metrics are exposed at
+            <code class="font-mono text-xs">/metrics</code>. Scrape this endpoint with your
+            Prometheus instance or any compatible scraper.
+          </p>
+          @for (ep of prometheusEndpoints; track ep.label) {
+            <div
+              class="flex items-center justify-between gap-3 bg-surface-variant/30 rounded-lg px-4 py-3 mb-2"
+            >
+              <div>
+                <p class="text-xs text-on-surface-variant">{{ ep.label }}</p>
+                <p class="font-mono text-sm text-on-surface mt-0.5">{{ ep.value }}</p>
+              </div>
+              <button (click)="copy(ep.value, ep.label)" class="icon-btn shrink-0" title="Copy">
+                <span class="material-symbols-outlined text-base">
+                  {{ copiedKey() === ep.label ? 'check' : 'content_copy' }}
+                </span>
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Available Metrics -->
+      <div class="settings-card">
+        <div class="settings-card-header">
+          <span class="material-symbols-outlined settings-card-icon">monitoring</span>
+          <h3 class="settings-card-title">Available metrics</h3>
+        </div>
+        <div class="settings-card-body">
+          <ul class="space-y-1.5">
+            @for (m of prometheusMetrics; track m) {
+              <li class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-sm text-primary">circle</span>
+                <code class="font-mono text-xs text-on-surface">{{ m }}</code>
+              </li>
+            }
+          </ul>
+        </div>
+      </div>
+
+      <!-- Scrape Config -->
+      <div class="settings-card">
+        <div class="settings-card-header">
+          <span class="material-symbols-outlined settings-card-icon">code</span>
+          <h3 class="settings-card-title">{{ prometheusConfig.label }}</h3>
+          <button
+            (click)="copy(prometheusConfig.code, 'prom-config')"
+            class="icon-btn ml-auto"
+            title="Copy"
+          >
+            <span class="material-symbols-outlined text-base">
+              {{ copiedKey() === 'prom-config' ? 'check' : 'content_copy' }}
+            </span>
+          </button>
+        </div>
+        <div class="settings-card-body">
+          <pre
+            class="bg-surface-variant/30 rounded-lg p-4 text-xs font-mono text-on-surface overflow-x-auto whitespace-pre"
+            >{{ prometheusConfig.code }}</pre
+          >
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- OTLP tab -->
+  @if (activeTab() === 'otlp') {
+    <div class="space-y-4">
+      <!-- OTLP Endpoints -->
+      <div class="settings-card">
+        <div class="settings-card-header">
+          <span class="material-symbols-outlined settings-card-icon">timeline</span>
+          <h3 class="settings-card-title">OpenTelemetry endpoints</h3>
+        </div>
+        <div class="settings-card-body">
+          <p class="text-sm text-on-surface-variant mb-4">
+            The backend exports distributed traces via OTLP gRPC to Grafana Tempo. Connect your own
+            OpenTelemetry Collector to the endpoint below to receive traces.
+          </p>
+          @for (ep of otlpEndpoints; track ep.label) {
+            <div
+              class="flex items-center justify-between gap-3 bg-surface-variant/30 rounded-lg px-4 py-3 mb-2"
+            >
+              <div>
+                <p class="text-xs text-on-surface-variant">{{ ep.label }}</p>
+                <p class="font-mono text-sm text-on-surface mt-0.5">{{ ep.value }}</p>
+              </div>
+              <button (click)="copy(ep.value, ep.label)" class="icon-btn shrink-0" title="Copy">
+                <span class="material-symbols-outlined text-base">
+                  {{ copiedKey() === ep.label ? 'check' : 'content_copy' }}
+                </span>
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- OTel Collector Config -->
+      <div class="settings-card">
+        <div class="settings-card-header">
+          <span class="material-symbols-outlined settings-card-icon">code</span>
+          <h3 class="settings-card-title">{{ otlpConfig.label }}</h3>
+          <button
+            (click)="copy(otlpConfig.code, 'otlp-config')"
+            class="icon-btn ml-auto"
+            title="Copy"
+          >
+            <span class="material-symbols-outlined text-base">
+              {{ copiedKey() === 'otlp-config' ? 'check' : 'content_copy' }}
+            </span>
+          </button>
+        </div>
+        <div class="settings-card-body">
+          <pre
+            class="bg-surface-variant/30 rounded-lg p-4 text-xs font-mono text-on-surface overflow-x-auto whitespace-pre"
+            >{{ otlpConfig.code }}</pre
+          >
+        </div>
+      </div>
+
+      <!-- Service Name Info -->
+      <div class="settings-card">
+        <div class="settings-card-header">
+          <span class="material-symbols-outlined settings-card-icon">info</span>
+          <h3 class="settings-card-title">Service name</h3>
+        </div>
+        <div class="settings-card-body">
+          <p class="text-sm text-on-surface-variant">
+            The backend service is registered as
+            <code class="font-mono text-xs">smooth-operator-backend</code>. Filter traces by
+            <code class="font-mono text-xs">service.name = "smooth-operator-backend"</code> in your
+            tracing UI.
+          </p>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Loki tab -->
+  @if (activeTab() === 'loki') {
+    <div class="space-y-4">
+      <!-- Loki Endpoints -->
+      <div class="settings-card">
+        <div class="settings-card-header">
+          <span class="material-symbols-outlined settings-card-icon">receipt_long</span>
+          <h3 class="settings-card-title">Loki endpoints</h3>
+        </div>
+        <div class="settings-card-body">
+          <p class="text-sm text-on-surface-variant mb-4">
+            Application logs are shipped to Loki in CLEF (Compact Log Event Format). Each log line
+            carries structured properties you can filter with LogQL.
+          </p>
+          @for (ep of lokiEndpoints; track ep.label) {
+            <div
+              class="flex items-center justify-between gap-3 bg-surface-variant/30 rounded-lg px-4 py-3 mb-2"
+            >
+              <div>
+                <p class="text-xs text-on-surface-variant">{{ ep.label }}</p>
+                <p class="font-mono text-sm text-on-surface mt-0.5">{{ ep.value }}</p>
+              </div>
+              <button (click)="copy(ep.value, ep.label)" class="icon-btn shrink-0" title="Copy">
+                <span class="material-symbols-outlined text-base">
+                  {{ copiedKey() === ep.label ? 'check' : 'content_copy' }}
+                </span>
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Available Labels -->
+      <div class="settings-card">
+        <div class="settings-card-header">
+          <span class="material-symbols-outlined settings-card-icon">label</span>
+          <h3 class="settings-card-title">Available labels</h3>
+        </div>
+        <div class="settings-card-body">
+          <ul class="space-y-1.5">
+            @for (l of lokiLabels; track l) {
+              <li class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-sm text-primary">label</span>
+                <code class="font-mono text-xs text-on-surface">{{ l }}</code>
+              </li>
+            }
+          </ul>
+        </div>
+      </div>
+
+      <!-- LogQL Queries -->
+      <div class="settings-card">
+        <div class="settings-card-header">
+          <span class="material-symbols-outlined settings-card-icon">search</span>
+          <h3 class="settings-card-title">Example LogQL queries</h3>
+        </div>
+        <div class="settings-card-body">
+          <div class="space-y-4">
+            @for (q of lokiQueries; track q.label) {
+              <div>
+                <div class="flex items-center justify-between mb-1.5">
+                  <p class="text-xs font-medium text-on-surface-variant">{{ q.label }}</p>
+                  <button (click)="copy(q.code, q.label)" class="icon-btn" title="Copy">
+                    <span class="material-symbols-outlined text-base">
+                      {{ copiedKey() === q.label ? 'check' : 'content_copy' }}
+                    </span>
+                  </button>
+                </div>
+                <pre
+                  class="bg-surface-variant/30 rounded-lg px-4 py-3 text-xs font-mono text-on-surface overflow-x-auto whitespace-pre"
+                  >{{ q.code }}</pre
+                >
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Grafana tab -->
+  @if (activeTab() === 'grafana') {
+    <div class="space-y-4">
+      <!-- Grafana URL -->
+      <div class="settings-card">
+        <div class="settings-card-header">
+          <span class="material-symbols-outlined settings-card-icon">dashboard</span>
+          <h3 class="settings-card-title">Grafana</h3>
+        </div>
+        <div class="settings-card-body">
+          <p class="text-sm text-on-surface-variant mb-4">
+            Grafana is provisioned with four pre-built dashboards. Start the observability stack
+            with
+            <code class="font-mono text-xs bg-surface-variant px-1 py-0.5 rounded"
+              >docker compose --profile observability up -d</code
+            >, then open Grafana below.
+          </p>
+          @for (ep of grafanaEndpoints; track ep.label) {
+            <div
+              class="flex items-center justify-between gap-3 bg-surface-variant/30 rounded-lg px-4 py-3 mb-2"
+            >
+              <div>
+                <p class="text-xs text-on-surface-variant">{{ ep.label }}</p>
+                <p class="font-mono text-sm text-on-surface mt-0.5">{{ ep.value }}</p>
+              </div>
+              <div class="flex items-center gap-1">
+                <a
+                  [href]="ep.value"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="icon-btn shrink-0"
+                  title="Open"
+                >
+                  <span class="material-symbols-outlined text-base">open_in_new</span>
+                </a>
+                <button (click)="copy(ep.value, ep.label)" class="icon-btn shrink-0" title="Copy">
+                  <span class="material-symbols-outlined text-base">
+                    {{ copiedKey() === ep.label ? 'check' : 'content_copy' }}
+                  </span>
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Provisioned Dashboards -->
+      <div class="settings-card">
+        <div class="settings-card-header">
+          <span class="material-symbols-outlined settings-card-icon">bar_chart</span>
+          <h3 class="settings-card-title">Provisioned dashboards</h3>
+        </div>
+        <div class="settings-card-body">
+          <div class="space-y-3">
+            @for (d of grafanaDashboards; track d.uid) {
+              <div
+                class="flex items-start gap-3 p-3 rounded-lg border border-outline-variant/20 hover:bg-surface-variant/20 transition-colors"
+              >
+                <span class="material-symbols-outlined text-primary mt-0.5">bar_chart</span>
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-medium text-on-surface">{{ d.name }}</p>
+                  <p class="text-xs text-on-surface-variant mt-0.5">{{ d.description }}</p>
+                  <code class="font-mono text-xs text-on-surface-variant/70 mt-1 block"
+                    >uid: {{ d.uid }}</code
+                  >
+                </div>
+                <div class="flex items-center gap-1 shrink-0">
+                  <a
+                    href="http://localhost:3001/d/{{ d.uid }}"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="icon-btn"
+                    title="Open in Grafana"
+                  >
+                    <span class="material-symbols-outlined text-base">open_in_new</span>
+                  </a>
+                  <button
+                    (click)="copyDashboardJson(d.uid, d.filename)"
+                    class="icon-btn"
+                    title="Copy JSON"
+                  >
+                    <span class="material-symbols-outlined text-base">
+                      {{ copiedKey() === d.uid ? 'check' : 'content_copy' }}
+                    </span>
+                  </button>
+                  <button
+                    (click)="downloadDashboard(d.filename)"
+                    class="icon-btn"
+                    title="Download JSON"
+                  >
+                    <span class="material-symbols-outlined text-base">download</span>
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Default Credentials -->
+      <div class="settings-card">
+        <div class="settings-card-header">
+          <span class="material-symbols-outlined settings-card-icon">lock</span>
+          <h3 class="settings-card-title">Default credentials</h3>
+        </div>
+        <div class="settings-card-body">
+          <p class="text-sm text-on-surface-variant">
+            Default login is <code class="font-mono text-xs">admin / admin</code>. Change this
+            immediately via <strong>Profile → Change Password</strong> in Grafana, or set
+            <code class="font-mono text-xs">GF_SECURITY_ADMIN_PASSWORD</code> in your
+            <code class="font-mono text-xs">docker-compose.yml</code> before starting.
+          </p>
+        </div>
+      </div>
+    </div>
+  }
+</div>

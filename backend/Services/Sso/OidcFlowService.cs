@@ -152,6 +152,8 @@ namespace Backend.Services.Sso
         {
             // Use disco.Issuer (canonical clean URL) so we never double-append /.well-known/openid-configuration
             // regardless of what the user typed in the authority field.
+            if (string.IsNullOrEmpty(disco.Issuer))
+                throw new InvalidOperationException("OIDC discovery document is missing the issuer field.");
             var metadataAddress = $"{disco.Issuer.TrimEnd('/')}/.well-known/openid-configuration";
             var configManager = new ConfigurationManager<OpenIdConnectConfiguration>(
                 metadataAddress,

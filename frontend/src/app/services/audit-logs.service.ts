@@ -14,6 +14,9 @@ export interface AuditLogEntry {
   resourceId: string;
   details: string;
   ipAddress: string;
+  outcome: string;
+  userAgent: string | null;
+  correlationId: string | null;
 }
 
 export interface AuditLogQuery {
@@ -24,6 +27,7 @@ export interface AuditLogQuery {
   resourceType?: string;
   from?: string;
   to?: string;
+  outcome?: string;
 }
 
 export interface PagedAuditLogs {
@@ -79,6 +83,7 @@ export class AuditLogsService {
     if (q.resourceType) p = p.set('resourceType', q.resourceType);
     if (q.from) p = p.set('from', q.from);
     if (q.to) p = p.set('to', q.to);
+    if (q.outcome) p = p.set('outcome', q.outcome);
     return p;
   }
 
@@ -94,6 +99,9 @@ export class AuditLogsService {
       resourceId: pickOr(raw, '', 'resourceId', 'ResourceId'),
       details: pickOr(raw, '', 'details', 'Details'),
       ipAddress: pickOr(raw, '', 'ipAddress', 'IpAddress'),
+      outcome: pickOr(raw, 'success', 'outcome', 'Outcome'),
+      userAgent: pickOr<string | null>(raw, null, 'userAgent', 'UserAgent'),
+      correlationId: pickOr<string | null>(raw, null, 'correlationId', 'CorrelationId'),
     };
   }
 }

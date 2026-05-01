@@ -102,6 +102,8 @@ namespace Backend.Controllers
             {
                 var (identity, returnUrl) = await _oidc.HandleCallbackAsync(code ?? "", state ?? "", _urls.CallbackUrl(Request));
                 var result = await _provisioning.ProvisionOrLinkAsync(SsoProviderType.Oidc, identity.ExternalId, identity.Email, identity.Name);
+                await _audit.WriteAsync("sso.login_success", "sso", result.User.Id.ToString(),
+                    new { providerType = "Oidc", email = identity.Email });
                 return Redirect(_urls.FinalizeUrl(Request, result.Token, returnUrl));
             }
             catch (UnauthorizedAccessException ex)
@@ -129,6 +131,8 @@ namespace Backend.Controllers
             {
                 var (identity, returnUrl) = await _saml.HandleAssertionAsync(Request);
                 var result = await _provisioning.ProvisionOrLinkAsync(SsoProviderType.Saml, identity.ExternalId, identity.Email, identity.Name);
+                await _audit.WriteAsync("sso.login_success", "sso", result.User.Id.ToString(),
+                    new { providerType = "Saml", email = identity.Email });
                 return Redirect(_urls.FinalizeUrl(Request, result.Token, returnUrl));
             }
             catch (UnauthorizedAccessException ex)
