@@ -38,6 +38,6 @@ Click the edit icon in the vault row and update the name.
 
 Click the trash icon. This removes the vault and its assignments. **Connections inside the vault are not deleted** — they become unassigned and will no longer be visible to any user until reassigned to a new vault.
 
-:::caution
+:::warning
 Make sure to reassign orphaned connections after deleting a vault, or users will lose access to those sessions.
 :::

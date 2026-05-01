@@ -18,7 +18,7 @@ Fill in the setup form:
 
 Click **Create Account**. This creates the root `Owner` account with full access to everything.
 
-:::caution
+:::warning
 There is only one Owner. This account cannot be demoted or deleted. Keep your password safe — if you lose access, you'll need to reset the database.
 :::
 
@@ -40,7 +40,7 @@ Go to **Settings → Email** and fill in your SMTP details:
 | Password | your SMTP password |
 | From Address | `noreply@example.com` |
 | From Name | `Smooth Operator` |
-| Enable SSL | ✅ (recommended) |
+| Enable SSL | Yes (recommended) |
 
 Click **Save**, then **Test** to verify the connection.
 

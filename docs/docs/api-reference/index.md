@@ -1,6 +1,5 @@
 ---
 sidebar_position: 1
-slug: /api-reference
 ---
 
 # API Overview
@@ -68,7 +67,6 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 | SSO | `/api/auth/sso` | OIDC / SAML flows |
 | Settings — SMTP | `/api/settings/smtp` | Email configuration |
 | Settings — SSO | `/api/settings/sso` | SSO provider configuration |
-| Settings — System | `/api/settings/system` | Application settings |
 | Audit Logs | `/api/audit-logs` | Query and export logs |
 | Invites | `/api/invites` | Look up and redeem invite tokens |
 

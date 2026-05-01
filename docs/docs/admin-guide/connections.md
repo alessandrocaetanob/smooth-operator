@@ -27,22 +27,22 @@ Connections are the core resource in Smooth Operator — each one represents a s
 
 | Field | Required | Description |
 |-------|:--------:|-------------|
-| **Name** | ✅ | Friendly display name shown to users |
-| **Protocol** | ✅ | SSH, RDP, or VNC |
-| **Vault** | ✅ | Which vault this connection belongs to |
+| **Name** | Yes | Friendly display name shown to users |
+| **Protocol** | Yes | SSH, RDP, or VNC |
+| **Vault** | Yes | Which vault this connection belongs to |
 
 ### Network
 
 | Field | Required | Default | Description |
 |-------|:--------:|---------|-------------|
-| **Host** | ✅ | — | IP address or hostname of the target server |
-| **Port** | ✅ | 22 / 3389 / 5900 | Port for the selected protocol |
+| **Host** | Yes | — | IP address or hostname of the target server |
+| **Port** | Yes | 22 / 3389 / 5900 | Port for the selected protocol |
 
 ### Authentication
 
 | Field | Required | Description |
 |-------|:--------:|-------------|
-| **Credential** | ❌ | Select a stored [credential](./credentials) for automatic login |
+| **Credential** | No | Select a stored [credential](./credentials) for automatic login |
 
 If no credential is provided, the Guacamole session may prompt the user for a username/password depending on the protocol.
 
@@ -58,9 +58,9 @@ If no credential is provided, the Guacamole session may prompt the user for a us
 Smooth Operator can probe whether a connection's host:port is reachable. Click the **Probe** button on any connection row to run a real-time connectivity check.
 
 The probe result is displayed as a status indicator:
-- 🟢 **Reachable** — TCP connection to the host:port succeeds
-- 🔴 **Unreachable** — connection refused or timeout
-- ⚪ **Unknown** — probe not yet run
+- **Reachable** — TCP connection to the host:port succeeds
+- **Unreachable** — connection refused or timeout
+- **Unknown** — probe not yet run
 
 ## Editing a connection
 

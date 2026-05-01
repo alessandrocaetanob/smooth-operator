@@ -207,4 +207,4 @@ const connections = await client.getConnections();
 ## Next steps
 
 - [Interactive Swagger UI](./swagger) — explore all endpoints visually
-- [API Overview](./index) — error codes, pagination, rate limits
+- [API Overview](./) — error codes, pagination, rate limits

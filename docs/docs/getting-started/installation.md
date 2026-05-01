@@ -19,9 +19,9 @@ The default `docker-compose.yml` works out of the box for local development. For
 
 ```yaml
 environment:
-  # ⚠️ Generate a strong random 64-char hex secret
+  # WARNING: Generate a strong random 64-char hex secret
   - ENCRYPTION_KEY=<your-64-char-hex>
-  # ⚠️ Generate a strong random secret
+  # WARNING: Generate a strong random secret
   - Jwt__Key=<your-jwt-secret>
   # Set to your public app URL
   - APP_URL=https://your-domain.com
@@ -87,7 +87,7 @@ docker-compose up postgres redis
 # Stop all containers (preserves data volumes)
 docker-compose down
 
-# Stop and remove volumes (⚠️ deletes all data)
+# Stop and remove volumes (WARNING: deletes all data)
 docker-compose down -v
 ```
 

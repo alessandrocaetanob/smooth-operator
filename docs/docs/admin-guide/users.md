@@ -10,10 +10,10 @@ User management is found at **Settings → Users**.
 
 | Role | Invite users | Manage vaults | Manage connections | Manage credentials | Settings |
 |------|:---:|:---:|:---:|:---:|:---:|
-| **Owner** | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Admin** | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **TeamAdmin** | ❌ | ❌ | ✅ (assigned) | ✅ | ❌ |
-| **User** | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **Owner** | Yes | Yes | Yes | Yes | Yes |
+| **Admin** | Yes | Yes | Yes | Yes | Yes |
+| **TeamAdmin** | No | No | Yes (assigned) | Yes | No |
+| **User** | No | No | No | No | No |
 
 ## Inviting a user
 
@@ -34,7 +34,7 @@ The users table shows all registered users with their email, display name, role,
 
 Click the role badge next to a user's name and select the new role from the dropdown. Role changes take effect immediately on the user's next API request.
 
-:::caution
+:::warning
 You cannot demote another Owner. The Owner role can only be transferred by the current Owner (contact your database administrator if the Owner account is inaccessible).
 :::
 

@@ -21,8 +21,8 @@ const config: Config = {
   organizationName: 'alessandrocaetanob',
   projectName: 'smooth-operator',
 
-  onBrokenLinks: 'warn',
-  onBrokenMarkdownLinks: 'warn',
+  onBrokenLinks: 'throw',
+  onBrokenMarkdownLinks: 'throw',
 
   i18n: {
     defaultLocale: 'en',
@@ -72,32 +72,27 @@ const config: Config = {
       items: [
         {
           to: '/docs/getting-started',
-          label: '🚀 Getting Started',
+          label: 'Getting Started',
           position: 'left',
         },
         {
           to: '/docs/user-guide',
-          label: '👤 User Guide',
+          label: 'User Guide',
           position: 'left',
         },
         {
           to: '/docs/admin-guide',
-          label: '🛠️ Admin Guide',
+          label: 'Admin Guide',
           position: 'left',
         },
         {
           to: '/docs/api-reference',
-          label: '📡 API Reference',
+          label: 'API Reference',
           position: 'left',
         },
         {
           href: 'https://github.com/alessandrocaetanob/smooth-operator',
           label: 'GitHub',
-          position: 'right',
-        },
-        {
-          href: 'http://localhost:4200',
-          label: 'Open App ↗',
           position: 'right',
         },
       ],
@@ -112,13 +107,6 @@ const config: Config = {
             { label: 'User Guide', to: '/docs/user-guide' },
             { label: 'Admin Guide', to: '/docs/admin-guide' },
             { label: 'API Reference', to: '/docs/api-reference' },
-          ],
-        },
-        {
-          title: 'Application',
-          items: [
-            { label: 'Open App', href: 'http://localhost:4200' },
-            { label: 'Swagger UI', href: 'http://localhost:5000/swagger' },
           ],
         },
         {
