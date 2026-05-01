@@ -1,1 +1,71 @@
 /* integrations.css — scoped styles for the Integrations settings page */
+
+/* ===== SETTINGS CARDS ===== */
+.settings-card {
+  background: rgb(var(--color-surface-container) / 0.7);
+  border: 1px solid rgb(var(--color-outline-variant) / 0.2);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.settings-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgb(var(--color-outline-variant) / 0.15);
+  background: rgb(var(--color-surface-container-low) / 0.5);
+}
+
+.settings-card-icon {
+  font-size: 18px !important;
+  color: rgb(var(--color-primary));
+  opacity: 0.8;
+}
+
+.settings-card-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgb(var(--color-on-surface) / 0.9);
+  letter-spacing: 0.01em;
+}
+
+.settings-card-body {
+  padding: 16px;
+}
+
+/* ===== FIELD LABELS ===== */
+.settings-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgb(var(--color-on-surface-variant) / 0.7);
+  margin-bottom: 6px;
+}
+
+/* ===== STATUS BANNERS ===== */
+.status-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  font-size: 13px;
+}
+
+.status-banner .material-symbols-outlined {
+  font-size: 20px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.status-info {
+  background: rgb(var(--color-primary) / 0.08);
+  border-color: rgb(var(--color-primary) / 0.25);
+  color: rgb(var(--color-primary));
+}
