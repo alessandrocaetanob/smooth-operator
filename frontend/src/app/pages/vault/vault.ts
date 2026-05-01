@@ -49,7 +49,7 @@ export class Vault implements OnInit {
   readonly connectionsByVault = computed(() => {
     const map = new Map<string, Connection[]>();
     for (const c of this.list()) {
-      if (c.connectionGroupId) {
+      if (c.connectionGroupId != null) {
         if (!map.has(c.connectionGroupId)) {
           map.set(c.connectionGroupId, []);
         }
