@@ -187,8 +187,11 @@ app.UseSerilogRequestLogging(opts =>
 {
     opts.EnrichDiagnosticContext = (diag, ctx) =>
     {
-        diag.Set("CorrelationId", ctx.Items["CorrelationId"]);
-        diag.Set("UserId", ctx.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value);
+        if (ctx.Items["CorrelationId"] is { } correlationId)
+            diag.Set("CorrelationId", correlationId);
+        var userId = ctx.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (userId is not null)
+            diag.Set("UserId", userId);
     };
 });
 
