@@ -73,6 +73,16 @@ services:
     networks:
       - smooth-operator-net
 
+  docs:
+    build:
+      context: ./docs
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    restart: unless-stopped
+    networks:
+      - smooth-operator-net
+
 volumes:
   postgres_data:
   redis_data:

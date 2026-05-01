@@ -1,122 +1,313 @@
 # Smooth Operator 🕶️ 🔐
 
-**Smooth Operator** is a Cloud Native application acting as a centralized, clientless vault for managing remote connections (RDP, SSH, VNC). It provides infrastructure administrators and operators seamless and secure access to servers directly through the browser—eliminating the need for VPN clients or exposing ports to the public internet.
+**Smooth Operator** is a cloud-native, clientless remote access vault. It gives teams secure, browser-based access to SSH, RDP, and VNC servers—without VPN clients, exposed ports, or direct credential sharing.
 
-The application manages granular, team-based access permissions, ensuring end-users never have direct contact with actual server credentials.
+End users never see actual credentials. Admins control exactly who can access what, through granular role-based permissions and vault assignments.
+
+> 📖 **Full documentation →** [http://localhost:3000](http://localhost:3000) *(start the docs container with `docker-compose up docs`)*
 
 ---
 
 ## 🏗️ Architecture
 
-The architecture is built upon a modern, decoupled Cloud Native stack.
-
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#6750A4', 'primaryTextColor': '#FFFFFF', 'primaryBorderColor': '#4F378B', 'lineColor': '#6750A4', 'secondaryColor': '#EAD7FF', 'tertiaryColor': '#F6EDFF', 'background': '#FFFBFE', 'nodeBorder': '#4F378B', 'clusterBkg': '#F6EDFF', 'titleColor': '#21005D', 'edgeLabelBackground': '#F6EDFF'}}}%%
 graph TD
-    %% User Access
-    User([End User / Web Browser]) -->|HTTPS / WebSocket| Ingress[Azure Container Apps Ingress]
+    Browser([🌐 Browser]) -->|HTTPS + WebSocket| Frontend
 
-    %% Frontend Service
-    Ingress -->|Static Assets| Frontend[Angular Frontend]
-    Ingress -->|API & WSS| Backend[C# .NET Backend API]
+    subgraph Docker Stack
+        Frontend["⚡ Angular 21\nnginx · :4200"]
+        Backend["🔧 .NET 10 API\n:5000"]
+        DB[("🗄️ PostgreSQL 15\n:5432")]
+        Cache[("⚡ Redis 7\n:6379")]
+        Guacd["🖥️ guacd 1.6\nApache Guacamole\n:4822"]
+        Docs["📚 Docusaurus\nDocs Site · :3000"]
+    end
 
-    %% Backend Integrations
-    Backend -->|JWT Auth Validation| Supabase[(Supabase PostgreSQL)]
-    Backend -->|Fetch Secrets via Managed Identity| AKV[Azure Key Vault]
-    Backend -->|TCP 4822 Stream| Guacd[Apache Guacamole Engine guacd]
-
-    %% Target Infrastructure
-    Guacd -->|SSH / RDP / VNC| TargetServers[Target Infrastructure Nodes]
+    Frontend -->|REST + WSS| Backend
+    Backend -->|EF Core / Npgsql| DB
+    Backend -->|StackExchange.Redis| Cache
+    Backend -->|TCP 4822| Guacd
+    Guacd -->|SSH / RDP / VNC| Targets[🖧 Target Servers]
 ```
 
 ### Component Breakdown
 
-*   **Frontend:** Built with **Angular v17+** and **Tailwind CSS**. It employs modern "glassmorphism" styling and dark-mode aesthetics. The core connection streaming relies on the `guacamole-common-js` library rendering to an HTML5 `<canvas>`.
-*   **Backend:** A **C# .NET 10 LTS REST API**. Handles authentication verification, role/team authorization, and establishes the crucial WebSocket tunnels between the Angular frontend and the connection engine.
-*   **Connection Engine:** An isolated **Apache Guacamole (`guacd`)** daemon written in C/C++. It translates generic remote desktop protocols (RDP, VNC, SSH) into a proprietary protocol that can be streamed over WebSockets.
-*   **Database:** Persisted using **Supabase (PostgreSQL)**. Manages user identities, team structures, server configurations, and audit logging.
-*   **Secrets Management:** **Azure Key Vault** stores connection strings, SSH private keys, and RDP passwords, accessed securely via Azure Managed Identities.
-*   **Hosting:** Deployed to **Azure Container Apps (ACA)**.
+| Component | Technology | Role |
+|-----------|-----------|------|
+| **Frontend** | Angular 21, Tailwind CSS 4, guacamole-common-js | SPA served via nginx; renders live remote sessions on HTML5 Canvas |
+| **Backend** | .NET 10, ASP.NET Core, EF Core | REST API + WebSocket tunnel; handles auth, RBAC, and Guacamole proxying |
+| **Database** | PostgreSQL 15 | Users, vaults, connections, credentials, groups, audit logs |
+| **Cache** | Redis 7 | Rate limiting, session state |
+| **Connection Engine** | Apache guacd 1.6 | Translates RDP/SSH/VNC to Guacamole protocol over WebSocket |
+| **Docs** | Docusaurus 3 | User guide, admin guide, and API reference |
 
 ---
 
-## 🚀 Getting Started
+## 🔌 Remote Session Flow
+
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#6750A4', 'primaryTextColor': '#FFFFFF', 'lineColor': '#6750A4', 'secondaryColor': '#EAD7FF', 'actorBkg': '#EAD7FF', 'actorBorder': '#6750A4', 'activationBkgColor': '#F6EDFF', 'activationBorderColor': '#6750A4', 'sequenceNumberColor': '#6750A4'}}}%%
+sequenceDiagram
+    actor User as 👤 User
+    participant FE as Angular Frontend
+    participant API as .NET API
+    participant DB as PostgreSQL
+    participant G as guacd
+    participant Srv as Target Server
+
+    User->>FE: Click "Connect"
+    FE->>API: POST /api/guacamole/ticket/{id}
+    API->>DB: Check permission + fetch params
+    DB-->>API: OK + encrypted credentials
+    API-->>FE: One-time ticket token
+    FE->>API: WS /api/guacamole/connect/{id}?ticket=…
+    API->>G: Guacamole handshake (host, port, creds)
+    G->>Srv: SSH / RDP / VNC protocol
+    Srv-->>G: Remote desktop stream
+    G-->>API: Guacamole binary frames
+    API-->>FE: WebSocket relay
+    FE->>User: Live HTML5 Canvas session
+```
+
+---
+
+## 🗄️ Data Model
+
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#6750A4', 'primaryTextColor': '#FFFFFF', 'lineColor': '#6750A4', 'secondaryColor': '#EAD7FF'}}}%%
+erDiagram
+    USER {
+        uuid    id
+        string  email
+        string  displayName
+        string  role
+        bool    isActive
+    }
+    USER_GROUP {
+        uuid    id
+        string  name
+    }
+    VAULT {
+        uuid    id
+        string  name
+    }
+    CONNECTION {
+        uuid    id
+        string  name
+        string  protocol
+        string  host
+        int     port
+    }
+    CREDENTIAL {
+        uuid    id
+        string  name
+        string  type
+    }
+    KNOWN_HOST {
+        uuid    id
+        string  hostname
+        string  fingerprint
+    }
+    AUDIT_LOG {
+        uuid      id
+        string    action
+        string    resourceType
+        timestamp createdAt
+    }
+
+    USER        }o--o{  USER_GROUP  : "member of"
+    USER_GROUP  }o--o{  VAULT       : "has access to"
+    USER        }o--o{  VAULT       : "directly assigned"
+    VAULT       ||--o{  CONNECTION  : "contains"
+    CONNECTION  }o--o|  CREDENTIAL  : "uses"
+    CONNECTION  }o--o|  KNOWN_HOST  : "validates"
+    USER        ||--o{  AUDIT_LOG   : "generates"
+```
+
+---
+
+## ✨ Features
+
+### 🔐 Security & Access Control
+- **Role-Based Access Control (RBAC)** — four built-in roles: `Owner`, `Admin`, `TeamAdmin`, `User`
+- **Vault-based isolation** — users only see connections in vaults they're assigned to, never raw credentials
+- **Invite-only registration** — no public self-registration; admins send email invites
+- **Rate limiting** — fixed-window limiter on auth endpoints (5 req/min per IP)
+
+### 🔑 Authentication
+- **Local auth** — username/password with BCrypt hashing + HS256 JWT
+- **SSO via OIDC** — plug in any OpenID Connect provider (Azure AD, Okta, Auth0, …)
+- **SSO via SAML 2.0** — enterprise identity federation
+- **Forgot-password flow** — email-based password reset (requires SMTP)
+
+### 🖥️ Remote Sessions
+- **RDP, SSH, VNC** — all three protocols via Apache Guacamole
+- **Browser-native** — zero client software; runs on any modern browser
+- **HTML5 Canvas rendering** — full keyboard/mouse capture via `guacamole-common-js`
+- **Clipboard sharing** — bidirectional clipboard between browser and remote session
+- **SSH key pair generation** — generate and store SSH keys directly in the vault
+
+### 📋 Administration
+- **User & group management** — create groups, assign members, bulk-grant vault access
+- **Known hosts** — store and verify SSH host fingerprints
+- **SMTP configuration** — connect any SMTP server for invite/reset emails; test with one click
+- **Audit logs** — complete action history with IP addresses, exportable to CSV
+- **Credential vault** — store passwords and SSH keys, encrypted at rest
+
+### 🎨 UX & Design
+- **Operator Glass design system** — glassmorphic UI built on Material Design 3 color tokens
+- **Light / dark theme** — auto-detects `prefers-color-scheme`; user-toggleable at runtime
+- **Fully responsive** — works on desktop and tablets
+- See [frontend/DESIGN_SYSTEM.md](frontend/DESIGN_SYSTEM.md) for the full token reference
+
+---
+
+## 🛠️ Tech Stack
+
+| Layer | Technology | Version |
+|-------|-----------|---------|
+| Frontend framework | Angular | 21 |
+| Frontend styling | Tailwind CSS | 4 |
+| Remote protocol rendering | guacamole-common-js | 1.6 |
+| Backend framework | ASP.NET Core | .NET 10 |
+| ORM | Entity Framework Core + Npgsql | 9 |
+| Authentication | JWT HS256 + OIDC + SAML 2.0 | — |
+| Database | PostgreSQL | 15 |
+| Cache / rate limiter | Redis | 7 |
+| Connection engine | Apache guacd | 1.6 |
+| Email | MailKit | — |
+| API docs | Swagger / OpenAPI | — |
+| Docs site | Docusaurus | 3 |
+| CI/CD | GitHub Actions | — |
+
+---
+
+## 🚀 Quick Start
 
 ### Prerequisites
-*   [Docker Desktop](https://www.docker.com/products/docker-desktop/) or Docker Engine + Docker Compose
-*   [Node.js v22+](https://nodejs.org/)
-*   [.NET 10.0 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/10.0)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (or Docker Engine + Compose)
+- Ports `4200`, `5000`, `3000`, `5432`, `6379`, `4822` available
 
-### Running Locally with Docker Compose
-
-The easiest way to run both the frontend and backend locally is via Docker Compose:
+### 1. Clone and start
 
 ```bash
-# From the project root directory
+git clone https://github.com/alessandrocaetanob/smooth-operator.git
+cd smooth-operator
 docker-compose up --build
 ```
 
-This will:
-1. Build the Angular frontend multi-stage image and serve it via Nginx on `http://localhost:4200`.
-2. Build and run the .NET Web API on `http://localhost:5000`.
+| Service | URL |
+|---------|-----|
+| **App** | http://localhost:4200 |
+| **API** | http://localhost:5000 |
+| **API Docs (Swagger)** | http://localhost:5000/swagger |
+| **Docs site** | http://localhost:3000 |
 
-*(Note: `guacd` and Supabase instances are external dependencies or can be added to the docker-compose stack in later development phases).*
+### 2. First-access setup
 
-### Running Services Independently
+Open http://localhost:4200. On first run the app redirects to the **setup wizard** where you create the initial Owner account, set a display name, and (optionally) configure SMTP.
 
-#### Frontend (Angular)
+### 3. Invite users
+
+From **Settings → Users**, use the **Invite** button to send invite links to team members.
+
+### 4. Create a vault and a connection
+
+1. **Settings → Vaults** — create a vault (e.g. "Production Linux")
+2. **Connections** — add an SSH/RDP/VNC connection, assign it to the vault
+3. **Settings → Users** — assign users (or groups) to the vault
+
+### 5. Connect
+
+Users see their assigned connections under **My Access** or **My Vaults** and can launch a live session with one click.
+
+---
+
+## 🔧 Running Services Independently
+
+### Frontend (Angular)
 ```bash
 cd frontend
 npm install
 npm start
-# Available at http://localhost:4200
+# → http://localhost:4200
 ```
 
-#### Backend (.NET)
+### Backend (.NET)
 ```bash
 cd backend
 dotnet restore
 dotnet run
-# Available at http://localhost:5000
+# → http://localhost:5000
+# → Swagger UI at http://localhost:5000/swagger (Development only)
+```
+
+### Docs site (Docusaurus)
+```bash
+cd docs
+npm install
+npm start
+# → http://localhost:3000
 ```
 
 ---
 
-## 🎨 UX and Features
+## ⚙️ Environment Variables
 
-*   **Zero-Friction Auth:** Passwordless/SSO-first entry flow. The backend handles token claims and team membership logic transparently.
-*   **Role-Based Vault Dashboards:** Admins can manage teams and register server instances, while Operators view an organized bento-grid dashboard of accessible servers without ever seeing the underlying credentials.
-*   **Built-in RBAC Defaults:** Owner (root bootstrap account), Admin (users/vaults/credentials), TeamAdmin (connections in assigned vaults), and User (connect-only access in assigned vaults). New users are added through invite-only flow; direct self-registration is disabled outside Development unless `Auth:AllowSelfRegister=true` is set.
-*   **Instant Browser Connections:** Initiating a connection opens a seamless HTML5 Canvas session using `guacamole-common-js`, immediately capturing input devices without local software.
-*   **Comprehensive Audit Logs:** A robust auditing view allows administrators to trace historical sessions, operator actions, and connection durations.
-*   **Operator Glass Design Language:** The frontend uses a theme-aware glassmorphic design system built on Material Design 3 color tokens. All colors are driven by CSS custom properties that auto-switch with the active theme. Users can toggle between **light** and **dark** themes via the header button, or the app auto-selects based on `prefers-color-scheme` on first visit. See [frontend/DESIGN_SYSTEM.md](frontend/DESIGN_SYSTEM.md) for the full component and token reference.
+All variables are set in `docker-compose.yml`. Override them for production.
+
+| Variable | Service | Description |
+|----------|---------|-------------|
+| `ASPNETCORE_ENVIRONMENT` | backend | `Development` enables Swagger UI and relaxed CORS |
+| `ConnectionStrings__DefaultConnection` | backend | PostgreSQL connection string |
+| `ConnectionStrings__Redis` | backend | Redis host:port |
+| `Guacd__Host` | backend | guacd hostname (default `guacd`) |
+| `Guacd__Port` | backend | guacd port (default `4822`) |
+| `ENCRYPTION_KEY` | backend | 64-char hex key for encrypting stored credentials — **change in production!** |
+| `Jwt__Key` | backend | HS256 JWT signing secret — **change in production!** |
+| `Jwt__Issuer` | backend | JWT issuer claim (default `smooth-operator`) |
+| `Jwt__Audience` | backend | JWT audience claim (default `smooth-operator-api`) |
+| `APP_URL` | backend | Public app URL (used in email links) |
+| `FRONTEND_URL` | backend | Frontend URL for CORS allow-list |
+| `AzureAd__TenantId` | backend | *(optional)* Entra ID tenant — enables Microsoft SSO when set |
+| `AzureAd__ClientId` | backend | *(optional)* Entra ID app client ID |
+| `POSTGRES_USER/PASSWORD/DB` | postgres | PostgreSQL credentials |
+
+> ⚠️ **Security:** The default `ENCRYPTION_KEY` and `Jwt__Key` in `docker-compose.yml` are for **development only**. Generate strong random secrets for any non-local deployment.
 
 ---
 
-## 🛠️ Development Tools
+## 🔒 CI/CD & Security
 
-*   **Styling:** Tailwind CSS with a custom design-token system — see [frontend/DESIGN_SYSTEM.md](frontend/DESIGN_SYSTEM.md) for the full token and component reference.
-*   **Design System:** "Operator Glass" — glass-morphic, token-driven, theme-aware. Light/dark switching via `ThemeService`. All color, spacing, and type choices must reference design tokens, not hardcoded values.
-*   **Icons:** Google Material Symbols (Outlined).
-*   **Testing:** Angular unit tests (Jasmine/Karma) and Playwright for frontend E2E and visual verification.
+GitHub Actions workflows run on every push and PR:
+
+| Workflow | What it checks |
+|----------|---------------|
+| **CodeQL** | Static analysis for C# and TypeScript vulnerabilities |
+| **Dependency scan** | Known CVEs in npm and NuGet packages |
+| **Docker scan** | Container image vulnerability scanning |
+| **Build validation** | Frontend build + backend compile |
+| **Format check** | Prettier (frontend) + dotnet format (backend) |
+| **Tests** | Vitest unit tests (frontend) + xUnit (backend) |
+
+📖 Workflow details: [.github/workflows/README.md](.github/workflows/README.md) · [Quick Reference](.github/workflows/QUICKREF.md)
 
 ---
 
-## 🔒 CI/CD & Code Quality
+## 📖 Documentation
 
-This project uses automated GitHub Actions workflows for:
+Full user guides, admin reference, integration guides, and API documentation are available in the **Smooth Operator Docs** site.
 
-*   **Security Scanning:** CodeQL analysis for vulnerability detection, dependency scanning, and container security
-*   **Code Quality:** Automated linting, formatting checks, and build validation for both frontend and backend
-*   **PR Validation:** Comprehensive checks ensuring code quality and security standards before merge
+```bash
+# Start only the docs container
+docker-compose up docs
+# → http://localhost:3000
+```
 
-📖 **Documentation:**
-- [Full Workflows Documentation](.github/workflows/README.md)
-- [Quick Reference Guide](.github/workflows/QUICKREF.md)
-
-**Key Features:**
-- 🔐 CodeQL security analysis (C# + TypeScript)
-- 📦 Dependency vulnerability scanning
-- 🐳 Docker image security scanning
-- ✨ Code formatting validation
-- ✅ Automated testing
-- 🚦 PR quality gates
+| Section | Contents |
+|---------|---------|
+| [Getting Started](http://localhost:3000/docs/getting-started) | Installation, first setup, prerequisites |
+| [User Guide](http://localhost:3000/docs/user-guide) | My Access, active sessions, profile |
+| [Admin Guide](http://localhost:3000/docs/admin-guide) | Users, groups, vaults, connections, credentials, SSO, SMTP |
+| [API Reference](http://localhost:3000/docs/api-reference) | Interactive Swagger UI + integration examples |
