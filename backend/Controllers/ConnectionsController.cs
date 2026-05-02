@@ -287,6 +287,46 @@ namespace Backend.Controllers
             return Ok(new { reachable });
         }
 
+        // ---- Batch Host reachability probe ------------------------------------------
+
+        [HttpPost("probe-batch")]
+        public async Task<IActionResult> ProbeBatch([FromBody] List<Guid> ids)
+        {
+            var profile = await _access.GetCurrentProfileAsync(User);
+            if (profile == null) return Unauthorized();
+
+            var connections = await _context.Connections
+                .Include(c => c.Host)
+                .Include(c => c.Users)
+                .Where(c => ids.Contains(c.Id))
+                .ToListAsync();
+
+            var probeTasks = connections.Select(async connection =>
+            {
+                if (!_access.CanUseConnection(profile, connection) || connection.Host == null)
+                {
+                    return new KeyValuePair<Guid, bool>(connection.Id, false);
+                }
+
+                var defaultPort = (connection.Protocol ?? "rdp").ToLowerInvariant() switch
+                {
+                    "ssh" => 22,
+                    "vnc" => 5900,
+                    "telnet" => 23,
+                    _ => 3389
+                };
+                var settings = ParseConnectionSettings(connection.Settings);
+                var port = int.TryParse(settings.GetValueOrDefault("port"), out var p) ? p : defaultPort;
+
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+                var reachable = await TcpProbeAsync(connection.Host.Address, port, cts.Token);
+                return new KeyValuePair<Guid, bool>(connection.Id, reachable);
+            });
+
+            var results = await Task.WhenAll(probeTasks);
+            return Ok(results.ToDictionary(r => r.Key, r => r.Value));
+        }
+
         private static async Task<bool> TcpProbeAsync(string host, int port, CancellationToken ct)
         {
             try
