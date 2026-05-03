@@ -4,3 +4,6 @@
 ## 2026-05-01 - Invite Form Input Accessibility
 **Learning:** The invite form inputs lacked explicit `id` attributes, making their `<label for="...">` associations non-functional. Even when labels are visually connected, screen readers and click-to-focus behaviour require a matching `id` on each input.
 **Action:** Always verify that input fields have an `id` matching their label's `for` attribute in Angular templates.
+## 2026-05-03 - Form Field Accessibility in Email Settings
+**Learning:** Similar to the invite form issue, multiple form fields in the email settings page (`email.html`) lacked explicit `id` attributes that matched the `for` attributes of their labels, and the test email field lacked any label.
+**Action:** Consistently link Angular form inputs with their descriptive labels using explicit `for` and `id` properties to improve screen reader capabilities and keyboard functionality. Add `aria-label` when text labels aren't applicable.
