@@ -45,6 +45,17 @@
       <span class="material-symbols-outlined text-base">receipt_long</span>
       Loki Logs
     </button>
+    <button
+      (click)="setTab('grafana')"
+      [class.text-primary]="activeTab() === 'grafana'"
+      [class.border-primary]="activeTab() === 'grafana'"
+      [class.text-on-surface-variant]="activeTab() !== 'grafana'"
+      [class.border-transparent]="activeTab() !== 'grafana'"
+      class="flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 hover:text-on-surface transition-colors"
+    >
+      <span class="material-symbols-outlined text-base">dashboard</span>
+      Grafana Dashboards
+    </button>
   </nav>
 
   <!-- Prometheus tab -->
@@ -268,6 +279,53 @@
                   class="bg-surface-variant/30 rounded-lg px-4 py-3 text-xs font-mono text-on-surface overflow-x-auto whitespace-pre"
                   >{{ q.code }}</pre
                 >
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Grafana Dashboards tab -->
+  @if (activeTab() === 'grafana') {
+    <div class="space-y-4">
+      <div class="settings-card">
+        <div class="settings-card-header">
+          <span class="material-symbols-outlined settings-card-icon">dashboard</span>
+          <h3 class="settings-card-title">Grafana dashboard files</h3>
+        </div>
+        <div class="settings-card-body">
+          <p class="text-sm text-on-surface-variant mb-4">
+            Download these pre-built Grafana dashboard JSON files to use with your own standalone
+            Grafana server. Import each file via
+            <strong class="font-medium text-on-surface"
+              >Dashboards → Import → Upload JSON file</strong
+            >
+            in the Grafana UI. Requires Prometheus, Loki, and Tempo data sources configured with the
+            endpoints from the other tabs.
+          </p>
+          <div class="space-y-3">
+            @for (d of grafanaDashboards; track d.filename) {
+              <div
+                class="flex items-center justify-between gap-4 bg-surface-variant/30 rounded-lg px-4 py-3"
+              >
+                <div class="min-w-0">
+                  <p class="text-sm font-medium text-on-surface">{{ d.name }}</p>
+                  <p class="text-xs text-on-surface-variant mt-0.5">{{ d.description }}</p>
+                  <code class="font-mono text-xs text-on-surface-variant/70 mt-1 block">{{
+                    d.filename
+                  }}</code>
+                </div>
+                <a
+                  [href]="d.url"
+                  [attr.download]="d.filename"
+                  class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-outline-variant/30 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-colors shrink-0"
+                  title="Download {{ d.filename }}"
+                >
+                  <span class="material-symbols-outlined text-base">download</span>
+                  Download
+                </a>
               </div>
             }
           </div>

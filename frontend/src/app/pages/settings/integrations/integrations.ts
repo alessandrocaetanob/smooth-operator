@@ -11,6 +11,13 @@ interface CodeBlock {
   code: string;
 }
 
+interface GrafanaDashboard {
+  name: string;
+  description: string;
+  filename: string;
+  url: string;
+}
+
 @Component({
   selector: 'app-integrations',
   imports: [CommonModule],
@@ -18,7 +25,7 @@ interface CodeBlock {
   styleUrl: './integrations.css',
 })
 export class Integrations {
-  readonly activeTab = signal<'prometheus' | 'otlp' | 'loki'>('prometheus');
+  readonly activeTab = signal<'prometheus' | 'otlp' | 'loki' | 'grafana'>('prometheus');
 
   readonly copiedKey = signal<string | null>(null);
 
@@ -103,7 +110,38 @@ service:
     'EnvironmentName="Development|Production"',
   ];
 
-  setTab(tab: 'prometheus' | 'otlp' | 'loki'): void {
+  readonly grafanaDashboards: GrafanaDashboard[] = [
+    {
+      name: 'Active Sessions',
+      description:
+        'Live and historical session counts, connection gauge, and session history over time.',
+      filename: 'active-sessions.json',
+      url: '/grafana-dashboards/active-sessions.json',
+    },
+    {
+      name: 'ASP.NET Core Overview',
+      description:
+        'HTTP request rate, error rate, response time percentiles, and total request volume.',
+      filename: 'aspnetcore-overview.json',
+      url: '/grafana-dashboards/aspnetcore-overview.json',
+    },
+    {
+      name: 'Audit Events',
+      description:
+        'Audit event totals, type distribution, outcome breakdown, and event rate timeseries.',
+      filename: 'audit-events.json',
+      url: '/grafana-dashboards/audit-events.json',
+    },
+    {
+      name: 'Auth & Security',
+      description:
+        'Login attempts, failure counts, success rate trends, and security monitoring panels.',
+      filename: 'auth-security.json',
+      url: '/grafana-dashboards/auth-security.json',
+    },
+  ];
+
+  setTab(tab: 'prometheus' | 'otlp' | 'loki' | 'grafana'): void {
     this.activeTab.set(tab);
   }
 
