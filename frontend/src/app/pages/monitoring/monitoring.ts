@@ -1,5 +1,6 @@
 import { Component, AfterViewInit, OnDestroy, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { finalize } from 'rxjs/operators';
 import {
   Chart,
   CategoryScale,
@@ -138,19 +139,40 @@ export class Monitoring implements AfterViewInit, OnDestroy {
       topEvents: this.metricsService.getTopAuditEvents(this.hours, 10),
       breakdown: this.metricsService.getAuditEventBreakdown(this.hours),
       eventTs: this.metricsService.getAuditEventTimeseries(this.hours, this.bucketMinutes),
-    }).subscribe({
-      next: ({ summary, loginTs, connTs, topEvents, breakdown, eventTs }) => {
-        this.summary.set(summary);
-        this.renderLoginChart(loginTs);
-        this.renderConnectionsChart(connTs);
-        this.renderTopEventsChart(topEvents);
-        this.renderBreakdownChart(breakdown);
-        this.renderEventTimeseriesChart(eventTs);
-        this.lastRefreshed.set(new Date());
-        this.loading.set(false);
-      },
-      error: () => this.loading.set(false),
-    });
+    })
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe({
+        next: ({ summary, loginTs, connTs, topEvents, breakdown, eventTs }) => {
+          this.summary.set(summary);
+          try {
+            this.renderLoginChart(loginTs);
+          } catch (e) {
+            console.error('[Monitoring] renderLoginChart', e);
+          }
+          try {
+            this.renderConnectionsChart(connTs);
+          } catch (e) {
+            console.error('[Monitoring] renderConnectionsChart', e);
+          }
+          try {
+            this.renderTopEventsChart(topEvents);
+          } catch (e) {
+            console.error('[Monitoring] renderTopEventsChart', e);
+          }
+          try {
+            this.renderBreakdownChart(breakdown);
+          } catch (e) {
+            console.error('[Monitoring] renderBreakdownChart', e);
+          }
+          try {
+            this.renderEventTimeseriesChart(eventTs);
+          } catch (e) {
+            console.error('[Monitoring] renderEventTimeseriesChart', e);
+          }
+          this.lastRefreshed.set(new Date());
+        },
+        error: (err) => console.error('[Monitoring] HTTP error', err),
+      });
   }
 
   // ── Chart helpers ─────────────────────────────────────────────────────────
@@ -201,6 +223,7 @@ export class Monitoring implements AfterViewInit, OnDestroy {
     }
     const el = document.getElementById(id) as HTMLCanvasElement | null;
     if (!el) return;
+    Chart.getChart(el)?.destroy();
     this.charts[id] = factory(el);
   }
 
