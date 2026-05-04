@@ -61,12 +61,106 @@ public class ConnectionsControllerTests
         var res = await client.PostAsJsonAsync("/api/connections/probe-bulk", ids);
 
         Assert.Equal(HttpStatusCode.OK, res.StatusCode);
-        var results = await res.Content.ReadFromJsonAsync<Dictionary<Guid, bool>>();
+        var results = await res.Content.ReadFromJsonAsync<Dictionary<Guid, string>>();
         Assert.NotNull(results);
         Assert.Equal(2, results.Count);
-        Assert.True(results.ContainsKey(connId1));
-        Assert.True(results.ContainsKey(connId2));
-        // We don't assert the actual true/false reachability value as it depends on whether the ports are open on localhost, which they likely aren't.
-        // The goal is just to ensure the endpoint functions and returns a value for each ID safely.
+        // Accessible connections with a host return "up" or "down" — never null or error statuses.
+        Assert.True(results[connId1] == "up" || results[connId1] == "down",
+            $"Expected 'up' or 'down' for connId1, got '{results[connId1]}'");
+        Assert.True(results[connId2] == "up" || results[connId2] == "down",
+            $"Expected 'up' or 'down' for connId2, got '{results[connId2]}'");
+    }
+
+    [Fact]
+    public async Task ProbeConnectionsBulk_MissingId_ReturnsNotFound()
+    {
+        var userId = Guid.NewGuid();
+        var vaultId = Guid.NewGuid();
+        var missingId = Guid.NewGuid();
+
+        await using var factory = new TestWebApplicationFactory(db =>
+        {
+            var v = new ConnectionGroup { Id = vaultId, Name = "v" };
+            db.ConnectionGroups.Add(v);
+
+            var u = new User { Id = userId, Email = "u@x", Name = "u", IsActive = true, CreatedAt = DateTime.UtcNow };
+            AttachRoles(db, u, AppRoles.User);
+            u.ConnectionGroups.Add(v);
+            db.Users.Add(u);
+        });
+
+        var client = AsUser(factory, userId, AppRoles.User);
+        var res = await client.PostAsJsonAsync("/api/connections/probe-bulk", new List<Guid> { missingId });
+
+        Assert.Equal(HttpStatusCode.OK, res.StatusCode);
+        var results = await res.Content.ReadFromJsonAsync<Dictionary<Guid, string>>();
+        Assert.NotNull(results);
+        Assert.Equal("not_found", results[missingId]);
+    }
+
+    [Fact]
+    public async Task ProbeConnectionsBulk_ForbiddenId_ReturnsForbidden()
+    {
+        var userId = Guid.NewGuid();
+        var ownVaultId = Guid.NewGuid();
+        var otherVaultId = Guid.NewGuid();
+        var hostId = Guid.NewGuid();
+        var forbiddenConnId = Guid.NewGuid();
+
+        await using var factory = new TestWebApplicationFactory(db =>
+        {
+            var ownVault = new ConnectionGroup { Id = ownVaultId, Name = "mine" };
+            var otherVault = new ConnectionGroup { Id = otherVaultId, Name = "theirs" };
+            db.ConnectionGroups.AddRange(ownVault, otherVault);
+
+            db.Hosts.Add(new Backend.Models.Host { Id = hostId, Name = "h", Address = "10.0.0.1" });
+            // This connection belongs to a vault the user has no access to.
+            db.Connections.Add(new Connection { Id = forbiddenConnId, Name = "secret", Protocol = "rdp", HostId = hostId, ConnectionGroupId = otherVaultId, Settings = "{}" });
+
+            var u = new User { Id = userId, Email = "u@x", Name = "u", IsActive = true, CreatedAt = DateTime.UtcNow };
+            AttachRoles(db, u, AppRoles.User);
+            u.ConnectionGroups.Add(ownVault); // user only has access to ownVault
+            db.Users.Add(u);
+        });
+
+        var client = AsUser(factory, userId, AppRoles.User);
+        var res = await client.PostAsJsonAsync("/api/connections/probe-bulk", new List<Guid> { forbiddenConnId });
+
+        Assert.Equal(HttpStatusCode.OK, res.StatusCode);
+        var results = await res.Content.ReadFromJsonAsync<Dictionary<Guid, string>>();
+        Assert.NotNull(results);
+        Assert.Equal("forbidden", results[forbiddenConnId]);
+    }
+
+    [Fact]
+    public async Task ProbeConnectionsBulk_HostlessConnection_ReturnsNoHost()
+    {
+        var userId = Guid.NewGuid();
+        var vaultId = Guid.NewGuid();
+        var hostlessConnId = Guid.NewGuid();
+        // A host ID that is never inserted into the database — Host nav property will be null.
+        var nonExistentHostId = Guid.NewGuid();
+
+        await using var factory = new TestWebApplicationFactory(db =>
+        {
+            var v = new ConnectionGroup { Id = vaultId, Name = "v" };
+            db.ConnectionGroups.Add(v);
+
+            // Connection references a host that doesn't exist — Host navigation property will be null.
+            db.Connections.Add(new Connection { Id = hostlessConnId, Name = "no-host", Protocol = "rdp", HostId = nonExistentHostId, ConnectionGroupId = vaultId, Settings = "{}" });
+
+            var u = new User { Id = userId, Email = "u@x", Name = "u", IsActive = true, CreatedAt = DateTime.UtcNow };
+            AttachRoles(db, u, AppRoles.User);
+            u.ConnectionGroups.Add(v);
+            db.Users.Add(u);
+        });
+
+        var client = AsUser(factory, userId, AppRoles.User);
+        var res = await client.PostAsJsonAsync("/api/connections/probe-bulk", new List<Guid> { hostlessConnId });
+
+        Assert.Equal(HttpStatusCode.OK, res.StatusCode);
+        var results = await res.Content.ReadFromJsonAsync<Dictionary<Guid, string>>();
+        Assert.NotNull(results);
+        Assert.Equal("no_host", results[hostlessConnId]);
     }
 }
