@@ -17,6 +17,6 @@
 **Learning:** Using O(N) array methods like `.filter()` inside Angular components (e.g., `getConnectionsForVault` called inside a `@for` loop) causes O(M*N) performance bottlenecks during change detection.
 **Action:** Transformed reference arrays into a lookup Map via a shared `computed(() => new Map(...))` signal to provide O(1) lookups for multiple iterations.
 
-## 2024-06-25 - Replace List.Remove with List.RemoveAll inside loops
+## 2026-05-04 - Replace List.Remove with List.RemoveAll inside loops
 **Inefficiency:** Calling `List.Remove` inside a loop takes O(N) time for every element being removed, resulting in O(N*M) time complexity. When the collection sizes are large, this becomes a significant performance bottleneck.
 **Optimization:** Use the `List.RemoveAll` method passing an efficient condition (such as checking against a `HashSet`). This optimizes the operation to an O(N) single linear scan, drastically improving processing time. In EF Core where navigation collections default to `List<T>`, utilizing type matching `if (members is List<User> list)` ensures safety without throwing exceptions.
