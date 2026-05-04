@@ -14,7 +14,9 @@
       "description": "Number of currently open Guacamole proxy sessions.",
       "gridPos": { "x": 0, "y": 0, "w": 6, "h": 8 },
       "datasource": { "type": "prometheus", "uid": "Prometheus" },
-      "targets": [{ "expr": "smooth_operator_active_sessions", "legendFormat": "active", "refId": "A" }],
+      "targets": [
+        { "expr": "smooth_operator_active_sessions", "legendFormat": "active", "refId": "A" }
+      ],
       "options": {
         "reduceOptions": { "values": false, "calcs": ["lastNotNull"], "fields": "" },
         "orientation": "auto",
@@ -47,7 +49,13 @@
       "description": "Total new connections opened in the last 24 hours.",
       "gridPos": { "x": 6, "y": 0, "w": 6, "h": 4 },
       "datasource": { "type": "prometheus", "uid": "Prometheus" },
-      "targets": [{ "expr": "increase(smooth_operator_connections_started_total[24h])", "legendFormat": "started", "refId": "A" }],
+      "targets": [
+        {
+          "expr": "increase(smooth_operator_connections_started_total[24h])",
+          "legendFormat": "started",
+          "refId": "A"
+        }
+      ],
       "options": {
         "reduceOptions": { "values": false, "calcs": ["lastNotNull"], "fields": "" },
         "orientation": "auto",
@@ -73,7 +81,13 @@
       "description": "Total connections closed in the last 24 hours.",
       "gridPos": { "x": 12, "y": 0, "w": 6, "h": 4 },
       "datasource": { "type": "prometheus", "uid": "Prometheus" },
-      "targets": [{ "expr": "increase(smooth_operator_connections_ended_total[24h])", "legendFormat": "ended", "refId": "A" }],
+      "targets": [
+        {
+          "expr": "increase(smooth_operator_connections_ended_total[24h])",
+          "legendFormat": "ended",
+          "refId": "A"
+        }
+      ],
       "options": {
         "reduceOptions": { "values": false, "calcs": ["lastNotNull"], "fields": "" },
         "orientation": "auto",
@@ -99,7 +113,13 @@
       "description": "Rate of new connections per second averaged over 5 minutes.",
       "gridPos": { "x": 18, "y": 0, "w": 6, "h": 4 },
       "datasource": { "type": "prometheus", "uid": "Prometheus" },
-      "targets": [{ "expr": "rate(smooth_operator_connections_started_total[5m])", "legendFormat": "rate", "refId": "A" }],
+      "targets": [
+        {
+          "expr": "rate(smooth_operator_connections_started_total[5m])",
+          "legendFormat": "rate",
+          "refId": "A"
+        }
+      ],
       "options": {
         "reduceOptions": { "values": false, "calcs": ["lastNotNull"], "fields": "" },
         "orientation": "auto",
@@ -133,7 +153,13 @@
       "description": "Connections opened in the past hour.",
       "gridPos": { "x": 6, "y": 4, "w": 6, "h": 4 },
       "datasource": { "type": "prometheus", "uid": "Prometheus" },
-      "targets": [{ "expr": "increase(smooth_operator_connections_started_total[1h])", "legendFormat": "started", "refId": "A" }],
+      "targets": [
+        {
+          "expr": "increase(smooth_operator_connections_started_total[1h])",
+          "legendFormat": "started",
+          "refId": "A"
+        }
+      ],
       "options": {
         "reduceOptions": { "values": false, "calcs": ["lastNotNull"], "fields": "" },
         "orientation": "auto",
@@ -159,7 +185,13 @@
       "description": "Connections closed in the past hour.",
       "gridPos": { "x": 12, "y": 4, "w": 6, "h": 4 },
       "datasource": { "type": "prometheus", "uid": "Prometheus" },
-      "targets": [{ "expr": "increase(smooth_operator_connections_ended_total[1h])", "legendFormat": "ended", "refId": "A" }],
+      "targets": [
+        {
+          "expr": "increase(smooth_operator_connections_ended_total[1h])",
+          "legendFormat": "ended",
+          "refId": "A"
+        }
+      ],
       "options": {
         "reduceOptions": { "values": false, "calcs": ["lastNotNull"], "fields": "" },
         "orientation": "auto",
@@ -185,7 +217,13 @@
       "description": "Rate of closed connections per second over 5 minutes.",
       "gridPos": { "x": 18, "y": 4, "w": 6, "h": 4 },
       "datasource": { "type": "prometheus", "uid": "Prometheus" },
-      "targets": [{ "expr": "rate(smooth_operator_connections_ended_total[5m])", "legendFormat": "rate", "refId": "A" }],
+      "targets": [
+        {
+          "expr": "rate(smooth_operator_connections_ended_total[5m])",
+          "legendFormat": "rate",
+          "refId": "A"
+        }
+      ],
       "options": {
         "reduceOptions": { "values": false, "calcs": ["lastNotNull"], "fields": "" },
         "orientation": "auto",
@@ -220,13 +258,29 @@
       "gridPos": { "x": 0, "y": 8, "w": 24, "h": 9 },
       "datasource": { "type": "prometheus", "uid": "Prometheus" },
       "targets": [
-        { "expr": "smooth_operator_active_sessions", "legendFormat": "Active Sessions", "refId": "A" },
-        { "expr": "rate(smooth_operator_connections_started_total[5m])", "legendFormat": "Start Rate (conn/s)", "refId": "B" },
-        { "expr": "rate(smooth_operator_connections_ended_total[5m])", "legendFormat": "End Rate (conn/s)", "refId": "C" }
+        {
+          "expr": "smooth_operator_active_sessions",
+          "legendFormat": "Active Sessions",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(smooth_operator_connections_started_total[5m])",
+          "legendFormat": "Start Rate (conn/s)",
+          "refId": "B"
+        },
+        {
+          "expr": "rate(smooth_operator_connections_ended_total[5m])",
+          "legendFormat": "End Rate (conn/s)",
+          "refId": "C"
+        }
       ],
       "options": {
         "tooltip": { "mode": "multi", "sort": "none" },
-        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max", "last"] }
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": ["mean", "max", "last"]
+        }
       },
       "fieldConfig": {
         "defaults": {
@@ -260,8 +314,16 @@
       "gridPos": { "x": 0, "y": 17, "w": 24, "h": 8 },
       "datasource": { "type": "prometheus", "uid": "Prometheus" },
       "targets": [
-        { "expr": "smooth_operator_connections_started_total", "legendFormat": "Total Started", "refId": "A" },
-        { "expr": "smooth_operator_connections_ended_total", "legendFormat": "Total Ended", "refId": "B" }
+        {
+          "expr": "smooth_operator_connections_started_total",
+          "legendFormat": "Total Started",
+          "refId": "A"
+        },
+        {
+          "expr": "smooth_operator_connections_ended_total",
+          "legendFormat": "Total Ended",
+          "refId": "B"
+        }
       ],
       "options": {
         "tooltip": { "mode": "multi", "sort": "none" },

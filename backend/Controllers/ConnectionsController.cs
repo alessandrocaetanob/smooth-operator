@@ -25,6 +25,9 @@ namespace Backend.Controllers
         private readonly IAuditService _audit;
         private readonly IAccessControlService _access;
 
+        /// <summary>Maximum number of concurrent TCP probes issued by probe-bulk.</summary>
+        private const int BulkProbeMaxConcurrency = 10;
+
         public ConnectionsController(AppDbContext context, IAuditService audit, IAccessControlService access)
         {
             _context = context;
@@ -356,6 +359,100 @@ namespace Backend.Controllers
                 return true;
             }
             catch (Exception) { return false; }
+        }
+
+        [HttpPost("probe-bulk")]
+        public async Task<IActionResult> ProbeConnectionsBulk([FromBody] List<Guid> ids)
+        {
+            var profile = await _access.GetCurrentProfileAsync(User);
+            if (profile == null) return Unauthorized();
+
+            if (ids == null || ids.Count == 0) return Ok(new Dictionary<Guid, string>());
+
+            // 1. Find which requested IDs exist in the database.
+            var existingConnections = await _context.Connections
+                .Where(c => ids.Contains(c.Id))
+                .Select(c => new { c.Id, c.Protocol, c.Settings, c.HostId })
+                .ToListAsync();
+
+            var existingSet = existingConnections.Select(c => c.Id).ToHashSet();
+
+            // 2. Apply scope filter at the DB level — avoids loading the Users collection
+            // into memory; the scope query translates to a SQL EXISTS sub-select.
+            var accessibleIds = await _access
+                .ApplyConnectionScope(_context.Connections.Where(c => ids.Contains(c.Id)), profile)
+                .Select(c => c.Id)
+                .ToHashSetAsync();
+
+            // 3. Load host addresses for accessible connections only (separate query avoids
+            // an implicit INNER JOIN on Include that would filter out connections with a
+            // missing host FK target).
+            var accessibleConnections = existingConnections
+                .Where(c => accessibleIds.Contains(c.Id))
+                .ToList();
+
+            var hostIds = accessibleConnections.Select(c => c.HostId).Distinct().ToList();
+            var hostLookup = await _context.Hosts
+                .Where(h => hostIds.Contains(h.Id))
+                .Select(h => new { h.Id, h.Address })
+                .ToDictionaryAsync(h => h.Id);
+
+            var results = new System.Collections.Concurrent.ConcurrentDictionary<Guid, string>();
+
+            // Build a O(1) lookup from existing connections so the classification loop below
+            // doesn't perform O(n) linear scans per entry.
+            var existingById = existingConnections.ToDictionary(c => c.Id);
+
+            // Classify IDs that are not probe candidates up-front so the response is
+            // semantically unambiguous (clients can distinguish 'host is down' from
+            // 'this ID is invalid / inaccessible / misconfigured').
+            foreach (var id in ids)
+            {
+                if (!existingSet.Contains(id))
+                    results[id] = "not_found";
+                else if (!accessibleIds.Contains(id))
+                    results[id] = "forbidden";
+                else if (!hostLookup.ContainsKey(existingById[id].HostId))
+                    results[id] = "no_host";
+            }
+
+            // Probe accessible connections that have a host, with a concurrency cap to
+            // prevent a large batch from exhausting socket / thread-pool resources.
+            var probeCandidates = accessibleConnections
+                .Where(c => hostLookup.ContainsKey(c.HostId))
+                .ToList();
+
+            using var semaphore = new SemaphoreSlim(BulkProbeMaxConcurrency, BulkProbeMaxConcurrency);
+
+            var tasks = probeCandidates.Select(conn => Task.Run(async () =>
+            {
+                await semaphore.WaitAsync();
+                try
+                {
+                    var defaultPort = (conn.Protocol ?? "rdp").ToLowerInvariant() switch
+                    {
+                        "ssh" => 22,
+                        "vnc" => 5900,
+                        "telnet" => 23,
+                        _ => 3389
+                    };
+                    var settings = ParseConnectionSettings(conn.Settings);
+                    var port = int.TryParse(settings.GetValueOrDefault("port"), out var p) ? p : defaultPort;
+                    var hostAddress = hostLookup[conn.HostId].Address;
+
+                    using var probeCts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+                    var reachable = await TcpProbeAsync(hostAddress, port, probeCts.Token);
+                    results[conn.Id] = reachable ? "up" : "down";
+                }
+                finally
+                {
+                    semaphore.Release();
+                }
+            })).ToList();
+
+            await Task.WhenAll(tasks);
+
+            return Ok(results);
         }
 
         // ---- Connection file download -----------------------------------------------
