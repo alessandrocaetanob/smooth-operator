@@ -31,6 +31,8 @@ export class SettingsGroups implements OnInit {
 
   readonly membersModalGroup = signal<UserGroup | null>(null);
   readonly selectedMemberIds = signal<string[]>([]);
+  // Performance optimization: O(1) lookup set for template bindings inside loops to prevent O(N*M) change detection cycles
+  readonly selectedMemberIdSet = computed(() => new Set(this.selectedMemberIds()));
   readonly membersBusy = signal(false);
   readonly memberSearch = signal('');
 
@@ -159,7 +161,7 @@ export class SettingsGroups implements OnInit {
   }
 
   isMemberSelected(userId: string): boolean {
-    return this.selectedMemberIds().includes(userId);
+    return this.selectedMemberIdSet().has(userId);
   }
 
   saveMembers(): void {
