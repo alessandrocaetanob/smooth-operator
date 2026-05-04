@@ -84,6 +84,23 @@
       @if (canAccessSettings()) {
         <li>
           <a
+            routerLink="/auditing"
+            routerLinkActive="bg-primary-container/15 text-primary border-l-primary"
+            [routerLinkActiveOptions]="{ exact: false }"
+            class="nav-link"
+            [class.justify-center]="collapsed()"
+            [attr.title]="collapsed() ? 'Auditing' : null"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">receipt_long</span>
+            @if (!collapsed()) {
+              <span>Auditing</span>
+            }
+          </a>
+        </li>
+      }
+      @if (canAccessSettings()) {
+        <li>
+          <a
             routerLink="/settings"
             routerLinkActive="bg-primary-container/15 text-primary border-l-primary"
             class="nav-link"

@@ -10,5 +10,15 @@
     "target": "http://localhost:5000",
     "secure": false,
     "changeOrigin": true
+  },
+  "/api/v1/query": {
+    "target": "http://localhost:9090",
+    "secure": false,
+    "changeOrigin": true
+  },
+  "/api/v1/query_range": {
+    "target": "http://localhost:9090",
+    "secure": false,
+    "changeOrigin": true
   }
 }

@@ -1,0 +1,67 @@
+<div class="space-y-6">
+  <!-- Stats row -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div
+      class="glass-card p-6 rounded-xl flex items-center justify-between border border-outline-variant/20"
+    >
+      <div>
+        <p class="text-sm font-medium text-on-surface-variant uppercase tracking-wider mb-1">
+          Active Sessions
+        </p>
+        <p class="text-3xl font-bold text-on-surface">{{ activeSessions() }}</p>
+      </div>
+      <div
+        class="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary"
+      >
+        <span class="material-symbols-outlined text-2xl" aria-hidden="true">desktop_windows</span>
+      </div>
+    </div>
+
+    <div
+      class="glass-card p-6 rounded-xl flex items-center justify-between border border-outline-variant/20"
+    >
+      <div>
+        <p class="text-sm font-medium text-on-surface-variant uppercase tracking-wider mb-1">
+          Total Logins (24h)
+        </p>
+        <p class="text-3xl font-bold text-on-surface">{{ totalLogins() }}</p>
+      </div>
+      <div
+        class="h-12 w-12 rounded-full bg-secondary/10 flex items-center justify-center text-secondary"
+      >
+        <span class="material-symbols-outlined text-2xl" aria-hidden="true">login</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts row -->
+  <div class="grid grid-cols-1 gap-6">
+    <div class="glass-card p-6 rounded-xl border border-outline-variant/20">
+      <h3 class="text-base font-semibold text-on-surface mb-4">Login Attempts (Last hour)</h3>
+      <div class="relative h-[300px] w-full">
+        <canvas id="loginsChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Legacy Grafana Downloads -->
+  <div class="mt-8 pt-6 border-t border-outline-variant/20">
+    <h3 class="text-base font-semibold text-on-surface mb-4">Legacy Grafana Dashboards</h3>
+    <p class="text-sm text-on-surface-variant mb-4">
+      Download the provisioned Grafana dashboard JSON files for use in your external Grafana
+      instances.
+    </p>
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+      @for (d of dashboardFiles; track d.filename) {
+        <a
+          [href]="'/dashboards/' + d.filename"
+          [download]="d.filename"
+          class="flex items-center gap-3 p-3 rounded-lg border border-outline-variant/30 hover:bg-surface-variant/20 transition-colors"
+        >
+          <span class="material-symbols-outlined text-on-surface-variant/70">download</span>
+          <span class="text-sm font-medium text-on-surface">{{ d.name }}</span>
+        </a>
+      }
+    </div>
+  </div>
+</div>

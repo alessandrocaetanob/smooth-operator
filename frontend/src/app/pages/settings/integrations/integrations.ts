@@ -18,7 +18,7 @@ interface CodeBlock {
   styleUrl: './integrations.css',
 })
 export class Integrations {
-  readonly activeTab = signal<'prometheus' | 'otlp' | 'loki' | 'grafana'>('prometheus');
+  readonly activeTab = signal<'prometheus' | 'otlp' | 'loki'>('prometheus');
 
   readonly copiedKey = signal<string | null>(null);
 
@@ -103,39 +103,7 @@ service:
     'EnvironmentName="Development|Production"',
   ];
 
-  readonly grafanaEndpoints: Endpoint[] = [
-    { label: 'Grafana UI', value: 'http://localhost:3001' },
-    { label: 'Grafana API', value: 'http://localhost:3001/api' },
-  ];
-
-  readonly grafanaDashboards = [
-    {
-      name: 'ASP.NET Core — Overview',
-      uid: 'aspnetcore-overview',
-      filename: 'aspnetcore-overview.json',
-      description: 'HTTP request rate, latency percentiles, error rates, active sessions.',
-    },
-    {
-      name: 'Auth & Security',
-      uid: 'auth-security',
-      filename: 'auth-security.json',
-      description: 'Login attempts, brute-force detection, success/failure rates.',
-    },
-    {
-      name: 'Active Sessions',
-      uid: 'active-sessions',
-      filename: 'active-sessions.json',
-      description: 'Live RDP/SSH session gauge, connection history.',
-    },
-    {
-      name: 'Audit Events',
-      uid: 'audit-events',
-      filename: 'audit-events.json',
-      description: 'Compliance audit event stream, event type distribution.',
-    },
-  ];
-
-  setTab(tab: 'prometheus' | 'otlp' | 'loki' | 'grafana'): void {
+  setTab(tab: 'prometheus' | 'otlp' | 'loki'): void {
     this.activeTab.set(tab);
   }
 
@@ -144,23 +112,5 @@ service:
       this.copiedKey.set(key);
       setTimeout(() => this.copiedKey.set(null), 2000);
     });
-  }
-
-  downloadDashboard(filename: string): void {
-    const a = document.createElement('a');
-    a.href = `/dashboards/${filename}`;
-    a.download = filename;
-    a.click();
-  }
-
-  copyDashboardJson(uid: string, filename: string): void {
-    fetch(`/dashboards/${filename}`)
-      .then((r) => r.text())
-      .then((text) => {
-        navigator.clipboard.writeText(text).then(() => {
-          this.copiedKey.set(uid);
-          setTimeout(() => this.copiedKey.set(null), 2000);
-        });
-      });
   }
 }
