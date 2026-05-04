@@ -12,6 +12,9 @@ import { CommonModule } from '@angular/common';
 import { finalize } from 'rxjs/operators';
 import {
   Chart,
+  LineController,
+  BarController,
+  DoughnutController,
   CategoryScale,
   LinearScale,
   PointElement,
@@ -25,6 +28,9 @@ import {
 } from 'chart.js';
 
 Chart.register(
+  LineController,
+  BarController,
+  DoughnutController,
   CategoryScale,
   LinearScale,
   PointElement,

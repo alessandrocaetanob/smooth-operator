@@ -1,3 +1,7 @@
+## 2026-05-04 - Grafana Removal — Native Monitoring Dashboards
+**Learning:** Grafana dashboards accessed via an external app break UX; embedding metrics natively inside the Angular app is cleaner. PrometheusService was also broken — it called `/api/v1/query` which nginx only proxies to the backend, with no matching controller.
+**Action:** Removed PrometheusService and the stub Dashboards component. Added `MetricsController` (6 endpoints querying AuditLog + AppMetrics gauge). Added `MetricsService` Angular service. Split "Auditing" sidebar item into "Audit Logs" (icon `receipt_long`) and "Monitoring" (icon `monitoring`). Built full Monitoring page with three sections (Active Sessions, Auth & Security, Audit Events) using Chart.js — all stat cards, line/bar/doughnut charts. Deleted `auditing.{ts,html,css}`, `dashboards/*`, `prometheus.service.ts`.
+
 ## 2024-04-27 - O(N) Array lookups in Angular Templates
 **Learning:** Using O(N) array methods like `.find()` directly inside Angular template bindings (e.g., `hostName(id)` called in a `@for` loop) causes O(M*N) performance bottlenecks because Angular's change detection executes these methods frequently.
 **Action:** Transform these reference arrays into lookup Maps using `computed` signals (`computed(() => new Map(...))`) to replace O(N) array searches with O(1) Map lookups.

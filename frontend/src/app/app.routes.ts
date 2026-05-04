@@ -76,21 +76,15 @@ export const routes: Routes = [
 
       {
         path: 'auditing',
-        loadComponent: () => import('./pages/auditing/auditing').then((m) => m.Auditing),
+        loadComponent: () => import('./pages/auditing/logs/audit-logs').then((m) => m.AuditLogs),
         canActivate: [ownerAdminGuard],
-        children: [
-          { path: '', pathMatch: 'full', redirectTo: 'logs' },
-          {
-            path: 'logs',
-            loadComponent: () =>
-              import('./pages/auditing/logs/audit-logs').then((m) => m.AuditLogs),
-          },
-          {
-            path: 'dashboards',
-            loadComponent: () =>
-              import('./pages/auditing/dashboards/dashboards').then((m) => m.Dashboards),
-          },
-        ],
+      },
+      { path: 'auditing/logs', redirectTo: 'auditing', pathMatch: 'full' },
+      { path: 'auditing/dashboards', redirectTo: 'monitoring', pathMatch: 'full' },
+      {
+        path: 'monitoring',
+        loadComponent: () => import('./pages/monitoring/monitoring').then((m) => m.Monitoring),
+        canActivate: [ownerAdminGuard],
       },
       {
         path: 'settings',
