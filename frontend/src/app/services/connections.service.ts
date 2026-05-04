@@ -112,6 +112,10 @@ export class ConnectionsService {
     return this.http.get<{ reachable: boolean }>(`/api/connections/${id}/probe`);
   }
 
+  probeBatch(ids: string[]): Observable<Record<string, boolean>> {
+    return this.http.post<Record<string, boolean>>(`/api/connections/probe-batch`, ids);
+  }
+
   probeConnectionsBulk(ids: string[]): Observable<Record<string, string>> {
     return this.http.post<Record<string, string>>('/api/connections/probe-bulk', ids);
   }

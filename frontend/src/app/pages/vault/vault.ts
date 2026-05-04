@@ -118,7 +118,6 @@ export class Vault implements OnInit {
       for (const id of ids) next.set(id, 'unknown');
       return next;
     });
-
     this.connections.probeConnectionsBulk(ids).subscribe({
       next: (results) => {
         this._reachabilityMap.update((m) => {

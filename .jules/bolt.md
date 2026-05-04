@@ -16,6 +16,14 @@
 ## 2026-05-01 - O(N) Array filtering in Angular Templates
 **Learning:** Using O(N) array methods like `.filter()` inside Angular components (e.g., `getConnectionsForVault` called inside a `@for` loop) causes O(M*N) performance bottlenecks during change detection.
 **Action:** Transformed reference arrays into a lookup Map via a shared `computed(() => new Map(...))` signal to provide O(1) lookups for multiple iterations.
+## 2026-05-02 - N+1 Network Bottleneck in probeAll
+**Learning:** Calling `/api/connections/{id}/probe` in a loop from the frontend created an N+1 network request bottleneck during connection status polling.
+**Action:** Created a batched `probe-batch` endpoint on the backend using `Task.WhenAll` to fetch all statuses concurrently, reducing frontend requests and database query overhead.
+
+## 2026-05-04 - Replace List.Remove with List.RemoveAll inside loops
+**Inefficiency:** Calling `List.Remove` inside a loop takes O(N) time for every element being removed, resulting in O(N*M) time complexity. When the collection sizes are large, this becomes a significant performance bottleneck.
+**Optimization:** Use the `List.RemoveAll` method passing an efficient condition (such as checking against a `HashSet`). This optimizes the operation to an O(N) single linear scan, drastically improving processing time. In EF Core where navigation collections default to `List<T>`, utilizing type matching `if (members is List<User> list)` ensures safety without throwing exceptions.
+
 ## 2026-05-04 - Backend HTTP Probes Overhead Reduction
 **Inefficiency:** Iterating over connections on the frontend to send individual `GET /api/connections/{id}/probe` requests creates N HTTP roundtrips, generating significant latency overhead and potentially exhausting connection limits or thread pools.
 **Optimization:** Created a new endpoint `POST /api/connections/probe-bulk` that accepts a list of GUIDs and utilizes `Task.WhenAll` on the backend to execute the TCP probes concurrently, returning a Dictionary. It avoids race conditions by utilizing a thread-safe `ConcurrentDictionary`.

@@ -222,11 +222,18 @@ namespace Backend.Controllers
             var currentMemberIds = previousMemberIds.ToHashSet();
             var newRequestedIds = requestedIds.ToHashSet();
 
-            var toRemove = group.Members.Where(m => !newRequestedIds.Contains(m.Id)).ToList();
-            var toAddIds = newRequestedIds.Where(userId => !currentMemberIds.Contains(userId)).ToList();
+            if (group.Members is System.Collections.Generic.List<User> list)
+            {
+                list.RemoveAll(m => !newRequestedIds.Contains(m.Id));
+            }
+            else
+            {
+                var toRemove = group.Members.Where(m => !newRequestedIds.Contains(m.Id)).ToList();
+                foreach (var user in toRemove)
+                    group.Members.Remove(user);
+            }
 
-            foreach (var user in toRemove)
-                group.Members.Remove(user);
+            var toAddIds = newRequestedIds.Where(userId => !currentMemberIds.Contains(userId)).ToList();
 
             foreach (var newId in toAddIds)
             {
