@@ -298,6 +298,59 @@ namespace Backend.Controllers
             catch (Exception) { return false; }
         }
 
+        [HttpPost("probe-bulk")]
+        public async Task<IActionResult> ProbeConnectionsBulk([FromBody] List<Guid> ids)
+        {
+            var profile = await _access.GetCurrentProfileAsync(User);
+            if (profile == null) return Unauthorized();
+
+            if (ids == null || ids.Count == 0) return Ok(new Dictionary<Guid, bool>());
+
+            var connections = await _context.Connections
+                .Include(c => c.Host)
+                .Include(c => c.Users)
+                .Where(c => ids.Contains(c.Id))
+                .ToListAsync();
+
+            var connectionsDict = connections.ToDictionary(c => c.Id);
+
+            var results = new System.Collections.Concurrent.ConcurrentDictionary<Guid, bool>();
+            var tasks = new List<Task>();
+
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+
+            foreach (var id in ids)
+            {
+                connectionsDict.TryGetValue(id, out var connection);
+                if (connection == null || !_access.CanUseConnection(profile, connection) || connection.Host == null)
+                {
+                    results[id] = false;
+                    continue;
+                }
+
+                var defaultPort = (connection.Protocol ?? "rdp").ToLowerInvariant() switch
+                {
+                    "ssh" => 22,
+                    "vnc" => 5900,
+                    "telnet" => 23,
+                    _ => 3389
+                };
+                var settings = ParseConnectionSettings(connection.Settings);
+                var port = int.TryParse(settings.GetValueOrDefault("port"), out var p) ? p : defaultPort;
+                var hostAddress = connection.Host.Address;
+
+                tasks.Add(Task.Run(async () =>
+                {
+                    var reachable = await TcpProbeAsync(hostAddress, port, cts.Token);
+                    results[id] = reachable;
+                }));
+            }
+
+            await Task.WhenAll(tasks);
+
+            return Ok(results);
+        }
+
         // ---- Connection file download -----------------------------------------------
 
         // Generates a native client connection file (.rdp, .sh script, or .vnc).

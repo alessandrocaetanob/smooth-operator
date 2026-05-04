@@ -112,6 +112,10 @@ export class ConnectionsService {
     return this.http.get<{ reachable: boolean }>(`/api/connections/${id}/probe`);
   }
 
+  probeConnectionsBulk(ids: string[]): Observable<Record<string, boolean>> {
+    return this.http.post<Record<string, boolean>>('/api/connections/probe-bulk', ids);
+  }
+
   private normalize(raw: any): Connection {
     const host = pick<any>(raw, 'host', 'Host');
     return {

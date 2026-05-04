@@ -110,22 +110,33 @@ export class Vault implements OnInit {
 
   private probeAll(): void {
     const ids = this.list().map((c) => c.id);
+    if (ids.length === 0) return;
+
     // Mark all as unknown first so the dots appear immediately
     this._reachabilityMap.update((m) => {
       const next = new Map(m);
       for (const id of ids) next.set(id, 'unknown');
       return next;
     });
-    for (const id of ids) {
-      this.connections.probeConnection(id).subscribe({
-        next: ({ reachable }) => {
-          this._reachabilityMap.update((m) => new Map(m).set(id, reachable ? 'up' : 'down'));
-        },
-        error: () => {
-          this._reachabilityMap.update((m) => new Map(m).set(id, 'down'));
-        },
-      });
-    }
+
+    this.connections.probeConnectionsBulk(ids).subscribe({
+      next: (results) => {
+        this._reachabilityMap.update((m) => {
+          const next = new Map(m);
+          for (const [id, reachable] of Object.entries(results)) {
+            next.set(id, reachable ? 'up' : 'down');
+          }
+          return next;
+        });
+      },
+      error: () => {
+        this._reachabilityMap.update((m) => {
+          const next = new Map(m);
+          for (const id of ids) next.set(id, 'down');
+          return next;
+        });
+      },
+    });
   }
 
   selectVault(id: string | null): void {

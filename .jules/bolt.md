@@ -16,3 +16,6 @@
 ## 2026-05-01 - O(N) Array filtering in Angular Templates
 **Learning:** Using O(N) array methods like `.filter()` inside Angular components (e.g., `getConnectionsForVault` called inside a `@for` loop) causes O(M*N) performance bottlenecks during change detection.
 **Action:** Transformed reference arrays into a lookup Map via a shared `computed(() => new Map(...))` signal to provide O(1) lookups for multiple iterations.
+## 2026-05-04 - Backend HTTP Probes Overhead Reduction
+**Inefficiency:** Iterating over connections on the frontend to send individual `GET /api/connections/{id}/probe` requests creates N HTTP roundtrips, generating significant latency overhead and potentially exhausting connection limits or thread pools.
+**Optimization:** Created a new endpoint `POST /api/connections/probe-bulk` that accepts a list of GUIDs and utilizes `Task.WhenAll` on the backend to execute the TCP probes concurrently, returning a Dictionary. It avoids race conditions by utilizing a thread-safe `ConcurrentDictionary`.
