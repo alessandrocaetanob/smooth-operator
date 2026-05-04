@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  coverlet.runsettings — controls coverage collection during `dotnet test`.
+  Applied via:  dotnet test --settings coverlet.runsettings
+-->
+<RunSettings>
+  <DataCollectionRunSettings>
+    <DataCollectors>
+      <DataCollector friendlyName="XPlat Code Coverage">
+        <Configuration>
+          <!-- Output directory relative to the test project (overridden in CI). -->
+          <Format>cobertura</Format>
+          <!-- Exclude auto-generated migration code and test infrastructure. -->
+          <Exclude>
+            [Backend]Backend.Migrations.*,
+            [Backend.Tests]*
+          </Exclude>
+          <ExcludeByFile>
+            **/Migrations/*.cs,
+            **/obj/**/*.cs
+          </ExcludeByFile>
+          <!-- Include only production code. -->
+          <Include>
+            [Backend]*
+          </Include>
+          <!-- Count branch coverage. -->
+          <SkipAutoProps>true</SkipAutoProps>
+          <SingleHit>false</SingleHit>
+        </Configuration>
+      </DataCollector>
+    </DataCollectors>
+  </DataCollectionRunSettings>
+</RunSettings>

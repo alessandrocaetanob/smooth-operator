@@ -91,5 +91,37 @@ jobs:
 
           for project in "${test_projects[@]}"; do
             echo "Running tests for $project"
-            dotnet test "$project" --configuration Release --verbosity normal
+            dotnet test "$project" \
+              --configuration Release \
+              --verbosity normal \
+              --settings coverlet.runsettings \
+              --collect:"XPlat Code Coverage" \
+              --results-directory ./TestResults
           done
+
+      - name: Generate coverage report
+        if: always()
+        run: |
+          dotnet tool restore
+          reportgenerator \
+            -reports:"./TestResults/**/coverage.cobertura.xml" \
+            -targetdir:"./coveragereport" \
+            -reporttypes:"Html;Cobertura;MarkdownSummaryGithub" \
+            -verbosity:Warning || true
+
+      - name: Post coverage summary to job summary
+        if: always()
+        run: |
+          if [ -f ./coveragereport/SummaryGithub.md ]; then
+            cat ./coveragereport/SummaryGithub.md >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Upload coverage report artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: |
+            ./TestResults/**/coverage.cobertura.xml
+            ./coveragereport/
+          retention-days: 14
