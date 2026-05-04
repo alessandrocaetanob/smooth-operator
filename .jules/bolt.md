@@ -20,6 +20,10 @@
 **Learning:** Calling `/api/connections/{id}/probe` in a loop from the frontend created an N+1 network request bottleneck during connection status polling.
 **Action:** Created a batched `probe-batch` endpoint on the backend using `Task.WhenAll` to fetch all statuses concurrently, reducing frontend requests and database query overhead.
 
+## 2026-05-03 - EF Core Migrations Tool Configuration and Missing AuditLog Index
+**Learning:** The database `AuditLogs` table lacked a composite index on `UserId`, `Action`, `ResourceId`, and `Timestamp`, causing full table scans during the `GetMyLastConnected` query in `ConnectionsController`. Additionally, executing Entity Framework Core migrations requires explicit installation and path export of the `dotnet-ef` tool in this environment.
+**Action:** When working on backend optimizations, always inspect EF Core LINQ queries for missing database indexes and ensure `dotnet-ef` is properly installed before attempting database state changes.
+
 ## 2026-05-04 - Replace List.Remove with List.RemoveAll inside loops
 **Inefficiency:** Calling `List.Remove` inside a loop takes O(N) time for every element being removed, resulting in O(N*M) time complexity. When the collection sizes are large, this becomes a significant performance bottleneck.
 **Optimization:** Use the `List.RemoveAll` method passing an efficient condition (such as checking against a `HashSet`). This optimizes the operation to an O(N) single linear scan, drastically improving processing time. In EF Core where navigation collections default to `List<T>`, utilizing type matching `if (members is List<User> list)` ensures safety without throwing exceptions.
