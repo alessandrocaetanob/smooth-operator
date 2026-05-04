@@ -57,8 +57,9 @@
       <div class="settings-card-body">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
           <div class="md:col-span-2">
-            <label class="settings-label">Host</label>
+            <label class="settings-label" for="host">Host</label>
             <input
+              id="host"
               type="text"
               [ngModel]="host()"
               (ngModelChange)="host.set($event)"
@@ -69,8 +70,9 @@
             />
           </div>
           <div>
-            <label class="settings-label">Port</label>
+            <label class="settings-label" for="port">Port</label>
             <input
+              id="port"
               type="number"
               min="1"
               max="65535"
@@ -110,8 +112,9 @@
       <div class="settings-card-body">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
-            <label class="settings-label">Username</label>
+            <label class="settings-label" for="username">Username</label>
             <input
+              id="username"
               type="text"
               [ngModel]="username()"
               (ngModelChange)="username.set($event)"
@@ -121,13 +124,14 @@
             />
           </div>
           <div>
-            <label class="settings-label">
+            <label class="settings-label" for="password">
               Password
               @if (current()?.hasPassword) {
                 <span class="settings-label-hint">(leave blank to keep)</span>
               }
             </label>
             <input
+              id="password"
               type="password"
               [ngModel]="password()"
               (ngModelChange)="password.set($event)"
@@ -164,8 +168,9 @@
       <div class="settings-card-body">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
           <div>
-            <label class="settings-label">From address</label>
+            <label class="settings-label" for="fromAddress">From address</label>
             <input
+              id="fromAddress"
               type="email"
               [ngModel]="fromAddress()"
               (ngModelChange)="fromAddress.set($event)"
@@ -176,8 +181,9 @@
             />
           </div>
           <div>
-            <label class="settings-label">From name</label>
+            <label class="settings-label" for="fromName">From name</label>
             <input
+              id="fromName"
               type="text"
               [ngModel]="fromName()"
               (ngModelChange)="fromName.set($event)"
@@ -234,6 +240,7 @@
           name="testTo"
           placeholder="recipient@example.com"
           class="flex-1 input-field"
+          aria-label="Test email recipient"
         />
         <button
           type="button"
