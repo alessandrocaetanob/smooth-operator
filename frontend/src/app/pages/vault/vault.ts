@@ -120,13 +120,24 @@ export class Vault implements OnInit {
       next: (results) => {
         this._reachabilityMap.update((m) => {
           const next = new Map(m);
+          // Default all requested IDs to 'down'; absent keys (connection
+          // disappeared between reload and probe) are resolved this way.
+          for (const id of ids) next.set(id, 'down');
           for (const [id, reachable] of Object.entries(results)) {
             next.set(id, reachable ? 'up' : 'down');
           }
           return next;
         });
       },
-      error: () => {},
+      error: () => {
+        // On a network/server error resolve every pending ID to 'down' so
+        // the UI never gets stuck showing 'unknown' indefinitely.
+        this._reachabilityMap.update((m) => {
+          const next = new Map(m);
+          for (const id of ids) next.set(id, 'down');
+          return next;
+        });
+      },
     });
   }
 
