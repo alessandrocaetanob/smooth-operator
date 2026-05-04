@@ -1,4 +1,13 @@
-import { Component, AfterViewInit, OnDestroy, inject, signal, computed } from '@angular/core';
+import {
+  Component,
+  AfterViewInit,
+  OnDestroy,
+  inject,
+  signal,
+  computed,
+  ElementRef,
+  ViewChild,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { finalize } from 'rxjs/operators';
 import {
@@ -37,6 +46,12 @@ import {
 import { forkJoin } from 'rxjs';
 
 type TimeRange = '1h' | '6h' | '24h' | '7d';
+type ChartId =
+  | 'connectionsChart'
+  | 'loginChart'
+  | 'breakdownChart'
+  | 'topEventsChart'
+  | 'eventTimeseriesChart';
 
 const RANGE_HOURS: Record<TimeRange, number> = { '1h': 1, '6h': 6, '24h': 24, '7d': 168 };
 const BUCKET_MINUTES: Record<TimeRange, number> = { '1h': 5, '6h': 15, '24h': 60, '7d': 360 };
@@ -94,6 +109,12 @@ export class Monitoring implements AfterViewInit, OnDestroy {
 
   private charts: Record<string, Chart> = {};
   private intervalId: ReturnType<typeof setInterval> | null = null;
+  @ViewChild('connectionsChart') private connectionsChartRef?: ElementRef<HTMLCanvasElement>;
+  @ViewChild('loginChart') private loginChartRef?: ElementRef<HTMLCanvasElement>;
+  @ViewChild('breakdownChart') private breakdownChartRef?: ElementRef<HTMLCanvasElement>;
+  @ViewChild('topEventsChart') private topEventsChartRef?: ElementRef<HTMLCanvasElement>;
+  @ViewChild('eventTimeseriesChart')
+  private eventTimeseriesChartRef?: ElementRef<HTMLCanvasElement>;
 
   ngAfterViewInit(): void {
     this.loadAll();
@@ -210,8 +231,25 @@ export class Monitoring implements AfterViewInit, OnDestroy {
     };
   }
 
+  private canvasFor(id: ChartId): HTMLCanvasElement | null {
+    switch (id) {
+      case 'connectionsChart':
+        return this.connectionsChartRef?.nativeElement ?? null;
+      case 'loginChart':
+        return this.loginChartRef?.nativeElement ?? null;
+      case 'breakdownChart':
+        return this.breakdownChartRef?.nativeElement ?? null;
+      case 'topEventsChart':
+        return this.topEventsChartRef?.nativeElement ?? null;
+      case 'eventTimeseriesChart':
+        return this.eventTimeseriesChartRef?.nativeElement ?? null;
+      default:
+        return null;
+    }
+  }
+
   private upsertChart(
-    id: string,
+    id: ChartId,
     factory: (ctx: HTMLCanvasElement) => Chart,
     updater: (c: Chart) => void,
   ): void {
@@ -221,7 +259,7 @@ export class Monitoring implements AfterViewInit, OnDestroy {
       existing.update();
       return;
     }
-    const el = document.getElementById(id) as HTMLCanvasElement | null;
+    const el = this.canvasFor(id);
     if (!el) return;
     Chart.getChart(el)?.destroy();
     this.charts[id] = factory(el);

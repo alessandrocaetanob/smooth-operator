@@ -93,7 +93,11 @@
         Connections Over Time
       </p>
       <div class="chart-container">
-        <canvas id="connectionsChart" aria-label="Connections started and ended over time"></canvas>
+        <canvas
+          #connectionsChart
+          id="connectionsChart"
+          aria-label="Connections started and ended over time"
+        ></canvas>
       </div>
     </div>
   </section>
@@ -144,7 +148,11 @@
           Login Attempts Over Time
         </p>
         <div class="chart-container">
-          <canvas id="loginChart" aria-label="Login success and failure over time"></canvas>
+          <canvas
+            #loginChart
+            id="loginChart"
+            aria-label="Login success and failure over time"
+          ></canvas>
         </div>
       </div>
       <div class="glass-card p-4 rounded-xl">
@@ -152,7 +160,11 @@
           Outcome Breakdown
         </p>
         <div class="chart-container-sm">
-          <canvas id="breakdownChart" aria-label="Audit event outcome breakdown"></canvas>
+          <canvas
+            #breakdownChart
+            id="breakdownChart"
+            aria-label="Audit event outcome breakdown"
+          ></canvas>
         </div>
       </div>
     </div>
@@ -202,7 +214,11 @@
           Top 10 Event Types
         </p>
         <div class="chart-container">
-          <canvas id="topEventsChart" aria-label="Top audit event types by count"></canvas>
+          <canvas
+            #topEventsChart
+            id="topEventsChart"
+            aria-label="Top audit event types by count"
+          ></canvas>
         </div>
       </div>
       <div class="glass-card p-4 rounded-xl">
@@ -211,6 +227,7 @@
         </p>
         <div class="chart-container">
           <canvas
+            #eventTimeseriesChart
             id="eventTimeseriesChart"
             aria-label="Audit event rate by type over time"
           ></canvas>

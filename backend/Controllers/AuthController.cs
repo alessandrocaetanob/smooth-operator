@@ -185,6 +185,8 @@ namespace Backend.Controllers
 
             if (user == null || string.IsNullOrEmpty(user.PasswordHash))
             {
+                await _audit.WriteAsync("user.login_failed", "User", string.Empty,
+                    new { provider = "local", email, reason = "user_not_found_or_no_password" }, outcome: "failure");
                 _metrics.RecordLoginAttempt("failure");
                 return Unauthorized(new { message = invalid });
             }
@@ -199,6 +201,8 @@ namespace Backend.Controllers
 
             if (!user.IsActive)
             {
+                await _audit.WriteAsync("user.login_failed", "User", user.Id.ToString(),
+                    new { provider = "local", reason = "user_disabled" }, outcome: "failure");
                 _metrics.RecordLoginAttempt("failure");
                 return StatusCode(403, new { message = "User account is disabled." });
             }
