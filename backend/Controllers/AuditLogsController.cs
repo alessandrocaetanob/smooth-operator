@@ -151,6 +151,17 @@ namespace Backend.Controllers
         private static string Csv(string? input)
         {
             if (string.IsNullOrEmpty(input)) return "";
+
+            // Prevent CSV Injection (Formula Injection): some spreadsheet apps silently
+            // ignore leading whitespace/control characters before evaluating a formula.
+            // Check the first non-whitespace character while preserving the original value.
+            var trimmed = input.TrimStart(' ', '\t', '\r', '\n');
+            if (trimmed.Length > 0 &&
+                (trimmed[0] == '=' || trimmed[0] == '+' || trimmed[0] == '-' || trimmed[0] == '@'))
+            {
+                input = "'" + input;
+            }
+
             var needsQuote = input.Contains(',') || input.Contains('"') || input.Contains('\n') || input.Contains('\r');
             var escaped = input.Replace("\"", "\"\"");
             return needsQuote ? $"\"{escaped}\"" : escaped;

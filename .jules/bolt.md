@@ -16,6 +16,9 @@
 ## 2026-05-01 - O(N) Array filtering in Angular Templates
 **Learning:** Using O(N) array methods like `.filter()` inside Angular components (e.g., `getConnectionsForVault` called inside a `@for` loop) causes O(M*N) performance bottlenecks during change detection.
 **Action:** Transformed reference arrays into a lookup Map via a shared `computed(() => new Map(...))` signal to provide O(1) lookups for multiple iterations.
+## 2026-05-02 - N+1 Network Bottleneck in probeAll
+**Learning:** Calling `/api/connections/{id}/probe` in a loop from the frontend created an N+1 network request bottleneck during connection status polling.
+**Action:** Created a batched `probe-batch` endpoint on the backend using `Task.WhenAll` to fetch all statuses concurrently, reducing frontend requests and database query overhead.
 
 ## 2026-05-04 - Replace List.Remove with List.RemoveAll inside loops
 **Inefficiency:** Calling `List.Remove` inside a loop takes O(N) time for every element being removed, resulting in O(N*M) time complexity. When the collection sizes are large, this becomes a significant performance bottleneck.
