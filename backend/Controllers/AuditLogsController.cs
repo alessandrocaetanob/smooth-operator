@@ -151,6 +151,13 @@ namespace Backend.Controllers
         private static string Csv(string? input)
         {
             if (string.IsNullOrEmpty(input)) return "";
+
+            // Prevent CSV Injection (Macro Execution)
+            if (input.StartsWith("=") || input.StartsWith("+") || input.StartsWith("-") || input.StartsWith("@") || input.StartsWith("\t") || input.StartsWith("\r"))
+            {
+                input = "'" + input;
+            }
+
             var needsQuote = input.Contains(',') || input.Contains('"') || input.Contains('\n') || input.Contains('\r');
             var escaped = input.Replace("\"", "\"\"");
             return needsQuote ? $"\"{escaped}\"" : escaped;
