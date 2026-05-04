@@ -73,6 +73,19 @@ export const routes: Routes = [
         path: 'profile',
         loadComponent: () => import('./pages/profile/profile').then((m) => m.Profile),
       },
+
+      {
+        path: 'auditing',
+        loadComponent: () => import('./pages/auditing/logs/audit-logs').then((m) => m.AuditLogs),
+        canActivate: [ownerAdminGuard],
+      },
+      { path: 'auditing/logs', redirectTo: 'auditing', pathMatch: 'full' },
+      { path: 'auditing/dashboards', redirectTo: 'monitoring', pathMatch: 'full' },
+      {
+        path: 'monitoring',
+        loadComponent: () => import('./pages/monitoring/monitoring').then((m) => m.Monitoring),
+        canActivate: [ownerAdminGuard],
+      },
       {
         path: 'settings',
         loadComponent: () => import('./pages/settings/settings').then((m) => m.Settings),
@@ -112,10 +125,7 @@ export const routes: Routes = [
             loadComponent: () =>
               import('./pages/settings/retention/retention').then((m) => m.Retention),
           },
-          {
-            path: 'audit-logs',
-            loadComponent: () => import('./pages/audit-logs/audit-logs').then((m) => m.AuditLogs),
-          },
+
           {
             path: 'integrations',
             loadComponent: () =>
@@ -124,7 +134,7 @@ export const routes: Routes = [
         ],
       },
       { path: 'administration', redirectTo: 'settings/users', pathMatch: 'full' },
-      { path: 'audit-logs', redirectTo: 'settings/audit-logs', pathMatch: 'full' },
+      { path: 'audit-logs', redirectTo: 'auditing/logs', pathMatch: 'full' },
     ],
   },
 ];

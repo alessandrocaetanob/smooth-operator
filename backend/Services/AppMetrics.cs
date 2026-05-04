@@ -8,6 +8,7 @@ namespace Backend.Services
         void RecordConnectionStarted();
         void RecordConnectionEnded();
         void RecordAuditEvent(string action);
+        double CurrentActiveSessions { get; }
     }
 
     /// <summary>
@@ -55,5 +56,7 @@ namespace Backend.Services
 
         public void RecordAuditEvent(string action) =>
             AuditEvents.WithLabels(action).Inc();
+
+        public double CurrentActiveSessions => ActiveSessions.Value;
     }
 }
