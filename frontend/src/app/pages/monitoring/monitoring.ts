@@ -253,15 +253,28 @@ export class Monitoring implements AfterViewInit, OnDestroy {
     factory: (ctx: HTMLCanvasElement) => Chart,
     updater: (c: Chart) => void,
   ): void {
-    const existing = this.charts[id];
-    if (existing) {
-      updater(existing);
-      existing.update();
-      return;
-    }
     const el = this.canvasFor(id);
     if (!el) return;
-    Chart.getChart(el)?.destroy();
+
+    const existing = this.charts[id];
+    if (existing) {
+      if (existing.canvas !== el) {
+        existing.destroy();
+        delete this.charts[id];
+      } else {
+        updater(existing);
+        existing.update();
+        return;
+      }
+    }
+
+    // If another chart instance was attached to this canvas (e.g. from stale route state),
+    // clear it before creating the new instance.
+    const stale = Chart.getChart(el);
+    if (stale) {
+      stale.destroy();
+    }
+
     this.charts[id] = factory(el);
   }
 
