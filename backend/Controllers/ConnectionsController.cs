@@ -287,6 +287,66 @@ namespace Backend.Controllers
             return Ok(new { reachable });
         }
 
+        // ---- Batch Host reachability probe ------------------------------------------
+
+        // Maximum simultaneous outbound TCP probe sockets per batch request.
+        private const int ProbeBatchConcurrency = 20;
+
+        [HttpPost("probe-batch")]
+        public async Task<IActionResult> ProbeBatch([FromBody] List<Guid> ids)
+        {
+            var profile = await _access.GetCurrentProfileAsync(User);
+            if (profile == null) return Unauthorized();
+
+            // Apply access scope before materialising so the response shape does not
+            // reveal whether an unauthorised connection ID exists in the database.
+            var connections = await _access.ApplyConnectionScope(
+                    _context.Connections
+                        .Include(c => c.Host)
+                        .Include(c => c.Users),
+                    profile)
+                .Where(c => ids.Contains(c.Id))
+                .ToListAsync();
+
+            // Cap simultaneous outbound TCP connects to avoid port exhaustion.
+            using var semaphore = new SemaphoreSlim(ProbeBatchConcurrency);
+
+            // Access control is already enforced by ApplyConnectionScope above;
+            // per-connection CanUseConnection checks are therefore not needed here.
+            var probeTasks = connections.Select(async connection =>
+            {
+                if (connection.Host == null)
+                {
+                    return new KeyValuePair<Guid, bool>(connection.Id, false);
+                }
+
+                var defaultPort = (connection.Protocol ?? "rdp").ToLowerInvariant() switch
+                {
+                    "ssh" => 22,
+                    "vnc" => 5900,
+                    "telnet" => 23,
+                    _ => 3389
+                };
+                var settings = ParseConnectionSettings(connection.Settings);
+                var port = int.TryParse(settings.GetValueOrDefault("port"), out var p) ? p : defaultPort;
+
+                await semaphore.WaitAsync();
+                try
+                {
+                    using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+                    var reachable = await TcpProbeAsync(connection.Host.Address, port, cts.Token);
+                    return new KeyValuePair<Guid, bool>(connection.Id, reachable);
+                }
+                finally
+                {
+                    semaphore.Release();
+                }
+            });
+
+            var results = await Task.WhenAll(probeTasks);
+            return Ok(results.ToDictionary(r => r.Key, r => r.Value));
+        }
+
         private static async Task<bool> TcpProbeAsync(string host, int port, CancellationToken ct)
         {
             try
