@@ -9,6 +9,7 @@ import {
   ViewChild,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { forkJoin, Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import {
   Chart,
@@ -26,6 +27,13 @@ import {
   Legend,
   Filler,
 } from 'chart.js';
+import {
+  MetricsService,
+  MetricsSummary,
+  TimeseriesBucket,
+  TopEvent,
+  OutcomeBreakdown,
+} from '../../services/metrics.service';
 
 Chart.register(
   LineController,
@@ -42,14 +50,6 @@ Chart.register(
   Legend,
   Filler,
 );
-import {
-  MetricsService,
-  MetricsSummary,
-  TimeseriesBucket,
-  TopEvent,
-  OutcomeBreakdown,
-} from '../../services/metrics.service';
-import { forkJoin } from 'rxjs';
 
 type TimeRange = '1h' | '6h' | '24h' | '7d';
 type ChartId =
@@ -115,6 +115,7 @@ export class Monitoring implements AfterViewInit, OnDestroy {
 
   private charts: Record<string, Chart> = {};
   private intervalId: ReturnType<typeof setInterval> | null = null;
+  private inflight: Subscription | null = null;
   @ViewChild('connectionsChart') private connectionsChartRef?: ElementRef<HTMLCanvasElement>;
   @ViewChild('loginChart') private loginChartRef?: ElementRef<HTMLCanvasElement>;
   @ViewChild('breakdownChart') private breakdownChartRef?: ElementRef<HTMLCanvasElement>;
@@ -128,6 +129,8 @@ export class Monitoring implements AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     if (this.intervalId) clearInterval(this.intervalId);
+    this.inflight?.unsubscribe();
+    this.inflight = null;
     Object.values(this.charts).forEach((c) => c.destroy());
     this.charts = {};
   }
@@ -158,8 +161,11 @@ export class Monitoring implements AfterViewInit, OnDestroy {
   }
 
   loadAll(): void {
+    // Cancel any in-flight refresh so concurrent triggers (manual + range change + auto)
+    // don't race and leave `loading` flickering or apply stale responses.
+    this.inflight?.unsubscribe();
     this.loading.set(true);
-    forkJoin({
+    this.inflight = forkJoin({
       summary: this.metricsService.getSummary(),
       loginTs: this.metricsService.getLoginTimeseries(this.hours, this.bucketMinutes),
       connTs: this.metricsService.getConnectionsTimeseries(this.hours, this.bucketMinutes),
@@ -167,7 +173,12 @@ export class Monitoring implements AfterViewInit, OnDestroy {
       breakdown: this.metricsService.getAuditEventBreakdown(this.hours),
       eventTs: this.metricsService.getAuditEventTimeseries(this.hours, this.bucketMinutes),
     })
-      .pipe(finalize(() => this.loading.set(false)))
+      .pipe(
+        finalize(() => {
+          this.loading.set(false);
+          this.inflight = null;
+        }),
+      )
       .subscribe({
         next: ({ summary, loginTs, connTs, topEvents, breakdown, eventTs }) => {
           this.summary.set(summary);

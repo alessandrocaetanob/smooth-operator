@@ -32,17 +32,20 @@ namespace Backend.Controllers
             var since24h = now.AddHours(-24);
             var since1h = now.AddHours(-1);
 
-            var logs24h = await _context.AuditLogs
-                .Where(l => l.Timestamp >= since24h)
-                .Select(l => new { l.Action, l.Outcome })
-                .ToListAsync();
+            // Compute counts as SQL aggregates rather than materializing all 24h of audit
+            // rows in memory. Each query runs as a small COUNT/GROUP BY against the
+            // (UserId, Action, ResourceId, Timestamp) index.
+            var logs = _context.AuditLogs.AsNoTracking().Where(l => l.Timestamp >= since24h);
 
-            var loginFailures1h = await _context.AuditLogs
+            var loginTotal24h = await logs.CountAsync(l => l.Action.StartsWith("user.login"));
+            var loginSuccess24h = await logs.CountAsync(l => l.Action.StartsWith("user.login") && l.Outcome == "success");
+            var loginFailures1h = await _context.AuditLogs.AsNoTracking()
                 .CountAsync(l => l.Timestamp >= since1h && l.Action.StartsWith("user.login") && l.Outcome == "failure");
-
-            var logins24h = logs24h.Where(l => l.Action.StartsWith("user.login")).ToList();
-            var loginSuccess24h = logins24h.Count(l => l.Outcome == "success");
-            var loginTotal24h = logins24h.Count;
+            var connectionsStarted24h = await logs.CountAsync(l => l.Action == "connection.started");
+            var connectionsEnded24h = await logs.CountAsync(l => l.Action == "connection.ended");
+            var auditTotal24h = await logs.CountAsync();
+            var auditFailures24h = await logs.CountAsync(l => l.Outcome == "failure");
+            var authEvents24h = await logs.CountAsync(l => l.Action.StartsWith("user."));
 
             return Ok(new MetricsSummaryDto
             {
@@ -52,11 +55,11 @@ namespace Backend.Controllers
                 LoginSuccessRate24h = loginTotal24h > 0
                     ? Math.Round((double)loginSuccess24h / loginTotal24h * 100, 1)
                     : 0,
-                ConnectionsStarted24h = logs24h.Count(l => l.Action == "connection.started"),
-                ConnectionsEnded24h = logs24h.Count(l => l.Action == "connection.ended"),
-                AuditEventsTotal24h = logs24h.Count,
-                AuditFailures24h = logs24h.Count(l => l.Outcome == "failure"),
-                AuthEvents24h = logs24h.Count(l => l.Action.StartsWith("user.")),
+                ConnectionsStarted24h = connectionsStarted24h,
+                ConnectionsEnded24h = connectionsEnded24h,
+                AuditEventsTotal24h = auditTotal24h,
+                AuditFailures24h = auditFailures24h,
+                AuthEvents24h = authEvents24h,
             });
         }
 
@@ -68,13 +71,14 @@ namespace Backend.Controllers
             hours = Math.Clamp(hours, 1, 168);
             bucketMinutes = Math.Clamp(bucketMinutes, 1, 1440);
 
-            var since = DateTime.UtcNow.AddHours(-hours);
-            var rows = await _context.AuditLogs
+            var now = DateTime.UtcNow;
+            var since = now.AddHours(-hours);
+            var rows = await _context.AuditLogs.AsNoTracking()
                 .Where(l => l.Timestamp >= since && l.Action.StartsWith("user.login"))
                 .Select(l => new { l.Timestamp, l.Outcome })
                 .ToListAsync();
 
-            return Ok(BuildTimeseries(rows.Select(r => (r.Timestamp, r.Outcome)), since, bucketMinutes));
+            return Ok(BuildTimeseries(rows.Select(r => (r.Timestamp, r.Outcome)), since, now, bucketMinutes));
         }
 
         [HttpGet("connections/timeseries")]
@@ -85,14 +89,15 @@ namespace Backend.Controllers
             hours = Math.Clamp(hours, 1, 168);
             bucketMinutes = Math.Clamp(bucketMinutes, 1, 1440);
 
-            var since = DateTime.UtcNow.AddHours(-hours);
-            var rows = await _context.AuditLogs
+            var now = DateTime.UtcNow;
+            var since = now.AddHours(-hours);
+            var rows = await _context.AuditLogs.AsNoTracking()
                 .Where(l => l.Timestamp >= since &&
                     (l.Action == "connection.started" || l.Action == "connection.ended"))
                 .Select(l => new { l.Timestamp, l.Action })
                 .ToListAsync();
 
-            return Ok(BuildTimeseries(rows.Select(r => (r.Timestamp, r.Action)), since, bucketMinutes));
+            return Ok(BuildTimeseries(rows.Select(r => (r.Timestamp, r.Action)), since, now, bucketMinutes));
         }
 
         [HttpGet("audit-events/top")]
@@ -104,7 +109,7 @@ namespace Backend.Controllers
             limit = Math.Clamp(limit, 1, 50);
 
             var since = DateTime.UtcNow.AddHours(-hours);
-            var results = await _context.AuditLogs
+            var results = await _context.AuditLogs.AsNoTracking()
                 .Where(l => l.Timestamp >= since)
                 .GroupBy(l => l.Action)
                 .Select(g => new TopEventDto { Action = g.Key, Count = g.LongCount() })
@@ -122,7 +127,7 @@ namespace Backend.Controllers
             hours = Math.Clamp(hours, 1, 168);
 
             var since = DateTime.UtcNow.AddHours(-hours);
-            var counts = await _context.AuditLogs
+            var counts = await _context.AuditLogs.AsNoTracking()
                 .Where(l => l.Timestamp >= since)
                 .GroupBy(l => l.Outcome)
                 .Select(g => new { Outcome = g.Key, Count = g.LongCount() })
@@ -143,10 +148,11 @@ namespace Backend.Controllers
             hours = Math.Clamp(hours, 1, 168);
             bucketMinutes = Math.Clamp(bucketMinutes, 1, 1440);
 
-            var since = DateTime.UtcNow.AddHours(-hours);
+            var now = DateTime.UtcNow;
+            var since = now.AddHours(-hours);
 
             // Limit to the top 5 most frequent actions to keep chart readable
-            var topActions = await _context.AuditLogs
+            var topActions = await _context.AuditLogs.AsNoTracking()
                 .Where(l => l.Timestamp >= since)
                 .GroupBy(l => l.Action)
                 .OrderByDescending(g => g.Count())
@@ -154,17 +160,18 @@ namespace Backend.Controllers
                 .Select(g => g.Key)
                 .ToListAsync();
 
-            var rows = await _context.AuditLogs
+            var rows = await _context.AuditLogs.AsNoTracking()
                 .Where(l => l.Timestamp >= since && topActions.Contains(l.Action))
                 .Select(l => new { l.Timestamp, l.Action })
                 .ToListAsync();
 
-            return Ok(BuildTimeseries(rows.Select(r => (r.Timestamp, r.Action)), since, bucketMinutes));
+            return Ok(BuildTimeseries(rows.Select(r => (r.Timestamp, r.Action)), since, now, bucketMinutes));
         }
 
         private static IEnumerable<TimeseriesBucketDto> BuildTimeseries(
             IEnumerable<(DateTime Timestamp, string Label)> rows,
             DateTime since,
+            DateTime now,
             int bucketMinutes)
         {
             var buckets = new SortedDictionary<int, Dictionary<string, long>>();
@@ -179,8 +186,10 @@ namespace Backend.Controllers
                     d[label]++;
             }
 
-            // Fill all bucket slots so the frontend gets a continuous x-axis
-            var totalBuckets = (int)Math.Ceiling((DateTime.UtcNow - since).TotalMinutes / bucketMinutes);
+            // Fill all bucket slots so the frontend gets a continuous x-axis. Use the
+            // caller-provided `now` so the bucket count matches the `since` value derived
+            // from the same instant — avoids producing an extra trailing empty bucket.
+            var totalBuckets = (int)Math.Ceiling((now - since).TotalMinutes / bucketMinutes);
             for (var i = 0; i < totalBuckets; i++)
             {
                 if (!buckets.ContainsKey(i))
