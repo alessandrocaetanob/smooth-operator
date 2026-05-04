@@ -240,32 +240,40 @@ namespace Backend.Controllers
                 return Forbid();
             }
 
-            var vault = await _context.ConnectionGroups
+            var vaultEntity = await _context.ConnectionGroups
                 .AsNoTracking()
-                .Where(v => v.Id == id)
-                .Select(v => new
-                {
-                    v.Id,
-                    v.Name,
-                    DirectUsers = v.Users.Select(u => new
-                    {
-                        u.Id,
-                        u.Name,
-                        u.Email,
-                        u.IsActive,
-                        Roles = u.Roles.Select(r => r.Name).ToList()
-                    }).ToList(),
-                    GroupUsers = v.Groups.SelectMany(g => g.Members.Select(u => new
-                    {
-                        UserId = u.Id,
-                        u.Name,
-                        u.Email,
-                        u.IsActive,
-                        Roles = u.Roles.Select(r => r.Name).ToList(),
-                        GroupId = g.Id
-                    })).ToList()
-                })
-                .FirstOrDefaultAsync();
+                .Include(v => v.Users).ThenInclude(u => u.Roles)
+                .Include(v => v.Groups).ThenInclude(g => g.Members).ThenInclude(u => u.Roles)
+                .FirstOrDefaultAsync(v => v.Id == id);
+
+            if (vaultEntity == null) return NotFound();
+
+            var directUsers = vaultEntity.Users.Select(u => new
+            {
+                u.Id,
+                u.Name,
+                u.Email,
+                u.IsActive,
+                Roles = u.Roles.Select(r => r.Name).ToList()
+            }).ToList();
+
+            var groupUsers = vaultEntity.Groups.SelectMany(g => g.Members.Select(u => new
+            {
+                UserId = u.Id,
+                u.Name,
+                u.Email,
+                u.IsActive,
+                Roles = u.Roles.Select(r => r.Name).ToList(),
+                GroupId = g.Id
+            })).ToList();
+
+            var vault = new
+            {
+                vaultEntity.Id,
+                vaultEntity.Name,
+                DirectUsers = directUsers,
+                GroupUsers = groupUsers
+            };
 
             if (vault == null) return NotFound();
 
@@ -309,7 +317,7 @@ namespace Backend.Controllers
         private async Task<bool> VaultNameExistsAsync(string name, Guid? excludeId)
         {
             var query = _context.ConnectionGroups.AsNoTracking()
-                .Where(v => EF.Functions.ILike(v.Name, name));
+                .Where(v => v.Name.ToLower() == name.ToLower());
             if (excludeId.HasValue) query = query.Where(v => v.Id != excludeId.Value);
             return await query.AnyAsync();
         }

@@ -289,7 +289,49 @@ GitHub Actions workflows run on every push and PR:
 | **Docker scan** | Container image vulnerability scanning |
 | **Build validation** | Frontend build + backend compile |
 | **Format check** | Prettier (frontend) + dotnet format (backend) |
-| **Tests** | Vitest unit tests (frontend) + xUnit (backend) |
+| **Tests** | Vitest unit tests (frontend) + xUnit integration tests (backend) |
+| **Smoke Tests** | Playwright E2E browser automation |
+
+---
+
+## 🧪 Testing
+
+We maintain a high standard of quality with a **90% code coverage target** for backend core logic.
+
+### Test Stack
+- **Backend:** [xUnit](https://xunit.net/) + [Moq](https://github.com/moq/moq) + [FluentAssertions](https://fluentassertions.com/)
+- **Frontend:** [Vitest](https://vitest.dev/) + [Angular Testing Library](https://testing-library.com/docs/angular-library/intro/)
+- **E2E/Smoke:** [Playwright](https://playwright.dev/)
+- **Coverage:** [Coverlet](https://github.com/coverlet-coverage/coverlet) + [ReportGenerator](https://reportgenerator.io/)
+
+### Running Tests
+
+#### Backend (Unit & Integration)
+```bash
+cd backend.tests
+dotnet test
+```
+
+#### Running with Coverage (Local Report)
+We use a custom script to run tests, filter out migrations/build artifacts, and generate a browser-friendly HTML report.
+```powershell
+# In backend.tests directory
+dotnet test /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura /p:Exclude="[Backend.Migrations]*"
+# Generate HTML report
+reportgenerator -reports:coverage.cobertura.xml -targetdir:coveragereport -reporttypes:Html
+```
+
+#### Frontend
+```bash
+cd frontend
+npm test
+```
+
+### Testing Decisions
+1. **Mocking Strategy:** We use `Moq` for service-level dependencies. For network-bound flows (OIDC/SAML), we use a specialized `HttpMessageHandler` mock to simulate IdP responses without hitting the wire.
+2. **In-Memory DB:** Integration tests use the EF Core **InMemory provider** for speed, with custom seeding for RBAC and authentication states.
+3. **Coverage Exclusions:** We explicitly exclude `Backend.Migrations` and generated code from coverage reports to focus on maintainable business logic.
+4. **Smoke Tests:** Playwright is used for "critical path" validation (Login, Vault Creation, Connection Launch) on every release candidate.
 
 📖 Workflow details: [.github/workflows/README.md](.github/workflows/README.md) · [Quick Reference](.github/workflows/QUICKREF.md)
 

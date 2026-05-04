@@ -128,12 +128,32 @@ services:
     networks:
       - smooth-operator-net
 
+  # ── Code Quality ─────────────────────────────────────────────────────────────
+  # Start with: docker compose --profile code-quality up -d
+  sonarqube:
+    image: sonarqube:lts-community
+    profiles: [code-quality]
+    ports:
+      - "9000:9000"
+    environment:
+      - SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_logs:/opt/sonarqube/logs
+      - sonarqube_extensions:/opt/sonarqube/extensions
+    restart: unless-stopped
+    networks:
+      - smooth-operator-net
+
 volumes:
   postgres_data:
   redis_data:
   loki_data:
   prometheus_data:
   tempo_data:
+  sonarqube_data:
+  sonarqube_logs:
+  sonarqube_extensions:
 
 networks:
   smooth-operator-net:

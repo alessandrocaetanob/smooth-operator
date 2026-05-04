@@ -36,6 +36,8 @@ pnpm-debug.log*
 [Bb]in/
 [Oo]bj/
 TestResults/
+coveragereport/
+coverage.cobertura.xml
 *.nupkg
 *.snupkg
 

@@ -257,7 +257,7 @@ namespace Backend.Controllers
         private async Task<bool> NameExistsAsync(string name, Guid? excludeId)
         {
             var query = _db.UserGroups.AsNoTracking()
-                .Where(g => EF.Functions.ILike(g.Name, name));
+                .Where(g => g.Name.ToLower() == name.ToLower());
             if (excludeId.HasValue) query = query.Where(g => g.Id != excludeId.Value);
             return await query.AnyAsync();
         }

@@ -9,9 +9,11 @@
 
   <ItemGroup>
     <PackageReference Include="coverlet.collector" Version="6.0.4" />
+    <PackageReference Include="ITfoxtec.Identity.Saml2" Version="4.17.0" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.7" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.7" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="Moq" Version="4.20.72" />
     <!-- Override the vulnerable System.Security.Cryptography.Xml 10.0.0 transitively
          pulled in via the backend's ITfoxtec.Identity.Saml2 dep (NU1903). The Web SDK
          auto-prunes this package, but the Test SDK does not, so we pin it here. -->
