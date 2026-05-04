@@ -34,6 +34,9 @@ export class SettingsVaults implements OnInit {
   readonly assignModalVault = signal<Vault | null>(null);
   readonly selectedUserIds = signal<string[]>([]);
   readonly selectedGroupIds = signal<string[]>([]);
+  // Performance optimization: O(1) lookup sets for template bindings inside loops to prevent O(N*M) change detection cycles
+  readonly selectedUserIdSet = computed(() => new Set(this.selectedUserIds()));
+  readonly selectedGroupIdSet = computed(() => new Set(this.selectedGroupIds()));
   readonly userAssignSearch = signal('');
   readonly groupAssignSearch = signal('');
   readonly assignBusy = signal(false);
@@ -187,11 +190,11 @@ export class SettingsVaults implements OnInit {
   }
 
   isUserSelected(id: string): boolean {
-    return this.selectedUserIds().includes(id);
+    return this.selectedUserIdSet().has(id);
   }
 
   isGroupSelected(id: string): boolean {
-    return this.selectedGroupIds().includes(id);
+    return this.selectedGroupIdSet().has(id);
   }
 
   saveAssignments(): void {

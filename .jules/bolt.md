@@ -19,3 +19,6 @@
 ## 2026-05-02 - N+1 Network Bottleneck in probeAll
 **Learning:** Calling `/api/connections/{id}/probe` in a loop from the frontend created an N+1 network request bottleneck during connection status polling.
 **Action:** Created a batched `probe-batch` endpoint on the backend using `Task.WhenAll` to fetch all statuses concurrently, reducing frontend requests and database query overhead.
+## 2026-05-04 - O(N) Array Includes Lookups in Angular Templates
+**Learning:** Using O(N) array methods like `.includes()` directly inside component methods that are called from Angular templates (e.g., `isVaultSelected(id)`) inside loops like `@for` causes O(M*N) performance bottlenecks during change detection.
+**Action:** Transform array references into `Set` lookups using `computed` signals (`computed(() => new Set(...))`) and use `Set.prototype.has()` instead of `Array.prototype.includes()` to reduce lookup time complexity to O(1).

@@ -53,6 +53,8 @@ export class Administration implements OnInit {
 
   readonly vaultModalUser = signal<AppUser | null>(null);
   readonly selectedVaultIds = signal<string[]>([]);
+  // Performance optimization: O(1) lookup set for template bindings inside loops to prevent O(N*M) change detection cycles
+  readonly selectedVaultIdSet = computed(() => new Set(this.selectedVaultIds()));
   readonly vaultAssignmentBusy = signal(false);
 
   ngOnInit(): void {
@@ -207,7 +209,7 @@ export class Administration implements OnInit {
   }
 
   isVaultSelected(vaultId: string): boolean {
-    return this.selectedVaultIds().includes(vaultId);
+    return this.selectedVaultIdSet().has(vaultId);
   }
 
   copyInviteUrl(): void {
