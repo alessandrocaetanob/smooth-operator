@@ -11,6 +11,13 @@ interface CodeBlock {
   code: string;
 }
 
+interface GrafanaDashboard {
+  name: string;
+  description: string;
+  filename: string;
+  url: string;
+}
+
 @Component({
   selector: 'app-integrations',
   imports: [CommonModule],
@@ -103,35 +110,34 @@ service:
     'EnvironmentName="Development|Production"',
   ];
 
-  readonly grafanaEndpoints: Endpoint[] = [
-    { label: 'Grafana UI', value: 'http://localhost:3001' },
-    { label: 'Grafana API', value: 'http://localhost:3001/api' },
-  ];
-
-  readonly grafanaDashboards = [
-    {
-      name: 'ASP.NET Core — Overview',
-      uid: 'aspnetcore-overview',
-      filename: 'aspnetcore-overview.json',
-      description: 'HTTP request rate, latency percentiles, error rates, active sessions.',
-    },
-    {
-      name: 'Auth & Security',
-      uid: 'auth-security',
-      filename: 'auth-security.json',
-      description: 'Login attempts, brute-force detection, success/failure rates.',
-    },
+  readonly grafanaDashboards: GrafanaDashboard[] = [
     {
       name: 'Active Sessions',
-      uid: 'active-sessions',
+      description:
+        'Live and historical session counts, connection gauge, and session history over time.',
       filename: 'active-sessions.json',
-      description: 'Live RDP/SSH session gauge, connection history.',
+      url: '/grafana-dashboards/active-sessions.json',
+    },
+    {
+      name: 'ASP.NET Core Overview',
+      description:
+        'HTTP request rate, error rate, response time percentiles, and total request volume.',
+      filename: 'aspnetcore-overview.json',
+      url: '/grafana-dashboards/aspnetcore-overview.json',
     },
     {
       name: 'Audit Events',
-      uid: 'audit-events',
+      description:
+        'Audit event totals, type distribution, outcome breakdown, and event rate timeseries.',
       filename: 'audit-events.json',
-      description: 'Compliance audit event stream, event type distribution.',
+      url: '/grafana-dashboards/audit-events.json',
+    },
+    {
+      name: 'Auth & Security',
+      description:
+        'Login attempts, failure counts, success rate trends, and security monitoring panels.',
+      filename: 'auth-security.json',
+      url: '/grafana-dashboards/auth-security.json',
     },
   ];
 
@@ -144,23 +150,5 @@ service:
       this.copiedKey.set(key);
       setTimeout(() => this.copiedKey.set(null), 2000);
     });
-  }
-
-  downloadDashboard(filename: string): void {
-    const a = document.createElement('a');
-    a.href = `/dashboards/${filename}`;
-    a.download = filename;
-    a.click();
-  }
-
-  copyDashboardJson(uid: string, filename: string): void {
-    fetch(`/dashboards/${filename}`)
-      .then((r) => r.text())
-      .then((text) => {
-        navigator.clipboard.writeText(text).then(() => {
-          this.copiedKey.set(uid);
-          setTimeout(() => this.copiedKey.set(null), 2000);
-        });
-      });
   }
 }

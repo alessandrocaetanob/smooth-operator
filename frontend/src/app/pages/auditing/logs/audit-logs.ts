@@ -1,7 +1,11 @@
 import { DatePipe, SlicePipe } from '@angular/common';
 import { Component, ElementRef, OnInit, ViewChild, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { AuditLogEntry, AuditLogQuery, AuditLogsService } from '../../services/audit-logs.service';
+import {
+  AuditLogEntry,
+  AuditLogQuery,
+  AuditLogsService,
+} from '../../../services/audit-logs.service';
 
 @Component({
   selector: 'app-audit-logs',

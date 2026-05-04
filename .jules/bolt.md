@@ -19,6 +19,23 @@
 ## 2026-05-02 - N+1 Network Bottleneck in probeAll
 **Learning:** Calling `/api/connections/{id}/probe` in a loop from the frontend created an N+1 network request bottleneck during connection status polling.
 **Action:** Created a batched `probe-batch` endpoint on the backend using `Task.WhenAll` to fetch all statuses concurrently, reducing frontend requests and database query overhead.
+
+## 2026-05-03 - EF Core Migrations Tool Configuration and Missing AuditLog Index
+**Learning:** The database `AuditLogs` table lacked a composite index on `UserId`, `Action`, `ResourceId`, and `Timestamp`, causing full table scans during the `GetMyLastConnected` query in `ConnectionsController`. Additionally, executing Entity Framework Core migrations requires explicit installation and path export of the `dotnet-ef` tool in this environment.
+**Action:** When working on backend optimizations, always inspect EF Core LINQ queries for missing database indexes and ensure `dotnet-ef` is properly installed before attempting database state changes.
+
+## 2026-05-04 - Replace List.Remove with List.RemoveAll inside loops
+**Inefficiency:** Calling `List.Remove` inside a loop takes O(N) time for every element being removed, resulting in O(N*M) time complexity. When the collection sizes are large, this becomes a significant performance bottleneck.
+**Optimization:** Use the `List.RemoveAll` method passing an efficient condition (such as checking against a `HashSet`). This optimizes the operation to an O(N) single linear scan, drastically improving processing time. In EF Core where navigation collections default to `List<T>`, utilizing type matching `if (members is List<User> list)` ensures safety without throwing exceptions.
+
+## 2026-05-04 - Backend HTTP Probes Overhead Reduction
+**Inefficiency:** Iterating over connections on the frontend to send individual `GET /api/connections/{id}/probe` requests creates N HTTP roundtrips, generating significant latency overhead and potentially exhausting connection limits or thread pools.
+**Optimization:** Created a new endpoint `POST /api/connections/probe-bulk` that accepts a list of GUIDs and utilizes `Task.WhenAll` on the backend to execute the TCP probes concurrently, returning a Dictionary. It avoids race conditions by utilizing a thread-safe `ConcurrentDictionary`.
+
+## 2026-05-04 - Grafana Removal — Native Monitoring Dashboards
+**Learning:** Grafana dashboards accessed via an external app break UX; embedding metrics natively inside the Angular app is cleaner. PrometheusService was also broken — it called `/api/v1/query` which nginx only proxies to the backend, with no matching controller.
+**Action:** Removed PrometheusService and the stub Dashboards component. Added `MetricsController` (6 endpoints querying AuditLog + AppMetrics gauge). Added `MetricsService` Angular service. Split "Auditing" sidebar item into "Audit Logs" (icon `receipt_long`) and "Monitoring" (icon `monitoring`). Built full Monitoring page with three sections (Active Sessions, Auth & Security, Audit Events) using Chart.js — all stat cards, line/bar/doughnut charts. Deleted `auditing.{ts,html,css}`, `dashboards/*`, `prometheus.service.ts`.
+
 ## 2026-05-04 - O(N) Array Includes Lookups in Angular Templates
 **Learning:** Using O(N) array methods like `.includes()` directly inside component methods that are called from Angular templates (e.g., `isVaultSelected(id)`) inside loops like `@for` causes O(M*N) performance bottlenecks during change detection.
 **Action:** Transform array references into `Set` lookups using `computed` signals (`computed(() => new Set(...))`) and use `Set.prototype.has()` instead of `Array.prototype.includes()` to reduce lookup time complexity to O(1).

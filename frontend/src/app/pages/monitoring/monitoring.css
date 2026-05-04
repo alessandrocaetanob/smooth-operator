@@ -1,0 +1,11 @@
+.chart-container {
+  position: relative;
+  height: 220px;
+  width: 100%;
+}
+
+.chart-container-sm {
+  position: relative;
+  height: 180px;
+  width: 100%;
+}

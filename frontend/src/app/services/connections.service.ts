@@ -116,6 +116,10 @@ export class ConnectionsService {
     return this.http.post<Record<string, boolean>>(`/api/connections/probe-batch`, ids);
   }
 
+  probeConnectionsBulk(ids: string[]): Observable<Record<string, string>> {
+    return this.http.post<Record<string, string>>('/api/connections/probe-bulk', ids);
+  }
+
   private normalize(raw: any): Connection {
     const host = pick<any>(raw, 'host', 'Host');
     return {

@@ -110,33 +110,29 @@ export class Vault implements OnInit {
 
   private probeAll(): void {
     const ids = this.list().map((c) => c.id);
+    if (ids.length === 0) return;
+
     // Mark all as unknown first so the dots appear immediately
     this._reachabilityMap.update((m) => {
       const next = new Map(m);
       for (const id of ids) next.set(id, 'unknown');
       return next;
     });
-    this.connections.probeBatch(ids).subscribe({
+    this.connections.probeConnectionsBulk(ids).subscribe({
       next: (results) => {
         this._reachabilityMap.update((m) => {
           const next = new Map(m);
-          // Default all requested IDs to 'down'; absent keys (connection
-          // disappeared between reload and probe) are resolved this way.
-          for (const id of ids) next.set(id, 'down');
-          for (const [id, reachable] of Object.entries(results)) {
-            next.set(id, reachable ? 'up' : 'down');
+          for (const [id, status] of Object.entries(results)) {
+            if (status === 'up') next.set(id, 'up');
+            else if (status === 'down') next.set(id, 'down');
+            else next.set(id, 'unknown'); // not_found / forbidden / no_host
           }
           return next;
         });
       },
       error: () => {
-        // On a network/server error resolve every pending ID to 'down' so
-        // the UI never gets stuck showing 'unknown' indefinitely.
-        this._reachabilityMap.update((m) => {
-          const next = new Map(m);
-          for (const id of ids) next.set(id, 'down');
-          return next;
-        });
+        // A transient error gives no information about actual host reachability,
+        // so leave all connections as 'unknown' rather than marking them 'down'.
       },
     });
   }

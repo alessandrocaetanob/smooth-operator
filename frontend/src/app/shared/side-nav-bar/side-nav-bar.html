@@ -84,6 +84,40 @@
       @if (canAccessSettings()) {
         <li>
           <a
+            routerLink="/auditing"
+            routerLinkActive="bg-primary-container/15 text-primary border-l-primary"
+            [routerLinkActiveOptions]="{ exact: false }"
+            class="nav-link"
+            [class.justify-center]="collapsed()"
+            [attr.title]="collapsed() ? 'Audit Logs' : null"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">receipt_long</span>
+            @if (!collapsed()) {
+              <span>Audit Logs</span>
+            }
+          </a>
+        </li>
+      }
+      @if (canAccessSettings()) {
+        <li>
+          <a
+            routerLink="/monitoring"
+            routerLinkActive="bg-primary-container/15 text-primary border-l-primary"
+            [routerLinkActiveOptions]="{ exact: false }"
+            class="nav-link"
+            [class.justify-center]="collapsed()"
+            [attr.title]="collapsed() ? 'Monitoring' : null"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">monitoring</span>
+            @if (!collapsed()) {
+              <span>Monitoring</span>
+            }
+          </a>
+        </li>
+      }
+      @if (canAccessSettings()) {
+        <li>
+          <a
             routerLink="/settings"
             routerLinkActive="bg-primary-container/15 text-primary border-l-primary"
             class="nav-link"

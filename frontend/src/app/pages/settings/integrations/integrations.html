@@ -54,7 +54,7 @@
       class="flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 hover:text-on-surface transition-colors"
     >
       <span class="material-symbols-outlined text-base">dashboard</span>
-      Grafana
+      Grafana Dashboards
     </button>
   </nav>
 
@@ -287,118 +287,48 @@
     </div>
   }
 
-  <!-- Grafana tab -->
+  <!-- Grafana Dashboards tab -->
   @if (activeTab() === 'grafana') {
     <div class="space-y-4">
-      <!-- Grafana URL -->
       <div class="settings-card">
         <div class="settings-card-header">
           <span class="material-symbols-outlined settings-card-icon">dashboard</span>
-          <h3 class="settings-card-title">Grafana</h3>
+          <h3 class="settings-card-title">Grafana dashboard files</h3>
         </div>
         <div class="settings-card-body">
           <p class="text-sm text-on-surface-variant mb-4">
-            Grafana is provisioned with four pre-built dashboards. Start the observability stack
-            with
-            <code class="font-mono text-xs bg-surface-variant px-1 py-0.5 rounded"
-              >docker compose --profile observability up -d</code
-            >, then open Grafana below.
-          </p>
-          @for (ep of grafanaEndpoints; track ep.label) {
-            <div
-              class="flex items-center justify-between gap-3 bg-surface-variant/30 rounded-lg px-4 py-3 mb-2"
+            Download these pre-built Grafana dashboard JSON files to use with your own standalone
+            Grafana server. Import each file via
+            <strong class="font-medium text-on-surface"
+              >Dashboards → Import → Upload JSON file</strong
             >
-              <div>
-                <p class="text-xs text-on-surface-variant">{{ ep.label }}</p>
-                <p class="font-mono text-sm text-on-surface mt-0.5">{{ ep.value }}</p>
-              </div>
-              <div class="flex items-center gap-1">
-                <a
-                  [href]="ep.value"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="icon-btn shrink-0"
-                  title="Open"
-                >
-                  <span class="material-symbols-outlined text-base">open_in_new</span>
-                </a>
-                <button (click)="copy(ep.value, ep.label)" class="icon-btn shrink-0" title="Copy">
-                  <span class="material-symbols-outlined text-base">
-                    {{ copiedKey() === ep.label ? 'check' : 'content_copy' }}
-                  </span>
-                </button>
-              </div>
-            </div>
-          }
-        </div>
-      </div>
-
-      <!-- Provisioned Dashboards -->
-      <div class="settings-card">
-        <div class="settings-card-header">
-          <span class="material-symbols-outlined settings-card-icon">bar_chart</span>
-          <h3 class="settings-card-title">Provisioned dashboards</h3>
-        </div>
-        <div class="settings-card-body">
+            in the Grafana UI. Requires Prometheus, Loki, and Tempo data sources configured with the
+            endpoints from the other tabs.
+          </p>
           <div class="space-y-3">
-            @for (d of grafanaDashboards; track d.uid) {
+            @for (d of grafanaDashboards; track d.filename) {
               <div
-                class="flex items-start gap-3 p-3 rounded-lg border border-outline-variant/20 hover:bg-surface-variant/20 transition-colors"
+                class="flex items-center justify-between gap-4 bg-surface-variant/30 rounded-lg px-4 py-3"
               >
-                <span class="material-symbols-outlined text-primary mt-0.5">bar_chart</span>
-                <div class="flex-1 min-w-0">
+                <div class="min-w-0">
                   <p class="text-sm font-medium text-on-surface">{{ d.name }}</p>
                   <p class="text-xs text-on-surface-variant mt-0.5">{{ d.description }}</p>
-                  <code class="font-mono text-xs text-on-surface-variant/70 mt-1 block"
-                    >uid: {{ d.uid }}</code
-                  >
+                  <code class="font-mono text-xs text-on-surface-variant/70 mt-1 block">{{
+                    d.filename
+                  }}</code>
                 </div>
-                <div class="flex items-center gap-1 shrink-0">
-                  <a
-                    href="http://localhost:3001/d/{{ d.uid }}"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="icon-btn"
-                    title="Open in Grafana"
-                  >
-                    <span class="material-symbols-outlined text-base">open_in_new</span>
-                  </a>
-                  <button
-                    (click)="copyDashboardJson(d.uid, d.filename)"
-                    class="icon-btn"
-                    title="Copy JSON"
-                  >
-                    <span class="material-symbols-outlined text-base">
-                      {{ copiedKey() === d.uid ? 'check' : 'content_copy' }}
-                    </span>
-                  </button>
-                  <button
-                    (click)="downloadDashboard(d.filename)"
-                    class="icon-btn"
-                    title="Download JSON"
-                  >
-                    <span class="material-symbols-outlined text-base">download</span>
-                  </button>
-                </div>
+                <a
+                  [href]="d.url"
+                  [attr.download]="d.filename"
+                  class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-outline-variant/30 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-colors shrink-0"
+                  title="Download {{ d.filename }}"
+                >
+                  <span class="material-symbols-outlined text-base">download</span>
+                  Download
+                </a>
               </div>
             }
           </div>
-        </div>
-      </div>
-
-      <!-- Default Credentials -->
-      <div class="settings-card">
-        <div class="settings-card-header">
-          <span class="material-symbols-outlined settings-card-icon">lock</span>
-          <h3 class="settings-card-title">Default credentials</h3>
-        </div>
-        <div class="settings-card-body">
-          <p class="text-sm text-on-surface-variant">
-            Default login is <code class="font-mono text-xs">admin / admin</code>. Change this
-            immediately via <strong>Profile → Change Password</strong> in Grafana, or set
-            <code class="font-mono text-xs">GF_SECURITY_ADMIN_PASSWORD</code> in your
-            <code class="font-mono text-xs">docker-compose.yml</code> before starting.
-          </p>
         </div>
       </div>
     </div>

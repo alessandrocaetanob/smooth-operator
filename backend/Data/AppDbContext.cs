@@ -101,6 +101,12 @@ namespace Backend.Data
 
             modelBuilder.Entity<SsoAuthState>()
                 .HasIndex(s => s.ExpiresAt);
+
+            // ⚡ Bolt: Composite index to avoid full table scans on ConnectionsController.GetMyLastConnected
+            // Query filter: a.UserId == profile.UserId && a.Action == "connection.started"
+            // Group by: a.ResourceId, Select: max(a.Timestamp)
+            modelBuilder.Entity<AuditLog>()
+                .HasIndex(a => new { a.UserId, a.Action, a.ResourceId, a.Timestamp });
         }
     }
 }

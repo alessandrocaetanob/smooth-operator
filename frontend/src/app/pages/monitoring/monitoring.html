@@ -1,0 +1,238 @@
+<div class="page-shell">
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-on-surface tracking-tight">Monitoring</h1>
+      <p class="text-sm text-on-surface-variant mt-1">
+        Real-time system metrics and activity dashboards.
+      </p>
+    </div>
+    <div class="flex items-center gap-3 flex-wrap">
+      <!-- Time range selector -->
+      <div class="flex rounded-lg overflow-hidden border border-outline-variant/30">
+        @for (range of ranges; track range) {
+          <button
+            (click)="setRange(range)"
+            [class.bg-primary]="selectedRange() === range"
+            [class.text-on-primary]="selectedRange() === range"
+            [class.text-on-surface-variant]="selectedRange() !== range"
+            class="px-3 py-1.5 text-xs font-medium transition-colors hover:bg-surface-variant/50"
+          >
+            {{ range }}
+          </button>
+        }
+      </div>
+      <!-- Auto-refresh interval -->
+      <div class="flex rounded-lg overflow-hidden border border-outline-variant/30">
+        @for (opt of autoRefreshOptions; track opt.value) {
+          <button
+            (click)="setAutoRefresh(opt.value)"
+            [class.bg-primary]="autoRefresh() === opt.value"
+            [class.text-on-primary]="autoRefresh() === opt.value"
+            [class.text-on-surface-variant]="autoRefresh() !== opt.value"
+            class="px-3 py-1.5 text-xs font-medium transition-colors hover:bg-surface-variant/50"
+          >
+            {{ opt.label }}
+          </button>
+        }
+      </div>
+      <!-- Refresh button -->
+      <button
+        (click)="loadAll()"
+        [disabled]="loading()"
+        class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium glass-card rounded-lg hover:bg-surface-variant/50 transition-colors disabled:opacity-50"
+        title="Refresh now"
+      >
+        <span class="material-symbols-outlined text-sm" [class.animate-spin]="loading()"
+          >autorenew</span
+        >
+        @if (lastRefreshed()) {
+          <span class="text-on-surface-variant">{{ lastRefreshed() | date: 'HH:mm:ss' }}</span>
+        } @else {
+          <span class="text-on-surface-variant">Refresh</span>
+        }
+      </button>
+    </div>
+  </div>
+
+  <!-- Section 1: Active Sessions -->
+  <section class="mb-8">
+    <h2 class="text-base font-semibold text-on-surface mb-3 flex items-center gap-2">
+      <span class="material-symbols-outlined text-primary text-lg" aria-hidden="true"
+        >screen_share</span
+      >
+      Active Sessions
+    </h2>
+
+    <!-- Stat cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+      <div class="glass-card p-4 rounded-xl">
+        <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-1">Live Sessions</p>
+        <p class="text-3xl font-bold" [ngClass]="activeSessionsColor()">
+          {{ summary()?.activeSessions ?? '–' }}
+        </p>
+        <p class="text-xs text-on-surface-variant mt-1">Currently active</p>
+      </div>
+      <div class="glass-card p-4 rounded-xl">
+        <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-1">Started (24h)</p>
+        <p class="text-3xl font-bold text-on-surface">
+          {{ summary()?.connectionsStarted24h ?? '–' }}
+        </p>
+      </div>
+      <div class="glass-card p-4 rounded-xl">
+        <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-1">Ended (24h)</p>
+        <p class="text-3xl font-bold text-on-surface">
+          {{ summary()?.connectionsEnded24h ?? '–' }}
+        </p>
+      </div>
+    </div>
+
+    <!-- Connections timeseries chart -->
+    <div class="glass-card p-4 rounded-xl">
+      <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-3">
+        Connections Over Time
+      </p>
+      <div class="chart-container">
+        <canvas
+          #connectionsChart
+          id="connectionsChart"
+          aria-label="Connections started and ended over time"
+        ></canvas>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 2: Auth & Security -->
+  <section class="mb-8">
+    <h2 class="text-base font-semibold text-on-surface mb-3 flex items-center gap-2">
+      <span class="material-symbols-outlined text-primary text-lg" aria-hidden="true">shield</span>
+      Auth &amp; Security
+    </h2>
+
+    <!-- Stat cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+      <div class="glass-card p-4 rounded-xl">
+        <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-1">
+          Login Attempts (24h)
+        </p>
+        <p class="text-3xl font-bold text-on-surface">
+          {{ summary()?.loginAttemptsTotal24h ?? '–' }}
+        </p>
+      </div>
+      <div class="glass-card p-4 rounded-xl">
+        <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-1">
+          Failed Logins (1h)
+        </p>
+        <p
+          class="text-3xl font-bold"
+          [class.text-red-400]="(summary()?.loginFailures1h ?? 0) > 0"
+          [class.text-on-surface]="(summary()?.loginFailures1h ?? 0) === 0"
+        >
+          {{ summary()?.loginFailures1h ?? '–' }}
+        </p>
+      </div>
+      <div class="glass-card p-4 rounded-xl">
+        <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-1">
+          Success Rate (24h)
+        </p>
+        <p class="text-3xl font-bold text-green-400">
+          {{ summary() ? (summary()!.loginSuccessRate24h | number: '1.1-1') + '%' : '–' }}
+        </p>
+      </div>
+    </div>
+
+    <!-- Charts row -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div class="lg:col-span-2 glass-card p-4 rounded-xl">
+        <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-3">
+          Login Attempts Over Time
+        </p>
+        <div class="chart-container">
+          <canvas
+            #loginChart
+            id="loginChart"
+            aria-label="Login success and failure over time"
+          ></canvas>
+        </div>
+      </div>
+      <div class="glass-card p-4 rounded-xl">
+        <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-3">
+          Outcome Breakdown
+        </p>
+        <div class="chart-container-sm">
+          <canvas
+            #breakdownChart
+            id="breakdownChart"
+            aria-label="Audit event outcome breakdown"
+          ></canvas>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 3: Audit Events -->
+  <section class="mb-8">
+    <h2 class="text-base font-semibold text-on-surface mb-3 flex items-center gap-2">
+      <span class="material-symbols-outlined text-primary text-lg" aria-hidden="true"
+        >assignment</span
+      >
+      Audit Events
+    </h2>
+
+    <!-- Stat cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+      <div class="glass-card p-4 rounded-xl">
+        <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-1">
+          Total Events (24h)
+        </p>
+        <p class="text-3xl font-bold text-on-surface">
+          {{ summary()?.auditEventsTotal24h ?? '–' }}
+        </p>
+      </div>
+      <div class="glass-card p-4 rounded-xl">
+        <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-1">Failures (24h)</p>
+        <p
+          class="text-3xl font-bold"
+          [class.text-red-400]="(summary()?.auditFailures24h ?? 0) > 0"
+          [class.text-on-surface]="(summary()?.auditFailures24h ?? 0) === 0"
+        >
+          {{ summary()?.auditFailures24h ?? '–' }}
+        </p>
+      </div>
+      <div class="glass-card p-4 rounded-xl">
+        <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-1">
+          Auth Events (24h)
+        </p>
+        <p class="text-3xl font-bold text-on-surface">{{ summary()?.authEvents24h ?? '–' }}</p>
+      </div>
+    </div>
+
+    <!-- Charts row -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+      <div class="glass-card p-4 rounded-xl">
+        <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-3">
+          Top 10 Event Types
+        </p>
+        <div class="chart-container">
+          <canvas
+            #topEventsChart
+            id="topEventsChart"
+            aria-label="Top audit event types by count"
+          ></canvas>
+        </div>
+      </div>
+      <div class="glass-card p-4 rounded-xl">
+        <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-3">
+          Event Rate by Type
+        </p>
+        <div class="chart-container">
+          <canvas
+            #eventTimeseriesChart
+            id="eventTimeseriesChart"
+            aria-label="Audit event rate by type over time"
+          ></canvas>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
