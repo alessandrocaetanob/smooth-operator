@@ -25,6 +25,9 @@ namespace Backend.Controllers
         private readonly IAuditService _audit;
         private readonly IAccessControlService _access;
 
+        /// <summary>Maximum number of concurrent TCP probes issued by probe-bulk.</summary>
+        private const int BulkProbeMaxConcurrency = 10;
+
         public ConnectionsController(AppDbContext context, IAuditService audit, IAccessControlService access)
         {
             _context = context;
@@ -336,6 +339,10 @@ namespace Backend.Controllers
 
             var results = new System.Collections.Concurrent.ConcurrentDictionary<Guid, string>();
 
+            // Build a O(1) lookup from existing connections so the classification loop below
+            // doesn't perform O(n) linear scans per entry.
+            var existingById = existingConnections.ToDictionary(c => c.Id);
+
             // Classify IDs that are not probe candidates up-front so the response is
             // semantically unambiguous (clients can distinguish 'host is down' from
             // 'this ID is invalid / inaccessible / misconfigured').
@@ -345,7 +352,7 @@ namespace Backend.Controllers
                     results[id] = "not_found";
                 else if (!accessibleIds.Contains(id))
                     results[id] = "forbidden";
-                else if (!hostLookup.ContainsKey(existingConnections.First(c => c.Id == id).HostId))
+                else if (!hostLookup.ContainsKey(existingById[id].HostId))
                     results[id] = "no_host";
             }
 
@@ -355,8 +362,7 @@ namespace Backend.Controllers
                 .Where(c => hostLookup.ContainsKey(c.HostId))
                 .ToList();
 
-            const int maxConcurrency = 10;
-            using var semaphore = new SemaphoreSlim(maxConcurrency, maxConcurrency);
+            using var semaphore = new SemaphoreSlim(BulkProbeMaxConcurrency, BulkProbeMaxConcurrency);
 
             var tasks = probeCandidates.Select(conn => Task.Run(async () =>
             {
