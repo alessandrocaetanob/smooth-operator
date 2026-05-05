@@ -318,13 +318,13 @@ using (var scope = app.Services.CreateScope())
 
         await RoleSeeder.SeedDefaultsAsync(db, logger);
     }
+#pragma warning disable S2139 // Intentionally log before rethrowing for startup diagnostics
     catch (Exception ex)
     {
-#pragma warning disable S2139
         logger.LogError(ex, "Failed to apply database migrations on startup.");
         throw;
-#pragma warning restore S2139
     }
+#pragma warning restore S2139
 }
 
 app.UseWebSockets();
