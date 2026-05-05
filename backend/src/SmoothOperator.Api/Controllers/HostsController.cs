@@ -1,15 +1,10 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using SmoothOperator.Infrastructure.Data;
-using SmoothOperator.Application.DTOs;
-using SmoothOperator.Domain.Models;
-using SmoothOperator.Infrastructure.Services;
-using SmoothOperator.Application.Interfaces;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using SmoothOperator.Application.DTOs;
+using SmoothOperator.Application.Features.Hosts.Commands;
+using SmoothOperator.Application.Features.Hosts.Queries;
+using SmoothOperator.Infrastructure.Services;
 
 namespace SmoothOperator.Api.Controllers
 {
@@ -18,127 +13,46 @@ namespace SmoothOperator.Api.Controllers
     [Authorize(Roles = AppRoles.OwnerAdminOrTeamAdmin)]
     public class HostsController : ControllerBase
     {
-        private readonly AppDbContext _context;
-        private readonly IAuditService _audit;
+        private readonly IMediator _mediator;
 
-        public HostsController(AppDbContext context, IAuditService audit)
+        public HostsController(IMediator mediator)
         {
-            _context = context;
-            _audit = audit;
+            _mediator = mediator;
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<HostDto>>> GetHosts()
+        public async Task<IActionResult> GetHosts()
         {
-            var hosts = await _context.Hosts.ToListAsync();
-            return Ok(hosts.Select(h => new HostDto
-            {
-                Id = h.Id,
-                Name = h.Name,
-                Address = h.Address
-            }));
+            var result = await _mediator.Send(new GetHostsQuery(HttpContext.User));
+            return Ok(result);
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<HostDto>> GetHost(Guid id)
+        public async Task<IActionResult> GetHost(Guid id)
         {
-            var host = await _context.Hosts.FindAsync(id);
-
-            if (host == null)
-            {
-                return NotFound();
-            }
-
-            return new HostDto
-            {
-                Id = host.Id,
-                Name = host.Name,
-                Address = host.Address
-            };
+            var result = await _mediator.Send(new GetHostQuery(id, HttpContext.User));
+            return Ok(result);
         }
 
         [HttpPost]
-        public async Task<ActionResult<HostDto>> CreateHost([FromBody] CreateHostDto dto)
+        public async Task<IActionResult> CreateHost([FromBody] CreateHostDto dto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            var host = new SmoothOperator.Domain.Models.Host
-            {
-                Id = Guid.NewGuid(),
-                Name = dto.Name,
-                Address = dto.Address
-            };
-
-            _context.Hosts.Add(host);
-            await _context.SaveChangesAsync();
-            await _audit.WriteAsync("host.created", "Host", host.Id.ToString(), new { host.Name, host.Address });
-
-            return CreatedAtAction(nameof(GetHost), new { id = host.Id }, new HostDto
-            {
-                Id = host.Id,
-                Name = host.Name,
-                Address = host.Address
-            });
+            var result = await _mediator.Send(new CreateHostCommand(dto, HttpContext.User));
+            return CreatedAtAction(nameof(GetHost), new { id = result.Id }, result);
         }
 
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateHost(Guid id, [FromBody] CreateHostDto dto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            var host = await _context.Hosts.FindAsync(id);
-            if (host == null)
-            {
-                return NotFound();
-            }
-
-            host.Name = dto.Name;
-            host.Address = dto.Address;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!HostExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            await _audit.WriteAsync("host.updated", "Host", id.ToString(), new { host.Name, host.Address });
+            await _mediator.Send(new UpdateHostCommand(id, dto, HttpContext.User));
             return NoContent();
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteHost(Guid id)
         {
-            var host = await _context.Hosts.FindAsync(id);
-            if (host == null)
-            {
-                return NotFound();
-            }
-
-            _context.Hosts.Remove(host);
-            await _context.SaveChangesAsync();
-            await _audit.WriteAsync("host.deleted", "Host", id.ToString(), new { host.Name });
+            await _mediator.Send(new DeleteHostCommand(id, HttpContext.User));
             return NoContent();
-        }
-
-        private bool HostExists(Guid id)
-        {
-            return _context.Hosts.Any(e => e.Id == id);
         }
     }
 }

@@ -1,15 +1,10 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using SmoothOperator.Infrastructure.Data;
-using SmoothOperator.Application.DTOs;
-using SmoothOperator.Domain.Models;
-using SmoothOperator.Infrastructure.Services;
-using SmoothOperator.Application.Interfaces;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using SmoothOperator.Application.DTOs;
+using SmoothOperator.Application.Features.ConnectionGroups.Commands;
+using SmoothOperator.Application.Features.ConnectionGroups.Queries;
+using SmoothOperator.Infrastructure.Services;
 
 namespace SmoothOperator.Api.Controllers
 {
@@ -18,114 +13,33 @@ namespace SmoothOperator.Api.Controllers
     [Authorize]
     public class ConnectionGroupsController : ControllerBase
     {
-        private readonly AppDbContext _context;
-        private readonly IAccessControlService _access;
-        private readonly IAuditService _audit;
+        private readonly IMediator _mediator;
 
-        public ConnectionGroupsController(AppDbContext context, IAccessControlService access, IAuditService audit)
+        public ConnectionGroupsController(IMediator mediator)
         {
-            _context = context;
-            _access = access;
-            _audit = audit;
+            _mediator = mediator;
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<ConnectionGroupDto>>> GetVaults()
+        public async Task<IActionResult> GetVaults()
         {
-            var profile = await _access.GetCurrentProfileAsync(User);
-            if (profile == null) return Unauthorized();
-
-            var vaults = await _access.ApplyVaultScope(_context.ConnectionGroups.AsNoTracking(), profile)
-                .OrderBy(v => v.Name)
-                .Select(v => new ConnectionGroupDto
-                {
-                    Id = v.Id,
-                    Name = v.Name,
-                    ParentGroupId = v.ParentGroupId,
-                    UserCount = v.Users.Count,
-                    GroupCount = v.Groups.Count
-                })
-                .ToListAsync();
-
-            return Ok(vaults);
+            var result = await _mediator.Send(new GetVaultsQuery(HttpContext.User));
+            return Ok(result);
         }
 
         [HttpPost]
         [Authorize(Roles = AppRoles.OwnerOrAdmin)]
-        public async Task<ActionResult<ConnectionGroupDto>> CreateVault([FromBody] CreateConnectionGroupDto dto)
+        public async Task<IActionResult> CreateVault([FromBody] CreateConnectionGroupDto dto)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
-
-            if (dto.ParentGroupId.HasValue)
-            {
-                var parentExists = await _context.ConnectionGroups.AnyAsync(g => g.Id == dto.ParentGroupId.Value);
-                if (!parentExists)
-                {
-                    return BadRequest(new { message = "Parent vault does not exist." });
-                }
-            }
-
-            var name = dto.Name.Trim();
-            if (await VaultNameExistsAsync(name, null))
-            {
-                return Conflict(new { message = $"A vault named \"{name}\" already exists." });
-            }
-
-            var vault = new ConnectionGroup
-            {
-                Id = Guid.NewGuid(),
-                Name = name,
-                ParentGroupId = dto.ParentGroupId
-            };
-
-            _context.ConnectionGroups.Add(vault);
-            await _context.SaveChangesAsync();
-            await _audit.WriteAsync("vault.created", "ConnectionGroup", vault.Id.ToString(),
-                new { vault.Name, vault.ParentGroupId });
-
-            return CreatedAtAction(nameof(GetVaults), new { id = vault.Id }, new ConnectionGroupDto
-            {
-                Id = vault.Id,
-                Name = vault.Name,
-                ParentGroupId = vault.ParentGroupId
-            });
+            var result = await _mediator.Send(new CreateVaultCommand(dto, HttpContext.User));
+            return CreatedAtAction(nameof(GetVaults), new { id = result.Id }, result);
         }
 
         [HttpPut("{id}")]
         [Authorize(Roles = AppRoles.OwnerOrAdmin)]
         public async Task<IActionResult> UpdateVault(Guid id, [FromBody] CreateConnectionGroupDto dto)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
-            if (dto.ParentGroupId == id)
-            {
-                return BadRequest(new { message = "A vault cannot be its own parent." });
-            }
-
-            if (dto.ParentGroupId.HasValue)
-            {
-                var parentExists = await _context.ConnectionGroups.AnyAsync(g => g.Id == dto.ParentGroupId.Value);
-                if (!parentExists)
-                {
-                    return BadRequest(new { message = "Parent vault does not exist." });
-                }
-            }
-
-            var vault = await _context.ConnectionGroups.FindAsync(id);
-            if (vault == null) return NotFound();
-
-            var name = dto.Name.Trim();
-            if (!string.Equals(vault.Name, name, StringComparison.OrdinalIgnoreCase)
-                && await VaultNameExistsAsync(name, id))
-            {
-                return Conflict(new { message = $"A vault named \"{name}\" already exists." });
-            }
-
-            vault.Name = name;
-            vault.ParentGroupId = dto.ParentGroupId;
-
-            await _context.SaveChangesAsync();
-            await _audit.WriteAsync("vault.updated", "ConnectionGroup", id.ToString(),
-                new { vault.Name, vault.ParentGroupId });
+            await _mediator.Send(new UpdateVaultCommand(id, dto, HttpContext.User));
             return NoContent();
         }
 
@@ -133,200 +47,32 @@ namespace SmoothOperator.Api.Controllers
         [Authorize(Roles = AppRoles.OwnerOrAdmin)]
         public async Task<IActionResult> DeleteVault(Guid id)
         {
-            var vault = await _context.ConnectionGroups
-                .Include(v => v.Connections)
-                .Include(v => v.Users)
-                .Include(v => v.Groups)
-                .FirstOrDefaultAsync(v => v.Id == id);
-            if (vault == null) return NotFound();
-
-            if (vault.Connections.Any())
-            {
-                return Conflict(new { message = "Cannot delete a vault that still has connections." });
-            }
-
-            if (vault.Users.Any())
-            {
-                return Conflict(new { message = "Cannot delete a vault that is assigned to users." });
-            }
-
-            if (vault.Groups.Any())
-            {
-                return Conflict(new { message = "Cannot delete a vault that is assigned to groups." });
-            }
-
-            _context.ConnectionGroups.Remove(vault);
-            await _context.SaveChangesAsync();
-            await _audit.WriteAsync("vault.deleted", "ConnectionGroup", id.ToString(), new { vault.Name });
+            await _mediator.Send(new DeleteVaultCommand(id, HttpContext.User));
             return NoContent();
         }
 
         [HttpGet("{id}/assignments")]
         [Authorize(Roles = AppRoles.OwnerOrAdmin)]
-        public async Task<ActionResult<VaultAssignmentsDto>> GetAssignments(Guid id)
+        public async Task<IActionResult> GetAssignments(Guid id)
         {
-            var vault = await _context.ConnectionGroups
-                .AsNoTracking()
-                .Include(v => v.Users)
-                .Include(v => v.Groups)
-                .FirstOrDefaultAsync(v => v.Id == id);
-
-            if (vault == null) return NotFound();
-
-            return Ok(new VaultAssignmentsDto
-            {
-                UserIds = vault.Users.Select(u => u.Id).ToList(),
-                GroupIds = vault.Groups.Select(g => g.Id).ToList()
-            });
+            var result = await _mediator.Send(new GetVaultAssignmentsQuery(id));
+            return Ok(result);
         }
 
         [HttpPut("{id}/assignments")]
         [Authorize(Roles = AppRoles.OwnerOrAdmin)]
         public async Task<IActionResult> SetAssignments(Guid id, [FromBody] VaultAssignmentsDto dto)
         {
-            var vault = await _context.ConnectionGroups
-                .Include(v => v.Users)
-                .Include(v => v.Groups)
-                .FirstOrDefaultAsync(v => v.Id == id);
-
-            if (vault == null) return NotFound();
-
-            var requestedUserIds = (dto.UserIds ?? new List<Guid>()).Distinct().ToList();
-            var requestedGroupIds = (dto.GroupIds ?? new List<Guid>()).Distinct().ToList();
-
-            var users = await _context.Users
-                .Where(u => requestedUserIds.Contains(u.Id))
-                .ToListAsync();
-
-            var groups = await _context.UserGroups
-                .Where(g => requestedGroupIds.Contains(g.Id))
-                .ToListAsync();
-
-            var missingUserIds = requestedUserIds.Except(users.Select(u => u.Id)).ToList();
-            var missingGroupIds = requestedGroupIds.Except(groups.Select(g => g.Id)).ToList();
-
-            if (missingUserIds.Count > 0 || missingGroupIds.Count > 0)
-            {
-                return BadRequest(new
-                {
-                    message = "One or more assignment IDs are invalid.",
-                    missingUserIds,
-                    missingGroupIds
-                });
-            }
-
-            vault.Users.Clear();
-            foreach (var u in users) vault.Users.Add(u);
-
-            vault.Groups.Clear();
-            foreach (var g in groups) vault.Groups.Add(g);
-
-            await _context.SaveChangesAsync();
-            await _audit.WriteAsync("vault.assignments.updated", "ConnectionGroup", id.ToString(),
-                new { UserCount = users.Count, GroupCount = groups.Count });
-
-            return NoContent();
+            var result = await _mediator.Send(new SetVaultAssignmentsCommand(id, dto, HttpContext.User));
+            return Ok(result);
         }
 
         [HttpGet("{id}/effective-users")]
         [Authorize(Roles = AppRoles.OwnerAdminOrTeamAdmin)]
-        public async Task<ActionResult<VaultEffectiveUsersDto>> GetEffectiveUsers(Guid id)
+        public async Task<IActionResult> GetEffectiveUsers(Guid id)
         {
-            var profile = await _access.GetCurrentProfileAsync(User);
-            if (profile == null) return Unauthorized();
-
-            // TeamAdmins can only inspect vaults they have access to.
-            if (!profile.IsOwnerOrAdmin && !profile.VaultIds.Contains(id))
-            {
-                return Forbid();
-            }
-
-            var vaultEntity = await _context.ConnectionGroups
-                .AsNoTracking()
-                .Include(v => v.Users).ThenInclude(u => u.Roles)
-                .Include(v => v.Groups).ThenInclude(g => g.Members).ThenInclude(u => u.Roles)
-                .FirstOrDefaultAsync(v => v.Id == id);
-
-            if (vaultEntity == null) return NotFound();
-
-            var directUsers = vaultEntity.Users.Select(u => new
-            {
-                u.Id,
-                u.Name,
-                u.Email,
-                u.IsActive,
-                Roles = u.Roles.Select(r => r.Name).ToList()
-            }).ToList();
-
-            var groupUsers = vaultEntity.Groups.SelectMany(g => g.Members.Select(u => new
-            {
-                UserId = u.Id,
-                u.Name,
-                u.Email,
-                u.IsActive,
-                Roles = u.Roles.Select(r => r.Name).ToList(),
-                GroupId = g.Id
-            })).ToList();
-
-            var vault = new
-            {
-                vaultEntity.Id,
-                vaultEntity.Name,
-                DirectUsers = directUsers,
-                GroupUsers = groupUsers
-            };
-
-            if (vault == null) return NotFound();
-
-            var directIds = vault.DirectUsers.Select(u => u.Id).ToHashSet();
-            var groupedByUser = vault.GroupUsers
-                .GroupBy(gu => gu.UserId)
-                .ToDictionary(grp => grp.Key, grp => grp.ToList());
-
-            var allUserIds = directIds.Union(groupedByUser.Keys).ToList();
-
-            var users = new List<EffectiveUserSourceDto>();
-            foreach (var uid in allUserIds)
-            {
-                var direct = vault.DirectUsers.FirstOrDefault(u => u.Id == uid);
-                var viaGroups = groupedByUser.TryGetValue(uid, out var list) ? list : null;
-                var name = direct?.Name ?? viaGroups?[0].Name ?? string.Empty;
-                var email = direct?.Email ?? viaGroups?[0].Email ?? string.Empty;
-                var isActive = direct?.IsActive ?? viaGroups?[0].IsActive ?? false;
-                var roles = direct?.Roles ?? viaGroups?[0].Roles ?? new List<string>();
-
-                users.Add(new EffectiveUserSourceDto
-                {
-                    Id = uid,
-                    Name = name,
-                    Email = email,
-                    IsActive = isActive,
-                    Roles = roles,
-                    DirectAssignment = directIds.Contains(uid),
-                    ViaGroupIds = viaGroups?.Select(v => v.GroupId).Distinct().ToList() ?? new List<Guid>()
-                });
-            }
-
-            return Ok(new VaultEffectiveUsersDto
-            {
-                VaultId = vault.Id,
-                VaultName = vault.Name,
-                Users = users.OrderBy(u => u.Name).ToList()
-            });
+            var result = await _mediator.Send(new GetEffectiveUsersQuery(id, HttpContext.User));
+            return Ok(result);
         }
-
-        private async Task<bool> VaultNameExistsAsync(string name, Guid? excludeId)
-        {
-            var query = _context.ConnectionGroups.AsNoTracking()
-                .Where(v => v.Name.ToLower() == name.ToLower());
-            if (excludeId.HasValue) query = query.Where(v => v.Id != excludeId.Value);
-            return await query.AnyAsync();
-        }
-    }
-
-    public class VaultAssignmentsDto
-    {
-        public List<Guid> UserIds { get; set; } = new();
-        public List<Guid> GroupIds { get; set; } = new();
     }
 }
