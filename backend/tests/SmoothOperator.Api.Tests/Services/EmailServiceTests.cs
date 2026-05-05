@@ -83,11 +83,11 @@ public class EmailServiceTests
     public async Task SendAsync_WithCredentials_AttemptsToConnectAndReturnsFalse()
     {
         var db = GetDbContext();
-        db.SmtpSettings.Add(new SmtpSettings 
-        { 
-            Enabled = true, 
-            Host = "invalid.host.that.does.not.exist.local", 
-            Port = 25, 
+        db.SmtpSettings.Add(new SmtpSettings
+        {
+            Enabled = true,
+            Host = "invalid.host.that.does.not.exist.local",
+            Port = 25,
             FromAddress = "a@a.com",
             Username = "user",
             EncryptedPassword = "encrypted"

@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
 import { ThemeService } from './theme.service';
 
@@ -24,7 +24,7 @@ describe('ThemeService', () => {
   describe('init()', () => {
     it('should default to dark when nothing is saved and matchMedia returns false', () => {
       window.matchMedia = () =>
-        ({ matches: false, addEventListener: () => {} }) as unknown as MediaQueryList;
+        ({ matches: false, addEventListener: vi.fn() }) as unknown as MediaQueryList;
       create();
       service.init();
       expect(service.theme()).toBe('dark');
@@ -32,7 +32,7 @@ describe('ThemeService', () => {
 
     it('should use dark theme when prefers-color-scheme is dark and no saved value', () => {
       window.matchMedia = () =>
-        ({ matches: true, addEventListener: () => {} }) as unknown as MediaQueryList;
+        ({ matches: true, addEventListener: vi.fn() }) as unknown as MediaQueryList;
       create();
       service.init();
       expect(service.theme()).toBe('dark');
@@ -41,7 +41,7 @@ describe('ThemeService', () => {
     it('should restore saved "light" theme from localStorage', () => {
       localStorage.setItem('theme', 'light');
       window.matchMedia = () =>
-        ({ matches: true, addEventListener: () => {} }) as unknown as MediaQueryList;
+        ({ matches: true, addEventListener: vi.fn() }) as unknown as MediaQueryList;
       create();
       service.init();
       expect(service.theme()).toBe('light');
@@ -50,7 +50,7 @@ describe('ThemeService', () => {
     it('should restore saved "dark" theme from localStorage', () => {
       localStorage.setItem('theme', 'dark');
       window.matchMedia = () =>
-        ({ matches: false, addEventListener: () => {} }) as unknown as MediaQueryList;
+        ({ matches: false, addEventListener: vi.fn() }) as unknown as MediaQueryList;
       create();
       service.init();
       expect(service.theme()).toBe('dark');
@@ -58,7 +58,7 @@ describe('ThemeService', () => {
 
     it('should add "dark" class to documentElement when applying dark', () => {
       window.matchMedia = () =>
-        ({ matches: false, addEventListener: () => {} }) as unknown as MediaQueryList;
+        ({ matches: false, addEventListener: vi.fn() }) as unknown as MediaQueryList;
       create();
       service.init();
       expect(document.documentElement.classList.contains('dark')).toBe(true);
@@ -68,7 +68,7 @@ describe('ThemeService', () => {
       document.documentElement.classList.add('dark');
       localStorage.setItem('theme', 'light');
       window.matchMedia = () =>
-        ({ matches: false, addEventListener: () => {} }) as unknown as MediaQueryList;
+        ({ matches: false, addEventListener: vi.fn() }) as unknown as MediaQueryList;
       create();
       service.init();
       expect(document.documentElement.classList.contains('dark')).toBe(false);
@@ -76,7 +76,7 @@ describe('ThemeService', () => {
 
     it('should persist resolved theme to localStorage', () => {
       window.matchMedia = () =>
-        ({ matches: true, addEventListener: () => {} }) as unknown as MediaQueryList;
+        ({ matches: true, addEventListener: vi.fn() }) as unknown as MediaQueryList;
       create();
       service.init();
       expect(localStorage.getItem('theme')).toBe('dark');
@@ -86,7 +86,7 @@ describe('ThemeService', () => {
   describe('toggle()', () => {
     it('should flip dark -> light', () => {
       window.matchMedia = () =>
-        ({ matches: true, addEventListener: () => {} }) as unknown as MediaQueryList;
+        ({ matches: true, addEventListener: vi.fn() }) as unknown as MediaQueryList;
       create();
       service.init(); // sets dark
       service.toggle();
@@ -96,7 +96,7 @@ describe('ThemeService', () => {
     it('should flip light -> dark', () => {
       localStorage.setItem('theme', 'light');
       window.matchMedia = () =>
-        ({ matches: false, addEventListener: () => {} }) as unknown as MediaQueryList;
+        ({ matches: false, addEventListener: vi.fn() }) as unknown as MediaQueryList;
       create();
       service.init(); // sets light
       service.toggle();
@@ -106,7 +106,7 @@ describe('ThemeService', () => {
     it('should add dark class when toggling to dark', () => {
       localStorage.setItem('theme', 'light');
       window.matchMedia = () =>
-        ({ matches: false, addEventListener: () => {} }) as unknown as MediaQueryList;
+        ({ matches: false, addEventListener: vi.fn() }) as unknown as MediaQueryList;
       create();
       service.init();
       service.toggle();
@@ -115,7 +115,7 @@ describe('ThemeService', () => {
 
     it('should remove dark class when toggling to light', () => {
       window.matchMedia = () =>
-        ({ matches: true, addEventListener: () => {} }) as unknown as MediaQueryList;
+        ({ matches: true, addEventListener: vi.fn() }) as unknown as MediaQueryList;
       create();
       service.init(); // dark
       service.toggle();
@@ -124,7 +124,7 @@ describe('ThemeService', () => {
 
     it('should persist toggled theme to localStorage', () => {
       window.matchMedia = () =>
-        ({ matches: true, addEventListener: () => {} }) as unknown as MediaQueryList;
+        ({ matches: true, addEventListener: vi.fn() }) as unknown as MediaQueryList;
       create();
       service.init(); // dark
       service.toggle();

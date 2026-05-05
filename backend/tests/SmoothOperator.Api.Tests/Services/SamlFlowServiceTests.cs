@@ -31,10 +31,10 @@ public class SamlFlowServiceTests
         using var rsa = System.Security.Cryptography.RSA.Create(2048);
         var request = new CertificateRequest("cn=test-sp", rsa, System.Security.Cryptography.HashAlgorithmName.SHA256, System.Security.Cryptography.RSASignaturePadding.Pkcs1);
         var cert = request.CreateSelfSigned(DateTimeOffset.Now, DateTimeOffset.Now.AddYears(1));
-        
+
         var certPem = cert.ExportCertificatePem();
         var keyPem = rsa.ExportPkcs8PrivateKeyPem();
-        
+
         return (certPem, keyPem);
     }
 
@@ -43,7 +43,7 @@ public class SamlFlowServiceTests
     {
         await using var db = NewContext();
         var providers = new Mock<ISsoProviderService>();
-        
+
         var (spCert, spKey) = GetTestCertWithKey();
         var idpCert = GetTestCert();
 
@@ -76,7 +76,7 @@ public class SamlFlowServiceTests
     {
         await using var db = NewContext();
         var providers = new Mock<ISsoProviderService>();
-        
+
         var (spCert, spKey) = GetTestCertWithKey();
         var idpCert = GetTestCert();
 

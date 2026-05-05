@@ -1,4 +1,4 @@
-﻿namespace SmoothOperator.Api.Middleware
+namespace SmoothOperator.Api.Middleware
 {
     /// <summary>
     /// Applies OWASP-recommended HTTP security headers to every response.

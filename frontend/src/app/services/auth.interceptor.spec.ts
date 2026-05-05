@@ -1,16 +1,10 @@
 import { TestBed } from '@angular/core/testing';
-import {
-  HttpClient,
-  HTTP_INTERCEPTORS,
-  provideHttpClient,
-  withInterceptors,
-} from '@angular/common/http';
+import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Router } from '@angular/router';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
 import { authInterceptor } from './auth.interceptor';
-import { AuthService } from './auth.service';
 
 function makeJwt(payload: Record<string, unknown>): string {
   const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
@@ -23,7 +17,6 @@ const FUTURE_EXP = Math.floor(Date.now() / 1000) + 3600;
 describe('authInterceptor', () => {
   let http: HttpClient;
   let httpMock: HttpTestingController;
-  let authService: AuthService;
   let router: Router;
 
   beforeEach(() => {
@@ -37,7 +30,6 @@ describe('authInterceptor', () => {
     });
     http = TestBed.inject(HttpClient);
     httpMock = TestBed.inject(HttpTestingController);
-    authService = TestBed.inject(AuthService);
     router = TestBed.inject(Router);
   });
 
@@ -95,7 +87,7 @@ describe('authInterceptor', () => {
   });
 
   it('should NOT redirect on non-401 errors', () => {
-    http.get('/api/connections').subscribe({ error: () => {} });
+    http.get('/api/connections').subscribe({ error: vi.fn() });
     const req = httpMock.expectOne('/api/connections');
     req.flush({ message: 'Not found' }, { status: 404, statusText: 'Not Found' });
     expect((router.navigateByUrl as ReturnType<typeof vi.fn>).mock.calls.length).toBe(0);

@@ -3,7 +3,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 
-import { AuditLogsService, AuditLogQuery, PagedAuditLogs } from './audit-logs.service';
+import { AuditLogsService, PagedAuditLogs } from './audit-logs.service';
 
 const emptyPage: PagedAuditLogs = {
   items: [],

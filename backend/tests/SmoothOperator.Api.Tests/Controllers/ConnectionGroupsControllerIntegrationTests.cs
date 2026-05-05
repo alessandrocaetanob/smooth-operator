@@ -90,7 +90,7 @@ public class ConnectionGroupsControllerIntegrationTests
 
         // Clear assignments
         await client.PutAsJsonAsync($"/api/vaults/{vaultId}/assignments", new VaultAssignmentsDto());
-        
+
         var delRes2 = await client.DeleteAsync($"/api/vaults/{vaultId}");
         Assert.Equal(HttpStatusCode.NoContent, delRes2.StatusCode);
     }

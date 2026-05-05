@@ -23,10 +23,10 @@ namespace SmoothOperator.Application.Features.Users.Commands
         private static readonly IReadOnlyDictionary<string, string> RoleDescriptions =
             new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
-                ["Owner"]     = "Root access and bootstrap account owner.",
-                ["Admin"]     = "Can create groups, invite users, vaults and credentials.",
+                ["Owner"] = "Root access and bootstrap account owner.",
+                ["Admin"] = "Can create groups, invite users, vaults and credentials.",
                 ["TeamAdmin"] = "Can create/manage connections in assigned vaults.",
-                ["User"]      = "Can only use connections in assigned vaults."
+                ["User"] = "Can only use connections in assigned vaults."
             };
 
         private readonly IAppDbContext _context;

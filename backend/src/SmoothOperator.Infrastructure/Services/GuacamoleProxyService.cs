@@ -432,11 +432,8 @@ namespace SmoothOperator.Infrastructure.Services
         // https://guacamole.apache.org/doc/gug/protocol-reference.html
         private static class GuacStatus
         {
-            public const int ServerError = 0x0200;
             public const int UpstreamError = 0x0203;
-            public const int ResourceNotFound = 0x0204;
             public const int UpstreamNotFound = 0x0205;
-            public const int ClientForbidden = 0x0301;
         }
 
         // Returns true when the TCP port is open (or if the connection attempt

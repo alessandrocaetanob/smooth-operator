@@ -1,4 +1,4 @@
-﻿using SmoothOperator.Domain.Models;
+using SmoothOperator.Domain.Models;
 using SmoothOperator.Application.Interfaces;
 using Microsoft.EntityFrameworkCore;
 

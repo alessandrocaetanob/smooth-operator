@@ -77,7 +77,7 @@ public class UserGroupsControllerIntegrationTests
         // 5. Delete
         var delRes = await client.DeleteAsync($"/api/groups/{groupId}");
         Assert.Equal(HttpStatusCode.NoContent, delRes.StatusCode);
-        
+
         // Ensure deleted
         var getResAfterDel = await client.GetAsync($"/api/groups/{groupId}");
         Assert.Equal(HttpStatusCode.NotFound, getResAfterDel.StatusCode);

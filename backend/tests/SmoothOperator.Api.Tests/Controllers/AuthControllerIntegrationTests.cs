@@ -31,7 +31,7 @@ public class AuthControllerIntegrationTests
 
         var res = await client.GetAsync("/api/auth/setup-status");
         Assert.Equal(HttpStatusCode.OK, res.StatusCode);
-        
+
         var content = await res.Content.ReadAsStringAsync();
         Assert.Contains("\"requiresSetup\":true", content);
     }
@@ -47,7 +47,7 @@ public class AuthControllerIntegrationTests
 
         var res = await client.GetAsync("/api/auth/setup-status");
         Assert.Equal(HttpStatusCode.OK, res.StatusCode);
-        
+
         var content = await res.Content.ReadAsStringAsync();
         Assert.Contains("\"requiresSetup\":false", content);
     }
@@ -281,14 +281,14 @@ public class AuthControllerIntegrationTests
                     o => o.AllowSelfRegister = true);
             });
         }).CreateClient();
-        
+
         client.DefaultRequestHeaders.Add("X-Test-UserId", Guid.NewGuid().ToString());
         client.DefaultRequestHeaders.Add("X-Test-Roles", AppRoles.Admin);
 
         var req = new RegisterRequest { Email = "self@test.com", Name = "Self", Password = "Password123!!" };
         var res = await client.PostAsJsonAsync("/api/auth/register", req);
         Assert.Equal(HttpStatusCode.OK, res.StatusCode);
-        
+
         var authRes = await res.Content.ReadFromJsonAsync<AuthResponse>();
         Assert.Equal("self@test.com", authRes!.User.Email);
     }

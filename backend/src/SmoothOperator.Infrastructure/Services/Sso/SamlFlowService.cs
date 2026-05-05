@@ -150,7 +150,7 @@ namespace SmoothOperator.Infrastructure.Services.Sso
             await _providers.GetDecryptedSamlAsync()
                 ?? throw new InvalidOperationException("No active SAML provider configured.");
 
-        private static Saml2Configuration BuildSamlConfiguration(SamlConfig cfg, string acsUrl)
+        private static Saml2Configuration BuildSamlConfiguration(SamlConfig cfg)
         {
             var spCert = LoadCertificateWithKey(cfg.SpCertificate, cfg.SpPrivateKey);
             var idpCert = LoadCertificate(cfg.IdpCertificate);

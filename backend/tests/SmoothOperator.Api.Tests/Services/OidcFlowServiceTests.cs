@@ -64,7 +64,7 @@ public class OidcFlowServiceTests
         Assert.Contains("openid", url);
         Assert.Contains("profile", url);
         Assert.Contains("response_type=code", url);
-        
+
         var state = await db.SsoAuthStates.FirstOrDefaultAsync();
         Assert.NotNull(state);
         Assert.Equal("/dashboard", state.ReturnUrl);
@@ -99,11 +99,11 @@ public class OidcFlowServiceTests
         // We can't easily mock the IdentityModel extension methods because they are static.
         // But we can mock the underlying SendAsync call that they trigger.
         var handlerMock = new Mock<HttpMessageHandler>();
-        
+
         // 1. Discovery document call
         handlerMock.Protected()
-            .Setup<Task<HttpResponseMessage>>("SendAsync", 
-                ItExpr.Is<HttpRequestMessage>(m => m.RequestUri!.PathAndQuery.Contains(".well-known")), 
+            .Setup<Task<HttpResponseMessage>>("SendAsync",
+                ItExpr.Is<HttpRequestMessage>(m => m.RequestUri!.PathAndQuery.Contains(".well-known")),
                 ItExpr.IsAny<CancellationToken>())
             .ReturnsAsync(new HttpResponseMessage
             {
@@ -119,19 +119,19 @@ public class OidcFlowServiceTests
 
         // 3. JWKS call (needed by IdentityModel during validation)
         handlerMock.Protected()
-            .Setup<Task<HttpResponseMessage>>("SendAsync", 
-                ItExpr.Is<HttpRequestMessage>(m => m.RequestUri!.PathAndQuery.Contains("/keys")), 
+            .Setup<Task<HttpResponseMessage>>("SendAsync",
+                ItExpr.Is<HttpRequestMessage>(m => m.RequestUri!.PathAndQuery.Contains("/keys")),
                 ItExpr.IsAny<CancellationToken>())
             .ReturnsAsync(new HttpResponseMessage
             {
                 StatusCode = HttpStatusCode.OK,
-                Content = new StringContent(JsonSerializer.Serialize(new { keys = new object[] {} }))
+                Content = new StringContent(JsonSerializer.Serialize(new { keys = new object[] { } }))
             });
 
         // 2. Token exchange call
         handlerMock.Protected()
-            .Setup<Task<HttpResponseMessage>>("SendAsync", 
-                ItExpr.Is<HttpRequestMessage>(m => m.RequestUri!.PathAndQuery.Contains("/token")), 
+            .Setup<Task<HttpResponseMessage>>("SendAsync",
+                ItExpr.Is<HttpRequestMessage>(m => m.RequestUri!.PathAndQuery.Contains("/token")),
                 ItExpr.IsAny<CancellationToken>())
             .ReturnsAsync(new HttpResponseMessage
             {
@@ -149,12 +149,12 @@ public class OidcFlowServiceTests
 
         // Note: This will likely fail with InvalidOperationException or SecurityTokenException 
         // because "dummy-id-token" isn't a valid JWT.
-        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => 
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             svc.HandleCallbackAsync("test-code", state, "https://app.com/callback"));
-        
+
         // The fact it reached token exchange and then failed on validation/parsing is still valuable coverage.
         Assert.True(ex.Message.Contains("OIDC") || ex.Message.Contains("IDX20803"));
-        
+
         // State should be removed even on failure
         Assert.False(await db.SsoAuthStates.AnyAsync(s => s.State == state));
     }

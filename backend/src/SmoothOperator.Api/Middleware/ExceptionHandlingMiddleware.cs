@@ -32,12 +32,12 @@ namespace SmoothOperator.Api.Middleware
         {
             var (statusCode, message) = exception switch
             {
-                NotFoundException e      => (HttpStatusCode.NotFound, e.Message),
-                BadRequestException e    => (HttpStatusCode.BadRequest, e.Message),
-                ConflictException e      => (HttpStatusCode.Conflict, e.Message),
-                ForbiddenException e     => (HttpStatusCode.Forbidden, e.Message),
-                UnauthorizedException e  => (HttpStatusCode.Unauthorized, e.Message),
-                ValidationException e    => (HttpStatusCode.BadRequest,
+                NotFoundException e => (HttpStatusCode.NotFound, e.Message),
+                BadRequestException e => (HttpStatusCode.BadRequest, e.Message),
+                ConflictException e => (HttpStatusCode.Conflict, e.Message),
+                ForbiddenException e => (HttpStatusCode.Forbidden, e.Message),
+                UnauthorizedException e => (HttpStatusCode.Unauthorized, e.Message),
+                ValidationException e => (HttpStatusCode.BadRequest,
                     string.Join("; ", e.Errors.Select(err => err.ErrorMessage))),
                 _ => (HttpStatusCode.InternalServerError, "An unexpected error occurred.")
             };

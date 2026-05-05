@@ -28,7 +28,7 @@ describe('MetricsService', () => {
       const mockSummary: MetricsSummary = {
         activeSessions: 3,
         loginAttemptsTotal24h: 100,
-        loginFailures1h: 2,
+        loginFailures24h: 2,
         loginSuccessRate24h: 0.98,
         connectionsStarted24h: 50,
         connectionsEnded24h: 48,

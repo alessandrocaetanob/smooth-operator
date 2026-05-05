@@ -1,4 +1,4 @@
-﻿using SmoothOperator.Infrastructure.Data;
+using SmoothOperator.Infrastructure.Data;
 using SmoothOperator.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;

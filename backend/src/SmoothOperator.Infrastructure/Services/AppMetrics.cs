@@ -1,4 +1,4 @@
-﻿using Prometheus;
+using Prometheus;
 using SmoothOperator.Application.Interfaces;
 
 namespace SmoothOperator.Infrastructure.Services
