@@ -23,7 +23,7 @@ namespace SmoothOperator.Application.Features.Hosts.Queries
 
         public async Task<IEnumerable<HostDto>> Handle(GetHostsQuery request, CancellationToken cancellationToken)
         {
-            var hosts = await _context.Hosts.ToListAsync(cancellationToken);
+            var hosts = await _context.Hosts.AsNoTracking().ToListAsync(cancellationToken);
             return hosts.Select(h => new HostDto
             {
                 Id = h.Id,

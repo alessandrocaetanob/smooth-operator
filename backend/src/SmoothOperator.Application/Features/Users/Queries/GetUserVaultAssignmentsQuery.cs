@@ -25,6 +25,7 @@ namespace SmoothOperator.Application.Features.Users.Queries
         public async Task<IEnumerable<Guid>> Handle(GetUserVaultAssignmentsQuery request, CancellationToken cancellationToken)
         {
             var user = await _context.Users
+                .AsNoTracking()
                 .Include(u => u.ConnectionGroups)
                 .FirstOrDefaultAsync(u => u.Id == request.UserId, cancellationToken);
 

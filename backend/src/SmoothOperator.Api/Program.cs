@@ -17,8 +17,11 @@ using Microsoft.AspNetCore.HttpOverrides;
 using System.Net;
 using IPNetwork = System.Net.IPNetwork;
 using Serilog;
+using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using Microsoft.AspNetCore.ResponseCompression;
+using System.IO.Compression;
 using Prometheus;
 using StackExchange.Redis;
 using Microsoft.IdentityModel.Tokens;
@@ -182,6 +185,24 @@ builder.Services.AddHealthChecks()
 
 builder.Services.AddControllers();
 
+// ─── Response Compression (Brotli + Gzip) ───────────────────────────────────
+builder.Services.AddResponseCompression(opts =>
+{
+    opts.EnableForHttps = true;
+    opts.Providers.Add<BrotliCompressionProvider>();
+    opts.Providers.Add<GzipCompressionProvider>();
+    opts.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(
+        ["application/json", "image/svg+xml", "application/javascript"]);
+});
+builder.Services.Configure<BrotliCompressionProviderOptions>(opts =>
+    opts.Level = CompressionLevel.Fastest);
+builder.Services.Configure<GzipCompressionProviderOptions>(opts =>
+    opts.Level = CompressionLevel.SmallestSize);
+
+// ─── Output Caching ──────────────────────────────────────────────────────────
+builder.Services.AddOutputCache(opts =>
+    opts.AddPolicy("ShortCache", policy => policy.Expire(TimeSpan.FromSeconds(30))));
+
 // ─── Application layer: MediatR, FluentValidation, Mapster ──────────────────
 builder.Services.AddMediatR(cfg =>
 {
@@ -195,15 +216,21 @@ builder.Services.AddScoped<IMapper, Mapper>();
 builder.Services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<AppDbContext>());
 
 // ─── OpenTelemetry ───────────────────────────────────────────────────────────
-var otelEndpoint = builder.Configuration["Otel:Endpoint"];
+var otelSection = builder.Configuration.GetSection("Otel");
+var otelEndpoint = otelSection["Endpoint"];
+var otelServiceName = otelSection["ServiceName"] ?? "smooth-operator-backend";
 if (!string.IsNullOrWhiteSpace(otelEndpoint))
 {
     builder.Services.AddOpenTelemetry()
-        .ConfigureResource(r => r.AddService(
-            builder.Configuration["Otel:ServiceName"] ?? "smooth-operator-backend"))
+        .ConfigureResource(r => r.AddService(otelServiceName))
         .WithTracing(tracing => tracing
             .AddAspNetCoreInstrumentation()
             .AddHttpClientInstrumentation()
+            .AddOtlpExporter(o => o.Endpoint = new Uri(otelEndpoint)))
+        .WithMetrics(metrics => metrics
+            .AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddRuntimeInstrumentation()
             .AddOtlpExporter(o => o.Endpoint = new Uri(otelEndpoint)));
 }
 
@@ -271,8 +298,10 @@ app.UseSerilogRequestLogging(opts =>
     };
 });
 
+app.UseResponseCompression();
 app.UseHttpsRedirection();
 app.UseRouting();
+app.UseOutputCache();
 app.UseHttpMetrics();
 app.UseRateLimiter();
 app.UseAuthentication();

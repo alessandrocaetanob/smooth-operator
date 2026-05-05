@@ -38,6 +38,7 @@ namespace SmoothOperator.Application.Features.Connections.Queries
 
             // 1. Find which requested IDs exist in the database.
             var existingConnections = await _context.Connections
+                .AsNoTracking()
                 .Where(c => ids.Contains(c.Id))
                 .Select(c => new { c.Id, c.Protocol, c.Settings, c.HostId, c.ConnectionGroupId })
                 .ToListAsync(cancellationToken);
@@ -45,7 +46,7 @@ namespace SmoothOperator.Application.Features.Connections.Queries
             var existingSet = existingConnections.Select(c => c.Id).ToHashSet();
 
             // 2. Determine which existing connections the user can access.
-            var accessibleIds = await _access.ApplyConnectionScope(_context.Connections, profile)
+            var accessibleIds = await _access.ApplyConnectionScope(_context.Connections.AsNoTracking(), profile)
                 .Where(c => ids.Contains(c.Id))
                 .Select(c => c.Id)
                 .ToListAsync(cancellationToken);
@@ -57,6 +58,7 @@ namespace SmoothOperator.Application.Features.Connections.Queries
 
             var hostIds = accessibleById.Values.Select(c => c.HostId).Distinct().ToList();
             var hostLookup = await _context.Hosts
+                .AsNoTracking()
                 .Where(h => hostIds.Contains(h.Id))
                 .Select(h => new { h.Id, h.Address })
                 .ToDictionaryAsync(h => h.Id, cancellationToken);

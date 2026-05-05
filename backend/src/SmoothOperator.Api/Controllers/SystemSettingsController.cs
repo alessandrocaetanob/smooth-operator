@@ -5,6 +5,7 @@ using SmoothOperator.Application.Features.SystemSettings.Queries;
 using SmoothOperator.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OutputCaching;
 
 namespace SmoothOperator.Api.Controllers
 {
@@ -18,6 +19,7 @@ namespace SmoothOperator.Api.Controllers
         public SystemSettingsController(IMediator mediator) => _mediator = mediator;
 
         [HttpGet]
+        [OutputCache(PolicyName = "ShortCache")]
         public async Task<ActionResult<SystemSettingsDto>> Get()
         {
             var result = await _mediator.Send(new GetSystemSettingsQuery());

@@ -24,6 +24,7 @@ namespace SmoothOperator.Application.Features.Users.Queries
         public async Task<UserListItemDto> Handle(GetUserQuery request, CancellationToken cancellationToken)
         {
             var user = await _context.Users
+                .AsNoTracking()
                 .Include(u => u.Roles)
                 .Include(u => u.ConnectionGroups)
                 .FirstOrDefaultAsync(u => u.Id == request.Id, cancellationToken);

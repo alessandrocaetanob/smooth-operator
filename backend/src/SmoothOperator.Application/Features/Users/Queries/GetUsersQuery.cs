@@ -25,6 +25,7 @@ namespace SmoothOperator.Application.Features.Users.Queries
         public async Task<IEnumerable<UserListItemDto>> Handle(GetUsersQuery request, CancellationToken cancellationToken)
         {
             var users = await _context.Users
+                .AsNoTracking()
                 .Include(u => u.Roles)
                 .Include(u => u.ConnectionGroups)
                 .OrderBy(u => u.Email)

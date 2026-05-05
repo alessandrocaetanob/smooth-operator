@@ -99,6 +99,23 @@ All 55 Angular unit tests pass. Build clean at commit `fd451f9`.
 - **Test count:** 240 passing (45 test files), 0 failures.
 - **Coverage baseline:** 40.25% stmts / 46.85% branches / 33.62% funcs / 42.35% lines (70% CI gate deferred).
 
+## 2026-07-13 - Phase 10: Performance Pass
+
+**Summary:** Applied performance improvements across backend and Angular frontend.
+
+**Backend:**
+- Added `AsNoTracking()` to all 16 read-only EF Core query handlers across Domain, Application, and Infrastructure layers.
+- Added `AddResponseCompression()` (Brotli + Gzip) middleware; inserted `app.UseResponseCompression()` before routing.
+- Added `AddOutputCache(ShortCache=30s)` service and `app.UseOutputCache()` middleware; applied `[OutputCache(PolicyName="ShortCache")]` to `SystemSettingsController.Get()` and `SsoSettingsController.Get()`.
+- Extended OpenTelemetry with `WithMetrics()` chain including `AddAspNetCoreInstrumentation`, `AddHttpClientInstrumentation`, `AddRuntimeInstrumentation`, and `AddOtlpExporter` — enables request rate, DB latency, and runtime GC/thread metrics.
+- Added `OpenTelemetry.Instrumentation.Runtime 1.10.0` to `SmoothOperator.Infrastructure.csproj`.
+
+**Frontend:**
+- Extracted all Chart.js logic from `monitoring.ts` into new `MonitoringChartsComponent` (`monitoring-charts.component.ts/html/css`) — Chart.js now loads in a separate lazy chunk (208 kB) rather than the main bundle.
+- Added `@defer (on idle)` block in `monitoring.html` — charts render after the browser becomes idle, keeping initial paint fast.
+- Parent `monitoring.ts` reduced to data-fetching + signals; `chartData = signal<MonitoringChartData | null>(null)` passed as `@Input` to child.
+- `ngAfterViewInit` (with `@ViewChild` + canvas refs) replaced by `ngOnInit` — no DOM dependency in parent.
+
 ## 2026-07-13 - Phase 9: Docker & Delivery Hardening
 
 **Summary:** Hardened all Docker artifacts for production-grade security, non-root operation, and minimal attack surface. Both `smooth-operator-backend` and `smooth-operator-frontend` images build and pass health checks.

@@ -24,6 +24,7 @@ namespace SmoothOperator.Application.Features.Auth.Queries
         public async Task<UserInfo> Handle(GetMeQuery request, CancellationToken cancellationToken)
         {
             var user = await _context.Users
+                .AsNoTracking()
                 .Include(u => u.Roles)
                 .FirstOrDefaultAsync(u => u.Id == request.UserId, cancellationToken);
 

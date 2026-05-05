@@ -70,7 +70,7 @@ namespace SmoothOperator.Application.Features.AuditLogs.Queries
             string? user, string? action, string? resourceType,
             DateTime? from, DateTime? to, string? outcome)
         {
-            var q = _db.AuditLogs.Include(l => l.User).AsQueryable();
+            var q = _db.AuditLogs.AsNoTracking().Include(l => l.User).AsQueryable();
             if (!string.IsNullOrWhiteSpace(user))
             {
                 var term = user.Trim().ToLower();

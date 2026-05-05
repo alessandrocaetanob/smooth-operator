@@ -30,6 +30,7 @@ namespace SmoothOperator.Application.Features.Connections.Queries
             if (profile == null) return "forbidden";
 
             var connection = await _context.Connections
+                .AsNoTracking()
                 .Include(c => c.Host)
                 .Include(c => c.Users)
                 .FirstOrDefaultAsync(c => c.Id == request.ConnectionId, cancellationToken);

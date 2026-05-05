@@ -24,6 +24,7 @@ namespace SmoothOperator.Application.Features.Hosts.Queries
         public async Task<HostDto> Handle(GetHostQuery request, CancellationToken cancellationToken)
         {
             var host = await _context.Hosts
+                .AsNoTracking()
                 .FirstOrDefaultAsync(h => h.Id == request.Id, cancellationToken);
 
             if (host == null)

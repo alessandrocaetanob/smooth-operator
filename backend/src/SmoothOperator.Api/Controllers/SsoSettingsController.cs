@@ -6,6 +6,7 @@ using SmoothOperator.Application.Features.SsoSettings.Queries;
 using SmoothOperator.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OutputCaching;
 
 namespace SmoothOperator.Api.Controllers
 {
@@ -19,6 +20,7 @@ namespace SmoothOperator.Api.Controllers
         public SsoSettingsController(IMediator mediator) => _mediator = mediator;
 
         [HttpGet]
+        [OutputCache(PolicyName = "ShortCache")]
         public async Task<ActionResult<SsoProviderDto>> Get()
         {
             var result = await _mediator.Send(new GetSsoSettingsQuery());

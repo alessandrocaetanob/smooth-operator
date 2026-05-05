@@ -36,6 +36,7 @@ namespace SmoothOperator.Application.Features.Connections.Queries
             var ids = request.ConnectionIds.ToList();
             var connections = await _access.ApplyConnectionScope(
                     _context.Connections
+                        .AsNoTracking()
                         .Include(c => c.Host)
                         .Include(c => c.Users),
                     profile)

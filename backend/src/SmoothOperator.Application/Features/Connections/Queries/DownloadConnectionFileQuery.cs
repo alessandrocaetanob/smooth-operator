@@ -33,6 +33,7 @@ namespace SmoothOperator.Application.Features.Connections.Queries
                 throw new UnauthorizedException("User profile not found.");
 
             var connection = await _context.Connections
+                .AsNoTracking()
                 .Include(c => c.Host)
                 .Include(c => c.Credential)
                 .Include(c => c.Users)

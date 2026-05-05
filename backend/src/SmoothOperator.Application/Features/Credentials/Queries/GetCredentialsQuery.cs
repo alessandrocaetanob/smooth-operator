@@ -25,7 +25,7 @@ namespace SmoothOperator.Application.Features.Credentials.Queries
 
         public async Task<IEnumerable<CredentialDto>> Handle(GetCredentialsQuery request, CancellationToken cancellationToken)
         {
-            var credentials = await _context.Credentials.ToListAsync(cancellationToken);
+            var credentials = await _context.Credentials.AsNoTracking().ToListAsync(cancellationToken);
             return credentials.Select(c => new CredentialDto
             {
                 Id = c.Id,

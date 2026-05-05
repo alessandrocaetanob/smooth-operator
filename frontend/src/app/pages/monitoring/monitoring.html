@@ -87,19 +87,7 @@
       </div>
     </div>
 
-    <!-- Connections timeseries chart -->
-    <div class="glass-card p-4 rounded-xl">
-      <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-3">
-        Connections Over Time
-      </p>
-      <div class="chart-container">
-        <canvas
-          #connectionsChart
-          id="connectionsChart"
-          aria-label="Connections started and ended over time"
-        ></canvas>
-      </div>
-    </div>
+    <!-- Connections timeseries chart (rendered by deferred child below) -->
   </section>
 
   <!-- Section 2: Auth & Security -->
@@ -140,34 +128,7 @@
         </p>
       </div>
     </div>
-
-    <!-- Charts row -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-      <div class="lg:col-span-2 glass-card p-4 rounded-xl">
-        <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-3">
-          Login Attempts Over Time
-        </p>
-        <div class="chart-container">
-          <canvas
-            #loginChart
-            id="loginChart"
-            aria-label="Login success and failure over time"
-          ></canvas>
-        </div>
-      </div>
-      <div class="glass-card p-4 rounded-xl">
-        <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-3">
-          Outcome Breakdown
-        </p>
-        <div class="chart-container-sm">
-          <canvas
-            #breakdownChart
-            id="breakdownChart"
-            aria-label="Audit event outcome breakdown"
-          ></canvas>
-        </div>
-      </div>
-    </div>
+    <!-- Auth charts (rendered by deferred child below) -->
   </section>
 
   <!-- Section 3: Audit Events -->
@@ -206,33 +167,16 @@
         <p class="text-3xl font-bold text-on-surface">{{ summary()?.authEvents24h ?? '–' }}</p>
       </div>
     </div>
-
-    <!-- Charts row -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-      <div class="glass-card p-4 rounded-xl">
-        <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-3">
-          Top 10 Event Types
-        </p>
-        <div class="chart-container">
-          <canvas
-            #topEventsChart
-            id="topEventsChart"
-            aria-label="Top audit event types by count"
-          ></canvas>
-        </div>
-      </div>
-      <div class="glass-card p-4 rounded-xl">
-        <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-3">
-          Event Rate by Type
-        </p>
-        <div class="chart-container">
-          <canvas
-            #eventTimeseriesChart
-            id="eventTimeseriesChart"
-            aria-label="Audit event rate by type over time"
-          ></canvas>
-        </div>
-      </div>
-    </div>
+    <!-- Audit charts (rendered by deferred child below) -->
   </section>
+
+  <!-- All charts — deferred until browser is idle to keep initial paint fast -->
+  @defer (on idle) {
+    <app-monitoring-charts [data]="chartData()" />
+  } @placeholder {
+    <div class="h-64 flex items-center justify-center text-on-surface-variant text-sm opacity-60">
+      <span class="material-symbols-outlined text-2xl mr-2" aria-hidden="true">bar_chart</span>
+      Charts loading…
+    </div>
+  }
 </div>

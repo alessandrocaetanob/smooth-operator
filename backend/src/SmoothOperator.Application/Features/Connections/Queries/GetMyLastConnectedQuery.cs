@@ -31,6 +31,7 @@ namespace SmoothOperator.Application.Features.Connections.Queries
                 throw new UnauthorizedException("User profile not found.");
 
             var results = await _context.AuditLogs
+                .AsNoTracking()
                 .Where(a => a.UserId == profile.UserId && a.Action == "connection.started")
                 .GroupBy(a => a.ResourceId)
                 .Select(g => new { ResourceId = g.Key, LastConnectedAt = g.Max(a => a.Timestamp) })
