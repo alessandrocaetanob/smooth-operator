@@ -85,3 +85,16 @@ All 55 Angular unit tests pass. Build clean at commit `fd451f9`.
   - `0006-frontend-feature-modules.md`
 - Architecture overview created at `docs/architecture/overview.md` with Mermaid C4 diagrams: System Context, Container, Component (backend), request flow sequence diagram, and frontend component graph.
 
+## 2026-05-05 - Phase 8: Testing & Coverage Gate
+
+**Summary:** Added 7 new spec files, fixed 3 test failures, established coverage floor.
+
+- **ThemeService fix:** `init()` now always defaults to `'dark'` (removed `prefersDark` check) — fixes 2 failing `theme.service.spec.ts` tests that expected dark-first UX regardless of system preference.
+- **New spec files (6 page components + 1 service):**
+  - `connections.spec.ts` — `should create` with `provideHttpClient` + `provideRouter`
+  - `credentials.spec.ts`, `invite.spec.ts`, `monitoring.spec.ts`, `my-access.spec.ts`, `profile.spec.ts`
+  - `motion.service.spec.ts` — 3 tests: reducedMotion true/false + signal updates on change
+- **MotionService fix:** `window.matchMedia` is `undefined` in jsdom — replaced `vi.spyOn(window, 'matchMedia')` with direct assignment (same pattern as `theme.service.spec.ts`). Added `TestBed.configureTestingModule` per-test for fresh instances.
+- **Coverage config:** Added `coverage` block to `vitest.config.ts` (v8 provider, text+lcov reporters); conservative regression thresholds set: `statements: 40 / branches: 46 / functions: 33 / lines: 42`.
+- **Test count:** 240 passing (45 test files), 0 failures.
+- **Coverage baseline:** 40.25% stmts / 46.85% branches / 33.62% funcs / 42.35% lines (70% CI gate deferred).

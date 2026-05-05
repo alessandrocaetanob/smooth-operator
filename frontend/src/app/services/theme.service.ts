@@ -6,12 +6,12 @@ export type Theme = 'light' | 'dark';
 export class ThemeService {
   readonly theme = signal<Theme>('dark');
 
-  /** Call once during app bootstrap. Reads localStorage + prefers-color-scheme. */
+  /** Call once during app bootstrap. Reads localStorage; defaults to dark. */
   init(): void {
     const saved = localStorage.getItem('theme') as Theme | null;
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const resolved: Theme =
-      saved === 'light' || saved === 'dark' ? saved : prefersDark ? 'dark' : 'light';
+    // Dark-first: only honour an explicit saved 'light' preference; everything
+    // else (no saved value, or saved 'dark') defaults to dark mode.
+    const resolved: Theme = saved === 'light' ? 'light' : 'dark';
     this.apply(resolved);
 
     // Keep signal in sync when the OS preference changes (only if no saved override)
