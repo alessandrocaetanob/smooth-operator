@@ -50,7 +50,7 @@ namespace SmoothOperator.Infrastructure.Services.Sso
         public async Task<string> BuildAuthnRequestUrlAsync(string acsUrl, string returnUrl)
         {
             var cfg = await RequireSamlConfigAsync();
-            var samlConfig = BuildSamlConfiguration(cfg, acsUrl);
+            var samlConfig = BuildSamlConfiguration(cfg);
 
             var relayState = Guid.NewGuid().ToString("N");
 
@@ -85,7 +85,7 @@ namespace SmoothOperator.Infrastructure.Services.Sso
             var cfg = await RequireSamlConfigAsync();
             // ACS URL must match what we sent; rebuild from request.
             var acsUrl = $"{request.Scheme}://{request.Host}{request.Path}";
-            var samlConfig = BuildSamlConfiguration(cfg, acsUrl);
+            var samlConfig = BuildSamlConfiguration(cfg);
 
             var binding = new Saml2PostBinding();
             var response = new Saml2AuthnResponse(samlConfig);
@@ -126,7 +126,7 @@ namespace SmoothOperator.Infrastructure.Services.Sso
         public async Task<string> GetSpMetadataAsync(string acsUrl, string spMetadataUrl)
         {
             var cfg = await RequireSamlConfigAsync();
-            var samlConfig = BuildSamlConfiguration(cfg, acsUrl);
+            var samlConfig = BuildSamlConfiguration(cfg);
 
             var entityDescriptor = new EntityDescriptor(samlConfig)
             {
@@ -224,3 +224,4 @@ namespace SmoothOperator.Infrastructure.Services.Sso
         }
     }
 }
+

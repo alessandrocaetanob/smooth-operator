@@ -84,7 +84,7 @@ jobs:
         if: always()
         run: |
           dotnet tool restore
-          reportgenerator \
+          dotnet tool run reportgenerator -- \
             -reports:"./TestResults/**/coverage.cobertura.xml" \
             -targetdir:"./coveragereport" \
             -reporttypes:"Html;Cobertura;MarkdownSummaryGithub" \
