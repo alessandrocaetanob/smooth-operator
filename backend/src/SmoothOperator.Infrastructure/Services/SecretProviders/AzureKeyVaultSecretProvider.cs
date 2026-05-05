@@ -2,8 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Azure;
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
+using SmoothOperator.Application.Exceptions;
 using SmoothOperator.Application.Interfaces;
 using SmoothOperator.Application.Options;
 
@@ -31,8 +33,32 @@ namespace SmoothOperator.Infrastructure.Services.SecretProviders
             string? version = null,
             CancellationToken cancellationToken = default)
         {
-            var response = await _client.GetSecretAsync(secretName, version, cancellationToken);
-            return response.Value.Value;
+            try
+            {
+                var response = await _client.GetSecretAsync(secretName, version, cancellationToken);
+                return response.Value.Value;
+            }
+            catch (AuthenticationFailedException ex)
+            {
+                throw new SecretProviderException(
+                    "vault_auth_failed",
+                    "Vault authentication failed — check service principal credentials.",
+                    ex);
+            }
+            catch (RequestFailedException ex) when (ex.Status == 404)
+            {
+                throw new SecretProviderException(
+                    "secret_not_found",
+                    $"Secret '{secretName}' not found in vault.",
+                    ex);
+            }
+            catch (RequestFailedException ex) when (ex.Status is 401 or 403)
+            {
+                throw new SecretProviderException(
+                    "vault_access_denied",
+                    "Vault access denied — verify Key Vault RBAC permissions for the service principal.",
+                    ex);
+            }
         }
 
         public async Task<string> SetSecretAsync(

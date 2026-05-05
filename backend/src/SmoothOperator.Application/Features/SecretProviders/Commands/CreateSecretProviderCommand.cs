@@ -69,18 +69,37 @@ namespace SmoothOperator.Application.Features.SecretProviders.Commands
             await _audit.WriteAsync("provider.created", "SecretProvider", provider.Id.ToString(),
                 new { provider.Name, provider.Type });
 
-            return ToDto(provider);
+            return ToDto(provider, _encryption);
         }
 
-        internal static SecretProviderDto ToDto(SecretProvider p) => new()
+        internal static SecretProviderDto ToDto(SecretProvider p, IEncryptionService? encryption = null)
         {
-            Id = p.Id,
-            Name = p.Name,
-            Type = p.Type.ToString(),
-            IsEnabled = p.IsEnabled,
-            IsConfigured = !string.IsNullOrEmpty(p.EncryptedConfigJson),
-            CreatedAt = p.CreatedAt,
-            UpdatedAt = p.UpdatedAt
-        };
+            AzureKeyVaultConfig? config = null;
+            if (encryption != null && !string.IsNullOrEmpty(p.EncryptedConfigJson))
+            {
+                try
+                {
+                    var json = encryption.Decrypt(p.EncryptedConfigJson);
+                    config = JsonSerializer.Deserialize<AzureKeyVaultConfig>(json,
+                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                }
+                catch { /* return DTO without decrypted config fields on failure */ }
+            }
+
+            return new SecretProviderDto
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Type = p.Type.ToString(),
+                IsEnabled = p.IsEnabled,
+                IsConfigured = !string.IsNullOrEmpty(p.EncryptedConfigJson),
+                VaultUri = config?.VaultUri,
+                TenantId = config?.TenantId,
+                ClientId = config?.ClientId,
+                HasClientSecret = config != null && !string.IsNullOrEmpty(config.ClientSecret),
+                CreatedAt = p.CreatedAt,
+                UpdatedAt = p.UpdatedAt
+            };
+        }
     }
 }

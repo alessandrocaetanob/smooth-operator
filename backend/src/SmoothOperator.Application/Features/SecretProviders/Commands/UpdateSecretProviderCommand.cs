@@ -66,7 +66,7 @@ namespace SmoothOperator.Application.Features.SecretProviders.Commands
             await _audit.WriteAsync("provider.updated", "SecretProvider", provider.Id.ToString(),
                 new { provider.Name, provider.IsEnabled });
 
-            return CreateSecretProviderCommandHandler.ToDto(provider);
+            return CreateSecretProviderCommandHandler.ToDto(provider, _encryption);
         }
     }
 }

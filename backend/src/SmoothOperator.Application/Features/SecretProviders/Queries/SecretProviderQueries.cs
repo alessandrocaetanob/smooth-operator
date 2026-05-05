@@ -16,8 +16,13 @@ namespace SmoothOperator.Application.Features.SecretProviders.Queries
         : IRequestHandler<ListSecretProvidersQuery, IReadOnlyList<SecretProviderDto>>
     {
         private readonly IAppDbContext _context;
+        private readonly IEncryptionService _encryption;
 
-        public ListSecretProvidersQueryHandler(IAppDbContext context) => _context = context;
+        public ListSecretProvidersQueryHandler(IAppDbContext context, IEncryptionService encryption)
+        {
+            _context = context;
+            _encryption = encryption;
+        }
 
         public async Task<IReadOnlyList<SecretProviderDto>> Handle(ListSecretProvidersQuery request, CancellationToken cancellationToken)
         {
@@ -25,7 +30,7 @@ namespace SmoothOperator.Application.Features.SecretProviders.Queries
                 .OrderBy(p => p.Name)
                 .ToListAsync(cancellationToken);
 
-            return providers.ConvertAll(CreateSecretProviderCommandHandler.ToDto);
+            return providers.ConvertAll(p => CreateSecretProviderCommandHandler.ToDto(p, _encryption));
         }
     }
 
@@ -34,8 +39,13 @@ namespace SmoothOperator.Application.Features.SecretProviders.Queries
     public sealed class GetSecretProviderQueryHandler : IRequestHandler<GetSecretProviderQuery, SecretProviderDto>
     {
         private readonly IAppDbContext _context;
+        private readonly IEncryptionService _encryption;
 
-        public GetSecretProviderQueryHandler(IAppDbContext context) => _context = context;
+        public GetSecretProviderQueryHandler(IAppDbContext context, IEncryptionService encryption)
+        {
+            _context = context;
+            _encryption = encryption;
+        }
 
         public async Task<SecretProviderDto> Handle(GetSecretProviderQuery request, CancellationToken cancellationToken)
         {
@@ -43,7 +53,7 @@ namespace SmoothOperator.Application.Features.SecretProviders.Queries
                 .FirstOrDefaultAsync(p => p.Id == request.Id, cancellationToken)
                 ?? throw new Exceptions.NotFoundException("Secret provider not found.");
 
-            return CreateSecretProviderCommandHandler.ToDto(provider);
+            return CreateSecretProviderCommandHandler.ToDto(provider, _encryption);
         }
     }
 

@@ -1,4 +1,5 @@
 using SmoothOperator.Application.Interfaces;
+using SmoothOperator.Application.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -311,7 +312,7 @@ namespace SmoothOperator.Infrastructure.Services
                 var serverVersion = paramNames.Count > 0 && paramNames[0].StartsWith("VERSION_", StringComparison.Ordinal)
                     ? paramNames[0]
                     : "VERSION_1_0_0";
-                var paramValues = await ResolveConnectionParametersAsync(connection, paramNames, serverVersion, dbContext, CancellationToken.None);
+                var paramValues = await ResolveConnectionParametersAsync(connection, paramNames, serverVersion, dbContext, CancellationToken.None, userId, ipAddress);
 
                 _logger.LogInformation(
                     "guacd handshake for {Protocol}: server={ServerVersion}, sending {ValueCount} connect values for {NameCount} arg names",
@@ -484,7 +485,9 @@ namespace SmoothOperator.Infrastructure.Services
             IReadOnlyList<string> paramNames,
             string serverVersion,
             AppDbContext dbContext,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken,
+            Guid userId,
+            string ipAddress)
         {
             var protocol = (connection.Protocol ?? "rdp").ToLowerInvariant();
             var hostname = connection.Host?.Address ?? string.Empty;
@@ -516,6 +519,8 @@ namespace SmoothOperator.Infrastructure.Services
                         dbContext.AuditLogs.Add(new AuditLog
                         {
                             Id = Guid.NewGuid(),
+                            UserId = userId,
+                            IpAddress = ipAddress,
                             Action = "secret.fetched",
                             ResourceType = "Credential",
                             ResourceId = cred.Id.ToString(),
@@ -529,15 +534,42 @@ namespace SmoothOperator.Infrastructure.Services
                         });
                         await dbContext.SaveChangesAsync(cancellationToken);
                     }
+                    catch (SecretProviderException ex)
+                    {
+                        _logger.LogError(ex, "Secret provider error for credential {CredentialId}: [{ErrorCode}] {Message}", cred.Id, ex.ErrorCode, ex.Message);
+                        dbContext.AuditLogs.Add(new AuditLog
+                        {
+                            Id = Guid.NewGuid(),
+                            UserId = userId,
+                            IpAddress = ipAddress,
+                            Action = "secret.fetched",
+                            ResourceType = "Credential",
+                            ResourceId = cred.Id.ToString(),
+                            Outcome = "failure",
+                            Details = System.Text.Json.JsonSerializer.Serialize(new
+                            {
+                                credentialId = cred.Id,
+                                providerId = cred.SecretProviderId,
+                                secretName = cred.ExternalSecretName,
+                                success = false,
+                                error = ex.ErrorCode
+                            })
+                        });
+                        await dbContext.SaveChangesAsync(cancellationToken);
+                        throw new InvalidOperationException(ex.Message, ex);
+                    }
                     catch (Exception ex)
                     {
                         _logger.LogError(ex, "Failed to fetch secret from vault for credential {CredentialId}", cred.Id);
                         dbContext.AuditLogs.Add(new AuditLog
                         {
                             Id = Guid.NewGuid(),
+                            UserId = userId,
+                            IpAddress = ipAddress,
                             Action = "secret.fetched",
                             ResourceType = "Credential",
                             ResourceId = cred.Id.ToString(),
+                            Outcome = "failure",
                             Details = System.Text.Json.JsonSerializer.Serialize(new
                             {
                                 credentialId = cred.Id,

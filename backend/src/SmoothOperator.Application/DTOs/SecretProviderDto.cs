@@ -12,6 +12,11 @@ namespace SmoothOperator.Application.DTOs
         public string Type { get; set; } = string.Empty;
         public bool IsEnabled { get; set; }
         public bool IsConfigured { get; set; }
+        public string? VaultUri { get; set; }
+        public string? TenantId { get; set; }
+        public string? ClientId { get; set; }
+        /// <summary>True when a client secret is stored (never returns the secret value).</summary>
+        public bool HasClientSecret { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
     }
