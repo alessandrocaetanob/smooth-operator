@@ -1,0 +1,214 @@
+name: "CI"
+
+on:
+  push:
+    branches: [ master, main, develop ]
+  pull_request:
+    branches: [ master, main, develop ]
+    types: [opened, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
+
+jobs:
+  detect-changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    outputs:
+      backend: ${{ steps.changed.outputs.backend_any_changed }}
+      frontend: ${{ steps.changed.outputs.frontend_any_changed }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect changed files
+        id: changed
+        uses: tj-actions/changed-files@v45
+        with:
+          files_yaml: |
+            backend:
+              - 'backend/**'
+              - '.github/workflows/ci.yml'
+            frontend:
+              - 'frontend/**'
+              - '.github/workflows/ci.yml'
+
+  backend:
+    name: Backend (Build · Format · Test · Coverage)
+    needs: detect-changes
+    if: needs.detect-changes.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore smooth-operator.sln
+
+      - name: Build with analyzers
+        run: |
+          dotnet build smooth-operator.sln \
+            --configuration Release \
+            --no-restore \
+            /p:TreatWarningsAsErrors=false \
+            /p:EnforceCodeStyleInBuild=true \
+            /p:AnalysisLevel=latest
+
+      - name: Check formatting
+        run: dotnet format smooth-operator.sln --verify-no-changes --verbosity diagnostic
+
+      - name: Run tests with coverage
+        run: |
+          dotnet test smooth-operator.sln \
+            --configuration Release \
+            --no-build \
+            --verbosity normal \
+            --settings coverlet.runsettings \
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./TestResults
+
+      - name: Upload coverage to Codecov
+        if: always()
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./TestResults/**/coverage.cobertura.xml
+          flags: backend
+          fail_ci_if_error: true
+
+      - name: Generate coverage report
+        if: always()
+        run: |
+          dotnet tool restore
+          dotnet tool run reportgenerator -- \
+            -reports:"./TestResults/**/coverage.cobertura.xml" \
+            -targetdir:"./coveragereport" \
+            -reporttypes:"Html;Cobertura;MarkdownSummaryGithub" \
+            -verbosity:Warning || true
+
+      - name: Post coverage summary
+        if: always()
+        run: |
+          if [ -f ./coveragereport/SummaryGithub.md ]; then
+            cat ./coveragereport/SummaryGithub.md >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Upload coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage-report
+          path: |
+            ./TestResults/**/coverage.cobertura.xml
+            ./coveragereport/
+          retention-days: 14
+
+      - name: Check for vulnerable packages
+        run: dotnet list smooth-operator.sln package --vulnerable --include-transitive
+
+  frontend:
+    name: Frontend (Lint · Build · Test · Coverage)
+    needs: detect-changes
+    if: needs.detect-changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Check formatting
+        working-directory: frontend
+        run: npx prettier --check "src/**/*.{ts,html,css,scss,json}"
+
+      - name: Lint
+        working-directory: frontend
+        run: npm run lint
+
+      - name: Build
+        working-directory: frontend
+        run: npm run build
+
+      - name: Run tests with coverage
+        working-directory: frontend
+        run: npm test
+
+      - name: Upload coverage to Codecov
+        if: always()
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: frontend/coverage/lcov.info
+          flags: frontend
+          fail_ci_if_error: true
+
+      - name: Security audit
+        working-directory: frontend
+        run: npm audit --audit-level=moderate
+
+  security-scan:
+    name: Security Scan (Trivy)
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.35.0
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        # Code Scanning upload requires GitHub Advanced Security to be
+        # enabled (or a public repo with code scanning turned on). The
+        # Trivy scan above still runs and surfaces findings in job logs.
+        continue-on-error: true
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  ci-pass:
+    name: CI Passed
+    needs: [detect-changes, backend, frontend, security-scan]
+    if: always()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Verify all checks
+        run: |
+          if [[ "${{ needs.backend.result }}" == "failure" ]] || \
+             [[ "${{ needs.frontend.result }}" == "failure" ]] || \
+             [[ "${{ needs.security-scan.result }}" == "failure" ]]; then
+            echo "❌ One or more checks failed"
+            exit 1
+          fi
+          echo "✅ All checks passed"

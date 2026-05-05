@@ -1,0 +1,33 @@
+codecov:
+  # Wait for both backend and frontend uploads before sending notifications.
+  notify:
+    after_n_builds: 2
+
+coverage:
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 1%
+    patch:
+      default:
+        target: 70%
+
+flag_management:
+  default_rules:
+    carryforward: true
+
+flags:
+  backend:
+    paths:
+      - backend/
+    carryforward: true
+  frontend:
+    paths:
+      - frontend/src/
+    carryforward: true
+
+comment:
+  layout: "reach,diff,flags,tree"
+  behavior: default
+  require_changes: true
