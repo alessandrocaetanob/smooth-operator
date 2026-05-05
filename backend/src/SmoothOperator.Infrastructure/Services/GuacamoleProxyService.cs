@@ -7,7 +7,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;
 using SmoothOperator.Infrastructure.Data;
 using SmoothOperator.Domain.Models;
@@ -15,6 +15,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using StackExchange.Redis;
 using System.Linq;
+using SmoothOperator.Application.Options;
 
 namespace SmoothOperator.Infrastructure.Services
 {
@@ -32,20 +33,19 @@ namespace SmoothOperator.Infrastructure.Services
 
         public GuacamoleProxyService(
             ILogger<GuacamoleProxyService> logger,
-            IConfiguration configuration,
+            IOptions<GuacdOptions> guacdOptions,
             IServiceScopeFactory scopeFactory,
             IEncryptionService encryptionService,
+            IConnectionMultiplexer redis,
             IAppMetrics metrics)
         {
             _logger = logger;
-            _guacdHost = configuration["Guacd:Host"] ?? "guacd";
-            _guacdPort = int.Parse(configuration["Guacd:Port"] ?? "4822");
+            _guacdHost = guacdOptions.Value.Host;
+            _guacdPort = guacdOptions.Value.Port;
             _scopeFactory = scopeFactory;
             _encryptionService = encryptionService;
+            _redis = redis;
             _metrics = metrics;
-
-            var redisConnectionString = configuration.GetConnectionString("Redis") ?? "localhost:6379";
-            _redis = ConnectionMultiplexer.Connect(redisConnectionString);
         }
 
         // ---- Ticket lifecycle (REST issue / WS consume) ------------------------------

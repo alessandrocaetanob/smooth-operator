@@ -271,14 +271,14 @@ public class AuthControllerIntegrationTests
     public async Task Register_Succeeds_WhenForcedEnabled()
     {
         await using var factory = new TestWebApplicationFactory();
+        // PostConfigure runs after the factory's own PostConfigure (which sets AllowSelfRegister=false),
+        // so this override wins reliably regardless of which appsettings.*.json files are loaded.
         var client = factory.WithWebHostBuilder(builder =>
         {
-            builder.ConfigureAppConfiguration((ctx, cfg) =>
+            builder.ConfigureServices(services =>
             {
-                cfg.AddInMemoryCollection(new Dictionary<string, string?>
-                {
-                    ["Auth:AllowSelfRegister"] = "true"
-                });
+                services.PostConfigure<SmoothOperator.Application.Options.AuthOptions>(
+                    o => o.AllowSelfRegister = true);
             });
         }).CreateClient();
         

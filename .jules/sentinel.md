@@ -25,3 +25,15 @@
 
 Moved `backend.tests/` → `backend/tests/SmoothOperator.Api.Tests/`; added empty stub projects for Domain, Application, Infrastructure layers. Rewrote `smooth-operator.sln` with 8-project structure in `src/` + `tests/` solution folders. Updated `backend/Dockerfile` with per-csproj COPY layer caching, non-root user, `PublishReadyToRun=true`, entrypoint from `SmoothOperator.Api.dll`. Updated CI workflow + `coverlet.runsettings` to reference new solution/namespaces. Deleted old `backend/Models/`, `backend/Services/`, `backend/Controllers/` etc. and `backend.tests/`. All 142 tests green at phase boundary.
 
+## 2026-05-04 - Phase 2 Options Pattern & Strongly-Typed Configuration
+**Summary:** Replaced all `IConfiguration` indexer string reads with 7 `IOptions<T>` classes in `SmoothOperator.Application.Options/`:
+- `EncryptionOptions` (IValidatableObject — 64-char hex validation)
+- `JwtOptions` (IValidatableObject — ≥32 bytes UTF-8)
+- `GuacdOptions` ([Range] on Port 1–65535)
+- `AppUrlsOptions`, `AuthOptions`, `OtelOptions`, `RateLimitOptions`
+
+All options registered in `Program.cs` with `ValidateDataAnnotations().ValidateOnStart()` so misconfiguration fails at startup. Flat env-var keys removed from `appsettings.Development.json` (`ENCRYPTION_KEY`, `APP_URL`, `FRONTEND_URL`). `docker-compose.yml` updated to use `Encryption__Key`, `AppUrls__App`, `AppUrls__Frontend`.
+
+Test infrastructure: `TestWebApplicationFactory` uses `PostConfigure<AuthOptions>` in `ConfigureServices` (runs after all config sources) to pin `AllowSelfRegister = false` by default — fixes race against `appsettings.Development.json`. Added 16 options validation unit tests in `SmoothOperator.Application.Tests/Options/` covering `EncryptionOptions`, `JwtOptions`, `GuacdOptions`. All 158 tests green at phase boundary.
+
+

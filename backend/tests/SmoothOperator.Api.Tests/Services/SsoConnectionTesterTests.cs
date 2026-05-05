@@ -2,11 +2,12 @@ using System.Net;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using SmoothOperator.Application.Options;
 using SmoothOperator.Infrastructure.Data;
 using SmoothOperator.Infrastructure.Services;
 using SmoothOperator.Infrastructure.Services.Sso;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 
 namespace SmoothOperator.Api.Tests.Services;
 
@@ -19,13 +20,8 @@ public class SsoConnectionTesterTests
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
             .Options);
 
-    private static IEncryptionService NewEncryption()
-    {
-        var cfg = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?> { ["ENCRYPTION_KEY"] = TestKey })
-            .Build();
-        return new EncryptionService(cfg);
-    }
+    private static IEncryptionService NewEncryption() =>
+        new EncryptionService(Options.Create(new EncryptionOptions { Key = TestKey }));
 
     private sealed class FakeHttpClientFactory : IHttpClientFactory
     {

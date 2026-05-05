@@ -1,9 +1,10 @@
+using SmoothOperator.Application.Options;
 using SmoothOperator.Infrastructure.Data;
 using SmoothOperator.Domain.Models;
 using SmoothOperator.Infrastructure.Services;
 using SmoothOperator.Infrastructure.Services.Sso;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 
 namespace SmoothOperator.Api.Tests.Services;
 
@@ -16,13 +17,8 @@ public class SsoProviderServiceTests
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
             .Options);
 
-    private static IEncryptionService NewEncryption()
-    {
-        var cfg = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?> { ["ENCRYPTION_KEY"] = TestKey })
-            .Build();
-        return new EncryptionService(cfg);
-    }
+    private static IEncryptionService NewEncryption() =>
+        new EncryptionService(Options.Create(new EncryptionOptions { Key = TestKey }));
 
     [Fact]
     public async Task GetProviderAsync_ReturnsNull_WhenNoneConfigured()

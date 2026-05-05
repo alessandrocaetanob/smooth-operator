@@ -7,14 +7,16 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Moq;
+using StackExchange.Redis;
 
 namespace SmoothOperator.Api.Tests.Infrastructure;
 
 /// <summary>
-/// Boots the real ASP.NET Core pipeline with two test-only swaps:
+/// Boots the real ASP.NET Core pipeline with test-only swaps:
 /// 1. Replaces the Npgsql DbContext with a fresh InMemory store (one per factory).
-/// 2. Replaces the JWT auth handler with <see cref="TestAuthHandler"/> so tests
-///    can impersonate users via request headers.
+/// 2. Replaces the JWT auth handler with <see cref="TestAuthHandler"/>.
+/// 3. Replaces <see cref="IConnectionMultiplexer"/> with a no-op mock (no Redis needed).
 /// </summary>
 public class TestWebApplicationFactory : WebApplicationFactory<Program>
 {
@@ -28,9 +30,8 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
 
     static TestWebApplicationFactory()
     {
-        // These must be set BEFORE Program.Main runs because TokenService and other
-        // services are constructed against builder.Configuration before the WAF's
-        // ConfigureAppConfiguration hook fires (which only runs at builder.Build()).
+        // These must be set BEFORE Program.Main runs because options are read
+        // from builder.Configuration before the WAF's ConfigureAppConfiguration hook fires.
         Environment.SetEnvironmentVariable("Jwt__Key", "test-only-signing-key-not-used-for-anything-real-please-32+chars");
         Environment.SetEnvironmentVariable("Jwt__Issuer", "test-issuer");
         Environment.SetEnvironmentVariable("Jwt__Audience", "test-audience");
@@ -41,7 +42,7 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
         Environment.SetEnvironmentVariable("ConnectionStrings__Redis", "localhost:6379");
         Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "Testing");
         // EncryptionService requires a 64-char hex key (32 bytes for AES-256).
-        Environment.SetEnvironmentVariable("ENCRYPTION_KEY", TestEncryptionKey);
+        Environment.SetEnvironmentVariable("Encryption__Key", TestEncryptionKey);
     }
 
     public TestWebApplicationFactory(Action<AppDbContext>? seed = null, bool seedPhantomOwner = true)
@@ -58,19 +59,21 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
         {
             cfg.AddInMemoryCollection(new Dictionary<string, string?>
             {
-                // Provide harmless connection strings so health checks register cleanly;
-                // they are not invoked during the tests we run here.
+                // Connection strings for health checks — not invoked during tests.
                 ["ConnectionStrings:DefaultConnection"] = $"Host=localhost;Database={DatabaseName};Username=test;Password=test",
                 ["ConnectionStrings:Redis"] = "localhost:6379",
-                // Force-disable Entra so the auth pipeline only registers the local JWT handler,
-                // which we then replace below.
+                // Force-disable Entra so only the local JWT handler is registered.
                 ["AzureAd:ClientId"] = "",
                 ["AzureAd:TenantId"] = "",
                 ["Jwt:Key"] = "test-only-signing-key-not-used-for-anything-real-please-32+chars",
                 ["Jwt:Issuer"] = "test-issuer",
                 ["Jwt:Audience"] = "test-audience",
-                // EncryptionService requires a 64-char hex key (32 bytes for AES-256).
-                ["ENCRYPTION_KEY"] = TestEncryptionKey
+                // Options pattern keys (Phase 2).
+                ["Encryption:Key"] = TestEncryptionKey,
+                ["AppUrls:App"] = "http://localhost:5000",
+                ["AppUrls:Frontend"] = "http://localhost:4200",
+                // Default to false (invite-only). Tests that need self-register override this explicitly.
+                ["Auth:AllowSelfRegister"] = "false",
             });
         });
 
@@ -80,8 +83,6 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             services.RemoveAll<DbContextOptions<AppDbContext>>();
             services.RemoveAll<DbContextOptions>();
             services.RemoveAll<AppDbContext>();
-            // Also remove EF Core internal service descriptors that Npgsql registered,
-            // otherwise EF complains about two providers in the same container.
             for (var i = services.Count - 1; i >= 0; i--)
             {
                 var sd = services[i];
@@ -97,13 +98,29 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
                 opts.UseInMemoryDatabase(DatabaseName);
             });
 
+            // Replace the real IConnectionMultiplexer (which tries to connect to Redis)
+            // with a no-op mock so tests can run without a running Redis instance.
+            services.RemoveAll<IConnectionMultiplexer>();
+            var redisMock = new Mock<IConnectionMultiplexer>();
+            var dbMock = new Mock<IDatabase>();
+            dbMock.Setup(d => d.StringSetAsync(
+                    It.IsAny<RedisKey>(), It.IsAny<RedisValue>(),
+                    It.IsAny<TimeSpan?>(), It.IsAny<bool>(),
+                    It.IsAny<When>(), It.IsAny<CommandFlags>()))
+                .ReturnsAsync(true);
+            dbMock.Setup(d => d.StringGetAsync(It.IsAny<RedisKey>(), It.IsAny<CommandFlags>()))
+                .ReturnsAsync(RedisValue.Null);
+            dbMock.Setup(d => d.KeyDeleteAsync(It.IsAny<RedisKey>(), It.IsAny<CommandFlags>()))
+                .ReturnsAsync(true);
+            redisMock.Setup(r => r.GetDatabase(It.IsAny<int>(), It.IsAny<object?>()))
+                .Returns(dbMock.Object);
+            services.AddSingleton(redisMock.Object);
+
             // Swap real health checks for an empty registry to avoid Npgsql/Redis pings.
             services.RemoveAll<HealthCheckService>();
             services.AddHealthChecks();
 
-            // Replace authentication with our test handler. The app sets explicit
-            // DefaultAuthenticateScheme/DefaultChallengeScheme to "Bearer", so we
-            // must override them too — AddAuthentication("Test") only sets DefaultScheme.
+            // Replace authentication with our test handler.
             services.AddAuthentication(TestAuthHandler.SchemeName)
                 .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(TestAuthHandler.SchemeName, _ => { });
             services.Configure<AuthenticationOptions>(o =>
@@ -114,16 +131,18 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
                 o.DefaultForbidScheme = TestAuthHandler.SchemeName;
             });
 
+            // Lock AllowSelfRegister to false by default regardless of which appsettings.*.json
+            // is loaded (appsettings.Development.json has it true for local dev convenience).
+            // Tests that need self-registration enabled must PostConfigure to true in their own
+            // WithWebHostBuilder.ConfigureServices callback.
+            services.PostConfigure<SmoothOperator.Application.Options.AuthOptions>(o => o.AllowSelfRegister = false);
+
             // Build a one-shot scope to seed the database and register roles.
             using var scope = services.BuildServiceProvider().CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
             db.Database.EnsureCreated();
             RoleSeeder.SeedDefaultsAsync(db, Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance).GetAwaiter().GetResult();
 
-            // Ensure an Owner exists BEFORE the user seed so RoleSeeder (which Program.cs
-            // re-runs after the factory) does not auto-promote the first seeded user to
-            // Owner via its bootstrap path. Tests exercising "last-Owner" guards opt out
-            // by passing seedPhantomOwner: false and seeding their own Owner explicitly.
             if (_seedPhantomOwner)
             {
                 var ownerRole = db.Roles.First(r => r.Name == "Owner");

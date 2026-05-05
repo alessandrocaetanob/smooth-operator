@@ -2,6 +2,7 @@
 using SmoothOperator.Api.Middleware;
 using SmoothOperator.Infrastructure.Services;
 using SmoothOperator.Infrastructure.Services.Sso;
+using SmoothOperator.Application.Options;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.RateLimiting;
@@ -10,23 +11,70 @@ using Microsoft.AspNetCore.HttpOverrides;
 using System.Net;
 using IPNetwork = System.Net.IPNetwork;
 using Serilog;
-using Serilog.Formatting.Json;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
-using OpenTelemetry.Exporter;
 using Prometheus;
+using StackExchange.Redis;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Replace default logging with Serilog — reads config from "Serilog" section.
 builder.Host.UseSerilog((ctx, lc) => lc.ReadFrom.Configuration(ctx.Configuration));
 
-// Add services to the container.
+// ─── Options Registration ────────────────────────────────────────────────────
+// All options classes are registered with DataAnnotations validation and
+// ValidateOnStart() so misconfiguration is caught at startup, not at first request.
+
+builder.Services.AddOptions<JwtOptions>()
+    .BindConfiguration("Jwt")
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
+builder.Services.AddOptions<GuacdOptions>()
+    .BindConfiguration("Guacd")
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
+builder.Services.AddOptions<EncryptionOptions>()
+    .BindConfiguration("Encryption")
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
+builder.Services.AddOptions<OtelOptions>()
+    .BindConfiguration("Otel")
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
+builder.Services.AddOptions<AppUrlsOptions>()
+    .BindConfiguration("AppUrls")
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
+builder.Services.AddOptions<RateLimitOptions>()
+    .BindConfiguration("RateLimit")
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
+builder.Services.AddOptions<AuthOptions>()
+    .BindConfiguration("Auth")
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
+// ─── Core Services ───────────────────────────────────────────────────────────
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Redis — registered as singleton IConnectionMultiplexer so GuacamoleProxyService
+// and other consumers share one multiplexed connection rather than each opening one.
+builder.Services.AddSingleton<IConnectionMultiplexer>(_ =>
+    ConnectionMultiplexer.Connect(
+        builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379"));
 
 builder.Services.AddSingleton<IEncryptionService, EncryptionService>();
 builder.Services.AddSingleton<GuacamoleProxyService>();
@@ -36,11 +84,10 @@ builder.Services.AddScoped<IAuditService, AuditService>();
 builder.Services.AddScoped<IInviteService, InviteService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IAccessControlService, AccessControlService>();
+builder.Services.AddSingleton<ITokenService, TokenService>();
 builder.Services.AddHostedService<AuditRetentionService>();
 
-// SSO services. Single configured provider (OIDC or SAML 2.0) — the app issues
-// its own short-lived HS256 JWT after the IdP flow, so all authenticated requests
-// always go through the local JwtBearer handler regardless of how the user logged in.
+// SSO services
 builder.Services.AddScoped<ISsoProviderService, SsoProviderService>();
 builder.Services.AddScoped<IOidcFlowService, OidcFlowService>();
 builder.Services.AddScoped<ISamlFlowService, SamlFlowService>();
@@ -49,10 +96,13 @@ builder.Services.AddScoped<ISsoConnectionTester, SsoConnectionTester>();
 builder.Services.AddScoped<SsoUrlHelper>();
 builder.Services.AddHttpClient();
 
-// Local JWT (HS256) is the only token format we accept on the wire — even SSO
-// users carry a JWT minted by TokenService after the IdP flow completes.
-var tokenService = new TokenService(builder.Configuration);
-builder.Services.AddSingleton<ITokenService>(tokenService);
+// ─── Authentication ──────────────────────────────────────────────────────────
+// Build TokenValidationParameters directly from configuration so AddJwtBearer
+// doesn't depend on a resolved IOptions<T> (which isn't available yet during host build).
+// Options validation will still catch misconfiguration at startup via ValidateOnStart().
+var jwtCfg = builder.Configuration.GetSection("Jwt");
+var jwtKey = jwtCfg["Key"] ?? throw new InvalidOperationException(
+    "Jwt:Key is not configured. Set the Jwt__Key environment variable.");
 
 builder.Services.AddAuthentication(options =>
 {
@@ -60,10 +110,27 @@ builder.Services.AddAuthentication(options =>
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 }).AddJwtBearer(options =>
 {
-    options.TokenValidationParameters = tokenService.BuildValidationParameters();
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = jwtCfg["Issuer"] ?? TokenService.LocalIssuer,
+        ValidAudience = jwtCfg["Audience"] ?? TokenService.LocalAudience,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+        ClockSkew = TimeSpan.Zero,
+    };
 });
 
-// Add rate limiting
+// ─── Rate Limiting ───────────────────────────────────────────────────────────
+// Read limits directly from config at startup (same values registered in IOptions<RateLimitOptions>).
+var rlCfg = builder.Configuration.GetSection("RateLimit");
+var globalPermit = rlCfg.GetValue<int>("Global:PermitLimit", 100);
+var globalWindow = rlCfg.GetValue<int>("Global:WindowSeconds", 60);
+var authPermit = rlCfg.GetValue<int>("Auth:PermitLimit", 5);
+var authWindow = rlCfg.GetValue<int>("Auth:WindowSeconds", 60);
+
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -71,49 +138,45 @@ builder.Services.AddRateLimiter(options =>
     options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
             partitionKey: httpContext.User.Identity?.Name ?? httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-            factory: partition => new FixedWindowRateLimiterOptions
+            factory: _ => new FixedWindowRateLimiterOptions
             {
                 AutoReplenishment = true,
-                PermitLimit = 100,
+                PermitLimit = globalPermit,
                 QueueLimit = 0,
-                Window = TimeSpan.FromMinutes(1)
+                Window = TimeSpan.FromSeconds(globalWindow)
             }));
 
     options.AddPolicy("auth", httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
             partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-            factory: partition => new FixedWindowRateLimiterOptions
+            factory: _ => new FixedWindowRateLimiterOptions
             {
                 AutoReplenishment = true,
-                PermitLimit = 5,
+                PermitLimit = authPermit,
                 QueueLimit = 0,
-                Window = TimeSpan.FromMinutes(1)
+                Window = TimeSpan.FromSeconds(authWindow)
             }));
 });
 
 // Trust the X-Forwarded-For / X-Forwarded-Proto headers sent by the nginx reverse-proxy
-// container so that the "auth" rate-limiting policy partitions by the real client IP
-// rather than the nginx container address.  Restrict trust to RFC-1918 private ranges
-// (the docker bridge networks live inside these ranges).
+// container so rate-limiting partitions by the real client IP.
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-    // Clear the default localhost-only allow-list and replace it with all RFC-1918
-    // private address ranges, which covers any docker bridge subnet.
     options.KnownProxies.Clear();
     options.KnownIPNetworks.Add(new IPNetwork(IPAddress.Parse("10.0.0.0"), 8));
     options.KnownIPNetworks.Add(new IPNetwork(IPAddress.Parse("172.16.0.0"), 12));
     options.KnownIPNetworks.Add(new IPNetwork(IPAddress.Parse("192.168.0.0"), 16));
 });
 
-// Add health checks
+// ─── Health Checks ───────────────────────────────────────────────────────────
 builder.Services.AddHealthChecks()
     .AddNpgSql(builder.Configuration.GetConnectionString("DefaultConnection") ?? "")
     .AddRedis(builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379");
 
 builder.Services.AddControllers();
 
-// OpenTelemetry distributed tracing — exports to Tempo via OTLP.
+// ─── OpenTelemetry ───────────────────────────────────────────────────────────
 var otelEndpoint = builder.Configuration["Otel:Endpoint"];
 if (!string.IsNullOrWhiteSpace(otelEndpoint))
 {
@@ -126,10 +189,10 @@ if (!string.IsNullOrWhiteSpace(otelEndpoint))
             .AddOtlpExporter(o => o.Endpoint = new Uri(otelEndpoint)));
 }
 
+// ─── Build ───────────────────────────────────────────────────────────────────
 var app = builder.Build();
 
-// Apply any pending EF Core migrations on startup so the schema is always in
-// sync with the deployed binary. Wrapped in a scope because AppDbContext is scoped.
+// Apply any pending EF Core migrations on startup.
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -153,8 +216,6 @@ using (var scope = app.Services.CreateScope())
         }
         else
         {
-            // InMemory and other non-relational providers (used by tests) do not
-            // support migrations. Just ensure the in-memory store is created.
             await db.Database.EnsureCreatedAsync();
         }
 
@@ -169,18 +230,14 @@ using (var scope = app.Services.CreateScope())
 
 app.UseWebSockets();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-// UseForwardedHeaders must come before UseHttpsRedirection so that the
-// X-Forwarded-Proto header is visible when the HTTPS redirect decision is made.
 app.UseForwardedHeaders();
 
-// Security + observability middleware — ordered before routing.
 app.UseMiddleware<SecurityHeadersMiddleware>();
 app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseSerilogRequestLogging(opts =>

@@ -4,14 +4,14 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using SmoothOperator.Infrastructure.Data;
 using SmoothOperator.Application.DTOs;
+using SmoothOperator.Application.Options;
 using SmoothOperator.Domain.Models;
 using SmoothOperator.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 
 namespace SmoothOperator.Api.Controllers
 {
@@ -20,30 +20,27 @@ namespace SmoothOperator.Api.Controllers
     public class AuthController : ControllerBase
     {
         private readonly AppDbContext _context;
-        private readonly IConfiguration _configuration;
+        private readonly AuthOptions _authOptions;
         private readonly ITokenService _tokenService;
         private readonly IInviteService _inviteService;
         private readonly IEmailService _emailService;
-        private readonly IHostEnvironment _environment;
         private readonly IAuditService _audit;
         private readonly IAppMetrics _metrics;
 
         public AuthController(
             AppDbContext context,
-            IConfiguration configuration,
+            IOptions<AuthOptions> authOptions,
             ITokenService tokenService,
             IInviteService inviteService,
             IEmailService emailService,
-            IHostEnvironment environment,
             IAuditService audit,
             IAppMetrics metrics)
         {
             _context = context;
-            _configuration = configuration;
+            _authOptions = authOptions.Value;
             _tokenService = tokenService;
             _inviteService = inviteService;
             _emailService = emailService;
-            _environment = environment;
             _audit = audit;
             _metrics = metrics;
         }
@@ -129,8 +126,7 @@ namespace SmoothOperator.Api.Controllers
         [EnableRateLimiting("auth")]
         public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
-            var allowSelfRegister = _configuration.GetValue<bool?>("Auth:AllowSelfRegister")
-                                    ?? _environment.IsDevelopment();
+            var allowSelfRegister = _authOptions.AllowSelfRegister;
             if (!allowSelfRegister)
             {
                 return NotFound();

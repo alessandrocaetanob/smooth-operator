@@ -23,7 +23,7 @@ services:
       - ConnectionStrings__Redis=redis:6379
       - Guacd__Host=guacd
       - Guacd__Port=4822
-      - ENCRYPTION_KEY=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef # WARNING: FOR DEVELOPMENT ONLY! Use Azure Key Vault or secure secrets management in production
+      - Encryption__Key=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef # WARNING: FOR DEVELOPMENT ONLY! Use Azure Key Vault or secure secrets management in production
       - Jwt__Key=7e589cea4a11cdcc9c35a1cf55e9cbe2bf793a59d1c7c106e218749b6c2308ad # WARNING: FOR DEVELOPMENT ONLY! Replace with a strong random secret in production
       - Jwt__Issuer=smooth-operator
       - Jwt__Audience=smooth-operator-api
@@ -31,8 +31,8 @@ services:
       # - AzureAd__Instance=https://login.microsoftonline.com/
       # - AzureAd__TenantId=<your-tenant-id>
       # - AzureAd__ClientId=<your-client-id>
-      - APP_URL=http://localhost:4200
-      - FRONTEND_URL=http://localhost:4200
+      - AppUrls__App=http://localhost:4200
+      - AppUrls__Frontend=http://localhost:4200
       - Otel__Endpoint=http://tempo:4317
       - Otel__ServiceName=smooth-operator-backend
     depends_on:

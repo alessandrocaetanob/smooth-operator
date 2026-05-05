@@ -1,12 +1,13 @@
 ﻿using System;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
+using SmoothOperator.Application.Options;
 
 namespace SmoothOperator.Infrastructure.Services.Sso
 {
     /// <summary>
     /// Injectable helper for building URLs used by the SSO flows.
-    /// Base origin is sourced from FRONTEND_URL / APP_URL configuration so
+    /// Base origin is sourced from AppUrls:Frontend / AppUrls:App configuration so
     /// the constructed URIs are not attacker-controllable via the Host header
     /// (guards against host-header injection when AllowedHosts is permissive).
     /// Falls back to req.Scheme://req.Host only when no base URL is configured.
@@ -15,9 +16,10 @@ namespace SmoothOperator.Infrastructure.Services.Sso
     {
         private readonly string _baseUrl;
 
-        public SsoUrlHelper(IConfiguration config)
+        public SsoUrlHelper(IOptions<AppUrlsOptions> options)
         {
-            _baseUrl = (config["FRONTEND_URL"] ?? config["APP_URL"] ?? "").TrimEnd('/');
+            var urls = options.Value;
+            _baseUrl = (!string.IsNullOrEmpty(urls.Frontend) ? urls.Frontend : urls.App).TrimEnd('/');
         }
 
         private string Origin(HttpRequest req) =>

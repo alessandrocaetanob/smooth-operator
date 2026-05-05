@@ -5,7 +5,8 @@ using System.Threading.Tasks;
 using SmoothOperator.Infrastructure.Data;
 using SmoothOperator.Domain.Models;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
+using SmoothOperator.Application.Options;
 
 namespace SmoothOperator.Infrastructure.Services
 {
@@ -26,12 +27,12 @@ namespace SmoothOperator.Infrastructure.Services
         public const string TypePasswordReset = "password_reset";
 
         private readonly AppDbContext _context;
-        private readonly IConfiguration _configuration;
+        private readonly AppUrlsOptions _appUrls;
 
-        public InviteService(AppDbContext context, IConfiguration configuration)
+        public InviteService(AppDbContext context, IOptions<AppUrlsOptions> appUrlsOptions)
         {
             _context = context;
-            _configuration = configuration;
+            _appUrls = appUrlsOptions.Value;
         }
 
         public async Task<(Invitation invitation, string token, string url)> CreateAsync(
@@ -54,7 +55,9 @@ namespace SmoothOperator.Infrastructure.Services
             _context.Invitations.Add(invitation);
             await _context.SaveChangesAsync();
 
-            var baseUrl = (_configuration["FRONTEND_URL"] ?? _configuration["APP_URL"] ?? "http://localhost:4200")
+            var baseUrl = (!string.IsNullOrEmpty(_appUrls.Frontend)
+                ? _appUrls.Frontend
+                : (!string.IsNullOrEmpty(_appUrls.App) ? _appUrls.App : "http://localhost:4200"))
                 .TrimEnd('/');
             var url = $"{baseUrl}/invite/{raw}";
             return (invitation, raw, url);

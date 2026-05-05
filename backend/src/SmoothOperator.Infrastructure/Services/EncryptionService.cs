@@ -2,7 +2,8 @@
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
+using SmoothOperator.Application.Options;
 
 namespace SmoothOperator.Infrastructure.Services
 {
@@ -16,20 +17,15 @@ namespace SmoothOperator.Infrastructure.Services
     {
         private readonly byte[] _key;
 
-        public EncryptionService(IConfiguration configuration)
+        public EncryptionService(IOptions<EncryptionOptions> options)
         {
-            var keyString = configuration["ENCRYPTION_KEY"];
-            if (string.IsNullOrEmpty(keyString))
-            {
-                throw new InvalidOperationException("ENCRYPTION_KEY environment variable is not set.");
-            }
+            var keyString = options.Value.Key;
 
-            // Expected to be a 64 character hex string (32 bytes)
+            if (string.IsNullOrEmpty(keyString))
+                throw new InvalidOperationException("Encryption:Key is not configured. Set the Encryption__Key environment variable.");
+
             if (keyString.Length != 64)
-            {
-                // Fallback or throw
-                throw new InvalidOperationException("ENCRYPTION_KEY must be a 64-character hex string (32 bytes) for AES-256.");
-            }
+                throw new InvalidOperationException("Encryption:Key must be a 64-character hex string (32 bytes) for AES-256.");
 
             _key = ConvertHexStringToByteArray(keyString);
         }
