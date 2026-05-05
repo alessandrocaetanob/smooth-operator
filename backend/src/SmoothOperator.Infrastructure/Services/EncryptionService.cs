@@ -4,15 +4,10 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Extensions.Options;
 using SmoothOperator.Application.Options;
+using SmoothOperator.Application.Interfaces;
 
 namespace SmoothOperator.Infrastructure.Services
 {
-    public interface IEncryptionService
-    {
-        string Encrypt(string plainText);
-        string Decrypt(string cipherText);
-    }
-
     public class EncryptionService : IEncryptionService
     {
         private readonly byte[] _key;

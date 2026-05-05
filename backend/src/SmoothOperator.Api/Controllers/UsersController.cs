@@ -1,12 +1,14 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using SmoothOperator.Infrastructure.Data;
 using SmoothOperator.Application.DTOs;
+using SmoothOperator.Application.Helpers;
 using SmoothOperator.Domain.Models;
 using SmoothOperator.Infrastructure.Services;
+using SmoothOperator.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -387,7 +389,7 @@ namespace SmoothOperator.Api.Controllers
                 HasPassword = !string.IsNullOrEmpty(user.PasswordHash),
                 SsoLinked = !string.IsNullOrEmpty(user.ExternalId),
                 SsoProviderType = user.SsoProviderType?.ToString(),
-                AvatarUrl = AuthController.BuildAvatarUrl(user),
+                AvatarUrl = UserHelper.BuildAvatarUrl(user),
                 Roles = user.Roles
                     .Select(r => r.Name)
                     .Distinct(StringComparer.OrdinalIgnoreCase)

@@ -1,9 +1,10 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using SmoothOperator.Infrastructure.Data;
 using SmoothOperator.Application.DTOs;
 using SmoothOperator.Domain.Models;
 using SmoothOperator.Infrastructure.Services;
+using SmoothOperator.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;

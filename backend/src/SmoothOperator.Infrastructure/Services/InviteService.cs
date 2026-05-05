@@ -4,23 +4,13 @@ using System.Text;
 using System.Threading.Tasks;
 using SmoothOperator.Infrastructure.Data;
 using SmoothOperator.Domain.Models;
+using SmoothOperator.Application.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using SmoothOperator.Application.Options;
 
 namespace SmoothOperator.Infrastructure.Services
 {
-    public interface IInviteService
-    {
-        /// <summary>Creates an invitation for the given user and returns the absolute URL the user must visit.</summary>
-        Task<(Invitation invitation, string token, string url)> CreateAsync(
-            Guid userId, string type, TimeSpan ttl, Guid? createdById);
-
-        Task<Invitation?> ValidateAsync(string token);
-
-        Task<Invitation?> RedeemAsync(string token);
-    }
-
     public class InviteService : IInviteService
     {
         public const string TypeUserInvite = "user_invite";

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using SmoothOperator.Infrastructure.Data;
+using SmoothOperator.Application.Interfaces;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using Microsoft.EntityFrameworkCore;
@@ -9,16 +10,6 @@ using MimeKit;
 
 namespace SmoothOperator.Infrastructure.Services
 {
-    public interface IEmailService
-    {
-        Task<bool> IsConfiguredAsync();
-        Task<EmailSendResult> SendInviteAsync(string toEmail, string toName, string inviteUrl);
-        Task<EmailSendResult> SendPasswordResetAsync(string toEmail, string toName, string resetUrl);
-        Task<EmailSendResult> SendTestAsync(string toEmail);
-    }
-
-    public record EmailSendResult(bool Success, string? Error);
-
     public class EmailService : IEmailService
     {
         private readonly AppDbContext _context;

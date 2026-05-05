@@ -1,9 +1,10 @@
 ﻿using SmoothOperator.Domain.Models;
+using SmoothOperator.Application.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace SmoothOperator.Infrastructure.Data
 {
-    public class AppDbContext : DbContext
+    public class AppDbContext : DbContext, IAppDbContext
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 

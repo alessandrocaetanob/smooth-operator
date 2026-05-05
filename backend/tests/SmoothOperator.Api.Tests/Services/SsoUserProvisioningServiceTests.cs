@@ -1,4 +1,5 @@
 using SmoothOperator.Infrastructure.Data;
+using SmoothOperator.Application.Interfaces;
 using SmoothOperator.Domain.Models;
 using SmoothOperator.Infrastructure.Services;
 using SmoothOperator.Infrastructure.Services.Sso;

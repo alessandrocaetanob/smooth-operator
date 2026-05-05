@@ -3,17 +3,12 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using SmoothOperator.Infrastructure.Data;
 using SmoothOperator.Domain.Models;
+using SmoothOperator.Application.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
 namespace SmoothOperator.Infrastructure.Services
 {
-    public interface IAuditService
-    {
-        Task WriteAsync(string action, string resourceType, string? resourceId = null,
-            object? details = null, string outcome = "success");
-    }
-
     public class AuditService : IAuditService
     {
         private readonly AppDbContext _context;

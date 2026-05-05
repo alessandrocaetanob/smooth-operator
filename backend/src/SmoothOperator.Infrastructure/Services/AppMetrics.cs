@@ -1,16 +1,8 @@
 ﻿using Prometheus;
+using SmoothOperator.Application.Interfaces;
 
 namespace SmoothOperator.Infrastructure.Services
 {
-    public interface IAppMetrics
-    {
-        void RecordLoginAttempt(string outcome);
-        void RecordConnectionStarted();
-        void RecordConnectionEnded();
-        void RecordAuditEvent(string action);
-        double CurrentActiveSessions { get; }
-    }
-
     /// <summary>
     /// Centralised Prometheus counter/gauge definitions for Smooth Operator.
     /// Metrics are singleton-safe: Counter/Gauge instances are thread-safe by design.

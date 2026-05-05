@@ -7,15 +7,10 @@ using SmoothOperator.Domain.Models;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using SmoothOperator.Application.Options;
+using SmoothOperator.Application.Interfaces;
 
 namespace SmoothOperator.Infrastructure.Services
 {
-    public interface ITokenService
-    {
-        string CreateToken(User user);
-        TimeSpan TokenLifetime { get; }
-    }
-
     public class TokenService : ITokenService
     {
         public const string LocalIssuer = "smooth-operator";

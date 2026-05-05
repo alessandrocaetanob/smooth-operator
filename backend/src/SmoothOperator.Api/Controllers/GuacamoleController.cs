@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Net.WebSockets;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SmoothOperator.Infrastructure.Data;
 using SmoothOperator.Infrastructure.Services;
+using SmoothOperator.Application.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace SmoothOperator.Api.Controllers

@@ -3,6 +3,11 @@ using SmoothOperator.Api.Middleware;
 using SmoothOperator.Infrastructure.Services;
 using SmoothOperator.Infrastructure.Services.Sso;
 using SmoothOperator.Application.Options;
+using SmoothOperator.Application.Interfaces;
+using SmoothOperator.Application.Behaviors;
+using SmoothOperator.Application.Features.Auth.Commands;
+using FluentValidation;
+using MapsterMapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.RateLimiting;
@@ -175,6 +180,18 @@ builder.Services.AddHealthChecks()
     .AddRedis(builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379");
 
 builder.Services.AddControllers();
+
+// ─── Application layer: MediatR, FluentValidation, Mapster ──────────────────
+builder.Services.AddMediatR(cfg =>
+{
+    cfg.RegisterServicesFromAssembly(typeof(LoginCommandHandler).Assembly);
+    cfg.AddBehavior(typeof(MediatR.IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+    cfg.AddBehavior(typeof(MediatR.IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
+    cfg.AddBehavior(typeof(MediatR.IPipelineBehavior<,>), typeof(MetricsBehavior<,>));
+});
+builder.Services.AddValidatorsFromAssembly(typeof(LoginCommandHandler).Assembly);
+builder.Services.AddScoped<IMapper, Mapper>();
+builder.Services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<AppDbContext>());
 
 // ─── OpenTelemetry ───────────────────────────────────────────────────────────
 var otelEndpoint = builder.Configuration["Otel:Endpoint"];

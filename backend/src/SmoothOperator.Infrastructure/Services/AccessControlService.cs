@@ -5,36 +5,11 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using SmoothOperator.Infrastructure.Data;
 using SmoothOperator.Domain.Models;
+using SmoothOperator.Application.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace SmoothOperator.Infrastructure.Services
 {
-    public sealed class AccessProfile
-    {
-        public Guid UserId { get; init; }
-        public string Email { get; init; } = string.Empty;
-        public IReadOnlyList<string> Roles { get; init; } = Array.Empty<string>();
-        public IReadOnlyList<Guid> VaultIds { get; init; } = Array.Empty<Guid>();
-
-        public bool IsOwner => HasRole(AppRoles.Owner);
-        public bool IsAdmin => HasRole(AppRoles.Admin);
-        public bool IsOwnerOrAdmin => IsOwner || IsAdmin;
-        public bool IsTeamAdmin => HasRole(AppRoles.TeamAdmin);
-        public bool IsDefaultUser => HasRole(AppRoles.User);
-
-        public bool HasRole(string roleName)
-            => Roles.Any(r => string.Equals(r, roleName, StringComparison.OrdinalIgnoreCase));
-    }
-
-    public interface IAccessControlService
-    {
-        Task<AccessProfile?> GetCurrentProfileAsync(ClaimsPrincipal principal);
-        IQueryable<Connection> ApplyConnectionScope(IQueryable<Connection> query, AccessProfile profile);
-        IQueryable<ConnectionGroup> ApplyVaultScope(IQueryable<ConnectionGroup> query, AccessProfile profile);
-        bool CanManageConnectionsInVault(AccessProfile profile, Guid? vaultId);
-        bool CanUseConnection(AccessProfile profile, Connection connection);
-    }
-
     public class AccessControlService : IAccessControlService
     {
         private readonly AppDbContext _context;

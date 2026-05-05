@@ -1,4 +1,5 @@
-﻿using System;
+using SmoothOperator.Application.Interfaces;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using SmoothOperator.Infrastructure.Data;

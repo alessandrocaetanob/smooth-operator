@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using SmoothOperator.Infrastructure.Data;
 using SmoothOperator.Application.DTOs;
 using SmoothOperator.Infrastructure.Services;
+using SmoothOperator.Application.Interfaces;
 using SmoothOperator.Domain.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

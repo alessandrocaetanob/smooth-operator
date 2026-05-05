@@ -3,6 +3,7 @@ using System.Net.Http;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using SmoothOperator.Application.Options;
+using SmoothOperator.Application.Interfaces;
 using SmoothOperator.Infrastructure.Data;
 using SmoothOperator.Infrastructure.Services;
 using SmoothOperator.Infrastructure.Services.Sso;
