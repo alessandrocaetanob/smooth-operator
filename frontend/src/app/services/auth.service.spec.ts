@@ -207,13 +207,11 @@ describe('AuthService', () => {
     it('should normalize PascalCase login response', () => {
       const token = makeJwt({ sub: '42', exp: FUTURE_EXP });
       service.login({ email: 'a@b.com', password: 'secret' }).subscribe();
-      httpTesting
-        .expectOne('/api/auth/login')
-        .flush({
-          Token: token,
-          ExpiresAt: '2099-01-01T00:00:00Z',
-          User: { Id: '42', Name: 'Test' },
-        });
+      httpTesting.expectOne('/api/auth/login').flush({
+        Token: token,
+        ExpiresAt: '2099-01-01T00:00:00Z',
+        User: { Id: '42', Name: 'Test' },
+      });
       expect(service.token()).toBe(token);
     });
 

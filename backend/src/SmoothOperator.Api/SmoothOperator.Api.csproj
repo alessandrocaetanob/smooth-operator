@@ -5,6 +5,8 @@
     <RootNamespace>SmoothOperator.Api</RootNamespace>
     <AssemblyName>SmoothOperator.Api</AssemblyName>
     <UserSecretsId>c733ae61-9e8f-44b2-92af-7f62702ee512</UserSecretsId>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>

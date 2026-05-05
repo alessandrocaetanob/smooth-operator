@@ -98,3 +98,32 @@ All 55 Angular unit tests pass. Build clean at commit `fd451f9`.
 - **Coverage config:** Added `coverage` block to `vitest.config.ts` (v8 provider, text+lcov reporters); conservative regression thresholds set: `statements: 40 / branches: 46 / functions: 33 / lines: 42`.
 - **Test count:** 240 passing (45 test files), 0 failures.
 - **Coverage baseline:** 40.25% stmts / 46.85% branches / 33.62% funcs / 42.35% lines (70% CI gate deferred).
+
+## 2026-07-13 - Phase 9: Docker & Delivery Hardening
+
+**Summary:** Hardened all Docker artifacts for production-grade security, non-root operation, and minimal attack surface. Both `smooth-operator-backend` and `smooth-operator-frontend` images build and pass health checks.
+
+**Backend (`backend/Dockerfile`):**
+- Non-root runtime: `USER $APP_UID` (uid 1654, pre-baked in `mcr.microsoft.com/dotnet/aspnet` base image).
+- Health probe: installed `curl` (minimal, no recommends); `HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 CMD curl -fsS http://localhost:8080/health || exit 1`.
+- Publish stage: added `-r linux-x64 --no-self-contained /p:PublishReadyToRun=true` for faster cold start; restore stage updated to match with `-r linux-x64 /p:PublishReadyToRun=true`.
+- `ImplicitUsings>enable` + `Nullable>enable` added to all 4 `.csproj` files (Domain, Application, Infrastructure, Api) — fixed latent compile errors exposed when Docker rebuilds without incremental `obj/` cache.
+
+**Frontend (`frontend/Dockerfile`, `frontend/nginx.conf`):**
+- Base image: `nginxinc/nginx-unprivileged:1.27-alpine` (runs as `nginx` uid 101, listens on 8080).
+- Security headers via `nginx.conf`: `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy`, full `Content-Security-Policy` allowing `ws:/wss:` for Guacamole WebSocket; HSTS for non-localhost.
+- Cache-control: `no-store` for `index.html`; `1y` immutable for content-hashed assets.
+- Expanded gzip: `application/json`, `application/javascript`, `image/svg+xml`, `text/javascript`, `gzip_min_length 1024`.
+- `HEALTHCHECK CMD wget -qO- http://localhost:8080/ || exit 1`.
+- `entrypoint.sh`: `mkdir -p /usr/share/nginx/html/config` guard for `read_only: true` + tmpfs.
+
+**docker-compose.yml:**
+- `cap_drop: [ALL]` on both frontend and backend services.
+- Frontend: `read_only: true` + `tmpfs: [/tmp, /usr/share/nginx/html/config]`.
+- Backend: `tmpfs: [/tmp]` (`read_only: true` deferred to Phase 11 — requires Data Protection persistence first).
+- Port: frontend now binds `4200:8080`.
+
+**Build fixes:**
+- `backend/.dockerignore`: changed bare `obj/bin/out/publish` → `**/obj **/bin **/out **/publish` — prevents Windows `project.assets.json` leaking into Linux Docker builds.
+- `.env.example`: created to document all required env vars.
+

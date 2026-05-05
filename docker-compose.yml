@@ -4,10 +4,15 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "4200:80"
+      - "4200:8080"
     depends_on:
       - backend
     restart: unless-stopped
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /usr/share/nginx/html/config   # writable by entrypoint.sh at startup
     networks:
       - smooth-operator-net
 
@@ -40,6 +45,9 @@ services:
       - redis
       - guacd
     restart: unless-stopped
+    cap_drop: [ALL]
+    tmpfs:
+      - /tmp
     networks:
       - smooth-operator-net
 
