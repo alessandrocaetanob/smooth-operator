@@ -27,6 +27,7 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
 
     private readonly Action<AppDbContext>? _seed;
     private readonly bool _seedPhantomOwner;
+    private readonly Action<IServiceCollection>? _overrideServices;
 
     static TestWebApplicationFactory()
     {
@@ -45,10 +46,11 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
         Environment.SetEnvironmentVariable("Encryption__Key", TestEncryptionKey);
     }
 
-    public TestWebApplicationFactory(Action<AppDbContext>? seed = null, bool seedPhantomOwner = true)
+    public TestWebApplicationFactory(Action<AppDbContext>? seed = null, bool seedPhantomOwner = true, Action<IServiceCollection>? overrideServices = null)
     {
         _seed = seed;
         _seedPhantomOwner = seedPhantomOwner;
+        _overrideServices = overrideServices;
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -160,6 +162,8 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
 
             _seed?.Invoke(db);
             db.SaveChanges();
+
+            _overrideServices?.Invoke(services);
         });
     }
 }

@@ -1,6 +1,7 @@
 using SmoothOperator.Infrastructure.Data;
 using SmoothOperator.Api.Middleware;
 using SmoothOperator.Infrastructure.Services;
+using SmoothOperator.Infrastructure.Services.SecretProviders;
 using SmoothOperator.Infrastructure.Services.Sso;
 using SmoothOperator.Application.Options;
 using SmoothOperator.Application.Interfaces;
@@ -112,6 +113,9 @@ builder.Services.AddScoped<ISsoUserProvisioningService, SsoUserProvisioningServi
 builder.Services.AddScoped<ISsoConnectionTester, SsoConnectionTester>();
 builder.Services.AddScoped<SsoUrlHelper>();
 builder.Services.AddHttpClient();
+
+// Secret provider factory (transient — each call creates a live SDK client for that provider config)
+builder.Services.AddTransient<ISecretProviderFactory, SecretProviderFactory>();
 
 // ─── Authentication ──────────────────────────────────────────────────────────
 // Build TokenValidationParameters directly from configuration so AddJwtBearer

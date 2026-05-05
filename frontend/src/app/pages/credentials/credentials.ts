@@ -5,7 +5,9 @@ import {
   CredentialsService,
   CreateCredentialPayload,
   UpdateCredentialPayload,
+  SecretStorageMode,
 } from '../../services/credentials.service';
+import { SecretProvider, SecretProvidersService } from '../../services/secret-providers.service';
 import { AuthService } from '../../services/auth.service';
 import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog.service';
 import { ToastService } from '../../shared/toast/toast.service';
@@ -18,6 +20,11 @@ interface FormState {
   secret: string;
   credentialType: string;
   publicKey?: string;
+  storageMode: SecretStorageMode;
+  secretProviderId: string;
+  pushToVault: boolean;
+  externalSecretName: string;
+  externalSecretVersion: string;
 }
 
 const EMPTY_FORM: FormState = {
@@ -27,6 +34,11 @@ const EMPTY_FORM: FormState = {
   secret: '',
   credentialType: 'password',
   publicKey: '',
+  storageMode: 'Local',
+  secretProviderId: '',
+  pushToVault: true,
+  externalSecretName: '',
+  externalSecretVersion: '',
 };
 
 @Component({
@@ -37,11 +49,13 @@ const EMPTY_FORM: FormState = {
 })
 export class Credentials implements OnInit {
   private readonly svc = inject(CredentialsService);
+  private readonly providersSvc = inject(SecretProvidersService);
   private readonly auth = inject(AuthService);
   private readonly confirmSvc = inject(ConfirmDialogService);
   private readonly toastSvc = inject(ToastService);
 
   readonly credentials = this.svc.list;
+  readonly providers = this.providersSvc.list;
   readonly canManageCredentials = this.auth.canManageCredentials;
   readonly loading = signal(false);
   readonly errorMessage = signal<string | null>(null);
@@ -53,6 +67,8 @@ export class Credentials implements OnInit {
   readonly generatedPublicKey = signal<string>('');
   readonly sshKeyAlgorithm = signal<'rsa' | 'ecdsa'>('rsa');
   readonly searchQuery = signal('');
+  readonly loadingSecrets = signal(false);
+  readonly availableSecrets = signal<string[]>([]);
 
   readonly filteredCredentials = computed(() => {
     const q = this.searchQuery().toLowerCase().trim();
@@ -66,6 +82,7 @@ export class Credentials implements OnInit {
   });
 
   readonly isFiltered = computed(() => this.searchQuery().trim().length > 0);
+  readonly isExternal = computed(() => this.form().storageMode === 'External');
 
   readonly types = [
     { value: 'password', label: 'Password' },
@@ -74,6 +91,7 @@ export class Credentials implements OnInit {
 
   ngOnInit(): void {
     this.refresh();
+    this.providersSvc.reload().subscribe();
   }
 
   refresh(): void {
@@ -91,6 +109,7 @@ export class Credentials implements OnInit {
   newCredential(): void {
     if (!this.canManageCredentials()) return;
     this.form.set({ ...EMPTY_FORM });
+    this.availableSecrets.set([]);
     this.errorMessage.set(null);
     this.showDrawer.set(true);
   }
@@ -104,9 +123,41 @@ export class Credentials implements OnInit {
       secret: '',
       credentialType: c.credentialType,
       publicKey: c.publicKey || '',
+      storageMode: c.storageMode ?? 'Local',
+      secretProviderId: c.secretProviderId ?? '',
+      pushToVault: false,
+      externalSecretName: c.externalSecretName ?? '',
+      externalSecretVersion: c.externalSecretVersion ?? '',
     });
+    this.availableSecrets.set([]);
+    if (c.storageMode === 'External' && c.secretProviderId) {
+      this.loadSecretsForProvider(c.secretProviderId);
+    }
     this.errorMessage.set(null);
     this.showDrawer.set(true);
+  }
+
+  onProviderChange(providerId: string): void {
+    this.patch('secretProviderId', providerId);
+    this.patch('externalSecretName', '');
+    this.availableSecrets.set([]);
+    if (providerId) {
+      this.loadSecretsForProvider(providerId);
+    }
+  }
+
+  private loadSecretsForProvider(providerId: string): void {
+    this.loadingSecrets.set(true);
+    this.providersSvc.listSecrets(providerId).subscribe({
+      next: (secrets) => {
+        this.loadingSecrets.set(false);
+        this.availableSecrets.set(secrets);
+      },
+      error: () => {
+        this.loadingSecrets.set(false);
+        this.availableSecrets.set([]);
+      },
+    });
   }
 
   generateSshKey(): void {
@@ -151,6 +202,7 @@ export class Credentials implements OnInit {
     this.generatedPublicKey.set('');
     this.sshKeyAlgorithm.set('rsa');
     this.form.set({ ...EMPTY_FORM });
+    this.availableSecrets.set([]);
     this.errorMessage.set(null);
   }
 
@@ -170,9 +222,24 @@ export class Credentials implements OnInit {
       this.errorMessage.set('Name and username are required.');
       return;
     }
-    if (!f.id && !f.secret) {
-      this.errorMessage.set('Secret is required when creating a credential.');
-      return;
+    if (f.storageMode === 'External') {
+      if (!f.secretProviderId) {
+        this.errorMessage.set('Please select a secret provider.');
+        return;
+      }
+      if (f.pushToVault && !f.id && !f.secret) {
+        this.errorMessage.set('Secret value is required when pushing to vault.');
+        return;
+      }
+      if (!f.pushToVault && !f.externalSecretName) {
+        this.errorMessage.set('Please select an existing secret to link.');
+        return;
+      }
+    } else {
+      if (!f.id && !f.secret) {
+        this.errorMessage.set('Secret is required when creating a credential.');
+        return;
+      }
     }
     this.busy.set(true);
     this.errorMessage.set(null);
@@ -182,8 +249,20 @@ export class Credentials implements OnInit {
         username: f.username.trim(),
         credentialType: f.credentialType,
         publicKey: f.publicKey,
+        storageMode: f.storageMode,
       };
-      if (f.secret) upd.secret = f.secret;
+      if (f.storageMode === 'External') {
+        upd.secretProviderId = f.secretProviderId;
+        if (f.pushToVault && f.secret) {
+          upd.pushToVault = true;
+          upd.secret = f.secret;
+        } else if (!f.pushToVault) {
+          upd.externalSecretName = f.externalSecretName;
+          upd.externalSecretVersion = f.externalSecretVersion || undefined;
+        }
+      } else if (f.secret) {
+        upd.secret = f.secret;
+      }
       this.svc.update(f.id, upd).subscribe({
         next: () => this.done(),
         error: (err) => this.fail(err),
@@ -192,10 +271,22 @@ export class Credentials implements OnInit {
       const create: CreateCredentialPayload = {
         name: f.name.trim(),
         username: f.username.trim(),
-        secret: f.secret,
         credentialType: f.credentialType,
         publicKey: f.publicKey,
+        storageMode: f.storageMode,
       };
+      if (f.storageMode === 'External') {
+        create.secretProviderId = f.secretProviderId;
+        if (f.pushToVault) {
+          create.pushToVault = true;
+          create.secret = f.secret;
+        } else {
+          create.externalSecretName = f.externalSecretName;
+          create.externalSecretVersion = f.externalSecretVersion || undefined;
+        }
+      } else {
+        create.secret = f.secret;
+      }
       this.svc.create(create).subscribe({
         next: () => this.done(),
         error: (err) => this.fail(err),
@@ -228,6 +319,10 @@ export class Credentials implements OnInit {
 
   trackById(_: number, c: Credential): string {
     return c.id;
+  }
+
+  trackByProvider(_: number, p: SecretProvider): string {
+    return p.id;
   }
 
   private done(): void {

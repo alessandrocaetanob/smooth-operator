@@ -131,6 +131,13 @@ export const routes: Routes = [
             loadComponent: () =>
               import('./pages/settings/integrations/integrations').then((m) => m.Integrations),
           },
+          {
+            path: 'secret-providers',
+            loadComponent: () =>
+              import('./pages/settings/secret-providers/secret-providers').then(
+                (m) => m.SecretProviders,
+              ),
+          },
         ],
       },
       { path: 'administration', redirectTo: 'settings/users', pathMatch: 'full' },

@@ -93,6 +93,11 @@ namespace SmoothOperator.Application.DTOs
         public string Username { get; set; } = string.Empty;
         public string CredentialType { get; set; } = "password";
         public string? PublicKey { get; set; }
+        public string StorageMode { get; set; } = "Local";
+        public Guid? SecretProviderId { get; set; }
+        public string? SecretProviderName { get; set; }
+        public string? ExternalSecretName { get; set; }
+        public string? ExternalSecretVersion { get; set; }
     }
 
     public class VaultAssignmentsDto
@@ -111,15 +116,27 @@ namespace SmoothOperator.Application.DTOs
         [StringLength(255, ErrorMessage = "Username cannot exceed 255 characters")]
         public string Username { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Secret is required")]
+        // Secret is required only when StorageMode == Local.
         [StringLength(4096, MinimumLength = 1, ErrorMessage = "Secret must be between 1 and 4096 characters")]
-        public string Secret { get; set; } = string.Empty;
+        public string? Secret { get; set; }
 
         [Required(ErrorMessage = "CredentialType is required")]
         [RegularExpression("^(password|private_key)$", ErrorMessage = "CredentialType must be 'password' or 'private_key'")]
         public string CredentialType { get; set; } = "password";
 
         public string? PublicKey { get; set; }
+
+        // External secret provider fields (used when StorageMode == External)
+        public string StorageMode { get; set; } = "Local";
+        public Guid? SecretProviderId { get; set; }
+        public string? ExternalSecretName { get; set; }
+        public string? ExternalSecretVersion { get; set; }
+
+        /// <summary>
+        /// When true in push flow, the secret will be written to Key Vault and only a reference is stored locally.
+        /// When false in link flow, ExternalSecretName must reference an existing KV secret.
+        /// </summary>
+        public bool PushToVault { get; set; } = false;
     }
 
     public class ConnectionFileDto

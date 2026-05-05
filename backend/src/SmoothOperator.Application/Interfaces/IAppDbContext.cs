@@ -22,6 +22,7 @@ namespace SmoothOperator.Application.Interfaces
         DbSet<UserGroup> UserGroups { get; }
         DbSet<SsoProvider> SsoProviders { get; }
         DbSet<SsoAuthState> SsoAuthStates { get; }
+        DbSet<SecretProvider> SecretProviders { get; }
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     }
 }
