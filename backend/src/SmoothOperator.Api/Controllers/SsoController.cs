@@ -1,10 +1,11 @@
 using System;
 using System.Threading.Tasks;
-using SmoothOperator.Infrastructure.Data;
+using MediatR;
 using SmoothOperator.Application.DTOs;
 using SmoothOperator.Domain.Models;
-using SmoothOperator.Infrastructure.Services;
 using SmoothOperator.Application.Interfaces;
+using SmoothOperator.Application.Interfaces.Sso;
+using SmoothOperator.Application.Features.SsoProvider.Queries;
 using SmoothOperator.Infrastructure.Services.Sso;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -18,6 +19,7 @@ namespace SmoothOperator.Api.Controllers
     [AllowAnonymous]
     public class SsoController : ControllerBase
     {
+        private readonly IMediator _mediator;
         private readonly ISsoProviderService _providers;
         private readonly IOidcFlowService _oidc;
         private readonly ISamlFlowService _saml;
@@ -27,6 +29,7 @@ namespace SmoothOperator.Api.Controllers
         private readonly SsoUrlHelper _urls;
 
         public SsoController(
+            IMediator mediator,
             ISsoProviderService providers,
             IOidcFlowService oidc,
             ISamlFlowService saml,
@@ -35,6 +38,7 @@ namespace SmoothOperator.Api.Controllers
             ILogger<SsoController> logger,
             SsoUrlHelper urls)
         {
+            _mediator = mediator;
             _providers = providers;
             _oidc = oidc;
             _saml = saml;
@@ -48,14 +52,8 @@ namespace SmoothOperator.Api.Controllers
         [HttpGet("provider")]
         public async Task<ActionResult<SsoStatusDto>> GetProvider()
         {
-            var p = await _providers.GetActiveProviderAsync();
-            if (p == null) return Ok(new SsoStatusDto { Enabled = false });
-            return Ok(new SsoStatusDto
-            {
-                Enabled = true,
-                Type = p.Type.ToString(),
-                Name = p.Name
-            });
+            var result = await _mediator.Send(new GetSsoProviderQuery());
+            return Ok(result);
         }
 
         /// <summary>Begins an SSO flow. Redirects browser to the configured IdP.</summary>

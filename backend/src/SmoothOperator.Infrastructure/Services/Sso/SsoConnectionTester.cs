@@ -1,19 +1,13 @@
-﻿using System;
+using System;
 using System.Net.Http;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
+using SmoothOperator.Application.Interfaces.Sso;
 using SmoothOperator.Domain.Models;
 using Duende.IdentityModel.Client;
 
 namespace SmoothOperator.Infrastructure.Services.Sso
 {
-    public record SsoTestResult(bool Success, string Message, object? Details = null);
-
-    public interface ISsoConnectionTester
-    {
-        Task<SsoTestResult> TestAsync();
-    }
-
     /// <summary>
     /// Lightweight probe of the currently saved SSO provider. For OIDC, fetches the
     /// discovery document and surfaces issuer + endpoints. For SAML, validates the

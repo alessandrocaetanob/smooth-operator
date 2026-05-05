@@ -1,9 +1,10 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using SmoothOperator.Application.Interfaces.Sso;
 using SmoothOperator.Infrastructure.Data;
 using SmoothOperator.Domain.Models;
 using Duende.IdentityModel.Client;

@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using SmoothOperator.Infrastructure.Data;
 using SmoothOperator.Infrastructure.Services;
 using SmoothOperator.Application.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -17,12 +16,12 @@ namespace SmoothOperator.Api.Controllers
     public class GuacamoleController : ControllerBase
     {
         private readonly GuacamoleProxyService _proxyService;
-        private readonly AppDbContext _db;
+        private readonly IAppDbContext _db;
         private readonly IAccessControlService _accessControl;
 
         public GuacamoleController(
             GuacamoleProxyService proxyService,
-            AppDbContext db,
+            IAppDbContext db,
             IAccessControlService accessControl)
         {
             _proxyService = proxyService;

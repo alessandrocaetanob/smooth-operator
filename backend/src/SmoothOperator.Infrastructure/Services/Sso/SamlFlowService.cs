@@ -1,7 +1,8 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
+using SmoothOperator.Application.Interfaces.Sso;
 using SmoothOperator.Infrastructure.Data;
 using SmoothOperator.Domain.Models;
 using ITfoxtec.Identity.Saml2;

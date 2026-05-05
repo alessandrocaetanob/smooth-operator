@@ -1,4 +1,5 @@
 using SmoothOperator.Application.Interfaces;
+using SmoothOperator.Application.Interfaces.Sso;
 using System;
 using System.Threading.Tasks;
 using System.Text.Json;
@@ -8,18 +9,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace SmoothOperator.Infrastructure.Services.Sso
 {
-    public interface ISsoProviderService
-    {
-        Task<SsoProvider?> GetActiveProviderAsync();
-        Task<SsoProvider?> GetProviderAsync();
-        Task<OidcConfig?> GetDecryptedOidcAsync();
-        Task<SamlConfig?> GetDecryptedSamlAsync();
-        Task<SsoProvider> UpsertOidcAsync(string name, OidcConfig config);
-        Task<SsoProvider> UpsertSamlAsync(string name, SamlConfig config);
-        Task<bool> DeleteAsync();
-        Task<SsoProvider?> SetEnabledAsync(bool enabled);
-    }
-
     public class SsoProviderService : ISsoProviderService
     {
         private static readonly JsonSerializerOptions JsonOptions = new()

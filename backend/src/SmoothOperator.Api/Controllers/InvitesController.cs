@@ -1,13 +1,11 @@
-using System;
-using System.Threading.Tasks;
-using SmoothOperator.Infrastructure.Data;
+using MediatR;
 using SmoothOperator.Application.DTOs;
-using SmoothOperator.Infrastructure.Services;
-using SmoothOperator.Application.Interfaces;
+using SmoothOperator.Application.Exceptions;
+using SmoothOperator.Application.Features.Invites.Commands;
+using SmoothOperator.Application.Features.Invites.Queries;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
-using Microsoft.EntityFrameworkCore;
 
 namespace SmoothOperator.Api.Controllers
 {
@@ -16,32 +14,22 @@ namespace SmoothOperator.Api.Controllers
     [AllowAnonymous]
     public class InvitesController : ControllerBase
     {
-        private readonly AppDbContext _context;
-        private readonly IInviteService _invites;
-        private readonly IAuditService _audit;
+        private readonly IMediator _mediator;
 
-        public InvitesController(AppDbContext context, IInviteService invites, IAuditService audit)
-        {
-            _context = context;
-            _invites = invites;
-            _audit = audit;
-        }
+        public InvitesController(IMediator mediator) => _mediator = mediator;
 
         [HttpGet("{token}")]
         public async Task<IActionResult> Preview(string token)
         {
-            var invitation = await _invites.ValidateAsync(token);
-            if (invitation == null || invitation.User == null)
+            try
             {
-                return NotFound(new { message = "Invitation is invalid or has expired." });
+                var result = await _mediator.Send(new ValidateInviteQuery(token));
+                return Ok(result);
             }
-
-            return Ok(new InvitePreviewDto
+            catch (NotFoundException ex)
             {
-                Email = invitation.User.Email,
-                Name = invitation.User.Name,
-                Type = invitation.Type,
-            });
+                return NotFound(new { message = ex.Message });
+            }
         }
 
         [HttpPost("{token}/redeem")]
@@ -50,26 +38,15 @@ namespace SmoothOperator.Api.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            var invitation = await _invites.ValidateAsync(token);
-            if (invitation == null || invitation.User == null)
+            try
             {
-                return NotFound(new { message = "Invitation is invalid or has expired." });
+                await _mediator.Send(new RedeemInviteCommand(token, request.Password, request.Name));
+                return NoContent();
             }
-
-            var user = invitation.User;
-            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password, workFactor: 12);
-            if (!string.IsNullOrWhiteSpace(request.Name))
+            catch (NotFoundException ex)
             {
-                user.Name = request.Name.Trim();
+                return NotFound(new { message = ex.Message });
             }
-            user.IsActive = true;
-
-            await _invites.RedeemAsync(token);
-
-            await _audit.WriteAsync("invite.redeemed", "User", user.Id.ToString(),
-                new { type = invitation.Type, userId = user.Id });
-
-            return NoContent();
         }
     }
 }

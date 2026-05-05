@@ -94,4 +94,38 @@ namespace SmoothOperator.Application.DTOs
         public string CredentialType { get; set; } = "password";
         public string? PublicKey { get; set; }
     }
+
+    public class VaultAssignmentsDto
+    {
+        public List<Guid> UserIds { get; set; } = new();
+        public List<Guid> GroupIds { get; set; } = new();
+    }
+
+    public class CreateCredentialDto
+    {
+        [Required(ErrorMessage = "Credential name is required")]
+        [StringLength(100, MinimumLength = 1, ErrorMessage = "Name must be between 1 and 100 characters")]
+        public string Name { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Username is required")]
+        [StringLength(255, ErrorMessage = "Username cannot exceed 255 characters")]
+        public string Username { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Secret is required")]
+        [StringLength(4096, MinimumLength = 1, ErrorMessage = "Secret must be between 1 and 4096 characters")]
+        public string Secret { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "CredentialType is required")]
+        [RegularExpression("^(password|private_key)$", ErrorMessage = "CredentialType must be 'password' or 'private_key'")]
+        public string CredentialType { get; set; } = "password";
+
+        public string? PublicKey { get; set; }
+    }
+
+    public class ConnectionFileDto
+    {
+        public byte[] Content { get; set; } = Array.Empty<byte>();
+        public string ContentType { get; set; } = string.Empty;
+        public string FileName { get; set; } = string.Empty;
+    }
 }

@@ -1,9 +1,10 @@
-﻿using SmoothOperator.Infrastructure.Data;
+using SmoothOperator.Infrastructure.Data;
 using SmoothOperator.Api.Middleware;
 using SmoothOperator.Infrastructure.Services;
 using SmoothOperator.Infrastructure.Services.Sso;
 using SmoothOperator.Application.Options;
 using SmoothOperator.Application.Interfaces;
+using SmoothOperator.Application.Interfaces.Sso;
 using SmoothOperator.Application.Behaviors;
 using SmoothOperator.Application.Features.Auth.Commands;
 using FluentValidation;
