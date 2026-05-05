@@ -36,4 +36,20 @@ All options registered in `Program.cs` with `ValidateDataAnnotations().ValidateO
 
 Test infrastructure: `TestWebApplicationFactory` uses `PostConfigure<AuthOptions>` in `ConfigureServices` (runs after all config sources) to pin `AllowSelfRegister = false` by default — fixes race against `appsettings.Development.json`. Added 16 options validation unit tests in `SmoothOperator.Application.Tests/Options/` covering `EncryptionOptions`, `JwtOptions`, `GuacdOptions`. All 158 tests green at phase boundary.
 
+## 2026-07-13 - Phase 5 Architecture Tests (NetArchTest.Rules)
+**Summary:** Added `SmoothOperator.ArchitectureTests` project (`backend/tests/SmoothOperator.ArchitectureTests/`) using `NetArchTest.Rules 1.3.2`. Project references all 4 src layers (Domain, Application, Infrastructure, Api).
+
+**9 architecture tests enforcing layer dependency rules:**
+1. Domain → must NOT reference Application
+2. Domain → must NOT reference Infrastructure
+3. Domain → must NOT reference Api
+4. Application → must NOT reference Infrastructure
+5. Application → must NOT reference Api
+6. Infrastructure → must NOT reference Api
+7. Controllers → must reside in `SmoothOperator.Api.Controllers` namespace
+8. MediatR handlers → must reside under `SmoothOperator.Application.Features.*`
+9. Application interfaces → must reside in `SmoothOperator.Application.*`
+
+All 9 pass. Full suite result: **169 tests passing** (18 Application + 9 Architecture + 142 Api integration). Build clean with 0 errors. Project added to `smooth-operator.sln`.
+
 
