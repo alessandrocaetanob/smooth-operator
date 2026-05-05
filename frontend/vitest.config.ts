@@ -10,6 +10,7 @@ export default defineConfig({
     pool: 'forks',
     coverage: {
       provider: 'v8',
+      enabled: process.env.CI === 'true',
       reporter: ['text', 'lcov'],
       exclude: [
         'src/main.ts',
