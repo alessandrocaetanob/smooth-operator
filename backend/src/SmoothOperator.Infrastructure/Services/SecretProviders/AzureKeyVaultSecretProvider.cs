@@ -85,9 +85,14 @@ namespace SmoothOperator.Infrastructure.Services.SecretProviders
         public async Task<bool> TestConnectionAsync(CancellationToken cancellationToken = default)
         {
             // Listing secret properties is a cheap, non-destructive way to verify auth + network.
-            await foreach (var _ in _client.GetPropertiesOfSecretsAsync(cancellationToken))
+            var enumerator = _client.GetPropertiesOfSecretsAsync(cancellationToken).GetAsyncEnumerator(cancellationToken);
+            try
             {
-                break;
+                await enumerator.MoveNextAsync();
+            }
+            finally
+            {
+                await enumerator.DisposeAsync();
             }
             return true;
         }

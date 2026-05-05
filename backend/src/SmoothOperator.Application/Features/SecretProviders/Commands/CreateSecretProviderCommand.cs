@@ -30,15 +30,13 @@ namespace SmoothOperator.Application.Features.SecretProviders.Commands
         {
             var dto = request.Dto;
 
-            if (dto.Type == SecretProviderType.AzureKeyVault)
+            if (dto.Type == SecretProviderType.AzureKeyVault &&
+                (string.IsNullOrWhiteSpace(dto.TenantId) ||
+                 string.IsNullOrWhiteSpace(dto.ClientId) ||
+                 string.IsNullOrWhiteSpace(dto.ClientSecret) ||
+                 string.IsNullOrWhiteSpace(dto.VaultUri)))
             {
-                if (string.IsNullOrWhiteSpace(dto.TenantId) ||
-                    string.IsNullOrWhiteSpace(dto.ClientId) ||
-                    string.IsNullOrWhiteSpace(dto.ClientSecret) ||
-                    string.IsNullOrWhiteSpace(dto.VaultUri))
-                {
-                    throw new BadRequestException("TenantId, ClientId, ClientSecret, and VaultUri are required for Azure Key Vault providers.");
-                }
+                throw new BadRequestException("TenantId, ClientId, ClientSecret, and VaultUri are required for Azure Key Vault providers.");
             }
 
             var config = new AzureKeyVaultConfig

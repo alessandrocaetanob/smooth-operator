@@ -67,7 +67,7 @@ namespace SmoothOperator.Application.Features.Credentials.Commands
 
                     var secretProvider = _secretProviderFactory.Create(provider);
                     var secretName = $"smoothoperator-{SanitizeName(dto.Name)}-{Guid.NewGuid():N}";
-                    var version = await secretProvider.SetSecretAsync(secretName, dto.Secret!, cancellationToken);
+                    await secretProvider.SetSecretAsync(secretName, dto.Secret!, cancellationToken);
 
                     credential.ExternalSecretName = secretName;
                     credential.ExternalSecretVersion = null; // track latest
