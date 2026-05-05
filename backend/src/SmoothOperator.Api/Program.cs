@@ -320,8 +320,10 @@ using (var scope = app.Services.CreateScope())
     }
     catch (Exception ex)
     {
+#pragma warning disable S2139
         logger.LogError(ex, "Failed to apply database migrations on startup.");
         throw;
+#pragma warning restore S2139
     }
 }
 
@@ -363,9 +365,12 @@ app.MapControllers();
 app.MapHealthChecks("/health");
 app.MapMetrics("/metrics");
 
-app.Run();
+await app.RunAsync();
 
 
 // Expose the implicit Program class for WebApplicationFactory<Program> in tests.
-public partial class Program { }
+public partial class Program
+{
+    protected Program() { }
+}
 

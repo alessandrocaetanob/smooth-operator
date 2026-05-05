@@ -45,10 +45,10 @@ namespace SmoothOperator.Infrastructure.Services
             _context.Invitations.Add(invitation);
             await _context.SaveChangesAsync();
 
-            var baseUrl = (!string.IsNullOrEmpty(_appUrls.Frontend)
-                ? _appUrls.Frontend
-                : (!string.IsNullOrEmpty(_appUrls.App) ? _appUrls.App : "http://localhost:4200"))
-                .TrimEnd('/');
+#pragma warning disable S1075
+            var fallbackUrl = !string.IsNullOrEmpty(_appUrls.App) ? _appUrls.App : "http://localhost:4200";
+#pragma warning restore S1075
+            var baseUrl = (!string.IsNullOrEmpty(_appUrls.Frontend) ? _appUrls.Frontend : fallbackUrl).TrimEnd('/');
             var url = $"{baseUrl}/invite/{raw}";
             return (invitation, raw, url);
         }

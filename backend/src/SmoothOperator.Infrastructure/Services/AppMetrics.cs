@@ -12,7 +12,7 @@ namespace SmoothOperator.Infrastructure.Services
         private static readonly Counter LoginAttempts = Metrics.CreateCounter(
             "smooth_operator_login_attempts_total",
             "Total login attempts, labelled by outcome (success/failure).",
-            labelNames: ["outcome"]);
+            "outcome");
 
         private static readonly Gauge ActiveSessions = Metrics.CreateGauge(
             "smooth_operator_active_sessions",
@@ -29,7 +29,7 @@ namespace SmoothOperator.Infrastructure.Services
         private static readonly Counter AuditEvents = Metrics.CreateCounter(
             "smooth_operator_audit_events_total",
             "Total audit events recorded, labelled by action.",
-            labelNames: ["action"]);
+            "action");
 
         public void RecordLoginAttempt(string outcome) =>
             LoginAttempts.WithLabels(outcome).Inc();

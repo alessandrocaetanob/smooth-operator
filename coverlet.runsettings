@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  coverlet.runsettings — controls coverage collection during `dotnet test`.
-  Applied via:  dotnet test --settings coverlet.runsettings
+  coverlet.runsettings - controls coverage collection during dotnet test.
+  Applied via: dotnet test -settings coverlet.runsettings
 -->
 <RunSettings>
   <DataCollectionRunSettings>

@@ -10,7 +10,7 @@ namespace SmoothOperator.Api.Tests.Services;
 
 public class EmailServiceTests
 {
-    private AppDbContext GetDbContext()
+    private static AppDbContext GetDbContext()
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())

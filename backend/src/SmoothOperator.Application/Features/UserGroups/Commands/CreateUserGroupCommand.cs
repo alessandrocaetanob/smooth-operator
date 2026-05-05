@@ -63,7 +63,7 @@ namespace SmoothOperator.Application.Features.UserGroups.Commands
             return await query.AnyAsync(ct);
         }
 
-        internal static async Task<UserGroupDto?> BuildGroupDtoAsync(Guid id, CancellationToken ct, IAppDbContext context = null!)
+        internal static async Task<UserGroupDto?> BuildGroupDtoAsync(Guid id, CancellationToken ct, IAppDbContext context)
         {
             return await context.UserGroups
                 .AsNoTracking()

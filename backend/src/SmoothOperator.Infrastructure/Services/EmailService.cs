@@ -72,9 +72,8 @@ namespace SmoothOperator.Infrastructure.Services
                 message.Body = builder.ToMessageBody();
 
                 using var client = new SmtpClient();
-                var secure = settings.UseSsl
-                    ? (settings.Port == 465 ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.StartTls)
-                    : SecureSocketOptions.None;
+                var sslOptions = settings.Port == 465 ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.StartTls;
+                var secure = settings.UseSsl ? sslOptions : SecureSocketOptions.None;
 
                 await client.ConnectAsync(settings.Host, settings.Port, secure);
 

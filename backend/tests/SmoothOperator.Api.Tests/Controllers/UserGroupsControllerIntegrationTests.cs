@@ -122,6 +122,6 @@ public class UserGroupsControllerIntegrationTests
         var group2 = await getRes2.Content.ReadFromJsonAsync<UserGroupDto>();
         Assert.NotNull(group2);
         Assert.Equal(1, group2.MemberCount);
-        Assert.Equal(user2Id, group2.Members.First().Id);
+        Assert.Equal(user2Id, group2.Members[0].Id);
     }
 }

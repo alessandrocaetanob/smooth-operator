@@ -14,19 +14,6 @@ namespace SmoothOperator.Api.Tests.Controllers;
 
 public class UsersControllerIntegrationTests
 {
-    private static User MakeUser(string email, params string[] roles)
-    {
-        return new User
-        {
-            Id = Guid.NewGuid(),
-            Email = email,
-            Name = email,
-            IsActive = true,
-            Roles = new List<Role>(),
-            // Roles attached after seed when we have actual Role rows.
-            CreatedAt = DateTime.UtcNow
-        };
-    }
 
     private static void AttachRoles(AppDbContext db, User user, params string[] roleNames)
     {

@@ -723,7 +723,7 @@ namespace SmoothOperator.Infrastructure.Services
             }
         }
 
-        private async Task ProxyGuacdToWebSocket(GuacInstructionReader reader, WebSocket webSocket, Action<string> onGuacError)
+        private static async Task ProxyGuacdToWebSocket(GuacInstructionReader reader, WebSocket webSocket, Action<string> onGuacError)
         {
             var ct = CancellationToken.None;
             while (webSocket.State == WebSocketState.Open)
@@ -778,7 +778,7 @@ namespace SmoothOperator.Infrastructure.Services
             return null;
         }
 
-        private async Task ProxyWebSocketToGuacd(WebSocket webSocket, NetworkStream guacdStream)
+        private static async Task ProxyWebSocketToGuacd(WebSocket webSocket, NetworkStream guacdStream)
         {
             var buffer = new byte[16 * 1024];
             using var ms = new MemoryStream();
@@ -790,7 +790,7 @@ namespace SmoothOperator.Infrastructure.Services
                 {
                     result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
                     if (result.MessageType == WebSocketMessageType.Close) return;
-                    ms.Write(buffer, 0, result.Count);
+                    await ms.WriteAsync(buffer, 0, result.Count);
                 } while (!result.EndOfMessage);
 
                 var payload = ms.ToArray();

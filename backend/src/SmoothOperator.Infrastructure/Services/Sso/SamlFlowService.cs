@@ -83,8 +83,6 @@ namespace SmoothOperator.Infrastructure.Services.Sso
         public async Task<(SamlAssertionResult Identity, string ReturnUrl)> HandleAssertionAsync(HttpRequest request)
         {
             var cfg = await RequireSamlConfigAsync();
-            // ACS URL must match what we sent; rebuild from request.
-            var acsUrl = $"{request.Scheme}://{request.Host}{request.Path}";
             var samlConfig = BuildSamlConfiguration(cfg);
 
             var binding = new Saml2PostBinding();

@@ -91,7 +91,8 @@ namespace SmoothOperator.Infrastructure.Services.Sso
 
             await _db.SaveChangesAsync();
 
-            var action = wasCreated ? "user.sso_provisioned" : wasLinked ? "user.sso_linked" : "user.sso_login";
+            var defaultAction = wasLinked ? "user.sso_linked" : "user.sso_login";
+            var action = wasCreated ? "user.sso_provisioned" : defaultAction;
             await _audit.WriteAsync(action, "user", user.Id.ToString(),
                 new { providerType = providerType.ToString(), externalId, email });
 
