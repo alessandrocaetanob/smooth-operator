@@ -2,6 +2,7 @@ import { Component, inject } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { LayoutService } from '../../services/layout.service';
+import { RuntimeConfigService } from '../../core/config/runtime-config.service';
 
 @Component({
   selector: 'app-side-nav-bar',
@@ -13,6 +14,7 @@ import { LayoutService } from '../../services/layout.service';
 export class SideNavBar {
   private readonly router = inject(Router);
   private readonly auth = inject(AuthService);
+  private readonly runtimeConfig = inject(RuntimeConfigService);
   readonly layout = inject(LayoutService);
 
   readonly canManageConnections = this.auth.canManageConnections;
@@ -20,7 +22,9 @@ export class SideNavBar {
   readonly canAccessSettings = this.auth.canAccessSettings;
   readonly collapsed = this.layout.collapsed;
 
-  readonly helpUrl = 'http://localhost:3000';
+  get helpUrl(): string {
+    return this.runtimeConfig.config.helpUrl;
+  }
 
   toggleCollapsed(): void {
     this.layout.toggle();

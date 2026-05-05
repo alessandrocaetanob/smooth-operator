@@ -30,6 +30,13 @@ COPY --from=build /app/dist/frontend/browser /usr/share/nginx/html
 # Copy a custom nginx configuration (optional, recommended for Angular routing)
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
+# Copy the entrypoint that injects runtime config from environment variables
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
 EXPOSE 80
 
-CMD ["nginx", "-g", "daemon off;"]
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD wget -qO- http://localhost:80/ || exit 1
+
+ENTRYPOINT ["/entrypoint.sh"]
