@@ -5,7 +5,7 @@ import { Observable } from 'rxjs';
 export interface MetricsSummary {
   activeSessions: number;
   loginAttemptsTotal24h: number;
-  loginFailures1h: number;
+  loginFailures24h: number;
   loginSuccessRate24h: number;
   connectionsStarted24h: number;
   connectionsEnded24h: number;

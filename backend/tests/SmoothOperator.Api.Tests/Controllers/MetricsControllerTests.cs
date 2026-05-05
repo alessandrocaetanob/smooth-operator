@@ -86,7 +86,7 @@ public class MetricsControllerTests
 
         Assert.NotNull(summary);
         Assert.Equal(3, summary!.LoginAttemptsTotal24h);
-        Assert.Equal(2, summary.LoginFailures1h);
+        Assert.Equal(2, summary.LoginFailures24h);
         Assert.InRange(summary.LoginSuccessRate24h, 33.0, 33.5);
         Assert.Equal(1, summary.ConnectionsStarted24h);
         Assert.Equal(1, summary.ConnectionsEnded24h);

@@ -109,14 +109,14 @@
       </div>
       <div class="glass-card p-4 rounded-xl">
         <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-1">
-          Failed Logins (1h)
+          Failed Logins (24h)
         </p>
         <p
           class="text-3xl font-bold"
-          [class.text-red-400]="(summary()?.loginFailures1h ?? 0) > 0"
-          [class.text-on-surface]="(summary()?.loginFailures1h ?? 0) === 0"
+          [class.text-red-400]="(summary()?.loginFailures24h ?? 0) > 0"
+          [class.text-on-surface]="(summary()?.loginFailures24h ?? 0) === 0"
         >
-          {{ summary()?.loginFailures1h ?? '–' }}
+          {{ summary()?.loginFailures24h ?? '–' }}
         </p>
       </div>
       <div class="glass-card p-4 rounded-xl">

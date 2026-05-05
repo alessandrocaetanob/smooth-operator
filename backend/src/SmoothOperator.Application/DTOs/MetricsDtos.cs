@@ -7,7 +7,7 @@ namespace SmoothOperator.Application.DTOs
     {
         public double ActiveSessions { get; set; }
         public long LoginAttemptsTotal24h { get; set; }
-        public long LoginFailures1h { get; set; }
+        public long LoginFailures24h { get; set; }
         public double LoginSuccessRate24h { get; set; }
         public long ConnectionsStarted24h { get; set; }
         public long ConnectionsEnded24h { get; set; }
