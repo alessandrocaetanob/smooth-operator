@@ -26,8 +26,16 @@ using Prometheus;
 using StackExchange.Redis;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Microsoft.AspNetCore.DataProtection;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// ─── Docker Secrets ──────────────────────────────────────────────────────────
+// When running in Docker with the secrets: block, secrets are mounted as files
+// at /run/secrets/<KEY_NAME>. Key names use __ as the section separator so that
+// e.g. /run/secrets/Jwt__Key maps to the Jwt:Key config key.
+// File-based secrets take precedence over appsettings.json values.
+builder.Configuration.AddKeyPerFile(directoryPath: "/run/secrets", optional: true);
 
 // Replace default logging with Serilog — reads config from "Serilog" section.
 builder.Host.UseSerilog((ctx, lc) => lc.ReadFrom.Configuration(ctx.Configuration));
@@ -183,6 +191,50 @@ builder.Services.AddHealthChecks()
     .AddNpgSql(builder.Configuration.GetConnectionString("DefaultConnection") ?? "")
     .AddRedis(builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379");
 
+// ─── Data Protection ─────────────────────────────────────────────────────────
+// Persist ASP.NET Core data-protection keys to a named-volume-backed directory so
+// encrypted cookies / antiforgery tokens survive container restarts.
+// Override the path via DataProtection__KeysPath or the DataProtection:KeysPath
+// config key (default: /data/protection-keys, which maps to the dp_keys volume).
+var dpKeysPath = builder.Configuration["DataProtection:KeysPath"] ?? "/data/protection-keys";
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo(dpKeysPath))
+    .SetApplicationName("smooth-operator");
+
+// ─── CORS ────────────────────────────────────────────────────────────────────
+// Allowed origins are read from AppUrls:Frontend and AppUrls:AllowedOrigins[] so
+// the policy adjusts to the deployment environment without code changes.
+// Set AppUrls__AllowedOrigins__0, __1, … environment variables to add origins.
+const string CorsPolicyName = "AllowConfiguredOrigins";
+var appUrlsCfg = builder.Configuration.GetSection("AppUrls");
+var frontendOrigin = appUrlsCfg["Frontend"];
+var appOrigin = appUrlsCfg["App"];
+var extraOrigins = appUrlsCfg.GetSection("AllowedOrigins").Get<string[]>() ?? [];
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(CorsPolicyName, policy =>
+    {
+        var origins = new List<string>();
+        if (!string.IsNullOrWhiteSpace(frontendOrigin))
+            origins.Add(frontendOrigin.TrimEnd('/'));
+        if (!string.IsNullOrWhiteSpace(appOrigin) && appOrigin != frontendOrigin)
+            origins.Add(appOrigin.TrimEnd('/'));
+        origins.AddRange(extraOrigins
+            .Where(o => !string.IsNullOrWhiteSpace(o))
+            .Select(o => o.TrimEnd('/')));
+
+        if (origins.Count > 0)
+            policy.WithOrigins([.. origins])
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowCredentials();
+        else
+            // No origins configured — permissive dev fallback (no credentials).
+            policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+    });
+});
+
 builder.Services.AddControllers();
 
 // ─── Response Compression (Brotli + Gzip) ───────────────────────────────────
@@ -301,6 +353,7 @@ app.UseSerilogRequestLogging(opts =>
 app.UseResponseCompression();
 app.UseHttpsRedirection();
 app.UseRouting();
+app.UseCors(CorsPolicyName);   // Must be after UseRouting, before UseAuthentication/OutputCache
 app.UseOutputCache();
 app.UseHttpMetrics();
 app.UseRateLimiter();

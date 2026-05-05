@@ -32,6 +32,11 @@ pnpm-debug.log*
 !.env.example
 !.env.*.example
 
+# Docker secrets directory — contains sensitive key files mounted at runtime.
+# Only .gitkeep (to preserve directory structure) is tracked.
+secrets/
+!secrets/.gitkeep
+
 # .NET / C#
 [Bb]in/
 [Oo]bj/

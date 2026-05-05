@@ -82,38 +82,5 @@ namespace SmoothOperator.Api.Controllers
             await _mediator.Send(new DeleteUserCommand(id, HttpContext.User));
             return NoContent();
         }
-
-        [AllowAnonymous]
-        [HttpGet("{id}/effective-vaults")]
-        public async Task<IActionResult> GetEffectiveVaults(Guid id)
-        {
-            if (User?.Identity?.IsAuthenticated != true)
-                return Unauthorized();
-
-            var result = await _mediator.Send(new GetEffectiveVaultsQuery(id, HttpContext.User));
-            return Ok(result);
-        }
-
-        [AllowAnonymous]
-        [HttpPut("me/profile")]
-        public async Task<IActionResult> UpdateMyProfile([FromBody] UpdateProfileRequest request)
-        {
-            if (User?.Identity?.IsAuthenticated != true)
-                return Unauthorized();
-
-            var result = await _mediator.Send(new UpdateMyProfileCommand(request, HttpContext.User));
-            return Ok(result);
-        }
-
-        [AllowAnonymous]
-        [HttpDelete("me/avatar")]
-        public async Task<IActionResult> DeleteMyAvatar()
-        {
-            if (User?.Identity?.IsAuthenticated != true)
-                return Unauthorized();
-
-            var result = await _mediator.Send(new DeleteMyAvatarCommand(HttpContext.User));
-            return Ok(result);
-        }
     }
 }

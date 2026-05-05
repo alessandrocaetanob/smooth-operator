@@ -19,7 +19,7 @@ namespace SmoothOperator.Api.Controllers
         public SystemSettingsController(IMediator mediator) => _mediator = mediator;
 
         [HttpGet]
-        [OutputCache(PolicyName = "ShortCache")]
+        [OutputCache(PolicyName = "ShortCache", Tags = ["system-settings"])]
         public async Task<ActionResult<SystemSettingsDto>> Get()
         {
             var result = await _mediator.Send(new GetSystemSettingsQuery());
@@ -27,11 +27,15 @@ namespace SmoothOperator.Api.Controllers
         }
 
         [HttpPut]
-        public async Task<ActionResult<SystemSettingsDto>> Update([FromBody] UpdateSystemSettingsRequest request)
+        public async Task<ActionResult<SystemSettingsDto>> Update(
+            [FromBody] UpdateSystemSettingsRequest request,
+            [FromServices] IOutputCacheStore cacheStore,
+            CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
             var result = await _mediator.Send(new UpdateSystemSettingsCommand(request));
+            await cacheStore.EvictByTagAsync("system-settings", cancellationToken);
             return Ok(result);
         }
     }

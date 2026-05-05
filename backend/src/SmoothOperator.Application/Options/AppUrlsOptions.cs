@@ -13,4 +13,11 @@ public sealed class AppUrlsOptions
 
     /// <summary>Base URL of the Angular frontend (e.g. https://myorg.example).</summary>
     public string Frontend { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Additional origins allowed by the CORS policy (beyond <see cref="Frontend"/>).
+    /// Useful when the frontend is served from multiple domains or behind a CDN.
+    /// Example: <c>AppUrls__AllowedOrigins__0=https://cdn.example.com</c>
+    /// </summary>
+    public string[] AllowedOrigins { get; set; } = [];
 }

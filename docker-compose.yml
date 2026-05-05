@@ -28,7 +28,7 @@ services:
       - ConnectionStrings__Redis=redis:6379
       - Guacd__Host=guacd
       - Guacd__Port=4822
-      - Encryption__Key=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef # WARNING: FOR DEVELOPMENT ONLY! Use Azure Key Vault or secure secrets management in production
+      - Encryption__Key=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef # WARNING: FOR DEVELOPMENT ONLY! Use Docker secrets or a secrets manager in production
       - Jwt__Key=7e589cea4a11cdcc9c35a1cf55e9cbe2bf793a59d1c7c106e218749b6c2308ad # WARNING: FOR DEVELOPMENT ONLY! Replace with a strong random secret in production
       - Jwt__Issuer=smooth-operator
       - Jwt__Audience=smooth-operator-api
@@ -40,12 +40,15 @@ services:
       - AppUrls__Frontend=http://localhost:4200
       - Otel__Endpoint=http://tempo:4317
       - Otel__ServiceName=smooth-operator-backend
+    volumes:
+      - dp_keys:/data/protection-keys
     depends_on:
       - postgres
       - redis
       - guacd
     restart: unless-stopped
     cap_drop: [ALL]
+    read_only: true
     tmpfs:
       - /tmp
     networks:
@@ -162,6 +165,7 @@ volumes:
   sonarqube_data:
   sonarqube_logs:
   sonarqube_extensions:
+  dp_keys:
 
 networks:
   smooth-operator-net:

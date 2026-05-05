@@ -144,3 +144,17 @@ All 55 Angular unit tests pass. Build clean at commit `fd451f9`.
 - `backend/.dockerignore`: changed bare `obj/bin/out/publish` → `**/obj **/bin **/out **/publish` — prevents Windows `project.assets.json` leaking into Linux Docker builds.
 - `.env.example`: created to document all required env vars.
 
+## 2025-07-25 - Phase 11: Security Pass
+
+- **Docker secrets**: added `builder.Configuration.AddKeyPerFile("/run/secrets", optional: true)` in `Program.cs`; file `/run/secrets/Jwt__Key` maps to `Jwt:Key` config key.
+- **Hardcoded JWT key cleared**: `appsettings.json` `Jwt:Key` is now `""` — must be supplied via env or secret.
+- **Legacy flat env keys removed**: `ENCRYPTION_KEY`, `APP_URL`, `FRONTEND_URL` removed from `appsettings.json`; Options pattern bindings in place.
+- **Data Protection**: `AddDataProtection().PersistKeysToFileSystem(new DirectoryInfo(config.DataProtection.KeysPath))` so antiforgery / cookie keys survive container restarts; `dp_keys` named volume added to `docker-compose.yml`; `DataProtection.KeysPath` config key added to `appsettings.json`.
+- **CORS**: `AddCors("AllowConfiguredOrigins")` reading from `AppUrlsOptions.AllowedOrigins[]`; `UseCors` inserted between `UseRouting` and `UseOutputCache` in middleware pipeline; `AllowedOrigins` property added to `AppUrlsOptions`.
+- **[AllowAnonymous] antipattern fixed**: `GetEffectiveVaults`, `UpdateMyProfile`, `DeleteMyAvatar` removed from admin-role-restricted `UsersController`; moved to new `UserProfileController` with `[Authorize]` (no role) at class level, same `/api/users` route prefix — preserving API contract.
+- **docker-compose**: `read_only: true` added to backend service; `dp_keys:/data/protection-keys` volume mount added; `dp_keys:` declared in top-level `volumes:` block.
+- **CI fixed**: `dependency-scan.yml` `dotnet restore/list` target changed from `backend/Backend.csproj` → `smooth-operator.sln`; `*.sln` added to `paths:` trigger.
+- **secrets/ gitignored**: `secrets/` entry + `!secrets/.gitkeep` added to `.gitignore`; `secrets/.gitkeep` placeholder committed.
+- **Output cache invalidation fix**: `SystemSettingsController.Update` now calls `cacheStore.EvictByTagAsync("system-settings")` after write; GET tagged with `"system-settings"` — prevents stale-read test failure.
+- All 151 tests pass (142 integration + 9 architecture).
+
