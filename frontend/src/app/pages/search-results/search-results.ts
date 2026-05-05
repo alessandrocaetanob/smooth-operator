@@ -20,8 +20,6 @@ interface ConnectionMatch {
   protocol: string;
 }
 
-type Match = VaultMatch | ConnectionMatch;
-
 @Component({
   selector: 'app-search-results',
   standalone: true,

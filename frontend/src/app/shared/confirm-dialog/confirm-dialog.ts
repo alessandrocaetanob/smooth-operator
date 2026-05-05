@@ -78,4 +78,10 @@ export class ConfirmDialog implements AfterViewInit, OnDestroy {
   onEscape(): void {
     if (this.active()) this.cancel();
   }
+
+  handleBackdropClick(event: MouseEvent): void {
+    if (event.target === event.currentTarget) {
+      this.cancel();
+    }
+  }
 }

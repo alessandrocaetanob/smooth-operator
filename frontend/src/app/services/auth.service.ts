@@ -1,6 +1,6 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap, of, catchError } from 'rxjs';
+import { Observable, tap, of, catchError, map } from 'rxjs';
 
 export interface SsoInfo {
   enabled: boolean;
@@ -71,20 +71,15 @@ export class AuthService {
   readonly canAccessSettings = computed(() => this.isOwnerOrAdmin());
 
   loadSetupStatus(): Observable<SetupStatus> {
-    return this.http.get<any>('/api/auth/setup-status').pipe(
-      tap((raw) => {
+    return this.http.get<Record<string, unknown>>('/api/auth/setup-status').pipe(
+      map((raw) => {
         if (!raw || typeof raw !== 'object') {
           throw new Error('Invalid setup-status response');
         }
-        this._setup.set(this.normalizeStatus(raw));
+        return this.normalizeStatus(raw);
       }),
+      tap((status) => this._setup.set(status)),
       catchError(() => {
-        // Backend unreachable or returned a non-JSON payload (e.g. SPA HTML
-        // when the API proxy is misconfigured). Default to `requiresSetup:
-        // false` so existing users land on /login and see real connection
-        // errors there — defaulting to `true` would hijack a healthy
-        // installation and dump every user on the bootstrap screen the
-        // moment the API hiccups, which has happened in production.
         const fallback: SetupStatus = {
           requiresSetup: false,
           providers: { local: true, sso: null },
@@ -96,17 +91,24 @@ export class AuthService {
   }
 
   setup(payload: { name: string; email: string; password: string }): Observable<AuthResponse> {
-    return this.http.post<any>('/api/auth/setup', payload).pipe(tap((res) => this.acceptAuth(res)));
+    return this.http
+      .post<Record<string, unknown>>('/api/auth/setup', payload)
+      .pipe(map((res) => this.acceptAuth(res)));
   }
 
   login(payload: { email: string; password: string }): Observable<AuthResponse> {
-    return this.http.post<any>('/api/auth/login', payload).pipe(tap((res) => this.acceptAuth(res)));
+    return this.http
+      .post<Record<string, unknown>>('/api/auth/login', payload)
+      .pipe(map((res) => this.acceptAuth(res)));
   }
 
   me(): Observable<UserInfo> {
-    return this.http
-      .get<any>('/api/auth/me')
-      .pipe(tap((u) => this._user.set(this.normalizeUser(u, this._token()))));
+    return this.http.get<Record<string, unknown>>('/api/auth/me').pipe(
+      map((u) => {
+        this._user.set(this.normalizeUser(u, this._token()));
+        return this.normalizeUser(u, this._token());
+      }),
+    );
   }
 
   hasRole(roleName: string): boolean {
@@ -128,10 +130,13 @@ export class AuthService {
     return this._user()?.roles ?? this.rolesFromToken(this._token());
   }
 
-  private acceptAuth(raw: any): AuthResponse {
-    const token = raw.token ?? raw.Token;
-    const expiresAt = raw.expiresAt ?? raw.ExpiresAt;
-    const user = this.normalizeUser(raw.user ?? raw.User, token);
+  private acceptAuth(raw: Record<string, unknown>): AuthResponse {
+    const token = (raw['token'] ?? raw['Token']) as string;
+    const expiresAt = (raw['expiresAt'] ?? raw['ExpiresAt']) as string;
+    const user = this.normalizeUser(
+      (raw['user'] ?? raw['User']) as Record<string, unknown> | null | undefined,
+      token,
+    );
     localStorage.setItem(TOKEN_KEY, token);
     this._token.set(token);
     this._user.set(user);
@@ -140,35 +145,44 @@ export class AuthService {
     return { token, expiresAt, user };
   }
 
-  private normalizeStatus(raw: any): SetupStatus {
-    const providers = raw.providers ?? raw.Providers ?? {};
-    const ssoEnabled = providers.sso ?? providers.Sso ?? false;
-    const ssoType = providers.ssoType ?? providers.SsoType ?? null;
-    const ssoName = providers.ssoName ?? providers.SsoName ?? null;
+  private normalizeStatus(raw: Record<string, unknown>): SetupStatus {
+    const providers = (raw['providers'] ?? raw['Providers'] ?? {}) as Record<string, unknown>;
+    const ssoEnabled = providers['sso'] ?? providers['Sso'] ?? false;
+    const ssoType = providers['ssoType'] ?? providers['SsoType'] ?? null;
+    const ssoName = providers['ssoName'] ?? providers['SsoName'] ?? null;
     return {
-      requiresSetup: raw.requiresSetup ?? raw.RequiresSetup ?? false,
+      requiresSetup: (raw['requiresSetup'] ?? raw['RequiresSetup'] ?? false) as boolean,
       providers: {
-        local: providers.local ?? providers.Local ?? true,
+        local: (providers['local'] ?? providers['Local'] ?? true) as boolean,
         sso:
           ssoEnabled && (ssoType === 'Oidc' || ssoType === 'Saml')
-            ? { enabled: true, type: ssoType, name: ssoName ?? 'Single Sign-On' }
+            ? {
+                enabled: true,
+                type: ssoType as 'Oidc' | 'Saml',
+                name: (ssoName as string | null) ?? 'Single Sign-On',
+              }
             : null,
       },
     };
   }
 
-  private normalizeUser(raw: any, fallbackToken: string | null = null): UserInfo {
+  private normalizeUser(
+    raw: Record<string, unknown> | null | undefined,
+    fallbackToken: string | null = null,
+  ): UserInfo {
     const roles = this.normalizeRoles(
-      raw?.roles ?? raw?.Roles ?? this.rolesFromToken(fallbackToken),
+      raw?.['roles'] ?? raw?.['Roles'] ?? this.rolesFromToken(fallbackToken),
     );
     return {
-      id: raw?.id ?? raw?.Id ?? '',
-      email: raw?.email ?? raw?.Email ?? '',
-      name: raw?.name ?? raw?.Name ?? '',
-      hasPassword: raw?.hasPassword ?? raw?.HasPassword ?? false,
-      ssoLinked: raw?.ssoLinked ?? raw?.SsoLinked ?? false,
-      ssoProviderType: raw?.ssoProviderType ?? raw?.SsoProviderType ?? null,
-      avatarUrl: raw?.avatarUrl ?? raw?.AvatarUrl ?? null,
+      id: (raw?.['id'] ?? raw?.['Id'] ?? '') as string,
+      email: (raw?.['email'] ?? raw?.['Email'] ?? '') as string,
+      name: (raw?.['name'] ?? raw?.['Name'] ?? '') as string,
+      hasPassword: (raw?.['hasPassword'] ?? raw?.['HasPassword'] ?? false) as boolean,
+      ssoLinked: (raw?.['ssoLinked'] ?? raw?.['SsoLinked'] ?? false) as boolean,
+      ssoProviderType: (raw?.['ssoProviderType'] ?? raw?.['SsoProviderType'] ?? null) as
+        | string
+        | null,
+      avatarUrl: (raw?.['avatarUrl'] ?? raw?.['AvatarUrl'] ?? null) as string | null,
       roles,
     };
   }
@@ -199,21 +213,18 @@ export class AuthService {
       payload['role'] ?? payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
 
     return {
-      id:
-        payload['nameid'] ??
+      id: (payload['nameid'] ??
         payload['sub'] ??
         payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'] ??
-        '',
-      email:
-        payload['email'] ??
+        '') as string,
+      email: (payload['email'] ??
         payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'] ??
-        '',
-      name:
-        payload['unique_name'] ??
+        '') as string,
+      name: (payload['unique_name'] ??
         payload['name'] ??
         payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] ??
         payload['email'] ??
-        '',
+        '') as string,
       hasPassword: false,
       ssoLinked: false,
       ssoProviderType: null,
@@ -230,7 +241,7 @@ export class AuthService {
     );
   }
 
-  private jwtPayload(token: string): Record<string, any> | null {
+  private jwtPayload(token: string): Record<string, unknown> | null {
     const parts = token.split('.');
     if (parts.length < 2) return null;
     const segment = parts[1].replace(/-/g, '+').replace(/_/g, '/');
@@ -260,7 +271,7 @@ export class AuthService {
     return t;
   }
 
-  private normalizeRoles(raw: any): string[] {
+  private normalizeRoles(raw: unknown): string[] {
     const values = Array.isArray(raw) ? raw : raw ? [raw] : [];
     const clean = values.map((r) => String(r).trim()).filter((r) => r.length > 0);
     return Array.from(new Set(clean));

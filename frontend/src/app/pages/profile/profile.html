@@ -99,11 +99,13 @@
         <div>
           <label
             class="block text-xs font-semibold uppercase tracking-wider text-on-surface-variant mb-1.5"
+            for="profile-email"
             >Email</label
           >
           <input
             class="input-field w-full opacity-70 cursor-not-allowed"
             type="email"
+            id="profile-email"
             [value]="user()?.email ?? ''"
             readonly
           />
@@ -111,10 +113,11 @@
         </div>
 
         <div>
-          <label
+          <p
             class="block text-xs font-semibold uppercase tracking-wider text-on-surface-variant mb-1.5"
-            >Roles</label
           >
+            Roles
+          </p>
           <div class="flex flex-wrap gap-1.5">
             @for (role of user()?.roles ?? []; track role) {
               <span

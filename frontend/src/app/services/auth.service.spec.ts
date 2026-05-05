@@ -55,7 +55,9 @@ describe('AuthService', () => {
     it('should throw an error when the server returns an error', () => {
       let errorThrown = false;
       service.me().subscribe({
-        next: () => {},
+        next: () => {
+          /* intentional no-op */
+        },
         error: () => {
           errorThrown = true;
         },

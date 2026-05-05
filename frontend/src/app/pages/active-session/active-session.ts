@@ -197,7 +197,11 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
     if (this.connections.list().length === 0) {
-      this.connections.reload().subscribe({ error: () => {} });
+      this.connections.reload().subscribe({
+        error: () => {
+          /* intentional no-op */
+        },
+      });
     }
     // If user landed here via deep link without going through /connecting, kick
     // off the connect flow now.
@@ -299,7 +303,9 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
     const text = this.hostClipboard();
     if (!text) return;
     if (typeof navigator !== 'undefined' && navigator.clipboard) {
-      navigator.clipboard.writeText(text).catch(() => {});
+      navigator.clipboard.writeText(text).catch(() => {
+        /* intentional no-op */
+      });
     }
   }
 
@@ -318,9 +324,13 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
     const el = this.displayRef?.nativeElement;
     if (!el) return;
     if (!document.fullscreenElement) {
-      el.requestFullscreen?.().catch(() => {});
+      el.requestFullscreen?.().catch(() => {
+        /* intentional no-op */
+      });
     } else {
-      document.exitFullscreen?.().catch(() => {});
+      document.exitFullscreen?.().catch(() => {
+        /* intentional no-op */
+      });
     }
   }
 

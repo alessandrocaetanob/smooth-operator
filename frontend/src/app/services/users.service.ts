@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 import { Observable, tap, map } from 'rxjs';
-import { pickOr } from './json-utils';
+import { pickOr, RawRecord } from './json-utils';
 
 export interface AppUser {
   id: string;
@@ -47,11 +47,11 @@ export interface EffectiveVaults {
   merged: EffectiveVaultRef[];
 }
 
-function normalizeVault(raw: any): EffectiveVaultRef {
+function normalizeVault(raw: RawRecord): EffectiveVaultRef {
   return {
     id: pickOr(raw, '', 'id', 'Id'),
     name: pickOr(raw, '', 'name', 'Name'),
-    parentGroupId: raw?.parentGroupId ?? raw?.ParentGroupId ?? null,
+    parentGroupId: (raw?.['parentGroupId'] ?? raw?.['ParentGroupId'] ?? null) as string | null,
   };
 }
 
@@ -63,7 +63,7 @@ export class UsersService {
 
   reload(): Observable<AppUser[]> {
     return this.http
-      .get<any[]>('/api/users')
+      .get<RawRecord[]>('/api/users')
       .pipe(
         tap((rows) => this._list.set((rows ?? []).map((r) => this.normalize(r)))),
       ) as unknown as Observable<AppUser[]>;
@@ -78,7 +78,7 @@ export class UsersService {
   }
 
   roleCatalog(): Observable<AppRole[]> {
-    return this.http.get<any[]>('/api/users/roles').pipe(
+    return this.http.get<RawRecord[]>('/api/users/roles').pipe(
       map((rows) =>
         (rows ?? []).map((raw) => ({
           name: pickOr(raw, '', 'name', 'Name'),
@@ -101,16 +101,27 @@ export class UsersService {
   }
 
   getEffectiveVaults(id: string): Observable<EffectiveVaults> {
-    return this.http.get<any>(`/api/users/${id}/effective-vaults`).pipe(
+    return this.http.get<RawRecord>(`/api/users/${id}/effective-vaults`).pipe(
       map((raw) => ({
         userId: pickOr(raw, '', 'userId', 'UserId'),
-        direct: (pickOr(raw, [] as any[], 'direct', 'Direct') ?? []).map(normalizeVault),
-        viaGroups: (pickOr(raw, [] as any[], 'viaGroups', 'ViaGroups') ?? []).map((g: any) => ({
-          groupId: pickOr(g, '', 'groupId', 'GroupId'),
-          groupName: pickOr(g, '', 'groupName', 'GroupName'),
-          vaults: (pickOr(g, [] as any[], 'vaults', 'Vaults') ?? []).map(normalizeVault),
-        })),
-        merged: (pickOr(raw, [] as any[], 'merged', 'Merged') ?? []).map(normalizeVault),
+        direct: (pickOr(raw, [] as unknown[], 'direct', 'Direct') ?? []).map((v) =>
+          normalizeVault(v as RawRecord),
+        ),
+        viaGroups: (pickOr(raw, [] as unknown[], 'viaGroups', 'ViaGroups') ?? []).map(
+          (g: unknown) => {
+            const gr = g as RawRecord;
+            return {
+              groupId: pickOr(gr, '', 'groupId', 'GroupId'),
+              groupName: pickOr(gr, '', 'groupName', 'GroupName'),
+              vaults: (pickOr(gr, [] as unknown[], 'vaults', 'Vaults') ?? []).map((v) =>
+                normalizeVault(v as RawRecord),
+              ),
+            };
+          },
+        ),
+        merged: (pickOr(raw, [] as unknown[], 'merged', 'Merged') ?? []).map((v) =>
+          normalizeVault(v as RawRecord),
+        ),
       })),
     );
   }
@@ -121,7 +132,7 @@ export class UsersService {
     password?: string;
     role?: string;
   }): Observable<InviteResult> {
-    return this.http.post<any>('/api/auth/invite', payload).pipe(
+    return this.http.post<RawRecord>('/api/auth/invite', payload).pipe(
       map((raw) => ({
         message: pickOr(raw, '', 'message', 'Message'),
         inviteUrl: pickOr(raw, '', 'inviteUrl', 'InviteUrl'),
@@ -131,7 +142,7 @@ export class UsersService {
     );
   }
 
-  private normalize(raw: any): AppUser {
+  private normalize(raw: RawRecord): AppUser {
     return {
       id: pickOr(raw, '', 'id', 'Id'),
       email: pickOr(raw, '', 'email', 'Email'),

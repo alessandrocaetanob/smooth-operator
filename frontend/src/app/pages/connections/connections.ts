@@ -355,7 +355,7 @@ export class Connections implements OnInit {
           setTimeout(() => this.closeDrawer(), 800);
           this.refresh();
         },
-        error: (err: any) => {
+        error: (err: unknown) => {
           this.busy.set(false);
           this.mascotState.set('error');
           const msg = this.toMessage(err) || 'Save failed.';
@@ -425,7 +425,8 @@ export class Connections implements OnInit {
     }
   }
 
-  private toMessage(err: any): string | null {
-    return err?.error?.message ?? err?.error?.Message ?? err?.message ?? null;
+  private toMessage(err: unknown): string | null {
+    const e = err as { error?: { message?: string; Message?: string }; message?: string };
+    return e?.error?.message ?? e?.error?.Message ?? e?.message ?? null;
   }
 }

@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
-import { pickOr } from './json-utils';
+import { pickOr, RawRecord } from './json-utils';
 
 export interface Credential {
   id: string;
@@ -35,14 +35,14 @@ export class CredentialsService {
 
   reload(): Observable<Credential[]> {
     return this.http
-      .get<any[]>('/api/credentials')
+      .get<RawRecord[]>('/api/credentials')
       .pipe(
         tap((rows) => this._list.set((rows ?? []).map((r) => this.normalize(r)))),
       ) as unknown as Observable<Credential[]>;
   }
 
   create(payload: CreateCredentialPayload): Observable<Credential> {
-    return this.http.post<any>('/api/credentials', payload);
+    return this.http.post<Credential>('/api/credentials', payload);
   }
 
   update(id: string, payload: UpdateCredentialPayload): Observable<void> {
@@ -60,7 +60,7 @@ export class CredentialsService {
     );
   }
 
-  private normalize(raw: any): Credential {
+  private normalize(raw: RawRecord): Credential {
     return {
       id: pickOr(raw, '', 'id', 'Id'),
       name: pickOr(raw, '', 'name', 'Name'),

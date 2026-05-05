@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
-import { pickOr } from './json-utils';
+import { pickOr, RawRecord } from './json-utils';
 
 export interface AppHost {
   id: string;
@@ -22,14 +22,14 @@ export class HostsService {
 
   reload(): Observable<AppHost[]> {
     return this.http
-      .get<any[]>('/api/hosts')
+      .get<RawRecord[]>('/api/hosts')
       .pipe(
         tap((rows) => this._list.set((rows ?? []).map((r) => this.normalize(r)))),
       ) as unknown as Observable<AppHost[]>;
   }
 
   create(payload: CreateHostPayload): Observable<AppHost> {
-    return this.http.post<any>('/api/hosts', payload);
+    return this.http.post<AppHost>('/api/hosts', payload);
   }
 
   update(id: string, payload: CreateHostPayload): Observable<void> {
@@ -40,7 +40,7 @@ export class HostsService {
     return this.http.delete<void>(`/api/hosts/${id}`);
   }
 
-  private normalize(raw: any): AppHost {
+  private normalize(raw: RawRecord): AppHost {
     return {
       id: pickOr(raw, '', 'id', 'Id'),
       name: pickOr(raw, '', 'name', 'Name'),

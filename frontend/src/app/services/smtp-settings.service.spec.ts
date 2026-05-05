@@ -2,11 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import {
-  SmtpSettingsService,
-  SmtpSettings,
-  UpdateSmtpSettingsRequest,
-} from './smtp-settings.service';
+import { SmtpSettingsService, UpdateSmtpSettingsRequest } from './smtp-settings.service';
 
 describe('SmtpSettingsService', () => {
   let service: SmtpSettingsService;

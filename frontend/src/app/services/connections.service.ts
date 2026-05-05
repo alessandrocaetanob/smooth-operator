@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, map, tap } from 'rxjs';
-import { pick, pickOr } from './json-utils';
+import { pick, pickOr, RawRecord } from './json-utils';
 
 export interface ConnectionHostRef {
   id: string;
@@ -43,7 +43,7 @@ export class ConnectionsService {
 
   reload(): Observable<Connection[]> {
     this._loading.set(true);
-    return this.http.get<any[]>('/api/connections').pipe(
+    return this.http.get<RawRecord[]>('/api/connections').pipe(
       tap({
         next: (rows) => {
           this._list.set((rows ?? []).map((r) => this.normalize(r)));
@@ -56,12 +56,12 @@ export class ConnectionsService {
 
   get(id: string): Observable<Connection> {
     return this.http
-      .get<any>(`/api/connections/${id}`)
+      .get<RawRecord>(`/api/connections/${id}`)
       .pipe(tap()) as unknown as Observable<Connection>;
   }
 
   create(payload: CreateConnectionPayload): Observable<Connection> {
-    return this.http.post<any>('/api/connections', payload);
+    return this.http.post<Connection>('/api/connections', payload);
   }
 
   update(id: string, payload: CreateConnectionPayload): Observable<void> {
@@ -98,7 +98,7 @@ export class ConnectionsService {
   }
 
   getLastConnected(): Observable<{ connectionId: string; lastConnectedAt: string }[]> {
-    return this.http.get<any[]>('/api/connections/my-last-connected').pipe(
+    return this.http.get<RawRecord[]>('/api/connections/my-last-connected').pipe(
       map((rows) =>
         (rows ?? []).map((r) => ({
           connectionId: pickOr(r, '', 'connectionId', 'ConnectionId'),
@@ -120,8 +120,8 @@ export class ConnectionsService {
     return this.http.post<Record<string, string>>('/api/connections/probe-bulk', ids);
   }
 
-  private normalize(raw: any): Connection {
-    const host = pick<any>(raw, 'host', 'Host');
+  private normalize(raw: RawRecord): Connection {
+    const host = pick<RawRecord>(raw, 'host', 'Host');
     return {
       id: pickOr(raw, '', 'id', 'Id'),
       name: pickOr(raw, '', 'name', 'Name'),
@@ -130,7 +130,9 @@ export class ConnectionsService {
       credentialId: pick<string>(raw, 'credentialId', 'CredentialId') ?? null,
       connectionGroupId: pick<string>(raw, 'connectionGroupId', 'ConnectionGroupId') ?? null,
       settings: pickOr(raw, '{}', 'settings', 'Settings'),
-      tags: (pick<any[]>(raw, 'tags', 'Tags') ?? []).filter((t: any) => typeof t === 'string'),
+      tags: (pick<unknown[]>(raw, 'tags', 'Tags') ?? []).filter(
+        (t): t is string => typeof t === 'string',
+      ),
       host: host
         ? {
             id: pickOr(host, '', 'id', 'Id'),

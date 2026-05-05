@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 import { Observable, map, tap } from 'rxjs';
-import { pickOr } from './json-utils';
+import { pickOr, RawRecord } from './json-utils';
 
 export type SsoProviderType = 'Oidc' | 'Saml';
 
@@ -82,7 +82,7 @@ export class SsoSettingsService {
   readonly current = this._current.asReadonly();
 
   load(): Observable<SsoProviderView> {
-    return this.http.get<any>('/api/settings/sso').pipe(
+    return this.http.get<RawRecord>('/api/settings/sso').pipe(
       map((r) => this.normalize(r)),
       tap((p) => this._current.set(p)),
     );
@@ -105,18 +105,18 @@ export class SsoSettingsService {
   }
 
   test(): Observable<SsoTestResult> {
-    return this.http.post<any>('/api/settings/sso/test', {}).pipe(
+    return this.http.post<RawRecord>('/api/settings/sso/test', {}).pipe(
       map((r) => ({
         success: pickOr(r, false, 'success', 'Success'),
         message: pickOr(r, '', 'message', 'Message'),
-        details: r?.details ?? r?.Details ?? null,
+        details: r?.['details'] ?? r?.['Details'] ?? null,
       })),
     );
   }
 
-  private normalize(raw: any): SsoProviderView {
-    const oidcRaw = raw?.oidc ?? raw?.Oidc;
-    const samlRaw = raw?.saml ?? raw?.Saml;
+  private normalize(raw: RawRecord): SsoProviderView {
+    const oidcRaw = (raw?.['oidc'] ?? raw?.['Oidc']) as RawRecord;
+    const samlRaw = (raw?.['saml'] ?? raw?.['Saml']) as RawRecord;
     return {
       id: pickOr(raw, undefined as string | undefined, 'id', 'Id'),
       name: pickOr(raw, '', 'name', 'Name'),

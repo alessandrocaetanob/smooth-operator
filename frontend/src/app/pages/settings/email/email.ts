@@ -127,7 +127,8 @@ export class Email implements OnInit {
     });
   }
 
-  private toMessage(err: any): string | null {
-    return err?.error?.message ?? err?.error?.Message ?? err?.message ?? null;
+  private toMessage(err: unknown): string | null {
+    const e = err as { error?: { message?: string; Message?: string }; message?: string };
+    return e?.error?.message ?? e?.error?.Message ?? e?.message ?? null;
   }
 }

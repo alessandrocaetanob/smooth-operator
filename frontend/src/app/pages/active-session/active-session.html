@@ -173,6 +173,8 @@
       class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
       (click)="closeKeyComboModal()"
       (keydown.escape)="closeKeyComboModal()"
+      (keydown.enter)="closeKeyComboModal()"
+      tabindex="0"
     >
       <div
         role="dialog"
@@ -180,6 +182,8 @@
         aria-labelledby="key-combo-title"
         class="glass-card rounded-xl w-full max-w-lg p-6 relative"
         (click)="$event.stopPropagation()"
+        (keydown.enter)="$event.stopPropagation()"
+        tabindex="-1"
       >
         <h2 id="key-combo-title" class="text-base font-semibold mb-3 flex items-center gap-2">
           <span class="material-symbols-outlined text-sm text-primary" aria-hidden="true"
@@ -273,6 +277,8 @@
       class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
       (click)="closeClipboardModal()"
       (keydown.escape)="closeClipboardModal()"
+      (keydown.enter)="closeClipboardModal()"
+      tabindex="0"
     >
       <div
         role="dialog"
@@ -280,6 +286,8 @@
         aria-labelledby="clipboard-title"
         class="glass-card rounded-xl w-full max-w-xl p-6 relative"
         (click)="$event.stopPropagation()"
+        (keydown.enter)="$event.stopPropagation()"
+        tabindex="-1"
       >
         <h2 id="clipboard-title" class="text-base font-semibold mb-1 flex items-center gap-2">
           <span class="material-symbols-outlined text-sm text-primary" aria-hidden="true"

@@ -135,11 +135,12 @@
       <div class="settings-card-body">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
           <div>
-            <label class="settings-label">Protocol</label>
+            <label class="settings-label" for="sso-type">Protocol</label>
             <select
               [ngModel]="type()"
               (ngModelChange)="type.set($event)"
               name="type"
+              id="sso-type"
               class="w-full input-field"
               [disabled]="hasProvider()"
             >
@@ -153,12 +154,13 @@
             }
           </div>
           <div>
-            <label class="settings-label">Display name</label>
+            <label class="settings-label" for="sso-name">Display name</label>
             <input
               type="text"
               [ngModel]="name()"
               (ngModelChange)="name.set($event)"
               name="name"
+              id="sso-name"
               placeholder="e.g. Corporate SSO"
               required
               class="w-full input-field"
@@ -209,12 +211,13 @@
             </p>
           </div>
           <div>
-            <label class="settings-label">Authority (issuer)</label>
+            <label class="settings-label" for="sso-oidc-authority">Authority (issuer)</label>
             <input
               type="url"
               [ngModel]="oidcAuthority()"
               (ngModelChange)="oidcAuthority.set($event)"
               name="oidcAuthority"
+              id="sso-oidc-authority"
               placeholder="https://login.example.com/realms/my-realm"
               required
               class="w-full input-field"
@@ -226,18 +229,19 @@
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <label class="settings-label">Client ID</label>
+              <label class="settings-label" for="sso-oidc-client-id">Client ID</label>
               <input
                 type="text"
                 [ngModel]="oidcClientId()"
                 (ngModelChange)="oidcClientId.set($event)"
                 name="oidcClientId"
+                id="sso-oidc-client-id"
                 required
                 class="w-full input-field"
               />
             </div>
             <div>
-              <label class="settings-label">
+              <label class="settings-label" for="sso-oidc-client-secret">
                 Client secret
                 @if (current()?.oidc?.hasClientSecret) {
                   <span class="settings-label-hint">(leave blank to keep)</span>
@@ -248,6 +252,7 @@
                 [ngModel]="oidcClientSecret()"
                 (ngModelChange)="oidcClientSecret.set($event)"
                 name="oidcClientSecret"
+                id="sso-oidc-client-secret"
                 [placeholder]="current()?.oidc?.hasClientSecret ? '••••••••' : 'Required'"
                 [required]="!current()?.oidc?.hasClientSecret"
                 class="w-full input-field"
@@ -255,46 +260,50 @@
             </div>
           </div>
           <div>
-            <label class="settings-label">Scopes</label>
+            <label class="settings-label" for="sso-oidc-scopes">Scopes</label>
             <input
               type="text"
               [ngModel]="oidcScopes()"
               (ngModelChange)="oidcScopes.set($event)"
               name="oidcScopes"
+              id="sso-oidc-scopes"
               placeholder="openid profile email"
               class="w-full input-field"
             />
           </div>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
-              <label class="settings-label">Subject claim</label>
+              <label class="settings-label" for="sso-oidc-subject-claim">Subject claim</label>
               <input
                 type="text"
                 [ngModel]="oidcSubjectClaim()"
                 (ngModelChange)="oidcSubjectClaim.set($event)"
                 name="oidcSubjectClaim"
+                id="sso-oidc-subject-claim"
                 placeholder="sub"
                 class="w-full input-field"
               />
             </div>
             <div>
-              <label class="settings-label">Email claim</label>
+              <label class="settings-label" for="sso-oidc-email-claim">Email claim</label>
               <input
                 type="text"
                 [ngModel]="oidcEmailClaim()"
                 (ngModelChange)="oidcEmailClaim.set($event)"
                 name="oidcEmailClaim"
+                id="sso-oidc-email-claim"
                 placeholder="email"
                 class="w-full input-field"
               />
             </div>
             <div>
-              <label class="settings-label">Name claim</label>
+              <label class="settings-label" for="sso-oidc-name-claim">Name claim</label>
               <input
                 type="text"
                 [ngModel]="oidcNameClaim()"
                 (ngModelChange)="oidcNameClaim.set($event)"
                 name="oidcNameClaim"
+                id="sso-oidc-name-claim"
                 placeholder="name"
                 class="w-full input-field"
               />
@@ -366,47 +375,53 @@
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <label class="settings-label">SP entity ID</label>
+              <label class="settings-label" for="sso-saml-sp-entity-id">SP entity ID</label>
               <input
                 type="text"
                 [ngModel]="samlSpEntityId()"
                 (ngModelChange)="samlSpEntityId.set($event)"
                 name="samlSpEntityId"
+                id="sso-saml-sp-entity-id"
                 placeholder="urn:smooth-operator"
                 required
                 class="w-full input-field"
               />
             </div>
             <div>
-              <label class="settings-label">IdP entity ID</label>
+              <label class="settings-label" for="sso-saml-idp-entity-id">IdP entity ID</label>
               <input
                 type="text"
                 [ngModel]="samlIdpEntityId()"
                 (ngModelChange)="samlIdpEntityId.set($event)"
                 name="samlIdpEntityId"
+                id="sso-saml-idp-entity-id"
                 required
                 class="w-full input-field"
               />
             </div>
           </div>
           <div>
-            <label class="settings-label">IdP SSO URL</label>
+            <label class="settings-label" for="sso-saml-idp-sso-url">IdP SSO URL</label>
             <input
               type="url"
               [ngModel]="samlIdpSsoUrl()"
               (ngModelChange)="samlIdpSsoUrl.set($event)"
               name="samlIdpSsoUrl"
+              id="sso-saml-idp-sso-url"
               placeholder="https://idp.example.com/saml/sso"
               required
               class="w-full input-field"
             />
           </div>
           <div>
-            <label class="settings-label">IdP signing certificate (PEM)</label>
+            <label class="settings-label" for="sso-saml-idp-cert"
+              >IdP signing certificate (PEM)</label
+            >
             <textarea
               [ngModel]="samlIdpCertificate()"
               (ngModelChange)="samlIdpCertificate.set($event)"
               name="samlIdpCertificate"
+              id="sso-saml-idp-cert"
               rows="6"
               placeholder="-----BEGIN CERTIFICATE-----&#10;…&#10;-----END CERTIFICATE-----"
               required
@@ -414,11 +429,14 @@
             ></textarea>
           </div>
           <div>
-            <label class="settings-label">SP signing certificate (PEM)</label>
+            <label class="settings-label" for="sso-saml-sp-cert"
+              >SP signing certificate (PEM)</label
+            >
             <textarea
               [ngModel]="samlSpCertificate()"
               (ngModelChange)="samlSpCertificate.set($event)"
               name="samlSpCertificate"
+              id="sso-saml-sp-cert"
               rows="6"
               placeholder="-----BEGIN CERTIFICATE-----&#10;…&#10;-----END CERTIFICATE-----"
               required
@@ -426,7 +444,7 @@
             ></textarea>
           </div>
           <div>
-            <label class="settings-label">
+            <label class="settings-label" for="sso-saml-sp-key">
               SP private key (PEM)
               @if (current()?.saml?.hasSpPrivateKey) {
                 <span class="settings-label-hint">(leave blank to keep)</span>
@@ -436,6 +454,7 @@
               [ngModel]="samlSpPrivateKey()"
               (ngModelChange)="samlSpPrivateKey.set($event)"
               name="samlSpPrivateKey"
+              id="sso-saml-sp-key"
               rows="5"
               [placeholder]="
                 current()?.saml?.hasSpPrivateKey
@@ -447,33 +466,36 @@
           </div>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
-              <label class="settings-label">NameID format</label>
+              <label class="settings-label" for="sso-saml-nameid-format">NameID format</label>
               <input
                 type="text"
                 [ngModel]="samlNameIdFormat()"
                 (ngModelChange)="samlNameIdFormat.set($event)"
                 name="samlNameIdFormat"
+                id="sso-saml-nameid-format"
                 class="w-full input-field"
               />
             </div>
             <div>
-              <label class="settings-label">Email attribute</label>
+              <label class="settings-label" for="sso-saml-attr-email">Email attribute</label>
               <input
                 type="text"
                 [ngModel]="samlAttributeEmail()"
                 (ngModelChange)="samlAttributeEmail.set($event)"
                 name="samlAttributeEmail"
+                id="sso-saml-attr-email"
                 placeholder="email"
                 class="w-full input-field"
               />
             </div>
             <div>
-              <label class="settings-label">Name attribute</label>
+              <label class="settings-label" for="sso-saml-attr-name">Name attribute</label>
               <input
                 type="text"
                 [ngModel]="samlAttributeName()"
                 (ngModelChange)="samlAttributeName.set($event)"
                 name="samlAttributeName"
+                id="sso-saml-attr-name"
                 placeholder="name"
                 class="w-full input-field"
               />
@@ -518,10 +540,11 @@
             </label>
           </div>
           <div class="border-t border-outline-variant/20 pt-3">
-            <label class="settings-label">SP metadata URL</label>
+            <label class="settings-label" for="sso-saml-metadata-url">SP metadata URL</label>
             <div class="flex gap-2">
               <input
                 type="text"
+                id="sso-saml-metadata-url"
                 [value]="metadataUrl()"
                 readonly
                 class="flex-1 input-field font-mono text-xs"

@@ -1,14 +1,4 @@
-import {
-  animate,
-  animateChild,
-  group,
-  query,
-  sequence,
-  stagger,
-  style,
-  transition,
-  trigger,
-} from '@angular/animations';
+import { animate, query, sequence, stagger, style, transition, trigger } from '@angular/animations';
 
 /** Fade in from opacity 0 */
 export const fadeIn = trigger('fadeIn', [

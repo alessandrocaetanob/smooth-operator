@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
-import { pickOr } from './json-utils';
+import { pickOr, RawRecord } from './json-utils';
 
 export interface InvitePreview {
   email: string;
@@ -14,7 +14,7 @@ export class InvitesService {
   private readonly http = inject(HttpClient);
 
   preview(token: string): Observable<InvitePreview> {
-    return this.http.get<any>(`/api/invites/${encodeURIComponent(token)}`).pipe(
+    return this.http.get<RawRecord>(`/api/invites/${encodeURIComponent(token)}`).pipe(
       map((raw) => ({
         email: pickOr(raw, '', 'email', 'Email'),
         name: pickOr(raw, '', 'name', 'Name'),

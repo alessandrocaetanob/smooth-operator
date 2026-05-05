@@ -50,6 +50,38 @@ Test infrastructure: `TestWebApplicationFactory` uses `PostConfigure<AuthOptions
 8. MediatR handlers → must reside under `SmoothOperator.Application.Features.*`
 9. Application interfaces → must reside in `SmoothOperator.Application.*`
 
-All 9 pass. Full suite result: **169 tests passing** (18 Application + 9 Architecture + 142 Api integration). Build clean with 0 errors. Project added to `smooth-operator.sln`.
+## 2026-07-13 - Phase 6 Frontend Runtime Config & Core Folder
 
+**Summary:** Established Angular `core/config/` structure and runtime configuration system:
+
+- `RuntimeConfigService` (`src/app/core/config/runtime-config.service.ts`) — fetches `/config/config.json` via native `fetch` in an `APP_INITIALIZER`, exposes `helpUrl`, `docsUrl`, `featureFlags`. Falls back to compile-time defaults on network errors; never blocks bootstrap.
+- `public/config/config.json` — default values served for local dev (`localhost:3000`). In Docker containers, overridden at runtime by `entrypoint.sh`.
+- `entrypoint.sh` — generates `config.json` from `APP_HELP_URL` / `APP_DOCS_URL` / `APP_FEATURE_FLAGS` env vars at container startup, then execs nginx. Same Docker image now works across all deployment environments without rebuild.
+- `app.config.ts` — runtime config `APP_INITIALIZER` runs first, before theme/auth initializers.
+- Removed both hardcoded `http://localhost:3000` occurrences: `SideNavBar.helpUrl` and `authentication.html` `href` now read from `RuntimeConfigService`.
+- `frontend/Dockerfile` — switched from `CMD` to `ENTRYPOINT ["/entrypoint.sh"]`; added `HEALTHCHECK`.
+
+All 55 Angular unit tests pass. Build clean at commit `fd451f9`.
+
+## 2026-07-13 - Phase 7 Documentation & Code Quality
+
+**Summary:** Completed documentation and code-quality pass.
+
+**Frontend:**
+- Created `frontend/eslint.config.js` with `@angular-eslint/recommended` + `typescript-eslint` rules; fixed all flagged issues across 50+ files. `ng lint` passes clean.
+- Created `frontend/vitest.config.ts` with `pool: 'forks'` — canonical fix for Vitest 4.x worker_threads hang on Windows. Angular builder picks it up via `"runnerConfig": true` in `angular.json`. All 23 spec files / 55 tests pass.
+- Coverage baseline: **39.5% lines / 44.28% branches / 25.3% functions / 40.98% statements** (Phase 8 target: 70%).
+
+**Backend:**
+- Moved `SonarAnalyzer.CSharp 10.25.0.139117` from `SmoothOperator.Application.csproj` to root `Directory.Build.props` so it applies to all 4 src projects and test projects. Build: 32 warnings, 0 errors. All 169 tests green.
+
+**Documentation:**
+- 6 ADRs written under `docs/adr/`:
+  - `0001-clean-architecture.md`
+  - `0002-cqrs-with-mediatr.md`
+  - `0003-options-pattern.md`
+  - `0004-frontend-runtime-config.md`
+  - `0005-coverage-gates.md`
+  - `0006-frontend-feature-modules.md`
+- Architecture overview created at `docs/architecture/overview.md` with Mermaid C4 diagrams: System Context, Container, Component (backend), request flow sequence diagram, and frontend component graph.
 

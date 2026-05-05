@@ -1,7 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { AuthService, UserInfo } from './auth.service';
+import { RawRecord } from './json-utils';
 
 export interface UpdateProfilePayload {
   name: string;
@@ -20,27 +21,39 @@ export class ProfileService {
       body['AvatarBase64'] = payload.avatarBase64;
       body['AvatarMimeType'] = payload.avatarMimeType;
     }
-    return this.http
-      .put<any>('/api/users/me/profile', body)
-      .pipe(tap((raw) => this.auth.setCurrentUser(this.normalize(raw))));
+    return this.http.put<RawRecord>('/api/users/me/profile', body).pipe(
+      map((raw) => {
+        const u = this.normalize(raw);
+        this.auth.setCurrentUser(u);
+        return u;
+      }),
+    );
   }
 
   removeAvatar(): Observable<UserInfo> {
-    return this.http
-      .delete<any>('/api/users/me/avatar')
-      .pipe(tap((raw) => this.auth.setCurrentUser(this.normalize(raw))));
+    return this.http.delete<RawRecord>('/api/users/me/avatar').pipe(
+      map((raw) => {
+        const u = this.normalize(raw);
+        this.auth.setCurrentUser(u);
+        return u;
+      }),
+    );
   }
 
-  private normalize(raw: any): UserInfo {
+  private normalize(raw: RawRecord): UserInfo {
     return {
-      id: raw?.id ?? raw?.Id ?? '',
-      email: raw?.email ?? raw?.Email ?? '',
-      name: raw?.name ?? raw?.Name ?? '',
-      hasPassword: raw?.hasPassword ?? raw?.HasPassword ?? false,
-      ssoLinked: raw?.ssoLinked ?? raw?.SsoLinked ?? false,
-      ssoProviderType: raw?.ssoProviderType ?? raw?.SsoProviderType ?? null,
-      avatarUrl: raw?.avatarUrl ?? raw?.AvatarUrl ?? null,
-      roles: Array.isArray(raw?.roles ?? raw?.Roles) ? (raw?.roles ?? raw?.Roles) : [],
+      id: (raw?.['id'] ?? raw?.['Id'] ?? '') as string,
+      email: (raw?.['email'] ?? raw?.['Email'] ?? '') as string,
+      name: (raw?.['name'] ?? raw?.['Name'] ?? '') as string,
+      hasPassword: (raw?.['hasPassword'] ?? raw?.['HasPassword'] ?? false) as boolean,
+      ssoLinked: (raw?.['ssoLinked'] ?? raw?.['SsoLinked'] ?? false) as boolean,
+      ssoProviderType: (raw?.['ssoProviderType'] ?? raw?.['SsoProviderType'] ?? null) as
+        | string
+        | null,
+      avatarUrl: (raw?.['avatarUrl'] ?? raw?.['AvatarUrl'] ?? null) as string | null,
+      roles: Array.isArray(raw?.['roles'] ?? raw?.['Roles'])
+        ? ((raw?.['roles'] ?? raw?.['Roles']) as string[])
+        : [],
     };
   }
 }
