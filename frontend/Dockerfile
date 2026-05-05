@@ -26,11 +26,6 @@ FROM nginxinc/nginx-unprivileged:1.27-alpine AS final
 # Switch to root temporarily for file setup
 USER root
 
-# Create the runtime-config directory and ensure the nginx user can write to it
-# (entrypoint.sh renders config.json from env vars at container start)
-RUN mkdir -p /usr/share/nginx/html/config \
-    && chown nginx:nginx /usr/share/nginx/html/config
-
 # Copy the Angular build output
 COPY --from=build /app/dist/frontend/browser /usr/share/nginx/html
 
@@ -39,6 +34,11 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY entrypoint.sh /entrypoint.sh
 # Strip Windows CRLF line endings (defensive: script must be pure LF for the shebang to work on Linux)
 RUN sed -i 's/\r$//' /entrypoint.sh && chmod +x /entrypoint.sh
+
+# Create the runtime-config directory AFTER the build copy so COPY can't reset ownership.
+# entrypoint.sh writes config.json here at container start from env vars.
+RUN mkdir -p /usr/share/nginx/html/config \
+    && chown -R nginx:nginx /usr/share/nginx/html/config
 
 # Switch back to the unprivileged nginx user for runtime
 USER nginx
