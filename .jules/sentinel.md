@@ -158,3 +158,8 @@ All 55 Angular unit tests pass. Build clean at commit `fd451f9`.
 - **Output cache invalidation fix**: `SystemSettingsController.Update` now calls `cacheStore.EvictByTagAsync("system-settings")` after write; GET tagged with `"system-settings"` — prevents stale-read test failure.
 - All 151 tests pass (142 integration + 9 architecture).
 
+
+## 2025-07-25 - Phase 12: Final Cleanup & PR
+
+Opened PR #50 to master: all 151 tests pass (142 integration + 9 architecture). README updated with Clean Architecture diagram and full Options-pattern env-var matrix. ADR-0007 documents Phase 11 security decisions. Branch: ac/refactor-testing-performance.
+
