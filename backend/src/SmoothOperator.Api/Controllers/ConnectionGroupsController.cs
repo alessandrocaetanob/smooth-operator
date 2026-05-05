@@ -63,8 +63,8 @@ namespace SmoothOperator.Api.Controllers
         [Authorize(Roles = AppRoles.OwnerOrAdmin)]
         public async Task<IActionResult> SetAssignments(Guid id, [FromBody] VaultAssignmentsDto dto)
         {
-            var result = await _mediator.Send(new SetVaultAssignmentsCommand(id, dto, HttpContext.User));
-            return Ok(result);
+            await _mediator.Send(new SetVaultAssignmentsCommand(id, dto, HttpContext.User));
+            return NoContent();
         }
 
         [HttpGet("{id}/effective-users")]

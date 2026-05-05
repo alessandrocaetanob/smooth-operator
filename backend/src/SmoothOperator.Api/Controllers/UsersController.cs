@@ -51,29 +51,29 @@ namespace SmoothOperator.Api.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateUser(Guid id, [FromBody] UpdateUserRequest dto)
         {
-            var result = await _mediator.Send(new UpdateUserCommand(id, dto, HttpContext.User));
-            return Ok(result);
+            await _mediator.Send(new UpdateUserCommand(id, dto, HttpContext.User));
+            return NoContent();
         }
 
         [HttpPut("{id}/role")]
         public async Task<IActionResult> SetRole(Guid id, [FromBody] SetUserRoleRequest dto)
         {
-            var result = await _mediator.Send(new SetUserRoleCommand(id, dto, HttpContext.User));
-            return Ok(result);
+            await _mediator.Send(new SetUserRoleCommand(id, dto, HttpContext.User));
+            return NoContent();
         }
 
         [HttpPut("{id}/vaults")]
         public async Task<IActionResult> SetVaultAssignments(Guid id, [FromBody] SetUserVaultAssignmentsRequest dto)
         {
-            var result = await _mediator.Send(new SetUserVaultAssignmentsCommand(id, dto, HttpContext.User));
-            return Ok(result);
+            await _mediator.Send(new SetUserVaultAssignmentsCommand(id, dto, HttpContext.User));
+            return NoContent();
         }
 
         [HttpPatch("{id}/active")]
         public async Task<IActionResult> SetActive(Guid id, [FromBody] SetUserActiveRequest dto)
         {
-            var result = await _mediator.Send(new SetUserActiveCommand(id, dto, HttpContext.User));
-            return Ok(result);
+            await _mediator.Send(new SetUserActiveCommand(id, dto, HttpContext.User));
+            return NoContent();
         }
 
         [HttpDelete("{id}")]

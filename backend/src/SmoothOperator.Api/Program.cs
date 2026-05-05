@@ -256,6 +256,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseForwardedHeaders();
 
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseMiddleware<SecurityHeadersMiddleware>();
 app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseSerilogRequestLogging(opts =>

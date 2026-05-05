@@ -80,9 +80,9 @@ namespace SmoothOperator.Api.Controllers
         }
 
         [HttpPost("probe-bulk")]
-        public async Task<IActionResult> ProbeConnectionsBulk()
+        public async Task<IActionResult> ProbeConnectionsBulk([FromBody] List<Guid> ids)
         {
-            var result = await _mediator.Send(new ProbeConnectionsBulkQuery(HttpContext.User));
+            var result = await _mediator.Send(new ProbeConnectionsBulkQuery(ids, HttpContext.User));
             return Ok(result);
         }
 

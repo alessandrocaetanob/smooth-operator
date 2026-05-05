@@ -12,7 +12,7 @@ using SmoothOperator.Application.Interfaces;
 
 namespace SmoothOperator.Application.Features.Connections.Queries
 {
-    public sealed record ProbeConnectionsBulkQuery(ClaimsPrincipal User) : IRequest<Dictionary<Guid, string>>;
+    public sealed record ProbeConnectionsBulkQuery(IReadOnlyList<Guid> RequestedIds, ClaimsPrincipal User) : IRequest<Dictionary<Guid, string>>;
 
     public sealed class ProbeConnectionsBulkQueryHandler : IRequestHandler<ProbeConnectionsBulkQuery, Dictionary<Guid, string>>
     {
@@ -32,14 +32,30 @@ namespace SmoothOperator.Application.Features.Connections.Queries
             if (profile == null)
                 throw new UnauthorizedException("User profile not found.");
 
-            var connections = await _access.ApplyConnectionScope(_context.Connections, profile)
-                .Select(c => new { c.Id, c.Protocol, c.Settings, c.HostId })
-                .ToListAsync(cancellationToken);
-
-            if (connections.Count == 0)
+            var ids = request.RequestedIds;
+            if (ids.Count == 0)
                 return new Dictionary<Guid, string>();
 
-            var hostIds = connections.Select(c => c.HostId).Distinct().ToList();
+            // 1. Find which requested IDs exist in the database.
+            var existingConnections = await _context.Connections
+                .Where(c => ids.Contains(c.Id))
+                .Select(c => new { c.Id, c.Protocol, c.Settings, c.HostId, c.ConnectionGroupId })
+                .ToListAsync(cancellationToken);
+
+            var existingSet = existingConnections.Select(c => c.Id).ToHashSet();
+
+            // 2. Determine which existing connections the user can access.
+            var accessibleIds = await _access.ApplyConnectionScope(_context.Connections, profile)
+                .Where(c => ids.Contains(c.Id))
+                .Select(c => c.Id)
+                .ToListAsync(cancellationToken);
+
+            var accessibleSet = accessibleIds.ToHashSet();
+            var accessibleById = existingConnections
+                .Where(c => accessibleSet.Contains(c.Id))
+                .ToDictionary(c => c.Id);
+
+            var hostIds = accessibleById.Values.Select(c => c.HostId).Distinct().ToList();
             var hostLookup = await _context.Hosts
                 .Where(h => hostIds.Contains(h.Id))
                 .Select(h => new { h.Id, h.Address })
@@ -47,10 +63,22 @@ namespace SmoothOperator.Application.Features.Connections.Queries
 
             var results = new ConcurrentDictionary<Guid, string>();
 
-            foreach (var conn in connections.Where(c => !hostLookup.ContainsKey(c.HostId)))
-                results[conn.Id] = "no_host";
+            // 3. Classify each requested ID.
+            foreach (var id in ids)
+            {
+                if (!existingSet.Contains(id))
+                    results[id] = "not_found";
+                else if (!accessibleSet.Contains(id))
+                    results[id] = "forbidden";
+                else if (!hostLookup.ContainsKey(accessibleById[id].HostId))
+                    results[id] = "no_host";
+            }
 
-            var probeCandidates = connections.Where(c => hostLookup.ContainsKey(c.HostId)).ToList();
+            // 4. Probe accessible connections that have a host.
+            var probeCandidates = accessibleById.Values
+                .Where(c => hostLookup.ContainsKey(c.HostId))
+                .ToList();
+
             using var semaphore = new SemaphoreSlim(BulkProbeMaxConcurrency, BulkProbeMaxConcurrency);
 
             var tasks = probeCandidates.Select(conn => Task.Run(async () =>
