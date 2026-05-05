@@ -23,6 +23,7 @@ namespace SmoothOperator.Infrastructure.Data
         public DbSet<UserGroup> UserGroups { get; set; } = null!;
         public DbSet<SsoProvider> SsoProviders { get; set; } = null!;
         public DbSet<SsoAuthState> SsoAuthStates { get; set; } = null!;
+        public DbSet<SecretProvider> SecretProviders { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -102,6 +103,14 @@ namespace SmoothOperator.Infrastructure.Data
 
             modelBuilder.Entity<SsoAuthState>()
                 .HasIndex(s => s.ExpiresAt);
+
+            // Credential -> SecretProvider (optional FK; delete restrict to avoid orphaned credentials)
+            modelBuilder.Entity<Credential>()
+                .HasOne(c => c.SecretProvider)
+                .WithMany()
+                .HasForeignKey(c => c.SecretProviderId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .IsRequired(false);
 
             // ⚡ Bolt: Composite index to avoid full table scans on ConnectionsController.GetMyLastConnected
             // Query filter: a.UserId == profile.UserId && a.Action == "connection.started"

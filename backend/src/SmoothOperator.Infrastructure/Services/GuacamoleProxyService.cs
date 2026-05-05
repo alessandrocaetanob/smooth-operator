@@ -29,6 +29,7 @@ namespace SmoothOperator.Infrastructure.Services
         private readonly IEncryptionService _encryptionService;
         private readonly IConnectionMultiplexer _redis;
         private readonly IAppMetrics _metrics;
+        private readonly ISecretProviderFactory _secretProviderFactory;
 
         private static readonly TimeSpan TicketTtl = TimeSpan.FromSeconds(30);
 
@@ -38,7 +39,8 @@ namespace SmoothOperator.Infrastructure.Services
             IServiceScopeFactory scopeFactory,
             IEncryptionService encryptionService,
             IConnectionMultiplexer redis,
-            IAppMetrics metrics)
+            IAppMetrics metrics,
+            ISecretProviderFactory secretProviderFactory)
         {
             _logger = logger;
             _guacdHost = guacdOptions.Value.Host;
@@ -47,6 +49,7 @@ namespace SmoothOperator.Infrastructure.Services
             _encryptionService = encryptionService;
             _redis = redis;
             _metrics = metrics;
+            _secretProviderFactory = secretProviderFactory;
         }
 
         // ---- Ticket lifecycle (REST issue / WS consume) ------------------------------
@@ -180,7 +183,7 @@ namespace SmoothOperator.Infrastructure.Services
 
             var connection = await dbContext.Connections
                 .Include(c => c.Host)
-                .Include(c => c.Credential)
+                .Include(c => c.Credential).ThenInclude(cr => cr!.SecretProvider)
                 .Include(c => c.Users)
                 .FirstOrDefaultAsync(c => c.Id == connectionId);
 
@@ -308,7 +311,7 @@ namespace SmoothOperator.Infrastructure.Services
                 var serverVersion = paramNames.Count > 0 && paramNames[0].StartsWith("VERSION_", StringComparison.Ordinal)
                     ? paramNames[0]
                     : "VERSION_1_0_0";
-                var paramValues = ResolveConnectionParameters(connection, paramNames, serverVersion);
+                var paramValues = await ResolveConnectionParametersAsync(connection, paramNames, serverVersion, dbContext, CancellationToken.None);
 
                 _logger.LogInformation(
                     "guacd handshake for {Protocol}: server={ServerVersion}, sending {ValueCount} connect values for {NameCount} arg names",
@@ -476,7 +479,12 @@ namespace SmoothOperator.Infrastructure.Services
         // Build the value list for guacd's `connect` instruction in the order
         // requested by its `args` reply. Parameters we don't recognise are sent
         // as empty strings (guacd treats those as "use default").
-        private List<string> ResolveConnectionParameters(Connection connection, IReadOnlyList<string> paramNames, string serverVersion)
+        private async Task<List<string>> ResolveConnectionParametersAsync(
+            Connection connection,
+            IReadOnlyList<string> paramNames,
+            string serverVersion,
+            AppDbContext dbContext,
+            CancellationToken cancellationToken)
         {
             var protocol = (connection.Protocol ?? "rdp").ToLowerInvariant();
             var hostname = connection.Host?.Address ?? string.Empty;
@@ -491,17 +499,71 @@ namespace SmoothOperator.Infrastructure.Services
             var credentialType = (connection.Credential?.CredentialType ?? "password").ToLowerInvariant();
             var isKeyAuth = credentialType is "private_key" or "ssh_key" or "key";
             var decryptedSecret = string.Empty;
-            if (connection.Credential != null && !string.IsNullOrEmpty(connection.Credential.EncryptedSecret))
+
+            if (connection.Credential != null)
             {
-                try
+                var cred = connection.Credential;
+                if (cred.StorageMode == Domain.Models.SecretStorageMode.External
+                    && cred.SecretProvider != null
+                    && !string.IsNullOrEmpty(cred.ExternalSecretName))
                 {
-                    decryptedSecret = _encryptionService.Decrypt(connection.Credential.EncryptedSecret);
+                    try
+                    {
+                        var secretProvider = _secretProviderFactory.Create(cred.SecretProvider);
+                        decryptedSecret = await secretProvider.GetSecretAsync(
+                            cred.ExternalSecretName, cred.ExternalSecretVersion, cancellationToken);
+
+                        dbContext.AuditLogs.Add(new AuditLog
+                        {
+                            Id = Guid.NewGuid(),
+                            Action = "secret.fetched",
+                            ResourceType = "Credential",
+                            ResourceId = cred.Id.ToString(),
+                            Details = System.Text.Json.JsonSerializer.Serialize(new
+                            {
+                                credentialId = cred.Id,
+                                providerId = cred.SecretProviderId,
+                                secretName = cred.ExternalSecretName,
+                                success = true
+                            })
+                        });
+                        await dbContext.SaveChangesAsync(cancellationToken);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Failed to fetch secret from vault for credential {CredentialId}", cred.Id);
+                        dbContext.AuditLogs.Add(new AuditLog
+                        {
+                            Id = Guid.NewGuid(),
+                            Action = "secret.fetched",
+                            ResourceType = "Credential",
+                            ResourceId = cred.Id.ToString(),
+                            Details = System.Text.Json.JsonSerializer.Serialize(new
+                            {
+                                credentialId = cred.Id,
+                                providerId = cred.SecretProviderId,
+                                secretName = cred.ExternalSecretName,
+                                success = false,
+                                error = "vault_unreachable"
+                            })
+                        });
+                        await dbContext.SaveChangesAsync(cancellationToken);
+                        throw new InvalidOperationException("Vault unreachable — cannot retrieve credential. Check secret provider configuration.", ex);
+                    }
                 }
-                catch (Exception ex)
+                else if (!string.IsNullOrEmpty(cred.EncryptedSecret))
                 {
-                    _logger.LogWarning(ex, "Failed to decrypt credential for connection {ConnectionId}", connection.Id);
+                    try
+                    {
+                        decryptedSecret = _encryptionService.Decrypt(cred.EncryptedSecret);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Failed to decrypt credential for connection {ConnectionId}", connection.Id);
+                    }
                 }
             }
+
             // For key auth the decrypted secret is the PEM private key, not a password.
             var password = isKeyAuth ? string.Empty : decryptedSecret;
             var privateKey = isKeyAuth ? decryptedSecret : string.Empty;

@@ -163,3 +163,25 @@ All 55 Angular unit tests pass. Build clean at commit `fd451f9`.
 
 Opened PR #50 to master: all 151 tests pass (142 integration + 9 architecture). README updated with Clean Architecture diagram and full Options-pattern env-var matrix. ADR-0007 documents Phase 11 security decisions. Branch: ac/refactor-testing-performance.
 
+## 2025-07-25 - Azure Key Vault Integration
+
+**Summary:** Added full Azure Key Vault integration: credentials can now be stored locally (as before) or referenced in Azure Key Vault via a registered secret provider.
+
+**Backend (previously completed):**
+- `SecretProvider` entity + `SecretStorageMode` / `SecretProviderType` enums.
+- `ISecretProvider` / `ISecretProviderFactory` abstraction.
+- `AzureKeyVaultSecretProvider` + `SecretProviderFactory` (Infrastructure).
+- MediatR commands/queries for CRUD + test-connection on providers.
+- Extended `CreateCredentialCommand` / `UpdateCredentialCommand` for push/link flows (plaintext never persisted when mode=External).
+- `SecretProvidersController` (Owner/Admin only).
+- `GuacamoleProxyService` resolves secrets via factory at connect time.
+- EF Core migration `AddSecretProviders`.
+
+**Frontend:**
+- `SecretProvidersService` — CRUD + test + listSecrets.
+- New `Settings → Key Vault` page (`secret-providers/`): list table, inline add/edit form, per-row test-connection button, isEnabled toggle (edit mode only).
+- Route added: `settings/secret-providers` lazy-loaded; tab added to `settings.html`.
+- `credentials.service.ts` extended: `SecretStorageMode`, new fields on `Credential`, updated payloads.
+- `credentials.ts` / `credentials.html` updated: Storage Mode toggle (Local / Azure Key Vault), provider picker, Push-to-Vault vs Link-Existing sub-mode, lazy secret-name dropdown.
+
+**Security:** clientSecret AES-encrypted at rest; never returned in API responses; plaintext never written to DB when storageMode=External; `secret.fetched` audit event never logs value.

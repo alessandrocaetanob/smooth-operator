@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using SmoothOperator.Application.DTOs;
 using SmoothOperator.Application.Exceptions;
 using SmoothOperator.Application.Interfaces;
+using SmoothOperator.Application.Features.Credentials.Commands;
 
 namespace SmoothOperator.Application.Features.Credentials.Queries
 {
@@ -25,15 +26,11 @@ namespace SmoothOperator.Application.Features.Credentials.Queries
 
         public async Task<IEnumerable<CredentialDto>> Handle(GetCredentialsQuery request, CancellationToken cancellationToken)
         {
-            var credentials = await _context.Credentials.AsNoTracking().ToListAsync(cancellationToken);
-            return credentials.Select(c => new CredentialDto
-            {
-                Id = c.Id,
-                Name = c.Name,
-                Username = c.Username,
-                CredentialType = c.CredentialType,
-                PublicKey = c.PublicKey
-            });
+            var credentials = await _context.Credentials
+                .Include(c => c.SecretProvider)
+                .AsNoTracking()
+                .ToListAsync(cancellationToken);
+            return credentials.Select(Commands.CreateCredentialCommandHandler.ToDto);
         }
     }
 }

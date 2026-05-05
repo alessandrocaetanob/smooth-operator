@@ -127,9 +127,11 @@ export const routes: Routes = [
           },
 
           {
-            path: 'integrations',
+            path: 'secret-providers',
             loadComponent: () =>
-              import('./pages/settings/integrations/integrations').then((m) => m.Integrations),
+              import('./pages/settings/secret-providers/secret-providers').then(
+                (m) => m.SecretProviders,
+              ),
           },
         ],
       },

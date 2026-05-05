@@ -3,28 +3,50 @@ import { Injectable, inject, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
 import { pickOr, RawRecord } from './json-utils';
 
+export type SecretStorageMode = 'Local' | 'External';
+
 export interface Credential {
   id: string;
   name: string;
   username: string;
   credentialType: 'password' | 'private_key' | string;
   publicKey?: string;
+  storageMode: SecretStorageMode;
+  secretProviderId?: string;
+  secretProviderName?: string;
+  externalSecretName?: string;
+  externalSecretVersion?: string;
 }
 
 export interface CreateCredentialPayload {
   name: string;
   username: string;
-  secret: string;
   credentialType: string;
   publicKey?: string;
+  storageMode?: SecretStorageMode;
+  // Local storage
+  secret?: string;
+  // External / Push-to-vault
+  secretProviderId?: string;
+  pushToVault?: boolean;
+  // External / Link-existing
+  externalSecretName?: string;
+  externalSecretVersion?: string;
 }
 
 export interface UpdateCredentialPayload {
   name: string;
   username: string;
-  secret?: string; // optional - omit to keep existing secret
   credentialType: string;
   publicKey?: string;
+  storageMode?: SecretStorageMode;
+  // Local storage (omit to keep existing)
+  secret?: string;
+  // External
+  secretProviderId?: string;
+  pushToVault?: boolean;
+  externalSecretName?: string;
+  externalSecretVersion?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -67,6 +89,16 @@ export class CredentialsService {
       username: pickOr(raw, '', 'username', 'Username'),
       credentialType: pickOr(raw, 'password', 'credentialType', 'CredentialType'),
       publicKey: pickOr(raw, '', 'publicKey', 'PublicKey'),
+      storageMode: pickOr(raw, 'Local', 'storageMode', 'StorageMode'),
+      secretProviderId: pickOr(raw, undefined, 'secretProviderId', 'SecretProviderId'),
+      secretProviderName: pickOr(raw, undefined, 'secretProviderName', 'SecretProviderName'),
+      externalSecretName: pickOr(raw, undefined, 'externalSecretName', 'ExternalSecretName'),
+      externalSecretVersion: pickOr(
+        raw,
+        undefined,
+        'externalSecretVersion',
+        'ExternalSecretVersion',
+      ),
     };
   }
 }
