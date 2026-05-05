@@ -5,12 +5,14 @@ on:
     branches: [ master, main, develop ]
     paths:
       - 'backend/**/*.csproj'
+      - '*.sln'
       - 'frontend/package*.json'
       - '.github/workflows/dependency-scan.yml'
   pull_request:
     branches: [ master, main, develop ]
     paths:
       - 'backend/**/*.csproj'
+      - '*.sln'
       - 'frontend/package*.json'
       - '.github/workflows/dependency-scan.yml'
   schedule:
@@ -64,14 +66,14 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Restore dependencies
-        run: dotnet restore backend/Backend.csproj
+        run: dotnet restore smooth-operator.sln
 
       - name: List outdated packages
-        run: dotnet list backend/Backend.csproj package --outdated
+        run: dotnet list smooth-operator.sln package --outdated
         continue-on-error: true
 
       - name: Check for vulnerable packages
-        run: dotnet list backend/Backend.csproj package --vulnerable --include-transitive
+        run: dotnet list smooth-operator.sln package --vulnerable --include-transitive
         continue-on-error: true
 
   dependency-review:

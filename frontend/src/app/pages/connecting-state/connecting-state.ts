@@ -128,7 +128,11 @@ export class ConnectingState implements OnInit, OnDestroy {
       this.connections
         .reload()
         .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe({ error: () => {} });
+        .subscribe({
+          error: () => {
+            /* intentional no-op */
+          },
+        });
     }
     const session = this.sessionManager.getOrCreate(id);
     const s = session.state();
@@ -159,7 +163,9 @@ export class ConnectingState implements OnInit, OnDestroy {
     const session = this.sessionManager.getOrCreate(id);
     session.disconnect();
     session.reset();
-    session.connect().catch(() => {});
+    session.connect().catch(() => {
+      /* intentional no-op */
+    });
   }
 
   isStepDone(step: Step): boolean {

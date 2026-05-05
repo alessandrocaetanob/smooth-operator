@@ -14,6 +14,7 @@ import { AuthService } from './services/auth.service';
 import { authInterceptor } from './services/auth.interceptor';
 import { ThemeService } from './services/theme.service';
 import { MotionService } from './services/motion.service';
+import { RuntimeConfigService } from './core/config/runtime-config.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -21,6 +22,10 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes, withComponentInputBinding()),
     provideHttpClient(withInterceptors([authInterceptor])),
     provideAnimationsAsync(),
+    // Runtime config — must run first so subsequent initializers can read it.
+    provideAppInitializer(async () => {
+      await inject(RuntimeConfigService).load();
+    }),
     // Theme + motion — synchronous, run before route activation.
     provideAppInitializer(() => {
       inject(ThemeService).init();

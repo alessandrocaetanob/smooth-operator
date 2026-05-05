@@ -239,11 +239,18 @@
     <div
       class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
       (click)="closeVaultAssignments()"
+      (keydown.enter)="closeVaultAssignments()"
+      tabindex="0"
       role="dialog"
       aria-modal="true"
       aria-label="Vault assignments"
     >
-      <div class="w-full max-w-lg glass-panel rounded-lg p-5" (click)="$event.stopPropagation()">
+      <div
+        class="w-full max-w-lg glass-panel rounded-lg p-5"
+        (click)="$event.stopPropagation()"
+        (keydown.enter)="$event.stopPropagation()"
+        tabindex="-1"
+      >
         <h3 class="text-sm font-semibold text-on-surface uppercase tracking-widest">
           Vault assignments
         </h3>

@@ -149,14 +149,15 @@ export class Hosts implements OnInit {
     this.refresh();
   }
 
-  private fail(err: any): void {
+  private fail(err: unknown): void {
     this.busy.set(false);
     const msg = this.toMessage(err) || 'Save failed.';
     this.errorMessage.set(msg);
     this.toastSvc.error(msg);
   }
 
-  private toMessage(err: any): string | null {
-    return err?.error?.message ?? err?.error?.Message ?? err?.message ?? null;
+  private toMessage(err: unknown): string | null {
+    const e = err as { error?: { message?: string; Message?: string }; message?: string };
+    return e?.error?.message ?? e?.error?.Message ?? e?.message ?? null;
   }
 }

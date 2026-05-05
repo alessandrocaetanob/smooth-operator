@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
-import { Router, UrlTree } from '@angular/router';
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { ActivatedRouteSnapshot, Router, RouterStateSnapshot, UrlTree } from '@angular/router';
+import { describe, it, expect, vi } from 'vitest';
 
 import { AuthService } from './auth.service';
 import {
@@ -12,12 +12,12 @@ import {
   setupGuard,
 } from './auth.guards';
 
-type AuthStub = {
+interface AuthStub {
   requiresSetup: () => boolean;
   isAuthenticated: () => boolean;
   canAccessSettings: () => boolean;
   hasAnyRole: (...roles: string[]) => boolean;
-};
+}
 
 function makeAuth(overrides: Partial<AuthStub> = {}): AuthStub {
   return {
@@ -47,31 +47,39 @@ function run<T>(fn: () => T): T {
   return TestBed.runInInjectionContext(fn) as T;
 }
 
-const dummyRoute = {} as any;
-const dummyState = {} as any;
+const dummyRoute = {} as ActivatedRouteSnapshot;
+const dummyState = {} as RouterStateSnapshot;
 
 describe('rootRedirectGuard', () => {
   it('redirects to /first-access when setup is required', () => {
     configure(makeAuth({ requiresSetup: () => true }));
-    const result = run(() => rootRedirectGuard(dummyRoute, dummyState)) as any;
+    const result = run(() => rootRedirectGuard(dummyRoute, dummyState)) as unknown as {
+      __url: string;
+    };
     expect(result.__url).toBe('/first-access');
   });
 
   it('redirects authenticated admins to /administration', () => {
     configure(makeAuth({ isAuthenticated: () => true, canAccessSettings: () => true }));
-    const result = run(() => rootRedirectGuard(dummyRoute, dummyState)) as any;
+    const result = run(() => rootRedirectGuard(dummyRoute, dummyState)) as unknown as {
+      __url: string;
+    };
     expect(result.__url).toBe('/administration');
   });
 
   it('redirects authenticated regular users to /vault', () => {
     configure(makeAuth({ isAuthenticated: () => true, canAccessSettings: () => false }));
-    const result = run(() => rootRedirectGuard(dummyRoute, dummyState)) as any;
+    const result = run(() => rootRedirectGuard(dummyRoute, dummyState)) as unknown as {
+      __url: string;
+    };
     expect(result.__url).toBe('/vault');
   });
 
   it('redirects anonymous visitors to /login', () => {
     configure(makeAuth({ isAuthenticated: () => false }));
-    const result = run(() => rootRedirectGuard(dummyRoute, dummyState)) as any;
+    const result = run(() => rootRedirectGuard(dummyRoute, dummyState)) as unknown as {
+      __url: string;
+    };
     expect(result.__url).toBe('/login');
   });
 });
@@ -79,7 +87,7 @@ describe('rootRedirectGuard', () => {
 describe('loginGuard', () => {
   it('bounces to /first-access when setup is required', () => {
     configure(makeAuth({ requiresSetup: () => true }));
-    const result = run(() => loginGuard(dummyRoute, dummyState)) as any;
+    const result = run(() => loginGuard(dummyRoute, dummyState)) as unknown as { __url: string };
     expect(result.__url).toBe('/first-access');
   });
 
@@ -93,7 +101,7 @@ describe('loginGuard', () => {
 describe('setupGuard', () => {
   it('blocks the setup screen once the app has users', () => {
     configure(makeAuth({ requiresSetup: () => false }));
-    const result = run(() => setupGuard(dummyRoute, dummyState)) as any;
+    const result = run(() => setupGuard(dummyRoute, dummyState)) as unknown as { __url: string };
     expect(result.__url).toBe('/login');
   });
 
@@ -107,7 +115,7 @@ describe('setupGuard', () => {
 describe('authGuard', () => {
   it('redirects unauthenticated users to /login', () => {
     configure(makeAuth({ isAuthenticated: () => false }));
-    const result = run(() => authGuard(dummyRoute, dummyState)) as any;
+    const result = run(() => authGuard(dummyRoute, dummyState)) as unknown as { __url: string };
     expect(result.__url).toBe('/login');
   });
 
@@ -120,8 +128,10 @@ describe('authGuard', () => {
 
 describe('ownerAdminGuard', () => {
   it('redirects users without Owner or Admin role to /vault', () => {
-    configure(makeAuth({ hasAnyRole: (...roles) => false }));
-    const result = run(() => ownerAdminGuard(dummyRoute, dummyState)) as any;
+    configure(makeAuth({ hasAnyRole: () => false }));
+    const result = run(() => ownerAdminGuard(dummyRoute, dummyState)) as unknown as {
+      __url: string;
+    };
     expect(result.__url).toBe('/vault');
   });
 
@@ -146,7 +156,9 @@ describe('ownerAdminGuard', () => {
             : false,
       }),
     );
-    const result = run(() => ownerAdminGuard(dummyRoute, dummyState)) as any;
+    const result = run(() => ownerAdminGuard(dummyRoute, dummyState)) as unknown as {
+      __url: string;
+    };
     expect(result.__url).toBe('/vault');
   });
 });
@@ -160,7 +172,9 @@ describe('connectionManagerGuard', () => {
 
   it('rejects regular users', () => {
     configure(makeAuth({ hasAnyRole: () => false }));
-    const result = run(() => connectionManagerGuard(dummyRoute, dummyState)) as any;
+    const result = run(() => connectionManagerGuard(dummyRoute, dummyState)) as unknown as {
+      __url: string;
+    };
     expect(result.__url).toBe('/vault');
   });
 });

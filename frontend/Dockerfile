@@ -20,16 +20,27 @@ COPY . .
 # Build the application
 RUN npm run build --configuration=production
 
-# Stage 2: Serve the application with Nginx
-FROM nginx:alpine
+# Stage 2: Serve the application with nginx-unprivileged (runs as non-root on port 8080)
+FROM nginxinc/nginx-unprivileged:1.27-alpine AS final
 
-# Copy the build output from the previous stage to Nginx's html directory
-# Note: Ensure the dist path matches the output path defined in angular.json
+# Switch to root temporarily for file setup
+USER root
+
+# Copy the Angular build output
 COPY --from=build /app/dist/frontend/browser /usr/share/nginx/html
 
-# Copy a custom nginx configuration (optional, recommended for Angular routing)
+# Copy nginx server-block config and startup script
 COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY entrypoint.sh /entrypoint.sh
+# Strip Windows CRLF line endings (defensive: script must be pure LF for the shebang to work on Linux)
+RUN sed -i 's/\r$//' /entrypoint.sh && chmod +x /entrypoint.sh
 
-EXPOSE 80
+# Switch back to the unprivileged nginx user for runtime
+USER nginx
 
-CMD ["nginx", "-g", "daemon off;"]
+EXPOSE 8080
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD wget -qO- http://localhost:8080/ || exit 1
+
+ENTRYPOINT ["/entrypoint.sh"]

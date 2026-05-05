@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
-import { pick, pickOr } from './json-utils';
+import { pick, pickOr, RawRecord } from './json-utils';
 
 export interface Vault {
   id: string;
@@ -29,14 +29,14 @@ export class VaultsService {
 
   reload(): Observable<Vault[]> {
     return this.http
-      .get<any[]>('/api/vaults')
+      .get<RawRecord[]>('/api/vaults')
       .pipe(
         tap((rows) => this._list.set((rows ?? []).map((r) => this.normalize(r)))),
       ) as unknown as Observable<Vault[]>;
   }
 
   create(payload: SaveVaultPayload): Observable<Vault> {
-    return this.http.post<any>('/api/vaults', payload);
+    return this.http.post<Vault>('/api/vaults', payload);
   }
 
   update(id: string, payload: SaveVaultPayload): Observable<void> {
@@ -55,7 +55,7 @@ export class VaultsService {
     return this.http.put<void>(`/api/vaults/${id}/assignments`, payload);
   }
 
-  private normalize(raw: any): Vault {
+  private normalize(raw: RawRecord): Vault {
     return {
       id: pickOr(raw, '', 'id', 'Id'),
       name: pickOr(raw, '', 'name', 'Name'),

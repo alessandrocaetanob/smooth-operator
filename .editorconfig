@@ -1,0 +1,36 @@
+# Editor configuration — https://editorconfig.org
+# Root config: applies to all files in the repository.
+root = true
+
+[*]
+charset = utf-8
+indent_style = space
+indent_size = 4
+insert_final_newline = true
+trim_trailing_whitespace = true
+end_of_line = lf
+
+# Markdown: keep trailing whitespace (line-break syntax uses 2 spaces).
+[*.md]
+max_line_length = off
+trim_trailing_whitespace = false
+
+# JSON / YAML: 2-space indent is conventional.
+[*.{json,yaml,yml}]
+indent_size = 2
+
+# Frontend (TypeScript, HTML, CSS, SCSS): 2-space indent matching the Angular CLI default.
+[*.{ts,js,mts,mjs,html,css,scss}]
+indent_size = 2
+quote_type = single
+
+# C# source and project files: 4-space indent per Microsoft conventions.
+[*.{cs,csx}]
+indent_size = 4
+
+[*.{csproj,sln,props,targets}]
+indent_size = 2
+
+# Shell scripts: 2-space indent.
+[*.sh]
+indent_size = 2

@@ -89,7 +89,7 @@ export class Vault implements OnInit {
       next: ({ connections }) => {
         if (connections !== null) {
           this.loadLastConnected();
-          this.probeAll();
+          this.probeReachability();
         }
       },
     });
@@ -104,11 +104,13 @@ export class Vault implements OnInit {
         }
         this._lastConnectedMap.set(m);
       },
-      error: () => {},
+      error: () => {
+        /* intentional no-op */
+      },
     });
   }
 
-  private probeAll(): void {
+  private probeReachability(): void {
     const ids = this.list().map((c) => c.id);
     if (ids.length === 0) return;
 
@@ -151,7 +153,11 @@ export class Vault implements OnInit {
     const supported: ('rdp' | 'ssh' | 'vnc')[] = ['rdp', 'ssh', 'vnc'];
     this.connections
       .downloadConnectionFile(connection.id, supported.includes(format) ? format : 'rdp')
-      .subscribe({ error: () => {} });
+      .subscribe({
+        error: () => {
+          /* intentional no-op */
+        },
+      });
   }
 
   lastConnectedLabel(id: string): string | null {

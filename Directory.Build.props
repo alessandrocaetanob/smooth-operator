@@ -1,0 +1,26 @@
+<Project>
+  <!--
+    Directory.Build.props — shared MSBuild properties applied to EVERY .NET project
+    under this repo root.  Project-local <PropertyGroup> overrides still take precedence.
+  -->
+  <PropertyGroup>
+    <!-- Enable C# nullable reference types and implicit usings by default. -->
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+
+    <!-- Enforce Roslyn code-style rules during build (IDE* diagnostics). -->
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <AnalysisLevel>latest</AnalysisLevel>
+
+    <!-- Deterministic builds for reproducibility and Docker layer caching. -->
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+
+  <!-- SonarAnalyzer applied to all projects for code-smell detection at build time. -->
+  <ItemGroup>
+    <PackageReference Include="SonarAnalyzer.CSharp" Version="10.25.0.139117">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
+</Project>

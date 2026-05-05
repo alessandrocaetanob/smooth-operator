@@ -36,6 +36,9 @@
 **Learning:** Grafana dashboards accessed via an external app break UX; embedding metrics natively inside the Angular app is cleaner. PrometheusService was also broken — it called `/api/v1/query` which nginx only proxies to the backend, with no matching controller.
 **Action:** Removed PrometheusService and the stub Dashboards component. Added `MetricsController` (6 endpoints querying AuditLog + AppMetrics gauge). Added `MetricsService` Angular service. Split "Auditing" sidebar item into "Audit Logs" (icon `receipt_long`) and "Monitoring" (icon `monitoring`). Built full Monitoring page with three sections (Active Sessions, Auth & Security, Audit Events) using Chart.js — all stat cards, line/bar/doughnut charts. Deleted `auditing.{ts,html,css}`, `dashboards/*`, `prometheus.service.ts`.
 
-## 2026-05-04 - O(N) Array Includes Lookups in Angular Templates
+## 2026-07-13 - Vitest 4.x pool:forks Fix for Windows
+**Learning:** Vitest 4.x default `pool: 'threads'` (worker_threads) hangs indefinitely during initialization on Windows. The process starts, Angular builder reports the build succeeded, but the test runner never emits output — it stalls at "Initi...".
+**Action:** Create `frontend/vitest.config.ts` with `pool: 'forks'` and set `"runnerConfig": true` in `angular.json` test options. Angular's unit-test builder calls `findVitestBaseConfig()` which locates `vitest.config.ts` in the project root and passes it to `startVitest()`. With `forks` pool, tests run via child_process.fork() instead of worker_threads, resolving the Windows hang. Result: 23 spec files / 55 tests pass in ~8 s.
+
 **Learning:** Using O(N) array methods like `.includes()` directly inside component methods that are called from Angular templates (e.g., `isVaultSelected(id)`) inside loops like `@for` causes O(M*N) performance bottlenecks during change detection.
 **Action:** Transform array references into `Set` lookups using `computed` signals (`computed(() => new Set(...))`) and use `Set.prototype.has()` instead of `Array.prototype.includes()` to reduce lookup time complexity to O(1).

@@ -1,0 +1,73 @@
+using System.Threading;
+using System.Threading.Tasks;
+using MediatR;
+using Microsoft.EntityFrameworkCore;
+using SmoothOperator.Application.DTOs;
+using SmoothOperator.Application.Exceptions;
+using SmoothOperator.Application.Helpers;
+using SmoothOperator.Application.Interfaces;
+
+namespace SmoothOperator.Application.Features.Auth.Commands
+{
+    public sealed record LoginCommand(string Email, string Password) : IRequest<AuthResponse>;
+
+    public sealed class LoginCommandHandler : IRequestHandler<LoginCommand, AuthResponse>
+    {
+        private readonly IAppDbContext _context;
+        private readonly ITokenService _tokenService;
+        private readonly IAuditService _audit;
+        private readonly IAppMetrics _metrics;
+
+        public LoginCommandHandler(
+            IAppDbContext context,
+            ITokenService tokenService,
+            IAuditService audit,
+            IAppMetrics metrics)
+        {
+            _context = context;
+            _tokenService = tokenService;
+            _audit = audit;
+            _metrics = metrics;
+        }
+
+        public async Task<AuthResponse> Handle(LoginCommand request, CancellationToken cancellationToken)
+        {
+            var email = request.Email.Trim().ToLowerInvariant();
+            var user = await _context.Users
+                .Include(u => u.Roles)
+                .FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
+
+            const string invalid = "Invalid email or password.";
+
+            if (user == null || string.IsNullOrEmpty(user.PasswordHash))
+            {
+                await _audit.WriteAsync("user.login_failed", "User", string.Empty,
+                    new { provider = "local", email, reason = "user_not_found_or_no_password" }, outcome: "failure");
+                _metrics.RecordLoginAttempt("failure");
+                throw new UnauthorizedException(invalid);
+            }
+
+            if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+            {
+                await _audit.WriteAsync("user.login_failed", "User", user.Id.ToString(),
+                    new { provider = "local" }, outcome: "failure");
+                _metrics.RecordLoginAttempt("failure");
+                throw new UnauthorizedException(invalid);
+            }
+
+            if (!user.IsActive)
+            {
+                await _audit.WriteAsync("user.login_failed", "User", user.Id.ToString(),
+                    new { provider = "local", reason = "user_disabled" }, outcome: "failure");
+                _metrics.RecordLoginAttempt("failure");
+                throw new ForbiddenException("User account is disabled.");
+            }
+
+            await _audit.WriteAsync("user.login", "User", user.Id.ToString(),
+                new { provider = "local" });
+            _metrics.RecordLoginAttempt("success");
+
+            return UserHelper.ToAuthResponse(user, _tokenService);
+        }
+    }
+}

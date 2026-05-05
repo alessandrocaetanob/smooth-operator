@@ -28,11 +28,11 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Restore dependencies
-        run: dotnet restore backend/Backend.csproj
+        run: dotnet restore smooth-operator.sln
 
       - name: Build with analyzers
         run: |
-          dotnet build backend/Backend.csproj \
+          dotnet build smooth-operator.sln \
             --configuration Release \
             --no-restore \
             /p:TreatWarningsAsErrors=false \
@@ -40,7 +40,7 @@ jobs:
             /p:AnalysisLevel=latest
 
       - name: Run .NET format check
-        run: dotnet format backend/Backend.csproj --verify-no-changes --verbosity diagnostic
+        run: dotnet format smooth-operator.sln --verify-no-changes --verbosity diagnostic
 
   test:
     name: Run Backend Tests
@@ -55,34 +55,15 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
-      - name: Restore backend & test dependencies
-        run: |
-          if [ -f backend/Backend.csproj ]; then
-            dotnet restore backend/Backend.csproj
-          fi
-
-          mapfile -t test_projects < <(find backend backend.tests -type f -name '*Tests*.csproj' 2>/dev/null | sort)
-
-          if [ ${#test_projects[@]} -eq 0 ]; then
-            echo "No test projects found, skipping test restore"
-            exit 0
-          fi
-
-          for project in "${test_projects[@]}"; do
-            dotnet restore "$project"
-          done
+      - name: Restore dependencies
+        run: dotnet restore smooth-operator.sln
 
       - name: Build
-        run: |
-          if [ -f backend/Backend.csproj ]; then
-            dotnet build backend/Backend.csproj --configuration Release --no-restore
-          else
-            echo "backend/Backend.csproj not found, skipping backend build"
-          fi
+        run: dotnet build smooth-operator.sln --configuration Release --no-restore
 
       - name: Run tests
         run: |
-          mapfile -t test_projects < <(find backend backend.tests -type f -name '*Tests*.csproj' 2>/dev/null | sort)
+          mapfile -t test_projects < <(find backend -type f -name '*Tests*.csproj' 2>/dev/null | sort)
 
           if [ ${#test_projects[@]} -eq 0 ]; then
             echo "No test projects found under backend/, skipping test execution"
@@ -91,5 +72,37 @@ jobs:
 
           for project in "${test_projects[@]}"; do
             echo "Running tests for $project"
-            dotnet test "$project" --configuration Release --verbosity normal
+            dotnet test "$project" \
+              --configuration Release \
+              --verbosity normal \
+              --settings coverlet.runsettings \
+              --collect:"XPlat Code Coverage" \
+              --results-directory ./TestResults
           done
+
+      - name: Generate coverage report
+        if: always()
+        run: |
+          dotnet tool restore
+          dotnet tool run reportgenerator -- \
+            -reports:"./TestResults/**/coverage.cobertura.xml" \
+            -targetdir:"./coveragereport" \
+            -reporttypes:"Html;Cobertura;MarkdownSummaryGithub" \
+            -verbosity:Warning || true
+
+      - name: Post coverage summary to job summary
+        if: always()
+        run: |
+          if [ -f ./coveragereport/SummaryGithub.md ]; then
+            cat ./coveragereport/SummaryGithub.md >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Upload coverage report artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: |
+            ./TestResults/**/coverage.cobertura.xml
+            ./coveragereport/
+          retention-days: 14

@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 import { Observable, map, tap } from 'rxjs';
-import { pickOr } from './json-utils';
+import { pickOr, RawRecord } from './json-utils';
 
 export interface SystemSettings {
   auditLogRetentionDays: number;
@@ -19,20 +19,20 @@ export class SystemSettingsService {
   readonly current = this._current.asReadonly();
 
   load(): Observable<SystemSettings> {
-    return this.http.get<any>('/api/settings/system').pipe(
+    return this.http.get<RawRecord>('/api/settings/system').pipe(
       map((r) => this.normalize(r)),
       tap((s) => this._current.set(s)),
     );
   }
 
   update(payload: UpdateSystemSettingsRequest): Observable<SystemSettings> {
-    return this.http.put<any>('/api/settings/system', payload).pipe(
+    return this.http.put<RawRecord>('/api/settings/system', payload).pipe(
       map((r) => this.normalize(r)),
       tap((s) => this._current.set(s)),
     );
   }
 
-  private normalize(raw: any): SystemSettings {
+  private normalize(raw: RawRecord): SystemSettings {
     return {
       auditLogRetentionDays: pickOr(raw, 0, 'auditLogRetentionDays', 'AuditLogRetentionDays'),
       updatedAt: pickOr(raw, null as string | null, 'updatedAt', 'UpdatedAt'),

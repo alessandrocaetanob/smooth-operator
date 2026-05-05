@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 import { Observable, tap, map } from 'rxjs';
-import { pickOr } from './json-utils';
+import { pickOr, RawRecord } from './json-utils';
 
 export interface SmtpSettings {
   configured: boolean;
@@ -35,14 +35,14 @@ export class SmtpSettingsService {
   readonly current = this._current.asReadonly();
 
   load(): Observable<SmtpSettings> {
-    return this.http.get<any>('/api/settings/smtp').pipe(
+    return this.http.get<RawRecord>('/api/settings/smtp').pipe(
       map((r) => this.normalize(r)),
       tap((s) => this._current.set(s)),
     );
   }
 
   update(payload: UpdateSmtpSettingsRequest): Observable<SmtpSettings> {
-    return this.http.put<any>('/api/settings/smtp', payload).pipe(
+    return this.http.put<RawRecord>('/api/settings/smtp', payload).pipe(
       map((r) => this.normalize(r)),
       tap((s) => this._current.set(s)),
     );
@@ -52,7 +52,7 @@ export class SmtpSettingsService {
     return this.http.post<{ success: boolean }>('/api/settings/smtp/test', { toEmail });
   }
 
-  private normalize(raw: any): SmtpSettings {
+  private normalize(raw: RawRecord): SmtpSettings {
     return {
       configured: pickOr(raw, false, 'configured', 'Configured'),
       host: pickOr(raw, '', 'host', 'Host'),

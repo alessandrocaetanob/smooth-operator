@@ -5,6 +5,7 @@ import { Mascot, MascotState } from '../../shared/mascot/mascot';
 import { ThemeToggle } from '../../shared/theme-toggle/theme-toggle';
 import { AuthService } from '../../services/auth.service';
 import { Spinner } from '../../shared/spinner/spinner';
+import { RuntimeConfigService } from '../../core/config/runtime-config.service';
 
 @Component({
   selector: 'app-authentication',
@@ -16,6 +17,7 @@ export class Authentication {
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly runtimeConfig = inject(RuntimeConfigService);
 
   readonly providers = this.auth.providers;
   readonly sso = computed(() => this.providers().sso);
@@ -23,6 +25,10 @@ export class Authentication {
   readonly errorMessage = signal<string | null>(null);
   readonly isPasswordFocused = signal(false);
   readonly typingLength = signal(0);
+
+  get helpUrl(): string {
+    return this.runtimeConfig.config.helpUrl;
+  }
 
   readonly form = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],

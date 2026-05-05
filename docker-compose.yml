@@ -4,10 +4,14 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "4200:80"
+      - "4200:8080"
     depends_on:
       - backend
     restart: unless-stopped
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs:
+      - /tmp
     networks:
       - smooth-operator-net
 
@@ -23,7 +27,7 @@ services:
       - ConnectionStrings__Redis=redis:6379
       - Guacd__Host=guacd
       - Guacd__Port=4822
-      - ENCRYPTION_KEY=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef # WARNING: FOR DEVELOPMENT ONLY! Use Azure Key Vault or secure secrets management in production
+      - Encryption__Key=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef # WARNING: FOR DEVELOPMENT ONLY! Use Docker secrets or a secrets manager in production
       - Jwt__Key=7e589cea4a11cdcc9c35a1cf55e9cbe2bf793a59d1c7c106e218749b6c2308ad # WARNING: FOR DEVELOPMENT ONLY! Replace with a strong random secret in production
       - Jwt__Issuer=smooth-operator
       - Jwt__Audience=smooth-operator-api
@@ -31,15 +35,21 @@ services:
       # - AzureAd__Instance=https://login.microsoftonline.com/
       # - AzureAd__TenantId=<your-tenant-id>
       # - AzureAd__ClientId=<your-client-id>
-      - APP_URL=http://localhost:4200
-      - FRONTEND_URL=http://localhost:4200
+      - AppUrls__App=http://localhost:4200
+      - AppUrls__Frontend=http://localhost:4200
       - Otel__Endpoint=http://tempo:4317
       - Otel__ServiceName=smooth-operator-backend
+    volumes:
+      - dp_keys:/data/protection-keys
     depends_on:
       - postgres
       - redis
       - guacd
     restart: unless-stopped
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs:
+      - /tmp
     networks:
       - smooth-operator-net
 
@@ -128,12 +138,33 @@ services:
     networks:
       - smooth-operator-net
 
+  # ── Code Quality ─────────────────────────────────────────────────────────────
+  # Start with: docker compose --profile code-quality up -d
+  sonarqube:
+    image: sonarqube:lts-community
+    profiles: [code-quality]
+    ports:
+      - "9000:9000"
+    environment:
+      - SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_logs:/opt/sonarqube/logs
+      - sonarqube_extensions:/opt/sonarqube/extensions
+    restart: unless-stopped
+    networks:
+      - smooth-operator-net
+
 volumes:
   postgres_data:
   redis_data:
   loki_data:
   prometheus_data:
   tempo_data:
+  sonarqube_data:
+  sonarqube_logs:
+  sonarqube_extensions:
+  dp_keys:
 
 networks:
   smooth-operator-net:

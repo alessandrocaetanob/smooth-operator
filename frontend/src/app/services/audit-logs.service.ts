@@ -1,7 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
-import { pickOr } from './json-utils';
+import { RawRecord, pickOr } from './json-utils';
 
 export interface AuditLogEntry {
   id: string;
@@ -52,10 +52,10 @@ export class AuditLogsService {
 
   reload(q: AuditLogQuery = {}): Observable<PagedAuditLogs> {
     const params = this.buildParams(q);
-    return this.http.get<any>('/api/audit-logs', { params }).pipe(
+    return this.http.get<RawRecord>('/api/audit-logs', { params }).pipe(
       tap((raw) => {
-        const items = (pickOr<any[]>(raw, [] as any[], 'items', 'Items') ?? []).map((r) =>
-          this.normalize(r),
+        const items = (pickOr<unknown[]>(raw, [], 'items', 'Items') ?? []).map((r) =>
+          this.normalize(r as RawRecord),
         );
         this._result.set({
           items,
@@ -87,7 +87,7 @@ export class AuditLogsService {
     return p;
   }
 
-  private normalize(raw: any): AuditLogEntry {
+  private normalize(raw: RawRecord): AuditLogEntry {
     return {
       id: pickOr(raw, '', 'id', 'Id'),
       timestamp: pickOr(raw, '', 'timestamp', 'Timestamp'),

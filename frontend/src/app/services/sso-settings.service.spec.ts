@@ -3,7 +3,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 
-import { SsoSettingsService } from './sso-settings.service';
+import { SsoSettingsService, SsoProviderView, SsoTestResult } from './sso-settings.service';
 
 describe('SsoSettingsService', () => {
   let svc: SsoSettingsService;
@@ -20,7 +20,7 @@ describe('SsoSettingsService', () => {
   afterEach(() => http.verify());
 
   it('load() returns empty shape when backend has no provider', () => {
-    let result: any = null;
+    let result!: SsoProviderView;
     svc.load().subscribe((p) => (result = p));
     const req = http.expectOne('/api/settings/sso');
     req.flush({ Type: '', IsEnabled: false });
@@ -32,7 +32,7 @@ describe('SsoSettingsService', () => {
   });
 
   it('load() normalizes PascalCase OIDC payload from .NET', () => {
-    let result: any = null;
+    let result!: SsoProviderView;
     svc.load().subscribe((p) => (result = p));
     http.expectOne('/api/settings/sso').flush({
       Id: 'p1',
@@ -65,7 +65,7 @@ describe('SsoSettingsService', () => {
   });
 
   it('load() normalizes camelCase SAML payload', () => {
-    let result: any = null;
+    let result!: SsoProviderView;
     svc.load().subscribe((p) => (result = p));
     http.expectOne('/api/settings/sso').flush({
       id: 'p2',
@@ -87,9 +87,9 @@ describe('SsoSettingsService', () => {
       },
     });
     expect(result.type).toBe('Saml');
-    expect(result.saml.spEntityId).toBe('sp');
-    expect(result.saml.wantResponseSigned).toBe(false);
-    expect(result.saml.hasSpPrivateKey).toBe(true);
+    expect(result.saml!.spEntityId).toBe('sp');
+    expect(result.saml!.wantResponseSigned).toBe(false);
+    expect(result.saml!.hasSpPrivateKey).toBe(true);
     expect(result.oidc).toBeNull();
   });
 
@@ -121,7 +121,7 @@ describe('SsoSettingsService', () => {
   });
 
   it('test() returns a normalized result', () => {
-    let result: any = null;
+    let result!: SsoTestResult;
     svc.test().subscribe((r) => (result = r));
     const req = http.expectOne('/api/settings/sso/test');
     expect(req.request.method).toBe('POST');
