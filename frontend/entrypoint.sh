@@ -7,9 +7,9 @@ export APP_HELP_URL="${APP_HELP_URL:-http://localhost:3000}"
 export APP_DOCS_URL="${APP_DOCS_URL:-http://localhost:3000}"
 export APP_FEATURE_FLAGS="${APP_FEATURE_FLAGS:-{}}"
 
-mkdir -p /usr/share/nginx/html/config
+mkdir -p /tmp/nginx-runtime
 
-cat > /usr/share/nginx/html/config/config.json <<EOF
+cat > /tmp/nginx-runtime/config.json <<EOF
 {
   "helpUrl": "${APP_HELP_URL}",
   "docsUrl": "${APP_DOCS_URL}",

@@ -12,7 +12,6 @@ services:
     read_only: true
     tmpfs:
       - /tmp
-      - /usr/share/nginx/html/config   # writable by entrypoint.sh at startup
     networks:
       - smooth-operator-net
 

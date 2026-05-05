@@ -35,11 +35,6 @@ COPY entrypoint.sh /entrypoint.sh
 # Strip Windows CRLF line endings (defensive: script must be pure LF for the shebang to work on Linux)
 RUN sed -i 's/\r$//' /entrypoint.sh && chmod +x /entrypoint.sh
 
-# Create the runtime-config directory AFTER the build copy so COPY can't reset ownership.
-# entrypoint.sh writes config.json here at container start from env vars.
-RUN mkdir -p /usr/share/nginx/html/config \
-    && chown -R nginx:nginx /usr/share/nginx/html/config
-
 # Switch back to the unprivileged nginx user for runtime
 USER nginx
 
