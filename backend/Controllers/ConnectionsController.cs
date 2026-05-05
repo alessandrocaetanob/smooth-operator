@@ -497,7 +497,12 @@ namespace Backend.Controllers
 
         private FileContentResult GenerateRdpFile(string name, string host, int port, string username, Dictionary<string, string> settings)
         {
+            name = SanitizeLineBreaks(name);
+            host = SanitizeLineBreaks(host);
+            username = SanitizeLineBreaks(username);
             settings.TryGetValue("domain", out var domain);
+            if (domain != null) domain = SanitizeLineBreaks(domain);
+
             var sb = new StringBuilder();
             sb.AppendLine("screen mode id:i:2");
             sb.AppendLine("use multimon:i:0");
@@ -531,6 +536,10 @@ namespace Backend.Controllers
 
         private FileContentResult GenerateSshFile(string name, string host, int port, string username)
         {
+            name = SanitizeLineBreaks(name);
+            host = SanitizeLineBreaks(host);
+            username = SanitizeLineBreaks(username);
+
             var sb = new StringBuilder();
             sb.AppendLine("#!/bin/bash");
             sb.AppendLine($"# Connection: {name}");
@@ -547,6 +556,10 @@ namespace Backend.Controllers
 
         private FileContentResult GenerateVncFile(string name, string host, int port, string username)
         {
+            name = SanitizeLineBreaks(name);
+            host = SanitizeLineBreaks(host);
+            username = SanitizeLineBreaks(username);
+
             var sb = new StringBuilder();
             sb.AppendLine("[Connection]");
             sb.AppendLine($"Host={host}");
@@ -570,6 +583,9 @@ namespace Backend.Controllers
         // Wraps a value in single quotes and escapes embedded single quotes for bash.
         private static string ShellEscape(string value) =>
             "'" + value.Replace("'", "'\\''") + "'";
+
+        private static string SanitizeLineBreaks(string value) =>
+            string.IsNullOrEmpty(value) ? value : value.Replace("\n", " ").Replace("\r", "");
 
         private static Dictionary<string, string> ParseConnectionSettings(string? settingsJson)
         {
