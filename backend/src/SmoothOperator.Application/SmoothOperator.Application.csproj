@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>SmoothOperator.Application</RootNamespace>
+    <AssemblyName>SmoothOperator.Application</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SmoothOperator.Domain\SmoothOperator.Domain.csproj" />
+  </ItemGroup>
+
+</Project>

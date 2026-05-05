@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>SmoothOperator.Api</RootNamespace>
+    <AssemblyName>SmoothOperator.Api</AssemblyName>
+    <UserSecretsId>c733ae61-9e8f-44b2-92af-7f62702ee512</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SmoothOperator.Domain\SmoothOperator.Domain.csproj" />
+    <ProjectReference Include="..\SmoothOperator.Application\SmoothOperator.Application.csproj" />
+    <ProjectReference Include="..\SmoothOperator.Infrastructure\SmoothOperator.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AspNetCore.HealthChecks.NpgSql" Version="9.0.0" />
+    <PackageReference Include="AspNetCore.HealthChecks.Redis" Version="9.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.7" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="10.0.7" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.7" />
+  </ItemGroup>
+
+</Project>

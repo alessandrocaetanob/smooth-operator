@@ -12,8 +12,11 @@
           <Format>cobertura</Format>
           <!-- Exclude auto-generated migration code and test infrastructure. -->
           <Exclude>
-            [Backend]Backend.Migrations.*,
-            [Backend.Tests]*
+            [SmoothOperator.Infrastructure]SmoothOperator.Infrastructure.Migrations.*,
+            [SmoothOperator.Api.Tests]*,
+            [SmoothOperator.Application.Tests]*,
+            [SmoothOperator.Domain.Tests]*,
+            [SmoothOperator.Infrastructure.Tests]*
           </Exclude>
           <ExcludeByFile>
             **/Migrations/*.cs,
@@ -21,7 +24,7 @@
           </ExcludeByFile>
           <!-- Include only production code. -->
           <Include>
-            [Backend]*
+            [SmoothOperator.*]*
           </Include>
           <!-- Count branch coverage. -->
           <SkipAutoProps>true</SkipAutoProps>

@@ -1,56 +1,73 @@
-﻿
-Microsoft Visual Studio Solution File, Format Version 12.00
+﻿Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.5.2.0
-MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Backend", "backend\Backend.csproj", "{B5CEE1AB-68C5-FCEC-EA61-653FFB609ED2}"
+VisualStudioVersion = 17.0.31903.59
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{10000000-0001-0000-0000-000000000000}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "backend.tests", "backend.tests", "{C0C6E044-CB20-653A-D6C2-4CA8FE87111B}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{10000000-0002-0000-0000-000000000000}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Backend.Tests", "backend.tests\Backend.Tests.csproj", "{DD4C85CE-7007-4D05-89AC-F9CC7465996E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmoothOperator.Domain", "backend\src\SmoothOperator.Domain\SmoothOperator.Domain.csproj", "{10000001-0000-0000-0000-000000000000}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmoothOperator.Application", "backend\src\SmoothOperator.Application\SmoothOperator.Application.csproj", "{10000002-0000-0000-0000-000000000000}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmoothOperator.Infrastructure", "backend\src\SmoothOperator.Infrastructure\SmoothOperator.Infrastructure.csproj", "{10000003-0000-0000-0000-000000000000}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmoothOperator.Api", "backend\src\SmoothOperator.Api\SmoothOperator.Api.csproj", "{10000004-0000-0000-0000-000000000000}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmoothOperator.Api.Tests", "backend\tests\SmoothOperator.Api.Tests\SmoothOperator.Api.Tests.csproj", "{10000005-0000-0000-0000-000000000000}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmoothOperator.Application.Tests", "backend\tests\SmoothOperator.Application.Tests\SmoothOperator.Application.Tests.csproj", "{10000006-0000-0000-0000-000000000000}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmoothOperator.Domain.Tests", "backend\tests\SmoothOperator.Domain.Tests\SmoothOperator.Domain.Tests.csproj", "{10000007-0000-0000-0000-000000000000}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmoothOperator.Infrastructure.Tests", "backend\tests\SmoothOperator.Infrastructure.Tests\SmoothOperator.Infrastructure.Tests.csproj", "{10000008-0000-0000-0000-000000000000}"
 EndProject
 Global
-	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Debug|Any CPU = Debug|Any CPU
-		Debug|x64 = Debug|x64
-		Debug|x86 = Debug|x86
-		Release|Any CPU = Release|Any CPU
-		Release|x64 = Release|x64
-		Release|x86 = Release|x86
-	EndGlobalSection
-	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{B5CEE1AB-68C5-FCEC-EA61-653FFB609ED2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B5CEE1AB-68C5-FCEC-EA61-653FFB609ED2}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B5CEE1AB-68C5-FCEC-EA61-653FFB609ED2}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{B5CEE1AB-68C5-FCEC-EA61-653FFB609ED2}.Debug|x64.Build.0 = Debug|Any CPU
-		{B5CEE1AB-68C5-FCEC-EA61-653FFB609ED2}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{B5CEE1AB-68C5-FCEC-EA61-653FFB609ED2}.Debug|x86.Build.0 = Debug|Any CPU
-		{B5CEE1AB-68C5-FCEC-EA61-653FFB609ED2}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B5CEE1AB-68C5-FCEC-EA61-653FFB609ED2}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B5CEE1AB-68C5-FCEC-EA61-653FFB609ED2}.Release|x64.ActiveCfg = Release|Any CPU
-		{B5CEE1AB-68C5-FCEC-EA61-653FFB609ED2}.Release|x64.Build.0 = Release|Any CPU
-		{B5CEE1AB-68C5-FCEC-EA61-653FFB609ED2}.Release|x86.ActiveCfg = Release|Any CPU
-		{B5CEE1AB-68C5-FCEC-EA61-653FFB609ED2}.Release|x86.Build.0 = Release|Any CPU
-		{DD4C85CE-7007-4D05-89AC-F9CC7465996E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{DD4C85CE-7007-4D05-89AC-F9CC7465996E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{DD4C85CE-7007-4D05-89AC-F9CC7465996E}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{DD4C85CE-7007-4D05-89AC-F9CC7465996E}.Debug|x64.Build.0 = Debug|Any CPU
-		{DD4C85CE-7007-4D05-89AC-F9CC7465996E}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{DD4C85CE-7007-4D05-89AC-F9CC7465996E}.Debug|x86.Build.0 = Debug|Any CPU
-		{DD4C85CE-7007-4D05-89AC-F9CC7465996E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{DD4C85CE-7007-4D05-89AC-F9CC7465996E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{DD4C85CE-7007-4D05-89AC-F9CC7465996E}.Release|x64.ActiveCfg = Release|Any CPU
-		{DD4C85CE-7007-4D05-89AC-F9CC7465996E}.Release|x64.Build.0 = Release|Any CPU
-		{DD4C85CE-7007-4D05-89AC-F9CC7465996E}.Release|x86.ActiveCfg = Release|Any CPU
-		{DD4C85CE-7007-4D05-89AC-F9CC7465996E}.Release|x86.Build.0 = Release|Any CPU
-	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
-		{DD4C85CE-7007-4D05-89AC-F9CC7465996E} = {C0C6E044-CB20-653A-D6C2-4CA8FE87111B}
-	EndGlobalSection
-	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {BFA46B70-CA37-411C-970C-CB324A34E012}
-	EndGlobalSection
+GlobalSection(SolutionConfigurationPlatforms) = preSolution
+Debug|Any CPU = Debug|Any CPU
+Release|Any CPU = Release|Any CPU
+EndGlobalSection
+GlobalSection(ProjectConfigurationPlatforms) = postSolution
+{10000001-0000-0000-0000-000000000000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+{10000001-0000-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
+{10000001-0000-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU
+{10000001-0000-0000-0000-000000000000}.Release|Any CPU.Build.0 = Release|Any CPU
+{10000002-0000-0000-0000-000000000000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+{10000002-0000-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
+{10000002-0000-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU
+{10000002-0000-0000-0000-000000000000}.Release|Any CPU.Build.0 = Release|Any CPU
+{10000003-0000-0000-0000-000000000000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+{10000003-0000-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
+{10000003-0000-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU
+{10000003-0000-0000-0000-000000000000}.Release|Any CPU.Build.0 = Release|Any CPU
+{10000004-0000-0000-0000-000000000000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+{10000004-0000-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
+{10000004-0000-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU
+{10000004-0000-0000-0000-000000000000}.Release|Any CPU.Build.0 = Release|Any CPU
+{10000005-0000-0000-0000-000000000000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+{10000005-0000-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
+{10000005-0000-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU
+{10000005-0000-0000-0000-000000000000}.Release|Any CPU.Build.0 = Release|Any CPU
+{10000006-0000-0000-0000-000000000000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+{10000006-0000-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
+{10000006-0000-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU
+{10000006-0000-0000-0000-000000000000}.Release|Any CPU.Build.0 = Release|Any CPU
+{10000007-0000-0000-0000-000000000000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+{10000007-0000-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
+{10000007-0000-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU
+{10000007-0000-0000-0000-000000000000}.Release|Any CPU.Build.0 = Release|Any CPU
+{10000008-0000-0000-0000-000000000000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+{10000008-0000-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
+{10000008-0000-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU
+{10000008-0000-0000-0000-000000000000}.Release|Any CPU.Build.0 = Release|Any CPU
+EndGlobalSection
+GlobalSection(NestedProjects) = preSolution
+{10000001-0000-0000-0000-000000000000} = {10000000-0001-0000-0000-000000000000}
+{10000002-0000-0000-0000-000000000000} = {10000000-0001-0000-0000-000000000000}
+{10000003-0000-0000-0000-000000000000} = {10000000-0001-0000-0000-000000000000}
+{10000004-0000-0000-0000-000000000000} = {10000000-0001-0000-0000-000000000000}
+{10000005-0000-0000-0000-000000000000} = {10000000-0002-0000-0000-000000000000}
+{10000006-0000-0000-0000-000000000000} = {10000000-0002-0000-0000-000000000000}
+{10000007-0000-0000-0000-000000000000} = {10000000-0002-0000-0000-000000000000}
+{10000008-0000-0000-0000-000000000000} = {10000000-0002-0000-0000-000000000000}
+EndGlobalSection
 EndGlobal

@@ -15,3 +15,13 @@
 
 ## 2026-05-04 - Phase 0 Baseline: 142 tests pass on refactor branch
 **Summary:** Enterprise refactor branch (`ac/refactor-testing-performance`) established a clean baseline: 142 integration + unit tests all green. Added `FluentAssertions 8.4.0`, `coverlet.msbuild`, `coverlet.runsettings`, `Directory.Build.props`, and root `.editorconfig`. CI updated to collect Cobertura coverage and upload HTML report artifact. Orphan `test_empty_verification.py` deleted.
+
+## 2026-05-04 - Phase 1 Solution Restructure: Clean Architecture 4-project layout
+**Summary:** Split monolithic `Backend.csproj` into 4 Clean Architecture layers under `backend/src/`:
+- `SmoothOperator.Domain` — entities (Models/), no external deps
+- `SmoothOperator.Application` — DTOs, future MediatR contracts
+- `SmoothOperator.Infrastructure` — EF Core, migrations, Redis, MailKit, SSO, encryption
+- `SmoothOperator.Api` — controllers, middleware, Program.cs
+
+Moved `backend.tests/` → `backend/tests/SmoothOperator.Api.Tests/`; added empty stub projects for Domain, Application, Infrastructure layers. Rewrote `smooth-operator.sln` with 8-project structure in `src/` + `tests/` solution folders. Updated `backend/Dockerfile` with per-csproj COPY layer caching, non-root user, `PublishReadyToRun=true`, entrypoint from `SmoothOperator.Api.dll`. Updated CI workflow + `coverlet.runsettings` to reference new solution/namespaces. Deleted old `backend/Models/`, `backend/Services/`, `backend/Controllers/` etc. and `backend.tests/`. All 142 tests green at phase boundary.
+
