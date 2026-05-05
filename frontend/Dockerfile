@@ -37,7 +37,8 @@ COPY --from=build /app/dist/frontend/browser /usr/share/nginx/html
 # Copy nginx server-block config and startup script
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+# Strip Windows CRLF line endings (defensive: script must be pure LF for the shebang to work on Linux)
+RUN sed -i 's/\r$//' /entrypoint.sh && chmod +x /entrypoint.sh
 
 # Switch back to the unprivileged nginx user for runtime
 USER nginx
