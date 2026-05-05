@@ -149,7 +149,7 @@ jobs:
 
       - name: Run tests with coverage
         working-directory: frontend
-        run: npx ng test --code-coverage
+        run: npx ng test --coverage
 
       - name: Upload coverage to Codecov
         if: always()
