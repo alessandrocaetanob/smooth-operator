@@ -433,7 +433,7 @@ public class GuacamoleProxyServiceInternalTests
 
         // Act
         var method = typeof(GuacamoleProxyService).GetMethod("ResolveConnectionParametersAsync", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        var task = (Task<List<string>>)method.Invoke(_service, new object[]
+        var task = (Task<List<string>>)method!.Invoke(_service, new object[]
         {
             connection,
             new List<string> { "username", "password" },
@@ -442,7 +442,7 @@ public class GuacamoleProxyServiceInternalTests
             CancellationToken.None,
             Guid.NewGuid(),
             "127.0.0.1"
-        });
+        })!;
         var result = await task;
 
         // Assert
@@ -461,7 +461,7 @@ public class GuacamoleProxyServiceInternalTests
 
         // Act
         var method = typeof(GuacamoleProxyService).GetMethod("ParseSettings", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-        var result = (Dictionary<string, string>)method.Invoke(null, new object[] { json });
+        var result = (Dictionary<string, string>)method!.Invoke(null, new object[] { json })!;
 
         // Assert
         Assert.Equal("22", result["port"]);
@@ -477,7 +477,7 @@ public class GuacamoleProxyServiceInternalTests
 
         // Act
         var method = typeof(GuacamoleProxyService).GetMethod("ParseSettings", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-        var result = (Dictionary<string, string>)method.Invoke(null, new object[] { json });
+        var result = (Dictionary<string, string>)method!.Invoke(null, new object[] { json })!;
 
         // Assert
         Assert.Empty(result);
@@ -505,7 +505,7 @@ public class GuacamoleProxyServiceInternalTests
 
         // Act & Assert
         var method = typeof(GuacamoleProxyService).GetMethod("ResolveConnectionParametersAsync", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        var task = (Task<List<string>>)method.Invoke(_service, new object[] { connection, new List<string> { "password" }, "VERSION_1_5_0", _dbContext, CancellationToken.None, Guid.NewGuid(), "127.0.0.1" });
+        var task = (Task<List<string>>)method!.Invoke(_service, new object[] { connection, new List<string> { "password" }, "VERSION_1_5_0", _dbContext, CancellationToken.None, Guid.NewGuid(), "127.0.0.1" })!;
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => task);
 
@@ -529,7 +529,7 @@ public class GuacamoleProxyServiceInternalTests
 
         // Act
         var method = typeof(GuacamoleProxyService).GetMethod("ResolveConnectionParametersAsync", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        var task = (Task<List<string>>)method.Invoke(_service, new object[] { connection, new List<string> { "password", "private-key" }, "VERSION_1_5_0", _dbContext, CancellationToken.None, Guid.NewGuid(), "127.0.0.1" });
+        var task = (Task<List<string>>)method!.Invoke(_service, new object[] { connection, new List<string> { "password", "private-key" }, "VERSION_1_5_0", _dbContext, CancellationToken.None, Guid.NewGuid(), "127.0.0.1" })!;
         var result = await task;
 
         // Assert
@@ -545,7 +545,7 @@ public class GuacamoleProxyServiceInternalTests
 
         // Act
         var method = typeof(GuacamoleProxyService).GetMethod("ResolveConnectionParametersAsync", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        var task = (Task<List<string>>)method.Invoke(_service, new object[] { connection, new List<string> { "VERSION_1_5_0", "hostname" }, "VERSION_1_5_0", _dbContext, CancellationToken.None, Guid.NewGuid(), "127.0.0.1" });
+        var task = (Task<List<string>>)method!.Invoke(_service, new object[] { connection, new List<string> { "VERSION_1_5_0", "hostname" }, "VERSION_1_5_0", _dbContext, CancellationToken.None, Guid.NewGuid(), "127.0.0.1" })!;
         var result = await task;
 
         // Assert
@@ -563,9 +563,9 @@ public class GuacamoleProxyServiceInternalTests
         var readAsync = readerType!.GetMethod("ReadAsync");
 
         // Act
-        var task1 = (Task<List<string>>)readAsync!.Invoke(reader, new object[] { CancellationToken.None });
+        var task1 = (Task<List<string>>)readAsync!.Invoke(reader, new object[] { CancellationToken.None })!;
         var result1 = await task1;
-        var task2 = (Task<List<string>>)readAsync!.Invoke(reader, new object[] { CancellationToken.None });
+        var task2 = (Task<List<string>>)readAsync!.Invoke(reader, new object[] { CancellationToken.None })!;
         var result2 = await task2;
 
         // Assert
@@ -584,7 +584,7 @@ public class GuacamoleProxyServiceInternalTests
         var readRawAsync = readerType!.GetMethod("ReadRawAsync");
 
         // Act
-        var task1 = (Task<string>)readRawAsync!.Invoke(reader, new object[] { CancellationToken.None });
+        var task1 = (Task<string>)readRawAsync!.Invoke(reader, new object[] { CancellationToken.None })!;
         var result1 = await task1;
 
         // Assert
