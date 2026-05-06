@@ -76,7 +76,7 @@ jobs:
             --results-directory ./TestResults
 
       - name: Upload coverage to Codecov
-        if: always()
+        if: always() && github.actor != 'dependabot[bot]'
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -152,7 +152,7 @@ jobs:
         run: npx ng test --coverage
 
       - name: Upload coverage to Codecov
-        if: always()
+        if: always() && github.actor != 'dependabot[bot]'
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
