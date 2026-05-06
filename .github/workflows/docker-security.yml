@@ -74,7 +74,7 @@ jobs:
 
       - name: Run Trivy vulnerability scanner on image
         if: hashFiles(format('{0}/Dockerfile', matrix.component)) != ''
-        uses: aquasecurity/trivy-action@0.22.0
+        uses: aquasecurity/trivy-action@master
         with:
           image-ref: smooth-operator-${{ matrix.component }}:test
           format: 'sarif'
