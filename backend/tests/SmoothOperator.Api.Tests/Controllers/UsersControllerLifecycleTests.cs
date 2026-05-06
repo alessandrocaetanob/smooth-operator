@@ -128,6 +128,7 @@ public class UsersControllerLifecycleTests
         var rolesRes = await client.GetAsync("/api/users/roles");
         Assert.Equal(HttpStatusCode.OK, rolesRes.StatusCode);
         var roles = await rolesRes.Content.ReadFromJsonAsync<List<RoleCatalogItemDto>>();
+        Assert.NotNull(roles);
         Assert.NotEmpty(roles);
     }
 }

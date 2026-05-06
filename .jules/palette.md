@@ -7,3 +7,6 @@
 ## 2026-05-03 - Form Field Accessibility in Email Settings
 **Learning:** Similar to the invite form issue, multiple form fields in the email settings page (`email.html`) lacked explicit `id` attributes that matched the `for` attributes of their labels, and the test email field lacked any label.
 **Action:** Consistently link Angular form inputs with their descriptive labels using explicit `for` and `id` properties to improve screen reader capabilities and keyboard functionality. Add `aria-label` when text labels aren't applicable.
+## 2026-05-06 - Password Visibility Toggle
+**Learning:** For authentication forms, users need the ability to verify their input, particularly for passwords, reducing input errors and friction. Providing a password visibility toggle with proper ARIA attributes ('aria-label', 'aria-pressed') ensures screen readers can accurately interpret the state, enhancing both general usability and accessibility.
+**Action:** Always include a password visibility toggle button on password fields, ensuring it is positioned carefully within a relative container, uses accessible icons, and dynamically updates its ARIA state to reflect visibility.

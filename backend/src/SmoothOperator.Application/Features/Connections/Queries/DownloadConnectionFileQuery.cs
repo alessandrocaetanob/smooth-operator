@@ -66,10 +66,22 @@ namespace SmoothOperator.Application.Features.Connections.Queries
             };
         }
 
+        private static string StripNewlines(string? value)
+        {
+            if (string.IsNullOrEmpty(value)) return string.Empty;
+            return value.Replace("\r", "").Replace("\n", "");
+        }
+
         private static ConnectionFileDto GenerateRdpFile(string name, string host, int port, string username,
             Dictionary<string, string> settings)
         {
             settings.TryGetValue("domain", out var domain);
+
+            name = StripNewlines(name);
+            host = StripNewlines(host);
+            username = StripNewlines(username);
+            domain = StripNewlines(domain);
+
             var sb = new StringBuilder();
             sb.AppendLine("screen mode id:i:2");
             sb.AppendLine("use multimon:i:0");
@@ -106,6 +118,10 @@ namespace SmoothOperator.Application.Features.Connections.Queries
 
         private static ConnectionFileDto GenerateSshFile(string name, string host, int port, string username)
         {
+            name = StripNewlines(name);
+            host = StripNewlines(host);
+            username = StripNewlines(username);
+
             var sb = new StringBuilder();
             sb.AppendLine("#!/bin/bash");
             sb.AppendLine($"# Connection: {name}");
@@ -125,6 +141,10 @@ namespace SmoothOperator.Application.Features.Connections.Queries
 
         private static ConnectionFileDto GenerateVncFile(string name, string host, int port, string username)
         {
+            name = StripNewlines(name);
+            host = StripNewlines(host);
+            username = StripNewlines(username);
+
             var sb = new StringBuilder();
             sb.AppendLine("[Connection]");
             sb.AppendLine($"Host={host}");

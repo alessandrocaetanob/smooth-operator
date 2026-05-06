@@ -185,3 +185,7 @@ Opened PR #50 to master: all 151 tests pass (142 integration + 9 architecture). 
 - `credentials.ts` / `credentials.html` updated: Storage Mode toggle (Local / Azure Key Vault), provider picker, Push-to-Vault vs Link-Existing sub-mode, lazy secret-name dropdown.
 
 **Security:** clientSecret AES-encrypted at rest; never returned in API responses; plaintext never written to DB when storageMode=External; `secret.fetched` audit event never logs value.
+## 2025-02-24 - Fix CRLF Injection in Connection File Downloads
+**Vulnerability:** User-controlled fields (`name`, `host`, `username`, `domain`) used to generate configuration and script files (RDP, VNC, SSH) were not sanitized against newline characters, permitting CRLF/Command injection attacks.
+**Learning:** Interpolating unvalidated input into `.sh`, `.rdp`, or `.vnc` strings permits attackers to inject extra commands or configuration options by introducing `\n` or `\r`.
+**Prevention:** All user input that gets mapped into plain-text connection profiles or scripts must have carriage returns and line feeds aggressively stripped to ensure the user cannot escape the intended single-line parameter context.
