@@ -25,6 +25,7 @@ export class Authentication {
   readonly errorMessage = signal<string | null>(null);
   readonly isPasswordFocused = signal(false);
   readonly typingLength = signal(0);
+  readonly passwordVisible = signal(false);
 
   get helpUrl(): string {
     return this.runtimeConfig.config.helpUrl;
@@ -49,6 +50,10 @@ export class Authentication {
 
   onPasswordBlur(): void {
     this.isPasswordFocused.set(false);
+  }
+
+  togglePasswordVisibility(): void {
+    this.passwordVisible.update((v) => !v);
   }
 
   onEmailInput(event: Event): void {

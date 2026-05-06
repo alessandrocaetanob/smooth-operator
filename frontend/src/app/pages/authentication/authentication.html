@@ -88,16 +88,29 @@
               >Forgot?</a
             >
           </div>
-          <input
-            class="w-full input-field px-app-md py-2.5 text-body-md"
-            id="password"
-            formControlName="password"
-            placeholder="••••••••"
-            type="password"
-            autocomplete="current-password"
-            (focus)="onPasswordFocus()"
-            (blur)="onPasswordBlur()"
-          />
+          <div class="relative flex items-center">
+            <input
+              class="w-full input-field px-app-md py-2.5 pr-10 text-body-md"
+              id="password"
+              formControlName="password"
+              placeholder="••••••••"
+              [type]="passwordVisible() ? 'text' : 'password'"
+              autocomplete="current-password"
+              (focus)="onPasswordFocus()"
+              (blur)="onPasswordBlur()"
+            />
+            <button
+              type="button"
+              class="absolute right-3 text-on-surface-variant hover:text-on-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-full p-1 flex items-center justify-center transition-colors"
+              (click)="togglePasswordVisibility()"
+              [attr.aria-label]="passwordVisible() ? 'Hide password' : 'Show password'"
+              [attr.aria-pressed]="passwordVisible()"
+            >
+              <span class="material-symbols-outlined text-[20px]" aria-hidden="true">
+                {{ passwordVisible() ? 'visibility' : 'visibility_off' }}
+              </span>
+            </button>
+          </div>
           @if (form.controls.password.invalid && form.controls.password.touched) {
             <p class="mt-1 text-xs text-error">Password is required.</p>
           }
