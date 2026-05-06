@@ -60,25 +60,24 @@ public class GuacamoleProxyServiceTests
         var userId = Guid.NewGuid();
         var connectionId = Guid.NewGuid();
         var ip = "127.0.0.1";
+        string? capturedRedisKey = null;
         _dbMock.Setup(db => db.StringSetAsync(
             It.IsAny<RedisKey>(),
             It.IsAny<RedisValue>(),
-            It.IsAny<TimeSpan?>(),
-            It.IsAny<When>(),
+            It.IsAny<Expiration>(),
+            It.IsAny<ValueCondition>(),
             It.IsAny<CommandFlags>()))
-            .ReturnsAsync(true);
+            .ReturnsAsync(true)
+            .Callback<RedisKey, RedisValue, Expiration, ValueCondition, CommandFlags>(
+                (k, v, t, w, f) => capturedRedisKey = k.ToString());
 
         // Act
         var ticket = await _service.IssueTicketAsync(userId, connectionId, ip);
 
         // Assert
         Assert.False(string.IsNullOrWhiteSpace(ticket));
-        Assert.True(
-            _dbMock.Invocations.Any(inv =>
-                inv.Method.Name == "StringSetAsync" &&
-                inv.Arguments.Count >= 1 &&
-                inv.Arguments[0].ToString()!.StartsWith("guac:ticket:")),
-            "Expected StringSetAsync to be called with a key prefixed 'guac:ticket:'");
+        Assert.NotNull(capturedRedisKey);
+        Assert.StartsWith("guac:ticket:", capturedRedisKey);
 
         using var scope = _scopeFactoryMock.Object.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -350,6 +349,8 @@ public class GuacamoleProxyServiceTests
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         dbContext.Users.Add(new User { Id = userId, IsActive = true, Name = "active-user", Email = "test@test.com" });
         
+        // Using the IANA-reserved 'invalid.invalid' hostname for immediate DNS NXDOMAIN failure,
+        // avoiding the 5-second TCP probe timeout that a non-routable IP like 192.0.2.1 would incur.
         var host = new SmoothOperator.Domain.Models.Host { Id = hostId, Name = "test-host", Address = "invalid.invalid" };
         dbContext.Hosts.Add(host);
         
