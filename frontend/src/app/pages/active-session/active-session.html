@@ -72,6 +72,7 @@
     <div
       #display
       class="w-full h-full flex items-center justify-center overflow-hidden bg-black select-none focus:outline-none"
+      role="application"
       tabindex="0"
     ></div>
 
@@ -168,13 +169,13 @@
 
   <!-- ── Key Combo Modal ───────────────────────────────────────────────── -->
   @if (showKeyComboModal()) {
-    <div
+    <dialog
       data-guac-modal-open="true"
       class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
       (click)="closeKeyComboModal()"
       (keydown.escape)="closeKeyComboModal()"
       (keydown.enter)="closeKeyComboModal()"
-      tabindex="0"
+      open
     >
       <div
         role="dialog"
@@ -267,18 +268,18 @@
           </button>
         </div>
       </div>
-    </div>
+    </dialog>
   }
 
   <!-- ── Clipboard Modal ───────────────────────────────────────────────── -->
   @if (showClipboardModal()) {
-    <div
+    <dialog
       data-guac-modal-open="true"
       class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
       (click)="closeClipboardModal()"
       (keydown.escape)="closeClipboardModal()"
       (keydown.enter)="closeClipboardModal()"
-      tabindex="0"
+      open
     >
       <div
         role="dialog"
@@ -345,6 +346,6 @@
           </div>
         </div>
       </div>
-    </div>
+    </dialog>
   }
 </main>

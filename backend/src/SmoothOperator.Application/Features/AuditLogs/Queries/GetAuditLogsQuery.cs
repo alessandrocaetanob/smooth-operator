@@ -6,7 +6,6 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using SmoothOperator.Application.DTOs;
 using SmoothOperator.Application.Interfaces;
-using SmoothOperator.Domain.Models;
 
 namespace SmoothOperator.Application.Features.AuditLogs.Queries
 {
@@ -31,7 +30,7 @@ namespace SmoothOperator.Application.Features.AuditLogs.Queries
             var page = Math.Max(1, request.Page);
             var pageSize = Math.Clamp(request.PageSize, 1, 200);
 
-            var q = BuildQuery(request.User, request.Action, request.ResourceType, request.From, request.To, request.Outcome);
+            var q = AuditLogQueryHelper.BuildFilteredQuery(_db, request.User, request.Action, request.ResourceType, request.From, request.To, request.Outcome);
 
             var total = await q.CountAsync(cancellationToken);
             var rows = await q
@@ -63,34 +62,6 @@ namespace SmoothOperator.Application.Features.AuditLogs.Queries
                 PageSize = pageSize,
                 TotalItems = total
             };
-        }
-
-        private IQueryable<AuditLog> BuildQuery(
-            string? user, string? action, string? resourceType,
-            DateTime? from, DateTime? to, string? outcome)
-        {
-            var q = _db.AuditLogs.AsNoTracking().Include(l => l.User).AsQueryable();
-            if (!string.IsNullOrWhiteSpace(user))
-            {
-                var term = user.Trim().ToLower();
-                q = q.Where(l => l.User != null &&
-                    (l.User.Email.ToLower().Contains(term) || l.User.Name.ToLower().Contains(term)));
-            }
-            if (!string.IsNullOrWhiteSpace(action))
-            {
-                var term = action.Trim().ToLower();
-                q = q.Where(l => l.Action.ToLower().Contains(term));
-            }
-            if (!string.IsNullOrWhiteSpace(resourceType))
-            {
-                var term = resourceType.Trim();
-                q = q.Where(l => l.ResourceType == term);
-            }
-            if (!string.IsNullOrWhiteSpace(outcome))
-                q = q.Where(l => l.Outcome == outcome.Trim().ToLower());
-            if (from.HasValue) q = q.Where(l => l.Timestamp >= from.Value);
-            if (to.HasValue) q = q.Where(l => l.Timestamp <= to.Value);
-            return q;
         }
     }
 }

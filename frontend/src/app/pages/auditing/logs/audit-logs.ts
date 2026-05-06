@@ -129,7 +129,7 @@ export class AuditLogs implements OnInit {
   }
 
   onPageSizeChange(value: string | number): void {
-    const n = typeof value === 'number' ? value : parseInt(value, 10);
+    const n = typeof value === 'number' ? value : Number.parseInt(value, 10);
     if (!Number.isFinite(n) || n < 1) return;
     this.setPageSize(n);
   }

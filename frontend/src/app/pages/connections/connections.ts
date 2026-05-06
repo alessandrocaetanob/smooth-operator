@@ -135,7 +135,7 @@ export class Connections implements OnInit {
   readonly allTags = computed(() => {
     const tagSet = new Set<string>();
     this.connections().forEach((c) => c.tags?.forEach((t) => tagSet.add(t)));
-    return Array.from(tagSet).sort();
+    return Array.from(tagSet).sort((a, b) => a.localeCompare(b));
   });
 
   /** Filtered connection list based on search query and tag filter */
@@ -266,7 +266,7 @@ export class Connections implements OnInit {
   }
 
   tagColor(tag: string): string {
-    const idx = tag.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % TAG_PALETTES.length;
+    const idx = tag.split('').reduce((a, c) => a + c.codePointAt(0)!, 0) % TAG_PALETTES.length;
     return TAG_PALETTES[idx];
   }
 

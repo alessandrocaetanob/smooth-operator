@@ -1,5 +1,12 @@
 <div class="glass-card rounded-xl overflow-hidden">
   <table class="w-full text-sm">
-    <ng-content></ng-content>
+    <thead class="hidden">
+      <tr>
+        <th scope="col"></th>
+      </tr>
+    </thead>
+    <tbody>
+      <ng-content></ng-content>
+    </tbody>
   </table>
 </div>

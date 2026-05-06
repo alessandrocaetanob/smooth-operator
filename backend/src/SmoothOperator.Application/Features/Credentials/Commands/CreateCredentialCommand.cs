@@ -122,6 +122,7 @@ namespace SmoothOperator.Application.Features.Credentials.Commands
         };
 
         private static string SanitizeName(string name) =>
-            System.Text.RegularExpressions.Regex.Replace(name.ToLowerInvariant(), @"[^a-z0-9\-]", "-");
+            System.Text.RegularExpressions.Regex.Replace(name.ToLowerInvariant(), @"[^a-z0-9\-]", "-", 
+                System.Text.RegularExpressions.RegexOptions.None, TimeSpan.FromMilliseconds(100));
     }
 }

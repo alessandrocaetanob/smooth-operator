@@ -181,13 +181,28 @@ builder.Services.AddRateLimiter(options =>
 
 // Trust the X-Forwarded-For / X-Forwarded-Proto headers sent by the nginx reverse-proxy
 // container so rate-limiting partitions by the real client IP.
+// Known proxy networks are configurable via ForwardedHeaders:KnownIPNetworks environment variables
+// to support different container networking scenarios (Docker, Kubernetes, etc.).
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
     options.KnownProxies.Clear();
-    options.KnownIPNetworks.Add(new IPNetwork(IPAddress.Parse("10.0.0.0"), 8));
-    options.KnownIPNetworks.Add(new IPNetwork(IPAddress.Parse("172.16.0.0"), 12));
-    options.KnownIPNetworks.Add(new IPNetwork(IPAddress.Parse("192.168.0.0"), 16));
+    
+    // Default: Docker private IP ranges (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16)
+    // Override via ForwardedHeaders__KnownIPNetworks__0, __1, __2 environment variables if needed
+    var knownNetworks = builder.Configuration.GetSection("ForwardedHeaders:KnownIPNetworks").Get<string[]>() 
+        ?? new[] { "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16" };
+    
+    foreach (var network in knownNetworks.Where(n => !string.IsNullOrWhiteSpace(n) && n.Contains('/')))
+    {
+        var parts = network.Split('/');
+        if (parts.Length == 2 && 
+            IPAddress.TryParse(parts[0], out var address) && 
+            int.TryParse(parts[1], out var prefixLength))
+        {
+            options.KnownIPNetworks.Add(new IPNetwork(address, prefixLength));
+        }
+    }
 });
 
 // ─── Health Checks ───────────────────────────────────────────────────────────
@@ -234,8 +249,16 @@ builder.Services.AddCors(options =>
                   .AllowAnyMethod()
                   .AllowCredentials();
         else
-            // No origins configured — permissive dev fallback (no credentials).
+        {
+            // Fallback: Permissive CORS for local development only.
+            // In production, explicitly configure origins via AppUrls environment variables.
+            var env = builder.Environment;
+            if (env.IsProduction())
+                throw new InvalidOperationException(
+                    "CORS origins not configured in production. Set AppUrls__Frontend and/or AppUrls__AllowedOrigins__* environment variables.");
+            
             policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+        }
     });
 });
 

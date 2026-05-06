@@ -65,7 +65,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v3.6.0
 
       - name: Build ${{ matrix.component }} image
         if: hashFiles(format('{0}/Dockerfile', matrix.component)) != ''
@@ -74,7 +74,7 @@ jobs:
 
       - name: Run Trivy vulnerability scanner on image
         if: hashFiles(format('{0}/Dockerfile', matrix.component)) != ''
-        uses: aquasecurity/trivy-action@0.35.0
+        uses: aquasecurity/trivy-action@0.35.1
         with:
           image-ref: smooth-operator-${{ matrix.component }}:test
           format: 'sarif'
@@ -83,7 +83,7 @@ jobs:
 
       - name: Upload Trivy results to GitHub Security
         if: hashFiles(format('{0}/Dockerfile', matrix.component)) != ''
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v3.25.14
         # Code Scanning upload requires GitHub Advanced Security.
         continue-on-error: true
         with:

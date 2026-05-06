@@ -18,6 +18,25 @@ interface GrafanaDashboard {
   url: string;
 }
 
+// Configuration for observability endpoints
+// In production, use HTTPS. HTTP is only for local development.
+const OBSERVABILITY_CONFIG = {
+  prometheus: {
+    protocol: 'https', // Change to 'http' for local dev only
+    defaultHost: '<your-host>',
+    defaultPort: 5000,
+  },
+  otlp: {
+    protocol: 'https',
+    grpcPort: 4317,
+    httpPort: 3200,
+  },
+  loki: {
+    protocol: 'https',
+    defaultPort: 3100,
+  },
+};
+
 @Component({
   selector: 'app-integrations',
   imports: [CommonModule],
@@ -30,7 +49,7 @@ export class Integrations {
   readonly copiedKey = signal<string | null>(null);
 
   readonly prometheusEndpoints: Endpoint[] = [
-    { label: 'Metrics scrape endpoint', value: 'http://<your-host>:5000/metrics' },
+    { label: 'Metrics scrape endpoint', value: `${OBSERVABILITY_CONFIG.prometheus.protocol}://<your-host>:${OBSERVABILITY_CONFIG.prometheus.defaultPort}/metrics` },
   ];
 
   readonly prometheusConfig: CodeBlock = {
@@ -55,8 +74,8 @@ scrape_configs:
   ];
 
   readonly otlpEndpoints: Endpoint[] = [
-    { label: 'OTLP gRPC endpoint', value: 'http://<your-host>:4317' },
-    { label: 'Tempo HTTP query endpoint', value: 'http://<your-host>:3200' },
+    { label: 'OTLP gRPC endpoint', value: `${OBSERVABILITY_CONFIG.otlp.protocol}://<your-host>:${OBSERVABILITY_CONFIG.otlp.grpcPort}` },
+    { label: 'Tempo HTTP query endpoint', value: `${OBSERVABILITY_CONFIG.otlp.protocol}://<your-host>:${OBSERVABILITY_CONFIG.otlp.httpPort}` },
   ];
 
   readonly otlpConfig: CodeBlock = {
@@ -69,9 +88,9 @@ scrape_configs:
 
 exporters:
   otlp/smooth-operator:
-    endpoint: http://<your-host>:4317
+    endpoint: https://<your-host>:4317
     tls:
-      insecure: true
+      insecure: false
 
 service:
   pipelines:
@@ -81,8 +100,8 @@ service:
   };
 
   readonly lokiEndpoints: Endpoint[] = [
-    { label: 'Loki push endpoint', value: 'http://<your-host>:3100' },
-    { label: 'Loki query API', value: 'http://<your-host>:3100/loki/api/v1/query_range' },
+    { label: 'Loki push endpoint', value: `${OBSERVABILITY_CONFIG.loki.protocol}://<your-host>:${OBSERVABILITY_CONFIG.loki.defaultPort}` },
+    { label: 'Loki query API', value: `${OBSERVABILITY_CONFIG.loki.protocol}://<your-host>:${OBSERVABILITY_CONFIG.loki.defaultPort}/loki/api/v1/query_range` },
   ];
 
   readonly lokiQueries: CodeBlock[] = [
@@ -152,3 +171,4 @@ service:
     });
   }
 }
+
