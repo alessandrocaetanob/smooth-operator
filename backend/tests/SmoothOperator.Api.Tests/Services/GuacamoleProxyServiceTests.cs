@@ -36,7 +36,7 @@ public class GuacamoleProxyServiceTests
         _redisMock.Setup(r => r.GetDatabase(It.IsAny<int>(), It.IsAny<object>())).Returns(_dbMock.Object);
         _scopeFactoryMock.Setup(s => s.CreateScope()).Returns(_scopeMock.Object);
         _scopeMock.Setup(s => s.ServiceProvider).Returns(_serviceProviderMock.Object);
-        
+
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
             .Options;
@@ -165,7 +165,7 @@ public class GuacamoleProxyServiceTests
         var userId = Guid.NewGuid();
         var connectionId = Guid.NewGuid();
         var ip = "127.0.0.1";
-        
+
         using var scope = _scopeFactoryMock.Object.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         dbContext.Users.Add(new User { Id = userId, IsActive = false, Name = "inactive-user", Email = "test@test.com" });
@@ -181,8 +181,8 @@ public class GuacamoleProxyServiceTests
 
         // Assert
         wsMock.Verify(w => w.CloseAsync(
-            System.Net.WebSockets.WebSocketCloseStatus.PolicyViolation, 
-            "User not authorized", 
+            System.Net.WebSockets.WebSocketCloseStatus.PolicyViolation,
+            "User not authorized",
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -193,7 +193,7 @@ public class GuacamoleProxyServiceTests
         var userId = Guid.NewGuid();
         var connectionId = Guid.NewGuid();
         var ip = "127.0.0.1";
-        
+
         using var scope = _scopeFactoryMock.Object.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         dbContext.Users.Add(new User { Id = userId, IsActive = true, Name = "active-user", Email = "test@test.com" });
@@ -209,10 +209,10 @@ public class GuacamoleProxyServiceTests
 
         // Assert
         wsMock.Verify(w => w.CloseAsync(
-            System.Net.WebSockets.WebSocketCloseStatus.InvalidMessageType, 
-            "Connection not found", 
+            System.Net.WebSockets.WebSocketCloseStatus.InvalidMessageType,
+            "Connection not found",
             It.IsAny<CancellationToken>()), Times.Once);
-        
+
         var log = await dbContext.AuditLogs.FirstOrDefaultAsync(l => l.Action == "connection.failed");
         Assert.NotNull(log);
     }
@@ -225,18 +225,18 @@ public class GuacamoleProxyServiceTests
         var connectionId = Guid.NewGuid();
         var hostId = Guid.NewGuid();
         var ip = "127.0.0.1";
-        
+
         using var scope = _scopeFactoryMock.Object.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         dbContext.Users.Add(new User { Id = userId, IsActive = true, Name = "active-user", Email = "test@test.com" });
-        
+
         var host = new SmoothOperator.Domain.Models.Host { Id = hostId, Name = "test-host", Address = "127.0.0.1" };
         dbContext.Hosts.Add(host);
-        
-        dbContext.Connections.Add(new Connection 
-        { 
-            Id = connectionId, 
-            HostId = hostId, 
+
+        dbContext.Connections.Add(new Connection
+        {
+            Id = connectionId,
+            HostId = hostId,
             Host = host,
             Protocol = "rdp",
             Settings = "{\"port\":\"59999\"}"
@@ -255,10 +255,10 @@ public class GuacamoleProxyServiceTests
 
         // Assert
         wsMock.Verify(w => w.CloseAsync(
-            System.Net.WebSockets.WebSocketCloseStatus.InternalServerError, 
-            It.Is<string>(s => s.Contains("not reachable")), 
+            System.Net.WebSockets.WebSocketCloseStatus.InternalServerError,
+            It.Is<string>(s => s.Contains("not reachable")),
             It.IsAny<CancellationToken>()), Times.Once);
-        
+
         var log = await dbContext.AuditLogs.FirstOrDefaultAsync(l => l.Action == "connection.host_unreachable");
         Assert.NotNull(log);
     }
@@ -311,7 +311,7 @@ public class GuacamoleProxyServiceTests
         // Arrange
         var userId = Guid.NewGuid();
         var connectionId = Guid.NewGuid();
-        
+
         using var scope = _scopeFactoryMock.Object.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         dbContext.Users.Add(new User { Id = userId, IsActive = true, Name = "active-user", Email = "test@test.com" });
@@ -344,20 +344,20 @@ public class GuacamoleProxyServiceTests
         var userId = Guid.NewGuid();
         var connectionId = Guid.NewGuid();
         var hostId = Guid.NewGuid();
-        
+
         using var scope = _scopeFactoryMock.Object.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         dbContext.Users.Add(new User { Id = userId, IsActive = true, Name = "active-user", Email = "test@test.com" });
-        
+
         // Using the IANA-reserved 'invalid.invalid' hostname for immediate DNS NXDOMAIN failure,
         // avoiding the 5-second TCP probe timeout that a non-routable IP like 192.0.2.1 would incur.
         var host = new SmoothOperator.Domain.Models.Host { Id = hostId, Name = "test-host", Address = "invalid.invalid" };
         dbContext.Hosts.Add(host);
-        
-        dbContext.Connections.Add(new Connection 
-        { 
-            Id = connectionId, 
-            HostId = hostId, 
+
+        dbContext.Connections.Add(new Connection
+        {
+            Id = connectionId,
+            HostId = hostId,
             Host = host,
             Protocol = protocol,
             Settings = "{}" // No port override
@@ -415,8 +415,8 @@ public class GuacamoleProxyServiceInternalTests
     {
         // Arrange
         var provider = new SecretProvider { Id = Guid.NewGuid(), Name = "Vault" };
-        var cred = new Credential 
-        { 
+        var cred = new Credential
+        {
             Id = Guid.NewGuid(),
             StorageMode = SecretStorageMode.External,
             SecretProvider = provider,
@@ -424,31 +424,31 @@ public class GuacamoleProxyServiceInternalTests
             Username = "guac-user"
         };
         var connection = new Connection { Credential = cred, Protocol = "ssh" };
-        
+
         var secretProviderMock = new Mock<ISecretProvider>();
         secretProviderMock.Setup(p => p.GetSecretAsync("my-secret", It.IsAny<string>(), It.IsAny<CancellationToken>()))
                           .ReturnsAsync("secret-password");
-        
+
         _secretProviderFactoryMock.Setup(f => f.Create(provider)).Returns(secretProviderMock.Object);
 
         // Act
         var method = typeof(GuacamoleProxyService).GetMethod("ResolveConnectionParametersAsync", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        var task = (Task<List<string>>)method.Invoke(_service, new object[] 
-        { 
-            connection, 
-            new List<string> { "username", "password" }, 
-            "VERSION_1_5_0", 
-            _dbContext, 
-            CancellationToken.None, 
-            Guid.NewGuid(), 
-            "127.0.0.1" 
+        var task = (Task<List<string>>)method.Invoke(_service, new object[]
+        {
+            connection,
+            new List<string> { "username", "password" },
+            "VERSION_1_5_0",
+            _dbContext,
+            CancellationToken.None,
+            Guid.NewGuid(),
+            "127.0.0.1"
         });
         var result = await task;
 
         // Assert
         Assert.Equal("guac-user", result[0]);
         Assert.Equal("secret-password", result[1]);
-        
+
         var log = await _dbContext.AuditLogs.FirstOrDefaultAsync(l => l.Action == "secret.fetched");
         Assert.NotNull(log);
     }
@@ -458,7 +458,7 @@ public class GuacamoleProxyServiceInternalTests
     {
         // Arrange
         var json = "{\"port\":\"22\",\"ignore-cert\":true,\"null-val\":null}";
-        
+
         // Act
         var method = typeof(GuacamoleProxyService).GetMethod("ParseSettings", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
         var result = (Dictionary<string, string>)method.Invoke(null, new object[] { json });
@@ -474,7 +474,7 @@ public class GuacamoleProxyServiceInternalTests
     {
         // Arrange
         var json = "invalid-json";
-        
+
         // Act
         var method = typeof(GuacamoleProxyService).GetMethod("ParseSettings", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
         var result = (Dictionary<string, string>)method.Invoke(null, new object[] { json });
@@ -488,27 +488,27 @@ public class GuacamoleProxyServiceInternalTests
     {
         // Arrange
         var provider = new SecretProvider { Id = Guid.NewGuid(), Name = "Vault" };
-        var cred = new Credential 
-        { 
+        var cred = new Credential
+        {
             Id = Guid.NewGuid(),
             StorageMode = SecretStorageMode.External,
             SecretProvider = provider,
             ExternalSecretName = "my-secret"
         };
         var connection = new Connection { Credential = cred, Protocol = "ssh" };
-        
+
         var secretProviderMock = new Mock<ISecretProvider>();
         secretProviderMock.Setup(p => p.GetSecretAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                           .ThrowsAsync(new SecretProviderException("403", "Access Denied"));
-        
+
         _secretProviderFactoryMock.Setup(f => f.Create(provider)).Returns(secretProviderMock.Object);
 
         // Act & Assert
         var method = typeof(GuacamoleProxyService).GetMethod("ResolveConnectionParametersAsync", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
         var task = (Task<List<string>>)method.Invoke(_service, new object[] { connection, new List<string> { "password" }, "VERSION_1_5_0", _dbContext, CancellationToken.None, Guid.NewGuid(), "127.0.0.1" });
-        
+
         await Assert.ThrowsAsync<InvalidOperationException>(() => task);
-        
+
         var log = await _dbContext.AuditLogs.FirstOrDefaultAsync(l => l.Action == "secret.fetched" && l.Outcome == "failure");
         Assert.NotNull(log);
         Assert.Contains("403", log!.Details);
@@ -518,8 +518,8 @@ public class GuacamoleProxyServiceInternalTests
     public async Task ResolveConnectionParametersAsync_SshKeyAuth_ConfiguresCorrectly()
     {
         // Arrange
-        var cred = new Credential 
-        { 
+        var cred = new Credential
+        {
             Id = Guid.NewGuid(),
             CredentialType = "private_key",
             EncryptedSecret = "encrypted-key"

@@ -36,10 +36,10 @@ public class GuacamoleControllerIntegrationTests
             var host = new Host { Id = Guid.NewGuid(), Name = "Test Host", Address = "1.2.3.4" };
             db.Hosts.Add(host);
 
-            var conn = new Connection 
-            { 
-                Id = connectionId, 
-                Name = "Test Conn", 
+            var conn = new Connection
+            {
+                Id = connectionId,
+                Name = "Test Conn",
                 HostId = host.Id,
                 Protocol = "rdp"
             };
@@ -52,7 +52,7 @@ public class GuacamoleControllerIntegrationTests
         client.DefaultRequestHeaders.Add("X-Test-Roles", AppRoles.User);
 
         var res = await client.PostAsync($"/api/guacamole/ticket/{connectionId}", null);
-        
+
         Assert.Equal(HttpStatusCode.OK, res.StatusCode);
         var content = await res.Content.ReadFromJsonAsync<TicketResponse>();
         Assert.NotNull(content);
@@ -79,11 +79,11 @@ public class GuacamoleControllerIntegrationTests
             var host = new Host { Id = Guid.NewGuid(), Name = "Test Host", Address = "1.2.3.4" };
             db.Hosts.Add(host);
 
-            var conn = new Connection 
-            { 
-                Id = connectionId, 
-                Name = "Test Conn", 
-                HostId = host.Id 
+            var conn = new Connection
+            {
+                Id = connectionId,
+                Name = "Test Conn",
+                HostId = host.Id
             };
             conn.Users.Add(otherUser); // Only other user has access
             db.Connections.Add(conn);
@@ -94,7 +94,7 @@ public class GuacamoleControllerIntegrationTests
         client.DefaultRequestHeaders.Add("X-Test-Roles", AppRoles.User);
 
         var res = await client.PostAsync($"/api/guacamole/ticket/{connectionId}", null);
-        
+
         Assert.Equal(HttpStatusCode.Forbidden, res.StatusCode);
     }
 
@@ -114,7 +114,7 @@ public class GuacamoleControllerIntegrationTests
         client.DefaultRequestHeaders.Add("X-Test-Roles", AppRoles.User);
 
         var res = await client.PostAsync($"/api/guacamole/ticket/{Guid.NewGuid()}", null);
-        
+
         Assert.Equal(HttpStatusCode.NotFound, res.StatusCode);
     }
 
@@ -125,7 +125,7 @@ public class GuacamoleControllerIntegrationTests
         var client = factory.CreateClient();
 
         var res = await client.GetAsync($"/api/guacamole/connect/{Guid.NewGuid()}?ticket=some-ticket");
-        
+
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
     }
 
