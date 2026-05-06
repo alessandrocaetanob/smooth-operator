@@ -54,19 +54,32 @@ public class GuacamoleProxyServiceTests
     }
 
     [Fact]
-    public async Task IssueTicketAsync_SavesToRedis()
+    public async Task IssueTicketAsync_PersistsTicketToRedisAndWritesAuditLog()
     {
         // Arrange
         var userId = Guid.NewGuid();
         var connectionId = Guid.NewGuid();
         var ip = "127.0.0.1";
+        _dbMock.Setup(db => db.StringSetAsync(
+            It.IsAny<RedisKey>(),
+            It.IsAny<RedisValue>(),
+            It.IsAny<TimeSpan?>(),
+            It.IsAny<When>(),
+            It.IsAny<CommandFlags>()))
+            .ReturnsAsync(true);
 
         // Act
         var ticket = await _service.IssueTicketAsync(userId, connectionId, ip);
 
         // Assert
         Assert.False(string.IsNullOrWhiteSpace(ticket));
-        
+        Assert.True(
+            _dbMock.Invocations.Any(inv =>
+                inv.Method.Name == "StringSetAsync" &&
+                inv.Arguments.Count >= 1 &&
+                inv.Arguments[0].ToString()!.StartsWith("guac:ticket:")),
+            "Expected StringSetAsync to be called with a key prefixed 'guac:ticket:'");
+
         using var scope = _scopeFactoryMock.Object.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var log = await dbContext.AuditLogs.FirstOrDefaultAsync(l => l.Action == "connection.ticket.issued");
@@ -161,6 +174,8 @@ public class GuacamoleProxyServiceTests
 
         var wsMock = new Mock<System.Net.WebSockets.WebSocket>();
         wsMock.Setup(w => w.State).Returns(System.Net.WebSockets.WebSocketState.Open);
+        wsMock.Setup(w => w.CloseAsync(It.IsAny<System.Net.WebSockets.WebSocketCloseStatus>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+              .Returns(Task.CompletedTask);
 
         // Act
         await _service.HandleWebSocketAsync(wsMock.Object, connectionId, userId, ip);
@@ -187,6 +202,8 @@ public class GuacamoleProxyServiceTests
 
         var wsMock = new Mock<System.Net.WebSockets.WebSocket>();
         wsMock.Setup(w => w.State).Returns(System.Net.WebSockets.WebSocketState.Open);
+        wsMock.Setup(w => w.CloseAsync(It.IsAny<System.Net.WebSockets.WebSocketCloseStatus>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+              .Returns(Task.CompletedTask);
 
         // Act
         await _service.HandleWebSocketAsync(wsMock.Object, connectionId, userId, ip);
@@ -229,8 +246,12 @@ public class GuacamoleProxyServiceTests
 
         var wsMock = new Mock<System.Net.WebSockets.WebSocket>();
         wsMock.Setup(w => w.State).Returns(System.Net.WebSockets.WebSocketState.Open);
+        wsMock.Setup(w => w.CloseAsync(It.IsAny<System.Net.WebSockets.WebSocketCloseStatus>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+              .Returns(Task.CompletedTask);
+        wsMock.Setup(w => w.SendAsync(It.IsAny<ArraySegment<byte>>(), It.IsAny<System.Net.WebSockets.WebSocketMessageType>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+              .Returns(Task.CompletedTask);
 
-        // Act - This will fail at ProbeHostAsync because nothing is listening on port 3389
+        // Act - This will fail at ProbeHostAsync because nothing is listening on port 59999
         await _service.HandleWebSocketAsync(wsMock.Object, connectionId, userId, ip);
 
         // Assert
@@ -256,10 +277,10 @@ public class GuacamoleProxyServiceTests
     }
 
     [Fact]
-    public async Task IssueTicketAsync_WithNullIp_SavesToRedis()
+    public async Task IssueTicketAsync_WithEmptyIp_SavesToRedis()
     {
         // Act
-        var ticket = await _service.IssueTicketAsync(Guid.NewGuid(), Guid.NewGuid(), null!);
+        var ticket = await _service.IssueTicketAsync(Guid.NewGuid(), Guid.NewGuid(), string.Empty);
 
         // Assert
         Assert.NotNull(ticket);
@@ -272,6 +293,8 @@ public class GuacamoleProxyServiceTests
         var userId = Guid.NewGuid();
         var wsMock = new Mock<System.Net.WebSockets.WebSocket>();
         wsMock.Setup(w => w.State).Returns(System.Net.WebSockets.WebSocketState.Open);
+        wsMock.Setup(w => w.CloseAsync(It.IsAny<System.Net.WebSockets.WebSocketCloseStatus>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+              .Returns(Task.CompletedTask);
 
         // Act
         await _service.HandleWebSocketAsync(wsMock.Object, Guid.NewGuid(), userId, "127.0.0.1");
@@ -298,6 +321,8 @@ public class GuacamoleProxyServiceTests
 
         var wsMock = new Mock<System.Net.WebSockets.WebSocket>();
         wsMock.Setup(w => w.State).Returns(System.Net.WebSockets.WebSocketState.Open);
+        wsMock.Setup(w => w.CloseAsync(It.IsAny<System.Net.WebSockets.WebSocketCloseStatus>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+              .Returns(Task.CompletedTask);
 
         // Act
         await _service.HandleWebSocketAsync(wsMock.Object, connectionId, userId, "127.0.0.1");
@@ -325,7 +350,7 @@ public class GuacamoleProxyServiceTests
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         dbContext.Users.Add(new User { Id = userId, IsActive = true, Name = "active-user", Email = "test@test.com" });
         
-        var host = new SmoothOperator.Domain.Models.Host { Id = hostId, Name = "test-host", Address = "192.0.2.1" };
+        var host = new SmoothOperator.Domain.Models.Host { Id = hostId, Name = "test-host", Address = "invalid.invalid" };
         dbContext.Hosts.Add(host);
         
         dbContext.Connections.Add(new Connection 
@@ -340,6 +365,10 @@ public class GuacamoleProxyServiceTests
 
         var wsMock = new Mock<System.Net.WebSockets.WebSocket>();
         wsMock.Setup(w => w.State).Returns(System.Net.WebSockets.WebSocketState.Open);
+        wsMock.Setup(w => w.CloseAsync(It.IsAny<System.Net.WebSockets.WebSocketCloseStatus>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+              .Returns(Task.CompletedTask);
+        wsMock.Setup(w => w.SendAsync(It.IsAny<ArraySegment<byte>>(), It.IsAny<System.Net.WebSockets.WebSocketMessageType>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+              .Returns(Task.CompletedTask);
 
         // Act - It will fail at ProbeHostAsync but we want to see it use the correct port in the log/details
         await _service.HandleWebSocketAsync(wsMock.Object, connectionId, userId, "127.0.0.1");
