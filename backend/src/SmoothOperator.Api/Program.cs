@@ -187,17 +187,17 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
     options.KnownProxies.Clear();
-    
+
     // Default: Docker private IP ranges (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16)
     // Override via ForwardedHeaders__KnownIPNetworks__0, __1, __2 environment variables if needed
-    var knownNetworks = builder.Configuration.GetSection("ForwardedHeaders:KnownIPNetworks").Get<string[]>() 
+    var knownNetworks = builder.Configuration.GetSection("ForwardedHeaders:KnownIPNetworks").Get<string[]>()
         ?? new[] { "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16" };
-    
+
     foreach (var network in knownNetworks.Where(n => !string.IsNullOrWhiteSpace(n) && n.Contains('/')))
     {
         var parts = network.Split('/');
-        if (parts.Length == 2 && 
-            IPAddress.TryParse(parts[0], out var address) && 
+        if (parts.Length == 2 &&
+            IPAddress.TryParse(parts[0], out var address) &&
             int.TryParse(parts[1], out var prefixLength))
         {
             options.KnownIPNetworks.Add(new IPNetwork(address, prefixLength));
@@ -256,7 +256,7 @@ builder.Services.AddCors(options =>
             if (env.IsProduction())
                 throw new InvalidOperationException(
                     "CORS origins not configured in production. Set AppUrls__Frontend and/or AppUrls__AllowedOrigins__* environment variables.");
-            
+
             policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
         }
     });

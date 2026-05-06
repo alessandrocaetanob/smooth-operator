@@ -49,7 +49,10 @@ export class Integrations {
   readonly copiedKey = signal<string | null>(null);
 
   readonly prometheusEndpoints: Endpoint[] = [
-    { label: 'Metrics scrape endpoint', value: `${OBSERVABILITY_CONFIG.prometheus.protocol}://<your-host>:${OBSERVABILITY_CONFIG.prometheus.defaultPort}/metrics` },
+    {
+      label: 'Metrics scrape endpoint',
+      value: `${OBSERVABILITY_CONFIG.prometheus.protocol}://<your-host>:${OBSERVABILITY_CONFIG.prometheus.defaultPort}/metrics`,
+    },
   ];
 
   readonly prometheusConfig: CodeBlock = {
@@ -74,8 +77,14 @@ scrape_configs:
   ];
 
   readonly otlpEndpoints: Endpoint[] = [
-    { label: 'OTLP gRPC endpoint', value: `${OBSERVABILITY_CONFIG.otlp.protocol}://<your-host>:${OBSERVABILITY_CONFIG.otlp.grpcPort}` },
-    { label: 'Tempo HTTP query endpoint', value: `${OBSERVABILITY_CONFIG.otlp.protocol}://<your-host>:${OBSERVABILITY_CONFIG.otlp.httpPort}` },
+    {
+      label: 'OTLP gRPC endpoint',
+      value: `${OBSERVABILITY_CONFIG.otlp.protocol}://<your-host>:${OBSERVABILITY_CONFIG.otlp.grpcPort}`,
+    },
+    {
+      label: 'Tempo HTTP query endpoint',
+      value: `${OBSERVABILITY_CONFIG.otlp.protocol}://<your-host>:${OBSERVABILITY_CONFIG.otlp.httpPort}`,
+    },
   ];
 
   readonly otlpConfig: CodeBlock = {
@@ -100,8 +109,14 @@ service:
   };
 
   readonly lokiEndpoints: Endpoint[] = [
-    { label: 'Loki push endpoint', value: `${OBSERVABILITY_CONFIG.loki.protocol}://<your-host>:${OBSERVABILITY_CONFIG.loki.defaultPort}` },
-    { label: 'Loki query API', value: `${OBSERVABILITY_CONFIG.loki.protocol}://<your-host>:${OBSERVABILITY_CONFIG.loki.defaultPort}/loki/api/v1/query_range` },
+    {
+      label: 'Loki push endpoint',
+      value: `${OBSERVABILITY_CONFIG.loki.protocol}://<your-host>:${OBSERVABILITY_CONFIG.loki.defaultPort}`,
+    },
+    {
+      label: 'Loki query API',
+      value: `${OBSERVABILITY_CONFIG.loki.protocol}://<your-host>:${OBSERVABILITY_CONFIG.loki.defaultPort}/loki/api/v1/query_range`,
+    },
   ];
 
   readonly lokiQueries: CodeBlock[] = [
@@ -171,4 +186,3 @@ service:
     });
   }
 }
-
