@@ -38,11 +38,12 @@ secrets/
 !secrets/.gitkeep
 
 # .NET / C#
-[Bb]in/
-[Oo]bj/
-TestResults/
-coveragereport/
-coverage.cobertura.xml
+**/bin/
+**/obj/
+**/TestResults/
+**/coverage/
+**/coveragereport/
+**/coverage.cobertura.xml
 *.nupkg
 *.snupkg
 
