@@ -237,7 +237,7 @@ namespace SmoothOperator.Infrastructure.Services
             await webSocket.CloseAsync(WebSocketCloseStatus.InvalidMessageType, "Connection not found", CancellationToken.None);
         }
 
-        private (string host, int port) ResolveTargetEndpoint(Connection connection)
+        private static (string host, int port) ResolveTargetEndpoint(Connection connection)
         {
             var defaultPort = (connection.Protocol ?? "rdp").ToLowerInvariant() switch
             {
@@ -336,122 +336,37 @@ namespace SmoothOperator.Infrastructure.Services
                 using var networkStream = tcpClient.GetStream();
                 var reader = new GuacInstructionReader(networkStream);
 
-                // Handshake: select <protocol>
-                string protocol = (connection.Protocol ?? "rdp").ToLowerInvariant();
-                await SendGuacMessage(networkStream, BuildGuacInstruction("select", protocol));
-
-                // guacd replies with `args` listing all parameter names that the
-                // protocol supports, in the order it expects them on `connect`.
-                var argsInstruction = await reader.ReadAsync(CancellationToken.None);
-                if (argsInstruction == null || argsInstruction.Count == 0 || argsInstruction[0] != "args")
-                {
-                    throw new InvalidOperationException(
-                        $"Unexpected guacd handshake reply: {(argsInstruction == null ? "<null>" : string.Join(",", argsInstruction))}");
-                }
-
-                // First element is "args". Per the Apache reference client
-                // (ConfiguredGuacamoleSocket.java), if the SECOND element looks
-                // like a protocol version token (e.g. "VERSION_1_5_0"), it is
-                // NOT skipped — it is treated as the first parameter name and
-                // the client must echo it back as the first connect VALUE so
-                // both sides agree on the protocol revision. Skipping it
-                // causes guacd to reject `connect` with "did not return the
-                // expected number of arguments" because guacd counts the
-                // version slot in its expected arg count.
-                var paramNames = argsInstruction.Skip(1).ToList();
-                var serverVersion = paramNames.Count > 0 && paramNames[0].StartsWith("VERSION_", StringComparison.Ordinal)
-                    ? paramNames[0]
-                    : "VERSION_1_0_0";
-                var paramValues = await ResolveConnectionParametersAsync(connection, paramNames, serverVersion, dbContext, CancellationToken.None, dbUser.Id, ipAddress);
-
-                _logger.LogInformation(
-                    "guacd handshake for {Protocol}: server={ServerVersion}, sending {ValueCount} connect values for {NameCount} arg names",
-                    protocol, serverVersion, paramValues.Count, paramNames.Count);
-
-                // size / audio / video / image — sensible defaults; the client may
-                // also send a `size` instruction later to renegotiate.
-                await SendGuacMessage(networkStream, BuildGuacInstruction("size", "1024", "768", "96"));
-                await SendGuacMessage(networkStream, BuildGuacInstruction("audio", "audio/L16"));
-                await SendGuacMessage(networkStream, BuildGuacInstruction("video"));
-                await SendGuacMessage(networkStream, BuildGuacInstruction("image", "image/png", "image/jpeg"));
-                // 1.5+ added optional `timezone` and `name` handshake instructions.
-                if (string.Compare(serverVersion, "VERSION_1_1_0", StringComparison.Ordinal) >= 0)
-                {
-                    await SendGuacMessage(networkStream, BuildGuacInstruction("timezone", "UTC"));
-                    await SendGuacMessage(networkStream, BuildGuacInstruction("name", "smooth-operator"));
-                }
-
-                // connect — values must be in the exact order guacd asked for in `args`.
-                var connectArgs = new List<string> { "connect" };
-                connectArgs.AddRange(paramValues);
-                await SendGuacMessage(networkStream, BuildGuacInstruction(connectArgs.ToArray()));
+                await PerformGuacamoleHandshakeAsync(networkStream, reader, connection, dbContext, dbUser, ipAddress);
 
                 _metrics.RecordConnectionStarted();
                 sessionMetricRecorded = true;
                 connectionSuccessful = true;
 
-                // Bidirectional proxy with proper instruction framing on the guacd→ws side.
-                var receiveTask = ProxyGuacdToWebSocket(reader, webSocket, msg =>
+                await RunBidirectionalProxyAsync(reader, webSocket, networkStream, connection.Id, msg =>
                 {
                     failureReason ??= msg;
                     _logger.LogWarning("guacd reported error for connection {ConnectionId}: {Error}", connection.Id, msg);
                 });
-                var sendTask = ProxyWebSocketToGuacd(webSocket, networkStream);
-
-                await Task.WhenAny(receiveTask, sendTask);
             }
             catch (SocketException ex)
             {
                 failureReason = $"Cannot reach Guacamole service ({_guacdHost}:{_guacdPort}): {ex.Message}";
                 _logger.LogError(ex, "Network error connecting to guacd for connection {ConnectionId}", connection.Id);
-
-                dbContext.AuditLogs.Add(new AuditLog
-                {
-                    Id = Guid.NewGuid(),
-                    UserId = dbUser.Id,
-                    Action = "connection.error",
-                    ResourceType = ResourceTypeConnection,
-                    ResourceId = connection.Id.ToString(),
-                    Details = $"{{\"error\":\"network_error\",\"message\":{JsonSerializer.Serialize(ex.Message)}}}",
-                    IpAddress = ipAddress
-                });
-                await dbContext.SaveChangesAsync();
+                await LogConnectionErrorAsync(dbContext, dbUser.Id, connection.Id, ipAddress, "network_error", ex.Message);
             }
             catch (Exception ex)
             {
                 failureReason = $"Session error: {ex.Message}";
                 _logger.LogError(ex, "Error during Guacamole session for connection {ConnectionId}", connection.Id);
-
-                dbContext.AuditLogs.Add(new AuditLog
-                {
-                    Id = Guid.NewGuid(),
-                    UserId = dbUser.Id,
-                    Action = "connection.error",
-                    ResourceType = ResourceTypeConnection,
-                    ResourceId = connection.Id.ToString(),
-                    Details = $"{{\"error\":\"session_error\",\"message\":{JsonSerializer.Serialize(ex.Message)}}}",
-                    IpAddress = ipAddress
-                });
-                await dbContext.SaveChangesAsync();
+                await LogConnectionErrorAsync(dbContext, dbUser.Id, connection.Id, ipAddress, "session_error", ex.Message);
             }
             finally
             {
-                var endTime = DateTime.UtcNow;
                 await db.KeyDeleteAsync($"session:{sessionId}");
 
                 if (connectionSuccessful)
                 {
-                    dbContext.AuditLogs.Add(new AuditLog
-                    {
-                        Id = Guid.NewGuid(),
-                        UserId = dbUser.Id,
-                        Action = "connection.ended",
-                        ResourceType = ResourceTypeConnection,
-                        ResourceId = connection.Id.ToString(),
-                        Details = $"{{\"sessionId\":\"{sessionId}\",\"endTime\":\"{endTime:O}\"}}",
-                        IpAddress = ipAddress
-                    });
-                    await dbContext.SaveChangesAsync();
+                    await LogConnectionEndedAsync(dbContext, dbUser.Id, connection.Id, ipAddress, sessionId);
                 }
 
                 if (sessionMetricRecorded)
@@ -462,6 +377,121 @@ namespace SmoothOperator.Infrastructure.Services
                 await CloseGuacSessionAsync(webSocket, failureReason);
                 tcpClient.Close();
             }
+        }
+
+        private async Task PerformGuacamoleHandshakeAsync(
+            NetworkStream networkStream,
+            GuacInstructionReader reader,
+            Connection connection,
+            AppDbContext dbContext,
+            User dbUser,
+            string ipAddress)
+        {
+            string protocol = (connection.Protocol ?? "rdp").ToLowerInvariant();
+            await SendGuacMessage(networkStream, BuildGuacInstruction("select", protocol));
+
+            var (paramNames, serverVersion) = await ReadHandshakeArgsAsync(reader);
+
+            var paramValues = await ResolveConnectionParametersAsync(
+                connection, paramNames, serverVersion, dbContext, CancellationToken.None, dbUser.Id, ipAddress);
+
+            _logger.LogInformation(
+                "guacd handshake for {Protocol}: server={ServerVersion}, sending {ValueCount} connect values for {NameCount} arg names",
+                protocol, serverVersion, paramValues.Count, paramNames.Count);
+
+            await SendHandshakeDefaultsAsync(networkStream, serverVersion);
+
+            // connect — values must be in the exact order guacd asked for in `args`.
+            var connectArgs = new List<string> { "connect" };
+            connectArgs.AddRange(paramValues);
+            await SendGuacMessage(networkStream, BuildGuacInstruction(connectArgs.ToArray()));
+        }
+
+        private static async Task<(List<string> paramNames, string serverVersion)> ReadHandshakeArgsAsync(GuacInstructionReader reader)
+        {
+            // guacd replies with `args` listing all parameter names that the
+            // protocol supports, in the order it expects them on `connect`.
+            var argsInstruction = await reader.ReadAsync(CancellationToken.None);
+            if (argsInstruction == null || argsInstruction.Count == 0 || argsInstruction[0] != "args")
+            {
+                throw new InvalidOperationException(
+                    $"Unexpected guacd handshake reply: {(argsInstruction == null ? "<null>" : string.Join(",", argsInstruction))}");
+            }
+
+            // First element is "args". Per the Apache reference client
+            // (ConfiguredGuacamoleSocket.java), if the SECOND element looks
+            // like a protocol version token (e.g. "VERSION_1_5_0"), it is
+            // NOT skipped — it is treated as the first parameter name and
+            // the client must echo it back as the first connect VALUE so
+            // both sides agree on the protocol revision.
+            var paramNames = argsInstruction.Skip(1).ToList();
+            var serverVersion = paramNames.Count > 0 && paramNames[0].StartsWith("VERSION_", StringComparison.Ordinal)
+                ? paramNames[0]
+                : "VERSION_1_0_0";
+            return (paramNames, serverVersion);
+        }
+
+        private static async Task SendHandshakeDefaultsAsync(NetworkStream networkStream, string serverVersion)
+        {
+            // size / audio / video / image — sensible defaults; the client may
+            // also send a `size` instruction later to renegotiate.
+            await SendGuacMessage(networkStream, BuildGuacInstruction("size", "1024", "768", "96"));
+            await SendGuacMessage(networkStream, BuildGuacInstruction("audio", "audio/L16"));
+            await SendGuacMessage(networkStream, BuildGuacInstruction("video"));
+            await SendGuacMessage(networkStream, BuildGuacInstruction("image", "image/png", "image/jpeg"));
+            // 1.5+ added optional `timezone` and `name` handshake instructions.
+            if (string.Compare(serverVersion, "VERSION_1_1_0", StringComparison.Ordinal) >= 0)
+            {
+                await SendGuacMessage(networkStream, BuildGuacInstruction("timezone", "UTC"));
+                await SendGuacMessage(networkStream, BuildGuacInstruction("name", "smooth-operator"));
+            }
+        }
+
+        private static async Task RunBidirectionalProxyAsync(
+            GuacInstructionReader reader,
+            WebSocket webSocket,
+            NetworkStream networkStream,
+            Guid connectionId,
+            Action<string> onGuacError)
+        {
+            // Bidirectional proxy with proper instruction framing on the guacd→ws side.
+            _ = connectionId; // reserved for future telemetry tagging
+            var receiveTask = ProxyGuacdToWebSocket(reader, webSocket, onGuacError);
+            var sendTask = ProxyWebSocketToGuacd(webSocket, networkStream);
+            await Task.WhenAny(receiveTask, sendTask);
+        }
+
+        private static async Task LogConnectionErrorAsync(
+            AppDbContext dbContext, Guid userId, Guid connectionId, string ipAddress, string errorType, string message)
+        {
+            dbContext.AuditLogs.Add(new AuditLog
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                Action = "connection.error",
+                ResourceType = ResourceTypeConnection,
+                ResourceId = connectionId.ToString(),
+                Details = $"{{\"error\":\"{errorType}\",\"message\":{JsonSerializer.Serialize(message)}}}",
+                IpAddress = ipAddress
+            });
+            await dbContext.SaveChangesAsync();
+        }
+
+        private static async Task LogConnectionEndedAsync(
+            AppDbContext dbContext, Guid userId, Guid connectionId, string ipAddress, string sessionId)
+        {
+            var endTime = DateTime.UtcNow;
+            dbContext.AuditLogs.Add(new AuditLog
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                Action = "connection.ended",
+                ResourceType = ResourceTypeConnection,
+                ResourceId = connectionId.ToString(),
+                Details = $"{{\"sessionId\":\"{sessionId}\",\"endTime\":\"{endTime:O}\"}}",
+                IpAddress = ipAddress
+            });
+            await dbContext.SaveChangesAsync();
         }
 
         private async Task CloseGuacSessionAsync(WebSocket webSocket, string? failureReason)
