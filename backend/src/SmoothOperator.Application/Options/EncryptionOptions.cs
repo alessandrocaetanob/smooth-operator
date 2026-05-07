@@ -15,7 +15,8 @@ public sealed class EncryptionOptions : IValidatableObject
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
-        if (Key.Length != 64 || !System.Text.RegularExpressions.Regex.IsMatch(Key, "^[0-9a-fA-F]+$"))
+        if (Key.Length != 64 || !System.Text.RegularExpressions.Regex.IsMatch(Key, "^[0-9a-fA-F]+$",
+                System.Text.RegularExpressions.RegexOptions.None, TimeSpan.FromSeconds(1)))
             yield return new ValidationResult(
                 "Encryption:Key must be a 64-character hex string (32 bytes for AES-256).",
                 [nameof(Key)]);
