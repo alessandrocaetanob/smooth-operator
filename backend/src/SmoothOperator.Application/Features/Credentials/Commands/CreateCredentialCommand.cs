@@ -38,33 +38,42 @@ namespace SmoothOperator.Application.Features.Credentials.Commands
             var dto = request.Dto;
             var isExternal = string.Equals(dto.StorageMode, "External", StringComparison.OrdinalIgnoreCase);
 
-            var credential = new Credential
-            {
-                Id = Guid.NewGuid(),
-                Name = dto.Name,
-                Username = dto.Username,
-                CredentialType = dto.CredentialType,
-                PublicKey = dto.PublicKey,
-                StorageMode = isExternal ? SecretStorageMode.External : SecretStorageMode.Local
-            };
+            var credential = BuildCredential(dto, isExternal);
 
             if (isExternal)
                 await HandleExternalCredentialAsync(credential, dto, cancellationToken);
             else
-            {
-                // Local flow
-                if (string.IsNullOrWhiteSpace(dto.Secret))
-                    throw new BadRequestException("Secret is required for local credentials.");
+                ApplyLocalSecret(credential, dto);
 
-                credential.EncryptedSecret = _encryptionService.Encrypt(dto.Secret!);
-            }
+            await PersistAndAuditAsync(credential, cancellationToken);
 
+            return ToDto(credential);
+        }
+
+        private static Credential BuildCredential(CreateCredentialDto dto, bool isExternal) => new()
+        {
+            Id = Guid.NewGuid(),
+            Name = dto.Name,
+            Username = dto.Username,
+            CredentialType = dto.CredentialType,
+            PublicKey = dto.PublicKey,
+            StorageMode = isExternal ? SecretStorageMode.External : SecretStorageMode.Local
+        };
+
+        private void ApplyLocalSecret(Credential credential, CreateCredentialDto dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto.Secret))
+                throw new BadRequestException("Secret is required for local credentials.");
+
+            credential.EncryptedSecret = _encryptionService.Encrypt(dto.Secret!);
+        }
+
+        private async Task PersistAndAuditAsync(Credential credential, CancellationToken cancellationToken)
+        {
             _context.Credentials.Add(credential);
             await _context.SaveChangesAsync(cancellationToken);
             await _audit.WriteAsync("credential.created", "Credential", credential.Id.ToString(),
                 new { credential.Name, credential.Username, credential.CredentialType, credential.StorageMode });
-
-            return ToDto(credential);
         }
 
         internal static CredentialDto ToDto(Credential c) => new()
