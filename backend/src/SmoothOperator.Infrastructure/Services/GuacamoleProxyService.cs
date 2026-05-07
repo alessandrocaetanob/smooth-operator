@@ -825,96 +825,107 @@ namespace SmoothOperator.Infrastructure.Services
             string ipAddress,
             CancellationToken cancellationToken)
         {
-            if (cred.StorageMode == Domain.Models.SecretStorageMode.External
-                && cred.SecretProvider != null
-                && !string.IsNullOrEmpty(cred.ExternalSecretName))
+            if (UsesExternalSecretProvider(cred))
             {
-                try
-                {
-                    var secretProvider = _secretProviderFactory.Create(cred.SecretProvider);
-                    var secret = await secretProvider.GetSecretAsync(
-                        cred.ExternalSecretName, cred.ExternalSecretVersion, cancellationToken);
+                return await FetchExternalSecretAsync(cred, dbContext, userId, ipAddress, cancellationToken);
+            }
 
-                    dbContext.AuditLogs.Add(new AuditLog
-                    {
-                        Id = Guid.NewGuid(),
-                        UserId = userId,
-                        IpAddress = ipAddress,
-                        Action = "secret.fetched",
-                        ResourceType = "Credential",
-                        ResourceId = cred.Id.ToString(),
-                        Details = System.Text.Json.JsonSerializer.Serialize(new
-                        {
-                            credentialId = cred.Id,
-                            providerId = cred.SecretProviderId,
-                            secretName = cred.ExternalSecretName,
-                            success = true
-                        })
-                    });
-                    await dbContext.SaveChangesAsync(cancellationToken);
-                    return secret;
-                }
-                catch (SecretProviderException ex)
-                {
-                    _logger.LogError(ex, "Secret provider error for credential {CredentialId}: [{ErrorCode}] {Message}", cred.Id, ex.ErrorCode, ex.Message);
-                    dbContext.AuditLogs.Add(new AuditLog
-                    {
-                        Id = Guid.NewGuid(),
-                        UserId = userId,
-                        IpAddress = ipAddress,
-                        Action = "secret.fetched",
-                        ResourceType = "Credential",
-                        ResourceId = cred.Id.ToString(),
-                        Outcome = "failure",
-                        Details = System.Text.Json.JsonSerializer.Serialize(new
-                        {
-                            credentialId = cred.Id,
-                            providerId = cred.SecretProviderId,
-                            secretName = cred.ExternalSecretName,
-                            success = false,
-                            error = ex.ErrorCode
-                        })
-                    });
-                    await dbContext.SaveChangesAsync(cancellationToken);
-                    throw new InvalidOperationException(ex.Message, ex);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Failed to fetch secret from vault for credential {CredentialId}", cred.Id);
-                    dbContext.AuditLogs.Add(new AuditLog
-                    {
-                        Id = Guid.NewGuid(),
-                        UserId = userId,
-                        IpAddress = ipAddress,
-                        Action = "secret.fetched",
-                        ResourceType = "Credential",
-                        ResourceId = cred.Id.ToString(),
-                        Outcome = "failure",
-                        Details = System.Text.Json.JsonSerializer.Serialize(new
-                        {
-                            credentialId = cred.Id,
-                            providerId = cred.SecretProviderId,
-                            secretName = cred.ExternalSecretName,
-                            success = false,
-                            error = "vault_unreachable"
-                        })
-                    });
-                    await dbContext.SaveChangesAsync(cancellationToken);
-                    throw new InvalidOperationException("Vault unreachable — cannot retrieve credential. Check secret provider configuration.", ex);
-                }
-            }
-            else if (!string.IsNullOrEmpty(cred.EncryptedSecret))
+            if (!string.IsNullOrEmpty(cred.EncryptedSecret))
             {
-                try
-                {
-                    return _encryptionService.Decrypt(cred.EncryptedSecret);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Failed to decrypt credential for connection");
-                }
+                return TryDecryptLocalSecret(cred.EncryptedSecret);
             }
+
             return string.Empty;
+        }
+
+        private static bool UsesExternalSecretProvider(Credential cred) =>
+            cred.StorageMode == Domain.Models.SecretStorageMode.External
+            && cred.SecretProvider != null
+            && !string.IsNullOrEmpty(cred.ExternalSecretName);
+
+        private async Task<string> FetchExternalSecretAsync(
+            Credential cred,
+            AppDbContext dbContext,
+            Guid userId,
+            string ipAddress,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                var secretProvider = _secretProviderFactory.Create(cred.SecretProvider!);
+                var secret = await secretProvider.GetSecretAsync(
+                    cred.ExternalSecretName!, cred.ExternalSecretVersion, cancellationToken);
+
+                await WriteSecretAuditAsync(dbContext, cred, userId, ipAddress, success: true, errorCode: null, cancellationToken);
+                return secret;
+            }
+            catch (SecretProviderException ex)
+            {
+                _logger.LogError(ex, "Secret provider error for credential {CredentialId}: [{ErrorCode}] {Message}", cred.Id, ex.ErrorCode, ex.Message);
+                await WriteSecretAuditAsync(dbContext, cred, userId, ipAddress, success: false, errorCode: ex.ErrorCode, cancellationToken);
+                throw new InvalidOperationException(ex.Message, ex);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to fetch secret from vault for credential {CredentialId}", cred.Id);
+                await WriteSecretAuditAsync(dbContext, cred, userId, ipAddress, success: false, errorCode: "vault_unreachable", cancellationToken);
+                throw new InvalidOperationException("Vault unreachable — cannot retrieve credential. Check secret provider configuration.", ex);
+            }
+        }
+
+        private string TryDecryptLocalSecret(string encryptedSecret)
+        {
+            try
+            {
+                return _encryptionService.Decrypt(encryptedSecret);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to decrypt credential for connection");
+                return string.Empty;
+            }
+        }
+
+        private static async Task WriteSecretAuditAsync(
+            AppDbContext dbContext,
+            Credential cred,
+            Guid userId,
+            string ipAddress,
+            bool success,
+            string? errorCode,
+            CancellationToken cancellationToken)
+        {
+            var details = success
+                ? JsonSerializer.Serialize(new
+                {
+                    credentialId = cred.Id,
+                    providerId = cred.SecretProviderId,
+                    secretName = cred.ExternalSecretName,
+                    success = true
+                })
+                : JsonSerializer.Serialize(new
+                {
+                    credentialId = cred.Id,
+                    providerId = cred.SecretProviderId,
+                    secretName = cred.ExternalSecretName,
+                    success = false,
+                    error = errorCode
+                });
+
+            var log = new AuditLog
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                IpAddress = ipAddress,
+                Action = "secret.fetched",
+                ResourceType = "Credential",
+                ResourceId = cred.Id.ToString(),
+                Details = details
+            };
+            if (!success) log.Outcome = "failure";
+
+            dbContext.AuditLogs.Add(log);
+            await dbContext.SaveChangesAsync(cancellationToken);
         }
 
         private static void TryReportGuacError(string raw, Action<string> onGuacError)
