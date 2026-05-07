@@ -279,15 +279,9 @@ public class GuacamoleProxyServiceTests
         reachableListener.Start();
         var reachablePort = ((IPEndPoint)reachableListener.LocalEndpoint).Port;
 
-        // Pick an unused guacd port and release it to force connect failure inside session run.
-        var guacdPortSelector = new TcpListener(IPAddress.Loopback, 0);
-        guacdPortSelector.Start();
-        var unavailableGuacdPort = ((IPEndPoint)guacdPortSelector.LocalEndpoint).Port;
-        guacdPortSelector.Stop();
-
         var service = new GuacamoleProxyService(
             _loggerMock.Object,
-            Options.Create(new GuacdOptions { Host = "127.0.0.1", Port = unavailableGuacdPort }),
+            Options.Create(new GuacdOptions { Host = "invalid.invalid", Port = 4822 }),
             _scopeFactoryMock.Object,
             _encryptionServiceMock.Object,
             _redisMock.Object,

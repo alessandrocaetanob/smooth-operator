@@ -1,4 +1,3 @@
-using System.Reflection;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -58,9 +57,7 @@ public class StartupExtensionsTests
 
         await using var app = builder.Build();
 
-        var type = typeof(Program).Assembly.GetType("SmoothOperator.Api.Extensions.MigrationExtensions");
-        var method = type!.GetMethod("ApplyPendingMigrationsAsync", BindingFlags.Static | BindingFlags.NonPublic);
-        await (Task)method!.Invoke(null, new object[] { app })!;
+        await app.ApplyPendingMigrationsAsync();
 
         await using var scope = app.Services.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
