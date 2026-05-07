@@ -7,7 +7,7 @@ export class MotionService {
 
   /** Call once during app bootstrap. */
   init(): void {
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const mq = globalThis.matchMedia('(prefers-reduced-motion: reduce)');
     this.reducedMotion.set(mq.matches);
     mq.addEventListener('change', (e) => this.reducedMotion.set(e.matches));
   }

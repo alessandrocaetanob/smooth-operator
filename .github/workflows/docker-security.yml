@@ -25,17 +25,17 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Run Hadolint on Frontend Dockerfile
-        uses: hadolint/hadolint-action@v3.1.0
+        uses: hadolint/hadolint-action@54c9adbab1582c2ef04b2016b760714a4bfde3cf # v3.1.0
         if: hashFiles('frontend/Dockerfile') != ''
         with:
           dockerfile: frontend/Dockerfile
           failure-threshold: warning
 
       - name: Run Hadolint on Backend Dockerfile
-        uses: hadolint/hadolint-action@v3.1.0
+        uses: hadolint/hadolint-action@54c9adbab1582c2ef04b2016b760714a4bfde3cf # v3.1.0
         if: hashFiles('backend/Dockerfile') != ''
         with:
           dockerfile: backend/Dockerfile
@@ -47,7 +47,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Validate docker-compose.yml
         run: docker compose config --quiet
@@ -62,10 +62,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
 
       - name: Build ${{ matrix.component }} image
         if: hashFiles(format('{0}/Dockerfile', matrix.component)) != ''
@@ -74,7 +74,7 @@ jobs:
 
       - name: Run Trivy vulnerability scanner on image
         if: hashFiles(format('{0}/Dockerfile', matrix.component)) != ''
-        uses: aquasecurity/trivy-action@0.35.0
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
         with:
           image-ref: smooth-operator-${{ matrix.component }}:test
           format: 'sarif'
@@ -83,7 +83,7 @@ jobs:
 
       - name: Upload Trivy results to GitHub Security
         if: hashFiles(format('{0}/Dockerfile', matrix.component)) != ''
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@0daab03d71ff584ef619d027a3fd9146679c5d84 # v3
         # Code Scanning upload requires GitHub Advanced Security.
         continue-on-error: true
         with:

@@ -1,6 +1,5 @@
-<div
-  class="fixed top-4 right-4 z-[90] flex flex-col gap-2 w-[min(360px,calc(100vw-2rem))]"
-  role="status"
+<output
+  class="block fixed top-4 right-4 z-[90] flex flex-col gap-2 w-[min(360px,calc(100vw-2rem))]"
   aria-live="polite"
 >
   @for (t of toasts(); track trackById($index, t)) {
@@ -36,4 +35,4 @@
       ></div>
     </div>
   }
-</div>
+</output>

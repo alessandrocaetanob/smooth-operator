@@ -84,7 +84,7 @@ export class ConnectionsService {
           if (!blob) return;
           const contentDisposition = response.headers.get('content-disposition') ?? '';
           const match = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
-          const filename = match ? match[1].replace(/['"]/g, '') : `connection.${format}`;
+          const filename = match ? match[1].replaceAll(/['"]/g, '') : `connection.${format}`;
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = url;

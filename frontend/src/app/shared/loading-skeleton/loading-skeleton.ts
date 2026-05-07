@@ -10,6 +10,6 @@ export class LoadingSkeleton {
   @Input() type: 'text' | 'card' | 'table-row' = 'text';
 
   get rowArray(): number[] {
-    return Array(this.rows).fill(0);
+    return new Array(this.rows).fill(0);
   }
 }

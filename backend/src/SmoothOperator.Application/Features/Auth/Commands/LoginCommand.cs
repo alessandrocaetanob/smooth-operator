@@ -13,6 +13,9 @@ namespace SmoothOperator.Application.Features.Auth.Commands
 
     public sealed class LoginCommandHandler : IRequestHandler<LoginCommand, AuthResponse>
     {
+        private const string ProviderLocal = "local";
+        private const string OutcomeFailure = "failure";
+
         private readonly IAppDbContext _context;
         private readonly ITokenService _tokenService;
         private readonly IAuditService _audit;
@@ -42,29 +45,29 @@ namespace SmoothOperator.Application.Features.Auth.Commands
             if (user == null || string.IsNullOrEmpty(user.PasswordHash))
             {
                 await _audit.WriteAsync("user.login_failed", "User", string.Empty,
-                    new { provider = "local", email, reason = "user_not_found_or_no_password" }, outcome: "failure");
-                _metrics.RecordLoginAttempt("failure");
+                    new { provider = ProviderLocal, email, reason = "user_not_found_or_no_password" }, outcome: OutcomeFailure);
+                _metrics.RecordLoginAttempt(OutcomeFailure);
                 throw new UnauthorizedException(invalid);
             }
 
             if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
             {
                 await _audit.WriteAsync("user.login_failed", "User", user.Id.ToString(),
-                    new { provider = "local" }, outcome: "failure");
-                _metrics.RecordLoginAttempt("failure");
+                    new { provider = ProviderLocal }, outcome: OutcomeFailure);
+                _metrics.RecordLoginAttempt(OutcomeFailure);
                 throw new UnauthorizedException(invalid);
             }
 
             if (!user.IsActive)
             {
                 await _audit.WriteAsync("user.login_failed", "User", user.Id.ToString(),
-                    new { provider = "local", reason = "user_disabled" }, outcome: "failure");
-                _metrics.RecordLoginAttempt("failure");
+                    new { provider = ProviderLocal, reason = "user_disabled" }, outcome: OutcomeFailure);
+                _metrics.RecordLoginAttempt(OutcomeFailure);
                 throw new ForbiddenException("User account is disabled.");
             }
 
             await _audit.WriteAsync("user.login", "User", user.Id.ToString(),
-                new { provider = "local" });
+                new { provider = ProviderLocal });
             _metrics.RecordLoginAttempt("success");
 
             return UserHelper.ToAuthResponse(user, _tokenService);

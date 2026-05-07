@@ -20,6 +20,18 @@ namespace SmoothOperator.Application.DTOs
         public string Outcome { get; set; } = "success";
     }
 
+    public class AuditLogFilterRequest
+    {
+        public int Page { get; set; } = 1;
+        public int PageSize { get; set; } = 25;
+        public string? User { get; set; }
+        public string? Action { get; set; }
+        public string? ResourceType { get; set; }
+        public DateTime? From { get; set; }
+        public DateTime? To { get; set; }
+        public string? Outcome { get; set; }
+    }
+
     public class PagedResult<T>
     {
         public IEnumerable<T> Items { get; set; } = new List<T>();

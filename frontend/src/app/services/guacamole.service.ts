@@ -285,7 +285,7 @@ export class GuacamoleSession {
     const display = this.client.getDisplay();
     const el = display.getElement();
 
-    while (host.firstChild) host.removeChild(host.firstChild);
+    while (host.firstChild) host.firstChild.remove();
     host.appendChild(el);
 
     const mouse = new Guacamole.Mouse(el);
@@ -339,7 +339,7 @@ export class GuacamoleSession {
 
     const doResize = () => this.resizeToHost();
     this.resizeListener = doResize;
-    window.addEventListener('resize', doResize);
+    globalThis.addEventListener('resize', doResize);
     display.onresize = () => doResize();
     queueMicrotask(doResize);
 
@@ -396,7 +396,7 @@ export class GuacamoleSession {
       this.touch = null;
     }
     if (this.resizeListener) {
-      window.removeEventListener('resize', this.resizeListener);
+      globalThis.removeEventListener('resize', this.resizeListener);
       this.resizeListener = null;
     }
     if (this.pasteListener) {
@@ -405,7 +405,7 @@ export class GuacamoleSession {
     }
     if (this.displayHost) {
       while (this.displayHost.firstChild) {
-        this.displayHost.removeChild(this.displayHost.firstChild);
+        this.displayHost.firstChild.remove();
       }
     }
     this.displayHost = null;
@@ -517,8 +517,8 @@ export class GuacamoleSession {
   }
 
   private buildWebSocketUrl(): string {
-    const proto = window.location.protocol === 'https:' ? 'wss' : 'ws';
-    const host = window.location.host;
+    const proto = globalThis.location.protocol === 'https:' ? 'wss' : 'ws';
+    const host = globalThis.location.host;
     return `${proto}://${host}/api/Guacamole/connect/${this.connectionId}`;
   }
 
@@ -536,7 +536,7 @@ export class GuacamoleSession {
   private log(level: GuacLogEntry['level'], message: string): void {
     this._logs.update((entries) => {
       const next = entries.concat({ level, message, timestamp: Date.now() });
-      return next.length > 200 ? next.slice(next.length - 200) : next;
+      return next.length > 200 ? next.slice(-200) : next;
     });
   }
 

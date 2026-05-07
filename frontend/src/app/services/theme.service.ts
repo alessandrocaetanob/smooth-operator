@@ -15,7 +15,7 @@ export class ThemeService {
     this.apply(resolved);
 
     // Keep signal in sync when the OS preference changes (only if no saved override)
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+    globalThis.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
       if (!localStorage.getItem('theme')) {
         this.apply(e.matches ? 'dark' : 'light');
       }

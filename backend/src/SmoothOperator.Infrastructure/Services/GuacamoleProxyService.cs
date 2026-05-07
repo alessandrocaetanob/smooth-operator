@@ -23,6 +23,9 @@ namespace SmoothOperator.Infrastructure.Services
 {
     public class GuacamoleProxyService
     {
+        private const string ResourceTypeConnection = "Connection";
+        private const string TicketInvalidAction = "connection.ticket.invalid";
+
         private readonly ILogger<GuacamoleProxyService> _logger;
         private readonly string _guacdHost;
         private readonly int _guacdPort;
@@ -75,7 +78,7 @@ namespace SmoothOperator.Infrastructure.Services
                 Id = Guid.NewGuid(),
                 UserId = userId,
                 Action = "connection.ticket.issued",
-                ResourceType = "Connection",
+                ResourceType = ResourceTypeConnection,
                 ResourceId = connectionId.ToString(),
                 Details = "{}",
                 IpAddress = ipAddress ?? string.Empty
@@ -97,7 +100,7 @@ namespace SmoothOperator.Infrastructure.Services
             var raw = await db.StringGetDeleteAsync(key);
             if (raw.IsNullOrEmpty)
             {
-                await LogTicketEventAsync(null, connectionId, "connection.ticket.invalid", ipAddress, "missing_or_expired");
+                await LogTicketEventAsync(null, connectionId, TicketInvalidAction, ipAddress, "missing_or_expired");
                 return null;
             }
 
@@ -108,13 +111,13 @@ namespace SmoothOperator.Infrastructure.Services
             }
             catch
             {
-                await LogTicketEventAsync(null, connectionId, "connection.ticket.invalid", ipAddress, "deserialize_failed");
+                await LogTicketEventAsync(null, connectionId, TicketInvalidAction, ipAddress, "deserialize_failed");
                 return null;
             }
 
             if (payload == null || payload.ConnectionId != connectionId)
             {
-                await LogTicketEventAsync(payload?.UserId, connectionId, "connection.ticket.invalid", ipAddress, "connection_mismatch");
+                await LogTicketEventAsync(payload?.UserId, connectionId, TicketInvalidAction, ipAddress, "connection_mismatch");
                 return null;
             }
 
@@ -124,7 +127,7 @@ namespace SmoothOperator.Infrastructure.Services
                 && !string.IsNullOrEmpty(ipAddress)
                 && !string.Equals(payload.IpAddress, ipAddress, StringComparison.OrdinalIgnoreCase))
             {
-                await LogTicketEventAsync(payload.UserId, connectionId, "connection.ticket.invalid", ipAddress, "ip_mismatch");
+                await LogTicketEventAsync(payload.UserId, connectionId, TicketInvalidAction, ipAddress, "ip_mismatch");
                 return null;
             }
 
@@ -145,7 +148,7 @@ namespace SmoothOperator.Infrastructure.Services
                     Id = Guid.NewGuid(),
                     UserId = userId,
                     Action = action,
-                    ResourceType = "Connection",
+                    ResourceType = ResourceTypeConnection,
                     ResourceId = connectionId.ToString(),
                     Details = reason == null ? "{}" : $"{{\"reason\":\"{reason}\"}}",
                     IpAddress = ipAddress ?? string.Empty
@@ -174,42 +177,68 @@ namespace SmoothOperator.Infrastructure.Services
             using var scope = _scopeFactory.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-            var dbUser = await dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
-            if (dbUser == null || !dbUser.IsActive)
+            var dbUser = await LoadAuthorizedUserAsync(dbContext, userId);
+            if (dbUser == null)
             {
                 _logger.LogWarning("User {UserId} not found or inactive. Connection denied.", userId);
                 await webSocket.CloseAsync(WebSocketCloseStatus.PolicyViolation, "User not authorized", CancellationToken.None);
                 return;
             }
 
-            var connection = await dbContext.Connections
+            var connection = await LoadConnectionAsync(dbContext, connectionId);
+            if (connection == null || connection.Host == null)
+            {
+                await HandleMissingConnectionAsync(webSocket, dbContext, dbUser.Id, connectionId, ipAddress);
+                return;
+            }
+
+            var (targetHost, targetPort) = ResolveTargetEndpoint(connection);
+            if (!await ProbeWithTimeoutAsync(targetHost, targetPort, TimeSpan.FromSeconds(5)))
+            {
+                await HandleUnreachableHostAsync(webSocket, dbContext, dbUser.Id, connectionId, ipAddress, targetHost, targetPort);
+                return;
+            }
+
+            await RecordConnectionStartedAuditAsync(dbContext, dbUser.Id, connectionId, ipAddress, connection, sessionId);
+
+            var db = _redis.GetDatabase();
+            await RegisterSessionAsync(db, sessionId, dbUser.Id, connectionId);
+
+            await RunGuacamoleSessionAsync(webSocket, connection, sessionId, dbUser, ipAddress, dbContext, db);
+        }
+
+        private static Task<User?> LoadAuthorizedUserAsync(AppDbContext dbContext, Guid userId) =>
+            dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId && u.IsActive);
+
+        private static Task<Connection?> LoadConnectionAsync(AppDbContext dbContext, Guid connectionId) =>
+            dbContext.Connections
                 .Include(c => c.Host)
                 .Include(c => c.Credential).ThenInclude(cr => cr!.SecretProvider)
                 .Include(c => c.Users)
                 .FirstOrDefaultAsync(c => c.Id == connectionId);
 
-            if (connection == null || connection.Host == null)
+        private async Task HandleMissingConnectionAsync(
+            WebSocket webSocket, AppDbContext dbContext, Guid userId, Guid connectionId, string ipAddress)
+        {
+            _logger.LogWarning("Connection {ConnectionId} not found or has no host.", connectionId);
+
+            dbContext.AuditLogs.Add(new AuditLog
             {
-                _logger.LogWarning("Connection {ConnectionId} not found or has no host.", connectionId);
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                Action = "connection.failed",
+                ResourceType = ResourceTypeConnection,
+                ResourceId = connectionId.ToString(),
+                Details = "{\"reason\":\"connection_not_found\"}",
+                IpAddress = ipAddress
+            });
+            await dbContext.SaveChangesAsync();
 
-                dbContext.AuditLogs.Add(new AuditLog
-                {
-                    Id = Guid.NewGuid(),
-                    UserId = dbUser.Id,
-                    Action = "connection.failed",
-                    ResourceType = "Connection",
-                    ResourceId = connectionId.ToString(),
-                    Details = "{\"reason\":\"connection_not_found\"}",
-                    IpAddress = ipAddress
-                });
-                await dbContext.SaveChangesAsync();
+            await webSocket.CloseAsync(WebSocketCloseStatus.InvalidMessageType, "Connection not found", CancellationToken.None);
+        }
 
-                await webSocket.CloseAsync(WebSocketCloseStatus.InvalidMessageType, "Connection not found", CancellationToken.None);
-                return;
-            }
-
-            // Pre-flight: verify the target host is reachable before involving guacd.
-            // This prevents black-screen sessions when the remote VM is down.
+        private static (string host, int port) ResolveTargetEndpoint(Connection connection)
+        {
             var defaultPort = (connection.Protocol ?? "rdp").ToLowerInvariant() switch
             {
                 "ssh" => 22,
@@ -217,65 +246,86 @@ namespace SmoothOperator.Infrastructure.Services
                 "telnet" => 23,
                 _ => 3389
             };
-            var targetHost = connection.Host.Address;
+            var targetHost = connection.Host!.Address;
             var targetPort = int.TryParse(
                 ParseSettings(connection.Settings).GetValueOrDefault("port"),
                 out var parsedPort) ? parsedPort : defaultPort;
+            return (targetHost, targetPort);
+        }
 
-            using var probeCts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-            if (!await ProbeHostAsync(targetHost, targetPort, probeCts.Token))
-            {
-                var unreachableMsg = $"Host {targetHost}:{targetPort} is not reachable";
-                _logger.LogWarning("Pre-flight check failed for connection {ConnectionId}: {Message}", connectionId, unreachableMsg);
+        private static async Task<bool> ProbeWithTimeoutAsync(string host, int port, TimeSpan timeout)
+        {
+            using var probeCts = new CancellationTokenSource(timeout);
+            return await ProbeHostAsync(host, port, probeCts.Token);
+        }
 
-                dbContext.AuditLogs.Add(new AuditLog
-                {
-                    Id = Guid.NewGuid(),
-                    UserId = dbUser.Id,
-                    Action = "connection.host_unreachable",
-                    ResourceType = "Connection",
-                    ResourceId = connectionId.ToString(),
-                    Details = $"{{\"host\":{JsonSerializer.Serialize(targetHost)},\"port\":{targetPort}}}",
-                    IpAddress = ipAddress
-                });
-                await dbContext.SaveChangesAsync();
+        private async Task HandleUnreachableHostAsync(
+            WebSocket webSocket, AppDbContext dbContext, Guid userId, Guid connectionId, string ipAddress,
+            string targetHost, int targetPort)
+        {
+            var unreachableMsg = $"Host {targetHost}:{targetPort} is not reachable";
+            _logger.LogWarning("Pre-flight check failed for connection {ConnectionId}: {Message}", connectionId, unreachableMsg);
 
-                if (webSocket.State == WebSocketState.Open)
-                {
-                    await TrySendGuacErrorAsync(webSocket, unreachableMsg, GuacStatus.UpstreamNotFound);
-                    await webSocket.CloseAsync(WebSocketCloseStatus.InternalServerError, unreachableMsg[..Math.Min(unreachableMsg.Length, 120)], CancellationToken.None);
-                }
-                return;
-            }
-
-            // Audit log - connection started (after probe confirms host is reachable)
             dbContext.AuditLogs.Add(new AuditLog
             {
                 Id = Guid.NewGuid(),
-                UserId = dbUser.Id,
+                UserId = userId,
+                Action = "connection.host_unreachable",
+                ResourceType = ResourceTypeConnection,
+                ResourceId = connectionId.ToString(),
+                Details = $"{{\"host\":{JsonSerializer.Serialize(targetHost)},\"port\":{targetPort}}}",
+                IpAddress = ipAddress
+            });
+            await dbContext.SaveChangesAsync();
+
+            if (webSocket.State == WebSocketState.Open)
+            {
+                await TrySendGuacErrorAsync(webSocket, unreachableMsg, GuacStatus.UpstreamNotFound);
+                await webSocket.CloseAsync(WebSocketCloseStatus.InternalServerError, unreachableMsg[..Math.Min(unreachableMsg.Length, 120)], CancellationToken.None);
+            }
+        }
+
+        private static async Task RecordConnectionStartedAuditAsync(
+            AppDbContext dbContext, Guid userId, Guid connectionId, string ipAddress, Connection connection, string sessionId)
+        {
+            dbContext.AuditLogs.Add(new AuditLog
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
                 Action = "connection.started",
-                ResourceType = "Connection",
+                ResourceType = ResourceTypeConnection,
                 ResourceId = connectionId.ToString(),
                 Details = JsonSerializer.Serialize(new
                 {
-                    host = connection.Host.Name,
+                    host = connection.Host!.Name,
                     protocol = connection.Protocol,
                     sessionId = sessionId
                 }),
                 IpAddress = ipAddress
             });
             await dbContext.SaveChangesAsync();
+        }
 
-            // Register session in Redis
-            var db = _redis.GetDatabase();
+        private static async Task RegisterSessionAsync(IDatabase db, string sessionId, Guid userId, Guid connectionId)
+        {
             await db.HashSetAsync($"session:{sessionId}", new HashEntry[]
             {
-                new HashEntry("UserId", dbUser.Id.ToString()),
+                new HashEntry("UserId", userId.ToString()),
                 new HashEntry("ConnectionId", connectionId.ToString()),
                 new HashEntry("StartTime", DateTime.UtcNow.ToString("O"))
             });
             await db.KeyExpireAsync($"session:{sessionId}", TimeSpan.FromHours(24));
+        }
 
+        private async Task RunGuacamoleSessionAsync(
+            WebSocket webSocket,
+            Connection connection,
+            string sessionId,
+            User dbUser,
+            string ipAddress,
+            AppDbContext dbContext,
+            IDatabase db)
+        {
             using var tcpClient = new TcpClient();
             var connectionSuccessful = false;
             var sessionMetricRecorded = false;
@@ -286,122 +336,37 @@ namespace SmoothOperator.Infrastructure.Services
                 using var networkStream = tcpClient.GetStream();
                 var reader = new GuacInstructionReader(networkStream);
 
-                // Handshake: select <protocol>
-                string protocol = (connection.Protocol ?? "rdp").ToLowerInvariant();
-                await SendGuacMessage(networkStream, BuildGuacInstruction("select", protocol));
-
-                // guacd replies with `args` listing all parameter names that the
-                // protocol supports, in the order it expects them on `connect`.
-                var argsInstruction = await reader.ReadAsync(CancellationToken.None);
-                if (argsInstruction == null || argsInstruction.Count == 0 || argsInstruction[0] != "args")
-                {
-                    throw new InvalidOperationException(
-                        $"Unexpected guacd handshake reply: {(argsInstruction == null ? "<null>" : string.Join(",", argsInstruction))}");
-                }
-
-                // First element is "args". Per the Apache reference client
-                // (ConfiguredGuacamoleSocket.java), if the SECOND element looks
-                // like a protocol version token (e.g. "VERSION_1_5_0"), it is
-                // NOT skipped — it is treated as the first parameter name and
-                // the client must echo it back as the first connect VALUE so
-                // both sides agree on the protocol revision. Skipping it
-                // causes guacd to reject `connect` with "did not return the
-                // expected number of arguments" because guacd counts the
-                // version slot in its expected arg count.
-                var paramNames = argsInstruction.Skip(1).ToList();
-                var serverVersion = paramNames.Count > 0 && paramNames[0].StartsWith("VERSION_", StringComparison.Ordinal)
-                    ? paramNames[0]
-                    : "VERSION_1_0_0";
-                var paramValues = await ResolveConnectionParametersAsync(connection, paramNames, serverVersion, dbContext, CancellationToken.None, userId, ipAddress);
-
-                _logger.LogInformation(
-                    "guacd handshake for {Protocol}: server={ServerVersion}, sending {ValueCount} connect values for {NameCount} arg names",
-                    protocol, serverVersion, paramValues.Count, paramNames.Count);
-
-                // size / audio / video / image — sensible defaults; the client may
-                // also send a `size` instruction later to renegotiate.
-                await SendGuacMessage(networkStream, BuildGuacInstruction("size", "1024", "768", "96"));
-                await SendGuacMessage(networkStream, BuildGuacInstruction("audio", "audio/L16"));
-                await SendGuacMessage(networkStream, BuildGuacInstruction("video"));
-                await SendGuacMessage(networkStream, BuildGuacInstruction("image", "image/png", "image/jpeg"));
-                // 1.5+ added optional `timezone` and `name` handshake instructions.
-                if (string.Compare(serverVersion, "VERSION_1_1_0", StringComparison.Ordinal) >= 0)
-                {
-                    await SendGuacMessage(networkStream, BuildGuacInstruction("timezone", "UTC"));
-                    await SendGuacMessage(networkStream, BuildGuacInstruction("name", "smooth-operator"));
-                }
-
-                // connect — values must be in the exact order guacd asked for in `args`.
-                var connectArgs = new List<string> { "connect" };
-                connectArgs.AddRange(paramValues);
-                await SendGuacMessage(networkStream, BuildGuacInstruction(connectArgs.ToArray()));
+                await PerformGuacamoleHandshakeAsync(networkStream, reader, connection, dbContext, dbUser, ipAddress);
 
                 _metrics.RecordConnectionStarted();
                 sessionMetricRecorded = true;
                 connectionSuccessful = true;
 
-                // Bidirectional proxy with proper instruction framing on the guacd→ws side.
-                var receiveTask = ProxyGuacdToWebSocket(reader, webSocket, msg =>
+                await RunBidirectionalProxyAsync(reader, webSocket, networkStream, connection.Id, msg =>
                 {
                     failureReason ??= msg;
-                    _logger.LogWarning("guacd reported error for connection {ConnectionId}: {Error}", connectionId, msg);
+                    _logger.LogWarning("guacd reported error for connection {ConnectionId}: {Error}", connection.Id, msg);
                 });
-                var sendTask = ProxyWebSocketToGuacd(webSocket, networkStream);
-
-                await Task.WhenAny(receiveTask, sendTask);
             }
             catch (SocketException ex)
             {
                 failureReason = $"Cannot reach Guacamole service ({_guacdHost}:{_guacdPort}): {ex.Message}";
-                _logger.LogError(ex, "Network error connecting to guacd for connection {ConnectionId}", connectionId);
-
-                dbContext.AuditLogs.Add(new AuditLog
-                {
-                    Id = Guid.NewGuid(),
-                    UserId = dbUser.Id,
-                    Action = "connection.error",
-                    ResourceType = "Connection",
-                    ResourceId = connectionId.ToString(),
-                    Details = $"{{\"error\":\"network_error\",\"message\":{JsonSerializer.Serialize(ex.Message)}}}",
-                    IpAddress = ipAddress
-                });
-                await dbContext.SaveChangesAsync();
+                _logger.LogError(ex, "Network error connecting to guacd for connection {ConnectionId}", connection.Id);
+                await LogConnectionErrorAsync(dbContext, dbUser.Id, connection.Id, ipAddress, "network_error", ex.Message);
             }
             catch (Exception ex)
             {
                 failureReason = $"Session error: {ex.Message}";
-                _logger.LogError(ex, "Error during Guacamole session for connection {ConnectionId}", connectionId);
-
-                dbContext.AuditLogs.Add(new AuditLog
-                {
-                    Id = Guid.NewGuid(),
-                    UserId = dbUser.Id,
-                    Action = "connection.error",
-                    ResourceType = "Connection",
-                    ResourceId = connectionId.ToString(),
-                    Details = $"{{\"error\":\"session_error\",\"message\":{JsonSerializer.Serialize(ex.Message)}}}",
-                    IpAddress = ipAddress
-                });
-                await dbContext.SaveChangesAsync();
+                _logger.LogError(ex, "Error during Guacamole session for connection {ConnectionId}", connection.Id);
+                await LogConnectionErrorAsync(dbContext, dbUser.Id, connection.Id, ipAddress, "session_error", ex.Message);
             }
             finally
             {
-                var endTime = DateTime.UtcNow;
                 await db.KeyDeleteAsync($"session:{sessionId}");
 
                 if (connectionSuccessful)
                 {
-                    dbContext.AuditLogs.Add(new AuditLog
-                    {
-                        Id = Guid.NewGuid(),
-                        UserId = dbUser.Id,
-                        Action = "connection.ended",
-                        ResourceType = "Connection",
-                        ResourceId = connectionId.ToString(),
-                        Details = $"{{\"sessionId\":\"{sessionId}\",\"endTime\":\"{endTime:O}\"}}",
-                        IpAddress = ipAddress
-                    });
-                    await dbContext.SaveChangesAsync();
+                    await LogConnectionEndedAsync(dbContext, dbUser.Id, connection.Id, ipAddress, sessionId);
                 }
 
                 if (sessionMetricRecorded)
@@ -409,27 +374,140 @@ namespace SmoothOperator.Infrastructure.Services
                     _metrics.RecordConnectionEnded();
                 }
 
-                // Surface the cause to the Guacamole client. Sending a Guacamole
-                // `error` instruction before the WS close lets the browser-side
-                // Guacamole.Client fire `client.onerror` with a real message
-                // instead of the user seeing a generic "Tunnel error: Closed".
-                if (failureReason != null && webSocket.State == WebSocketState.Open)
-                {
-                    await TrySendGuacErrorAsync(webSocket, failureReason, GuacStatus.UpstreamError);
-                }
-
-                if (webSocket.State == WebSocketState.Open)
-                {
-                    var status = failureReason != null
-                        ? WebSocketCloseStatus.InternalServerError
-                        : WebSocketCloseStatus.NormalClosure;
-                    var reason = failureReason ?? "Session ended";
-                    // WebSocket close reason has a 123-byte cap.
-                    if (reason.Length > 120) reason = reason.Substring(0, 120);
-                    await webSocket.CloseAsync(status, reason, CancellationToken.None);
-                }
+                await CloseGuacSessionAsync(webSocket, failureReason);
                 tcpClient.Close();
             }
+        }
+
+        private async Task PerformGuacamoleHandshakeAsync(
+            NetworkStream networkStream,
+            GuacInstructionReader reader,
+            Connection connection,
+            AppDbContext dbContext,
+            User dbUser,
+            string ipAddress)
+        {
+            string protocol = (connection.Protocol ?? "rdp").ToLowerInvariant();
+            await SendGuacMessage(networkStream, BuildGuacInstruction("select", protocol));
+
+            var (paramNames, serverVersion) = await ReadHandshakeArgsAsync(reader);
+
+            var paramValues = await ResolveConnectionParametersAsync(
+                connection, paramNames, serverVersion, dbContext, CancellationToken.None, dbUser.Id, ipAddress);
+
+            _logger.LogInformation(
+                "guacd handshake for {Protocol}: server={ServerVersion}, sending {ValueCount} connect values for {NameCount} arg names",
+                protocol, serverVersion, paramValues.Count, paramNames.Count);
+
+            await SendHandshakeDefaultsAsync(networkStream, serverVersion);
+
+            // connect — values must be in the exact order guacd asked for in `args`.
+            var connectArgs = new List<string> { "connect" };
+            connectArgs.AddRange(paramValues);
+            await SendGuacMessage(networkStream, BuildGuacInstruction(connectArgs.ToArray()));
+        }
+
+        private static async Task<(List<string> paramNames, string serverVersion)> ReadHandshakeArgsAsync(GuacInstructionReader reader)
+        {
+            // guacd replies with `args` listing all parameter names that the
+            // protocol supports, in the order it expects them on `connect`.
+            var argsInstruction = await reader.ReadAsync(CancellationToken.None);
+            if (argsInstruction == null || argsInstruction.Count == 0 || argsInstruction[0] != "args")
+            {
+                throw new InvalidOperationException(
+                    $"Unexpected guacd handshake reply: {(argsInstruction == null ? "<null>" : string.Join(",", argsInstruction))}");
+            }
+
+            // First element is "args". Per the Apache reference client
+            // (ConfiguredGuacamoleSocket.java), if the SECOND element looks
+            // like a protocol version token (e.g. "VERSION_1_5_0"), it is
+            // NOT skipped — it is treated as the first parameter name and
+            // the client must echo it back as the first connect VALUE so
+            // both sides agree on the protocol revision.
+            var paramNames = argsInstruction.Skip(1).ToList();
+            var serverVersion = paramNames.Count > 0 && paramNames[0].StartsWith("VERSION_", StringComparison.Ordinal)
+                ? paramNames[0]
+                : "VERSION_1_0_0";
+            return (paramNames, serverVersion);
+        }
+
+        private static async Task SendHandshakeDefaultsAsync(NetworkStream networkStream, string serverVersion)
+        {
+            // size / audio / video / image — sensible defaults; the client may
+            // also send a `size` instruction later to renegotiate.
+            await SendGuacMessage(networkStream, BuildGuacInstruction("size", "1024", "768", "96"));
+            await SendGuacMessage(networkStream, BuildGuacInstruction("audio", "audio/L16"));
+            await SendGuacMessage(networkStream, BuildGuacInstruction("video"));
+            await SendGuacMessage(networkStream, BuildGuacInstruction("image", "image/png", "image/jpeg"));
+            // 1.5+ added optional `timezone` and `name` handshake instructions.
+            if (string.Compare(serverVersion, "VERSION_1_1_0", StringComparison.Ordinal) >= 0)
+            {
+                await SendGuacMessage(networkStream, BuildGuacInstruction("timezone", "UTC"));
+                await SendGuacMessage(networkStream, BuildGuacInstruction("name", "smooth-operator"));
+            }
+        }
+
+        private static async Task RunBidirectionalProxyAsync(
+            GuacInstructionReader reader,
+            WebSocket webSocket,
+            NetworkStream networkStream,
+            Guid connectionId,
+            Action<string> onGuacError)
+        {
+            // Bidirectional proxy with proper instruction framing on the guacd→ws side.
+            _ = connectionId; // reserved for future telemetry tagging
+            var receiveTask = ProxyGuacdToWebSocket(reader, webSocket, onGuacError);
+            var sendTask = ProxyWebSocketToGuacd(webSocket, networkStream);
+            await Task.WhenAny(receiveTask, sendTask);
+        }
+
+        private static async Task LogConnectionErrorAsync(
+            AppDbContext dbContext, Guid userId, Guid connectionId, string ipAddress, string errorType, string message)
+        {
+            dbContext.AuditLogs.Add(new AuditLog
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                Action = "connection.error",
+                ResourceType = ResourceTypeConnection,
+                ResourceId = connectionId.ToString(),
+                Details = $"{{\"error\":\"{errorType}\",\"message\":{JsonSerializer.Serialize(message)}}}",
+                IpAddress = ipAddress
+            });
+            await dbContext.SaveChangesAsync();
+        }
+
+        private static async Task LogConnectionEndedAsync(
+            AppDbContext dbContext, Guid userId, Guid connectionId, string ipAddress, string sessionId)
+        {
+            var endTime = DateTime.UtcNow;
+            dbContext.AuditLogs.Add(new AuditLog
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                Action = "connection.ended",
+                ResourceType = ResourceTypeConnection,
+                ResourceId = connectionId.ToString(),
+                Details = $"{{\"sessionId\":\"{sessionId}\",\"endTime\":\"{endTime:O}\"}}",
+                IpAddress = ipAddress
+            });
+            await dbContext.SaveChangesAsync();
+        }
+
+        private async Task CloseGuacSessionAsync(WebSocket webSocket, string? failureReason)
+        {
+            if (failureReason != null && webSocket.State == WebSocketState.Open)
+                await TrySendGuacErrorAsync(webSocket, failureReason, GuacStatus.UpstreamError);
+
+            if (webSocket.State != WebSocketState.Open) return;
+
+            var status = failureReason != null
+                ? WebSocketCloseStatus.InternalServerError
+                : WebSocketCloseStatus.NormalClosure;
+            var reason = failureReason ?? "Session ended";
+            // WebSocket close reason has a 123-byte cap.
+            if (reason.Length > 120) reason = reason.Substring(0, 120);
+            await webSocket.CloseAsync(status, reason, CancellationToken.None);
         }
 
         // Guacamole protocol error codes (subset). See:
@@ -501,100 +579,9 @@ namespace SmoothOperator.Infrastructure.Services
             var username = connection.Credential?.Username ?? string.Empty;
             var credentialType = (connection.Credential?.CredentialType ?? "password").ToLowerInvariant();
             var isKeyAuth = credentialType is "private_key" or "ssh_key" or "key";
-            var decryptedSecret = string.Empty;
-
-            if (connection.Credential != null)
-            {
-                var cred = connection.Credential;
-                if (cred.StorageMode == Domain.Models.SecretStorageMode.External
-                    && cred.SecretProvider != null
-                    && !string.IsNullOrEmpty(cred.ExternalSecretName))
-                {
-                    try
-                    {
-                        var secretProvider = _secretProviderFactory.Create(cred.SecretProvider);
-                        decryptedSecret = await secretProvider.GetSecretAsync(
-                            cred.ExternalSecretName, cred.ExternalSecretVersion, cancellationToken);
-
-                        dbContext.AuditLogs.Add(new AuditLog
-                        {
-                            Id = Guid.NewGuid(),
-                            UserId = userId,
-                            IpAddress = ipAddress,
-                            Action = "secret.fetched",
-                            ResourceType = "Credential",
-                            ResourceId = cred.Id.ToString(),
-                            Details = System.Text.Json.JsonSerializer.Serialize(new
-                            {
-                                credentialId = cred.Id,
-                                providerId = cred.SecretProviderId,
-                                secretName = cred.ExternalSecretName,
-                                success = true
-                            })
-                        });
-                        await dbContext.SaveChangesAsync(cancellationToken);
-                    }
-                    catch (SecretProviderException ex)
-                    {
-                        _logger.LogError(ex, "Secret provider error for credential {CredentialId}: [{ErrorCode}] {Message}", cred.Id, ex.ErrorCode, ex.Message);
-                        dbContext.AuditLogs.Add(new AuditLog
-                        {
-                            Id = Guid.NewGuid(),
-                            UserId = userId,
-                            IpAddress = ipAddress,
-                            Action = "secret.fetched",
-                            ResourceType = "Credential",
-                            ResourceId = cred.Id.ToString(),
-                            Outcome = "failure",
-                            Details = System.Text.Json.JsonSerializer.Serialize(new
-                            {
-                                credentialId = cred.Id,
-                                providerId = cred.SecretProviderId,
-                                secretName = cred.ExternalSecretName,
-                                success = false,
-                                error = ex.ErrorCode
-                            })
-                        });
-                        await dbContext.SaveChangesAsync(cancellationToken);
-                        throw new InvalidOperationException(ex.Message, ex);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, "Failed to fetch secret from vault for credential {CredentialId}", cred.Id);
-                        dbContext.AuditLogs.Add(new AuditLog
-                        {
-                            Id = Guid.NewGuid(),
-                            UserId = userId,
-                            IpAddress = ipAddress,
-                            Action = "secret.fetched",
-                            ResourceType = "Credential",
-                            ResourceId = cred.Id.ToString(),
-                            Outcome = "failure",
-                            Details = System.Text.Json.JsonSerializer.Serialize(new
-                            {
-                                credentialId = cred.Id,
-                                providerId = cred.SecretProviderId,
-                                secretName = cred.ExternalSecretName,
-                                success = false,
-                                error = "vault_unreachable"
-                            })
-                        });
-                        await dbContext.SaveChangesAsync(cancellationToken);
-                        throw new InvalidOperationException("Vault unreachable — cannot retrieve credential. Check secret provider configuration.", ex);
-                    }
-                }
-                else if (!string.IsNullOrEmpty(cred.EncryptedSecret))
-                {
-                    try
-                    {
-                        decryptedSecret = _encryptionService.Decrypt(cred.EncryptedSecret);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogWarning(ex, "Failed to decrypt credential for connection {ConnectionId}", connection.Id);
-                    }
-                }
-            }
+            var decryptedSecret = connection.Credential != null
+                ? await ResolveDecryptedSecretAsync(connection.Credential, dbContext, userId, ipAddress, cancellationToken)
+                : string.Empty;
 
             // For key auth the decrypted secret is the PEM private key, not a password.
             var password = isKeyAuth ? string.Empty : decryptedSecret;
@@ -604,27 +591,7 @@ namespace SmoothOperator.Infrastructure.Services
             // "passphrase":"..."}). `passphrase` falls through to the override path below.
             Dictionary<string, string> overrides = ParseSettings(connection.Settings);
 
-            string ResolveValue(string name)
-            {
-                if (overrides.TryGetValue(name, out var v)) return v ?? string.Empty;
-                return name switch
-                {
-                    "hostname" => hostname,
-                    "port" => defaultPort,
-                    "username" => username,
-                    "password" => password,
-                    // SSH key auth — guacd's SSH plugin reads the PEM body from
-                    // `private-key` and an optional `passphrase`. When the
-                    // credential is key-based we route the decrypted secret here
-                    // and leave `password` empty so guacd doesn't fall back to
-                    // password/keyboard-interactive auth.
-                    "private-key" => privateKey,
-                    "ignore-cert" => protocol == "rdp" ? "true" : string.Empty,
-                    "security" => protocol == "rdp" ? "any" : string.Empty,
-                    "resize-method" => protocol == "rdp" ? "display-update" : string.Empty,
-                    _ => string.Empty
-                };
-            }
+            var ctx = new GuacConnectionContext(overrides, hostname, defaultPort, username, password, privateKey, protocol);
 
             var values = new List<string>(paramNames.Count);
             foreach (var name in paramNames)
@@ -637,9 +604,31 @@ namespace SmoothOperator.Infrastructure.Services
                     values.Add(serverVersion);
                     continue;
                 }
-                values.Add(ResolveValue(name) ?? string.Empty);
+                values.Add(ResolveConnectionParameter(name, ctx));
             }
             return values;
+        }
+
+        private static string ResolveConnectionParameter(string name, GuacConnectionContext ctx)
+        {
+            if (ctx.Overrides.TryGetValue(name, out var v)) return v ?? string.Empty;
+            return name switch
+            {
+                "hostname" => ctx.Hostname,
+                "port" => ctx.DefaultPort,
+                "username" => ctx.Username,
+                "password" => ctx.Password,
+                // SSH key auth — guacd's SSH plugin reads the PEM body from
+                // `private-key` and an optional `passphrase`. When the
+                // credential is key-based we route the decrypted secret here
+                // and leave `password` empty so guacd doesn't fall back to
+                // password/keyboard-interactive auth.
+                "private-key" => ctx.PrivateKey,
+                "ignore-cert" => ctx.Protocol == "rdp" ? "true" : string.Empty,
+                "security" => ctx.Protocol == "rdp" ? "any" : string.Empty,
+                "resize-method" => ctx.Protocol == "rdp" ? "display-update" : string.Empty,
+                _ => string.Empty
+            };
         }
 
         private static Dictionary<string, string> ParseSettings(string? settingsJson)
@@ -829,16 +818,7 @@ namespace SmoothOperator.Infrastructure.Services
                 // Inspect for guacd `error` instruction so we can surface it
                 // as the WS close reason if the session ends right after.
                 // Format: `5.error,LEN.MESSAGE,LEN.CODE;`
-                if (raw.Length > 7 && raw.StartsWith("5.error,", StringComparison.Ordinal))
-                {
-                    var parsed = ParseInstruction(raw);
-                    if (parsed != null && parsed.Count >= 2)
-                    {
-                        var msg = parsed[1];
-                        var code = parsed.Count >= 3 ? parsed[2] : "?";
-                        onGuacError($"guacd: {msg} (code {code})");
-                    }
-                }
+                TryReportGuacError(raw, onGuacError);
 
                 var bytes = Encoding.UTF8.GetBytes(raw);
                 await webSocket.SendAsync(
@@ -891,6 +871,138 @@ namespace SmoothOperator.Infrastructure.Services
                 if (payload.Length == 0) continue;
                 await guacdStream.WriteAsync(payload, 0, payload.Length);
                 await guacdStream.FlushAsync();
+            }
+        }
+
+        private sealed record GuacConnectionContext(
+            Dictionary<string, string> Overrides,
+            string Hostname,
+            string DefaultPort,
+            string Username,
+            string Password,
+            string PrivateKey,
+            string Protocol);
+
+        private async Task<string> ResolveDecryptedSecretAsync(
+            Credential cred,
+            AppDbContext dbContext,
+            Guid userId,
+            string ipAddress,
+            CancellationToken cancellationToken)
+        {
+            if (UsesExternalSecretProvider(cred))
+            {
+                return await FetchExternalSecretAsync(cred, dbContext, userId, ipAddress, cancellationToken);
+            }
+
+            if (!string.IsNullOrEmpty(cred.EncryptedSecret))
+            {
+                return TryDecryptLocalSecret(cred.EncryptedSecret);
+            }
+
+            return string.Empty;
+        }
+
+        private static bool UsesExternalSecretProvider(Credential cred) =>
+            cred.StorageMode == Domain.Models.SecretStorageMode.External
+            && cred.SecretProvider != null
+            && !string.IsNullOrEmpty(cred.ExternalSecretName);
+
+        private async Task<string> FetchExternalSecretAsync(
+            Credential cred,
+            AppDbContext dbContext,
+            Guid userId,
+            string ipAddress,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                var secretProvider = _secretProviderFactory.Create(cred.SecretProvider!);
+                var secret = await secretProvider.GetSecretAsync(
+                    cred.ExternalSecretName!, cred.ExternalSecretVersion, cancellationToken);
+
+                await WriteSecretAuditAsync(dbContext, cred, userId, ipAddress, success: true, errorCode: null, cancellationToken);
+                return secret;
+            }
+            catch (SecretProviderException ex)
+            {
+                _logger.LogError(ex, "Secret provider error for credential {CredentialId}: [{ErrorCode}] {Message}", cred.Id, ex.ErrorCode, ex.Message);
+                await WriteSecretAuditAsync(dbContext, cred, userId, ipAddress, success: false, errorCode: ex.ErrorCode, cancellationToken);
+                throw new InvalidOperationException(ex.Message, ex);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to fetch secret from vault for credential {CredentialId}", cred.Id);
+                await WriteSecretAuditAsync(dbContext, cred, userId, ipAddress, success: false, errorCode: "vault_unreachable", cancellationToken);
+                throw new InvalidOperationException("Vault unreachable — cannot retrieve credential. Check secret provider configuration.", ex);
+            }
+        }
+
+        private string TryDecryptLocalSecret(string encryptedSecret)
+        {
+            try
+            {
+                return _encryptionService.Decrypt(encryptedSecret);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to decrypt credential for connection");
+                return string.Empty;
+            }
+        }
+
+        private static async Task WriteSecretAuditAsync(
+            AppDbContext dbContext,
+            Credential cred,
+            Guid userId,
+            string ipAddress,
+            bool success,
+            string? errorCode,
+            CancellationToken cancellationToken)
+        {
+            var details = success
+                ? JsonSerializer.Serialize(new
+                {
+                    credentialId = cred.Id,
+                    providerId = cred.SecretProviderId,
+                    secretName = cred.ExternalSecretName,
+                    success = true
+                })
+                : JsonSerializer.Serialize(new
+                {
+                    credentialId = cred.Id,
+                    providerId = cred.SecretProviderId,
+                    secretName = cred.ExternalSecretName,
+                    success = false,
+                    error = errorCode
+                });
+
+            var log = new AuditLog
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                IpAddress = ipAddress,
+                Action = "secret.fetched",
+                ResourceType = "Credential",
+                ResourceId = cred.Id.ToString(),
+                Details = details
+            };
+            if (!success) log.Outcome = "failure";
+
+            dbContext.AuditLogs.Add(log);
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+
+        private static void TryReportGuacError(string raw, Action<string> onGuacError)
+        {
+            if (raw.Length <= 7 || !raw.StartsWith("5.error,", StringComparison.Ordinal))
+                return;
+            var parsed = ParseInstruction(raw);
+            if (parsed != null && parsed.Count >= 2)
+            {
+                var msg = parsed[1];
+                var code = parsed.Count >= 3 ? parsed[2] : "?";
+                onGuacError($"guacd: {msg} (code {code})");
             }
         }
     }

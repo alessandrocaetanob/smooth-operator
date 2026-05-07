@@ -30,7 +30,7 @@ export class Integrations {
   readonly copiedKey = signal<string | null>(null);
 
   readonly prometheusEndpoints: Endpoint[] = [
-    { label: 'Metrics scrape endpoint', value: 'http://<your-host>:5000/metrics' },
+    { label: 'Metrics scrape endpoint', value: 'https://<your-host>:5000/metrics' },
   ];
 
   readonly prometheusConfig: CodeBlock = {
@@ -55,8 +55,8 @@ scrape_configs:
   ];
 
   readonly otlpEndpoints: Endpoint[] = [
-    { label: 'OTLP gRPC endpoint', value: 'http://<your-host>:4317' },
-    { label: 'Tempo HTTP query endpoint', value: 'http://<your-host>:3200' },
+    { label: 'OTLP gRPC endpoint', value: 'https://<your-host>:4317' },
+    { label: 'Tempo HTTP query endpoint', value: 'https://<your-host>:3200' },
   ];
 
   readonly otlpConfig: CodeBlock = {
@@ -81,8 +81,8 @@ service:
   };
 
   readonly lokiEndpoints: Endpoint[] = [
-    { label: 'Loki push endpoint', value: 'http://<your-host>:3100' },
-    { label: 'Loki query API', value: 'http://<your-host>:3100/loki/api/v1/query_range' },
+    { label: 'Loki push endpoint', value: 'https://<your-host>:3100' },
+    { label: 'Loki query API', value: 'https://<your-host>:3100/loki/api/v1/query_range' },
   ];
 
   readonly lokiQueries: CodeBlock[] = [

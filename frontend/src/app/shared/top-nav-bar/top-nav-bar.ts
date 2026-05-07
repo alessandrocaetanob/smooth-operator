@@ -73,6 +73,14 @@ export class TopNavBar implements OnInit {
 
   menuOpen = false;
 
+  private readonly idleEvents: (keyof DocumentEventMap)[] = [
+    'pointermove',
+    'pointerdown',
+    'keydown',
+  ];
+  private readonly boundCheckScroll = (): void => this.handleScroll();
+  private readonly boundResetIdle = (): void => this.resetIdleTimer();
+
   onSearchInput(event: Event): void {
     const input = event.target as HTMLInputElement;
     this.searchTerm.set(input.value);
@@ -85,41 +93,37 @@ export class TopNavBar implements OnInit {
   }
 
   ngOnInit(): void {
-    this.zone.runOutsideAngular(() => {
-      const checkScroll = () => {
-        const s = window.scrollY > 4;
-        if (s !== this.scrolled()) {
-          this.zone.run(() => this.scrolled.set(s));
-        }
-      };
-      document.addEventListener('scroll', checkScroll, { passive: true });
-      checkScroll();
-
-      const reset = () => {
-        if (this.idleTimer) clearTimeout(this.idleTimer);
-        if (this._idleState() === 'sleep') {
-          this.zone.run(() => this._idleState.set('idle'));
-        }
-        this.idleTimer = setTimeout(() => {
-          this.zone.run(() => this._idleState.set('sleep'));
-        }, IDLE_TIMEOUT_MS);
-      };
-
-      const events: (keyof DocumentEventMap)[] = ['pointermove', 'pointerdown', 'keydown'];
-      events.forEach((evt) => document.addEventListener(evt, reset, { passive: true }));
-      reset();
-
-      this.destroyRef.onDestroy(() => {
-        if (this.idleTimer) clearTimeout(this.idleTimer);
-        if (this.healthTimer) clearInterval(this.healthTimer);
-        document.removeEventListener('scroll', checkScroll);
-        events.forEach((evt) => document.removeEventListener(evt, reset));
-      });
-    });
+    this.zone.runOutsideAngular(() => this.setupListenersOutsideZone());
 
     // Poll backend /health every 30s to drive the System Status pill.
     this.checkHealth();
     this.healthTimer = setInterval(() => this.checkHealth(), HEALTH_POLL_MS);
+  }
+
+  private setupListenersOutsideZone(): void {
+    document.addEventListener('scroll', this.boundCheckScroll, { passive: true });
+    this.handleScroll();
+
+    this.idleEvents.forEach((evt) =>
+      document.addEventListener(evt, this.boundResetIdle, { passive: true }),
+    );
+    this.resetIdleTimer();
+
+    this.destroyRef.onDestroy(() => this.cleanupListeners());
+  }
+
+  private handleScroll(): void {
+    const s = window.scrollY > 4;
+    if (s !== this.scrolled()) {
+      this.zone.run(() => this.scrolled.set(s));
+    }
+  }
+
+  private cleanupListeners(): void {
+    if (this.idleTimer) clearTimeout(this.idleTimer);
+    if (this.healthTimer) clearInterval(this.healthTimer);
+    document.removeEventListener('scroll', this.boundCheckScroll);
+    this.idleEvents.forEach((evt) => document.removeEventListener(evt, this.boundResetIdle));
   }
 
   private checkHealth(): void {
@@ -127,6 +131,16 @@ export class TopNavBar implements OnInit {
       next: () => this.health.set('healthy'),
       error: () => this.health.set('down'),
     });
+  }
+
+  private resetIdleTimer(): void {
+    if (this.idleTimer) clearTimeout(this.idleTimer);
+    if (this._idleState() === 'sleep') {
+      this.zone.run(() => this._idleState.set('idle'));
+    }
+    this.idleTimer = setTimeout(() => {
+      this.zone.run(() => this._idleState.set('sleep'));
+    }, IDLE_TIMEOUT_MS);
   }
 
   toggleTheme(): void {

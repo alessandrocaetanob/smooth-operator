@@ -131,18 +131,18 @@
   @if (membersModalGroup(); as group) {
     <div
       class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+      tabindex="-1"
       (click)="closeMembers()"
       (keydown.enter)="closeMembers()"
-      tabindex="0"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Group members"
+      (keydown.escape)="closeMembers()"
     >
-      <div
+      <dialog
+        open
+        tabindex="-1"
         class="w-full max-w-lg glass-panel rounded-lg p-5"
         (click)="$event.stopPropagation()"
         (keydown.enter)="$event.stopPropagation()"
-        tabindex="-1"
+        aria-label="Group members"
       >
         <h3 class="text-sm font-semibold text-on-surface uppercase tracking-widest">
           Members — {{ group.name }}
@@ -187,7 +187,7 @@
             {{ membersBusy() ? 'Saving…' : 'Save members' }}
           </button>
         </div>
-      </div>
+      </dialog>
     </div>
   }
 </div>

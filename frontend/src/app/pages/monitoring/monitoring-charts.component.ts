@@ -80,12 +80,13 @@ const GRID_COLOR = 'rgba(156, 163, 175, 0.1)';
 export class MonitoringChartsComponent implements AfterViewInit, OnDestroy {
   readonly data = input<MonitoringChartData | null>(null);
 
-  @ViewChild('connectionsChart') private connectionsChartRef?: ElementRef<HTMLCanvasElement>;
-  @ViewChild('loginChart') private loginChartRef?: ElementRef<HTMLCanvasElement>;
-  @ViewChild('breakdownChart') private breakdownChartRef?: ElementRef<HTMLCanvasElement>;
-  @ViewChild('topEventsChart') private topEventsChartRef?: ElementRef<HTMLCanvasElement>;
+  @ViewChild('connectionsChart')
+  private readonly connectionsChartRef?: ElementRef<HTMLCanvasElement>;
+  @ViewChild('loginChart') private readonly loginChartRef?: ElementRef<HTMLCanvasElement>;
+  @ViewChild('breakdownChart') private readonly breakdownChartRef?: ElementRef<HTMLCanvasElement>;
+  @ViewChild('topEventsChart') private readonly topEventsChartRef?: ElementRef<HTMLCanvasElement>;
   @ViewChild('eventTimeseriesChart')
-  private eventTimeseriesChartRef?: ElementRef<HTMLCanvasElement>;
+  private readonly eventTimeseriesChartRef?: ElementRef<HTMLCanvasElement>;
 
   private readonly injector = inject(Injector);
   private charts: Record<string, Chart> = {};
@@ -201,13 +202,13 @@ export class MonitoringChartsComponent implements AfterViewInit, OnDestroy {
 
     const existing = this.charts[id];
     if (existing) {
-      if (existing.canvas !== el) {
-        existing.destroy();
-        delete this.charts[id];
-      } else {
+      if (existing.canvas === el) {
         updater(existing);
         existing.update();
         return;
+      } else {
+        existing.destroy();
+        delete this.charts[id];
       }
     }
 

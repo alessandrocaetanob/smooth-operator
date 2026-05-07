@@ -106,6 +106,8 @@ namespace SmoothOperator.Application.Features.Credentials.Commands
         }
 
         private static string Sanitize(string name) =>
-            System.Text.RegularExpressions.Regex.Replace(name.ToLowerInvariant(), @"[^a-z0-9\-]", "-");
+            System.Text.RegularExpressions.Regex.Replace(
+                name.ToLowerInvariant(), @"[^a-z0-9\-]", "-",
+                System.Text.RegularExpressions.RegexOptions.None, TimeSpan.FromSeconds(1));
     }
 }

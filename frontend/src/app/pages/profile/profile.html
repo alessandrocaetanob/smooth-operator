@@ -21,13 +21,12 @@
     </div>
   }
   @if (success(); as s) {
-    <div
-      class="mb-4 rounded-lg border border-primary/40 bg-primary-container/30 text-primary px-4 py-3 text-sm flex items-start gap-2"
-      role="status"
+    <output
+      class="block mb-4 rounded-lg border border-primary/40 bg-primary-container/30 text-primary px-4 py-3 text-sm flex items-start gap-2"
     >
       <span class="material-symbols-outlined" aria-hidden="true">check_circle</span>
       <span>{{ s }}</span>
-    </div>
+    </output>
   }
 
   <section class="glass-panel rounded-2xl border border-outline-variant/40 p-6 md:p-8">
