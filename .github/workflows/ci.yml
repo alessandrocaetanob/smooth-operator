@@ -149,14 +149,14 @@ jobs:
 
       - name: Run tests with coverage
         working-directory: frontend
-        run: npx @angular/cli@21.2.8 ng test --coverage
+        run: npm test -- --coverage --watch=false
 
       - name: Upload coverage to Codecov
         if: always() && github.actor != 'dependabot[bot]'
         uses: codecov/codecov-action@75cd11691c0faa626561e295848008c8a7dddffe # v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: frontend/coverage/lcov.info
+          files: frontend/coverage/frontend/clover.xml
           flags: frontend
           fail_ci_if_error: true
 

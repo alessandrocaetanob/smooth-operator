@@ -206,16 +206,18 @@
 
   <!-- Detail slide-over -->
   @if (selectedEntry()) {
-    <div
-      class="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
+    <button
+      type="button"
+      class="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 cursor-default"
       (click)="closeDetail()"
-      aria-hidden="true"
-    ></div>
+      aria-label="Close detail panel"
+    ></button>
     <dialog
       open
       tabindex="-1"
       class="detail-panel"
       aria-labelledby="detail-panel-title"
+      tabindex="-1"
       (keydown.escape)="closeDetail()"
     >
       <!-- Panel header -->
