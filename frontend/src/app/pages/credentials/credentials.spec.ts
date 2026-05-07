@@ -116,5 +116,29 @@ describe('Credentials', () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((component as any).validateSaveForm()).toBe(true);
     });
+
+    it('accepts push-to-vault update without secret when id exists', () => {
+      component.form.update((f) => ({
+        ...f,
+        ...baseExternal,
+        id: 'cred-1',
+        pushToVault: true,
+        secret: '',
+      }));
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      expect((component as any).validateSaveForm()).toBe(true);
+    });
+
+    it('accepts valid external link-mode with explicit version', () => {
+      component.form.update((f) => ({
+        ...f,
+        ...baseExternal,
+        pushToVault: false,
+        externalSecretName: 'my-secret',
+        externalSecretVersion: 'v2',
+      }));
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      expect((component as any).validateSaveForm()).toBe(true);
+    });
   });
 });
