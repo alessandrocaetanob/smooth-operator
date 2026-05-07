@@ -13,6 +13,8 @@ using StackExchange.Redis;
 using Xunit;
 using System.Text;
 using System.Text.Json;
+using System.Net;
+using System.Net.Sockets;
 using SmoothOperator.Application.Exceptions;
 
 namespace SmoothOperator.Api.Tests.Services;
@@ -263,6 +265,78 @@ public class GuacamoleProxyServiceTests
         Assert.NotNull(log);
     }
 
+    [Fact]
+    public async Task HandleWebSocketAsync_WhenGuacdConnectionFails_DoesNotRecordSessionMetrics_AndCleansSession()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+        var connectionId = Guid.NewGuid();
+        var hostId = Guid.NewGuid();
+        var ip = "127.0.0.1";
+
+        // Reachable target endpoint so pre-flight probe succeeds.
+        using var reachableListener = new TcpListener(IPAddress.Loopback, 0);
+        reachableListener.Start();
+        var reachablePort = ((IPEndPoint)reachableListener.LocalEndpoint).Port;
+
+        // Pick an unused guacd port and release it to force connect failure inside session run.
+        var guacdPortSelector = new TcpListener(IPAddress.Loopback, 0);
+        guacdPortSelector.Start();
+        var unavailableGuacdPort = ((IPEndPoint)guacdPortSelector.LocalEndpoint).Port;
+        guacdPortSelector.Stop();
+
+        var service = new GuacamoleProxyService(
+            _loggerMock.Object,
+            Options.Create(new GuacdOptions { Host = "127.0.0.1", Port = unavailableGuacdPort }),
+            _scopeFactoryMock.Object,
+            _encryptionServiceMock.Object,
+            _redisMock.Object,
+            _metricsMock.Object,
+            _secretProviderFactoryMock.Object);
+
+        using var scope = _scopeFactoryMock.Object.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        dbContext.Users.Add(new User { Id = userId, IsActive = true, Name = "active-user", Email = "test@test.com" });
+
+        var host = new SmoothOperator.Domain.Models.Host { Id = hostId, Name = "test-host", Address = "127.0.0.1" };
+        dbContext.Hosts.Add(host);
+
+        dbContext.Connections.Add(new Connection
+        {
+            Id = connectionId,
+            HostId = hostId,
+            Host = host,
+            Protocol = "rdp",
+            Settings = $"{{\"port\":\"{reachablePort}\"}}"
+        });
+        await dbContext.SaveChangesAsync();
+
+        string? deletedSessionKey = null;
+        _dbMock.Setup(db => db.KeyDeleteAsync(It.IsAny<RedisKey>(), It.IsAny<CommandFlags>()))
+            .ReturnsAsync(true)
+            .Callback<RedisKey, CommandFlags>((key, _) => deletedSessionKey = key.ToString());
+
+        var wsMock = new Mock<System.Net.WebSockets.WebSocket>();
+        wsMock.Setup(w => w.State).Returns(System.Net.WebSockets.WebSocketState.Open);
+        wsMock.Setup(w => w.CloseAsync(It.IsAny<System.Net.WebSockets.WebSocketCloseStatus>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+              .Returns(Task.CompletedTask);
+        wsMock.Setup(w => w.SendAsync(It.IsAny<ArraySegment<byte>>(), It.IsAny<System.Net.WebSockets.WebSocketMessageType>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+              .Returns(Task.CompletedTask);
+
+        // Act
+        await service.HandleWebSocketAsync(wsMock.Object, connectionId, userId, ip);
+
+        // Assert
+        Assert.NotNull(deletedSessionKey);
+        Assert.StartsWith("session:", deletedSessionKey);
+        _metricsMock.Verify(m => m.RecordConnectionStarted(), Times.Never);
+        _metricsMock.Verify(m => m.RecordConnectionEnded(), Times.Never);
+        wsMock.Verify(w => w.CloseAsync(
+            System.Net.WebSockets.WebSocketCloseStatus.InternalServerError,
+            It.Is<string>(s => s.Contains("Cannot reach Guacamole service")),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
     [Theory]
     [InlineData("")]
     [InlineData("   ")]
@@ -410,6 +484,22 @@ public class GuacamoleProxyServiceInternalTests
             _secretProviderFactoryMock.Object);
     }
 
+    private Task<string> InvokeResolveDecryptedSecretAsync(Credential credential)
+    {
+        var method = typeof(GuacamoleProxyService).GetMethod(
+            "ResolveDecryptedSecretAsync",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+        return (Task<string>)method!.Invoke(_service, new object[]
+        {
+            credential,
+            _dbContext,
+            Guid.NewGuid(),
+            "127.0.0.1",
+            CancellationToken.None
+        })!;
+    }
+
     [Fact]
     public async Task ResolveConnectionParametersAsync_WithExternalSecret_FetchesFromProvider()
     {
@@ -512,6 +602,75 @@ public class GuacamoleProxyServiceInternalTests
         var log = await _dbContext.AuditLogs.FirstOrDefaultAsync(l => l.Action == "secret.fetched" && l.Outcome == "failure");
         Assert.NotNull(log);
         Assert.Contains("403", log!.Details);
+    }
+
+    [Fact]
+    public async Task ResolveDecryptedSecretAsync_LocalSecretDecryptFailure_ReturnsEmpty()
+    {
+        // Arrange
+        var cred = new Credential
+        {
+            Id = Guid.NewGuid(),
+            StorageMode = SecretStorageMode.Local,
+            EncryptedSecret = "encrypted-secret"
+        };
+        _encryptionServiceMock.Setup(e => e.Decrypt("encrypted-secret"))
+            .Throws(new InvalidOperationException("decrypt failed"));
+
+        // Act
+        var result = await InvokeResolveDecryptedSecretAsync(cred);
+
+        // Assert
+        Assert.Equal(string.Empty, result);
+    }
+
+    [Fact]
+    public async Task ResolveDecryptedSecretAsync_LocalWithoutEncryptedSecret_ReturnsEmpty()
+    {
+        // Arrange
+        var cred = new Credential
+        {
+            Id = Guid.NewGuid(),
+            StorageMode = SecretStorageMode.Local,
+            EncryptedSecret = string.Empty
+        };
+
+        // Act
+        var result = await InvokeResolveDecryptedSecretAsync(cred);
+
+        // Assert
+        Assert.Equal(string.Empty, result);
+    }
+
+    [Fact]
+    public async Task ResolveDecryptedSecretAsync_ExternalProviderUnexpectedFailure_ThrowsVaultUnreachable()
+    {
+        // Arrange
+        var provider = new SecretProvider { Id = Guid.NewGuid(), Name = "Vault" };
+        var cred = new Credential
+        {
+            Id = Guid.NewGuid(),
+            StorageMode = SecretStorageMode.External,
+            SecretProvider = provider,
+            SecretProviderId = provider.Id,
+            ExternalSecretName = "my-secret"
+        };
+
+        var secretProviderMock = new Mock<ISecretProvider>();
+        secretProviderMock
+            .Setup(p => p.GetSecretAsync("my-secret", It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("provider unavailable"));
+
+        _secretProviderFactoryMock.Setup(f => f.Create(provider)).Returns(secretProviderMock.Object);
+
+        // Act
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => InvokeResolveDecryptedSecretAsync(cred));
+
+        // Assert
+        Assert.Contains("Vault unreachable", ex.Message);
+        var log = await _dbContext.AuditLogs.FirstOrDefaultAsync(l => l.Action == "secret.fetched" && l.Outcome == "failure");
+        Assert.NotNull(log);
+        Assert.Contains("vault_unreachable", log!.Details);
     }
 
     [Fact]

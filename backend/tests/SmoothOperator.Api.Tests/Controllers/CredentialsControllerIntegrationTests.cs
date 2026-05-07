@@ -6,7 +6,9 @@ using SmoothOperator.Domain.Models;
 using SmoothOperator.Infrastructure.Services;
 using SmoothOperator.Api.Controllers;
 using SmoothOperator.Api.Tests.Infrastructure;
+using SmoothOperator.Application.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
+using Moq;
 using Xunit;
 
 namespace SmoothOperator.Api.Tests.Controllers;
@@ -111,5 +113,173 @@ public class CredentialsControllerIntegrationTests
         Assert.NotNull(ecdsaData);
         Assert.StartsWith("-----BEGIN EC PRIVATE KEY-----", ecdsaData.PrivateKey);
         Assert.StartsWith("ecdsa-sha2-nistp256 ", ecdsaData.PublicKey);
+    }
+
+    [Fact]
+    public async Task CreateCredential_ExternalPushToVault_PersistsReferenceAndCallsProvider()
+    {
+        var adminId = Guid.NewGuid();
+        var providerId = Guid.NewGuid();
+        var mockProvider = new Mock<ISecretProvider>();
+        mockProvider
+            .Setup(p => p.SetSecretAsync(It.IsAny<string>(), "vault-secret", It.IsAny<CancellationToken>()))
+            .ReturnsAsync("v1");
+        var mockFactory = new Mock<ISecretProviderFactory>();
+        mockFactory.Setup(f => f.Create(It.IsAny<SecretProvider>())).Returns(mockProvider.Object);
+
+        await using var factory = new TestWebApplicationFactory(
+            seed: db =>
+            {
+                var admin = new User { Id = adminId, Email = "a@x", Name = "a", IsActive = true, CreatedAt = DateTime.UtcNow };
+                AttachRoles(db, admin, AppRoles.Admin);
+                db.Users.Add(admin);
+                db.SecretProviders.Add(new SecretProvider
+                {
+                    Id = providerId,
+                    Name = "KV",
+                    Type = SecretProviderType.AzureKeyVault,
+                    EncryptedConfigJson = "{}",
+                    IsEnabled = true
+                });
+            },
+            overrideServices: services =>
+            {
+                services.RemoveAll<ISecretProviderFactory>();
+                services.AddSingleton(mockFactory.Object);
+            });
+
+        var client = AsUser(factory, adminId, AppRoles.Admin);
+        var request = new CreateCredentialDto
+        {
+            Name = "external-push",
+            Username = "svc-user",
+            CredentialType = "password",
+            StorageMode = "External",
+            SecretProviderId = providerId,
+            PushToVault = true,
+            Secret = "vault-secret"
+        };
+
+        var response = await client.PostAsJsonAsync("/api/credentials", request);
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var created = await response.Content.ReadFromJsonAsync<CredentialDto>();
+        Assert.NotNull(created);
+        Assert.Equal("External", created.StorageMode);
+        Assert.Equal(providerId, created.SecretProviderId);
+        Assert.False(string.IsNullOrWhiteSpace(created.ExternalSecretName));
+        Assert.Null(created.ExternalSecretVersion);
+
+        await using var scope = factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var persisted = await db.Credentials.FindAsync(created.Id);
+        Assert.NotNull(persisted);
+        Assert.Equal(SecretStorageMode.External, persisted!.StorageMode);
+        Assert.Equal(string.Empty, persisted.EncryptedSecret);
+        Assert.Equal(providerId, persisted.SecretProviderId);
+        Assert.False(string.IsNullOrWhiteSpace(persisted.ExternalSecretName));
+
+        mockProvider.Verify(p => p.SetSecretAsync(
+            It.Is<string>(n => n.StartsWith("smoothoperator-external-push-")),
+            "vault-secret",
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task CreateCredential_ExternalLink_PersistsProvidedSecretReference()
+    {
+        var adminId = Guid.NewGuid();
+        var providerId = Guid.NewGuid();
+
+        await using var factory = new TestWebApplicationFactory(db =>
+        {
+            var admin = new User { Id = adminId, Email = "a@x", Name = "a", IsActive = true, CreatedAt = DateTime.UtcNow };
+            AttachRoles(db, admin, AppRoles.Admin);
+            db.Users.Add(admin);
+            db.SecretProviders.Add(new SecretProvider
+            {
+                Id = providerId,
+                Name = "KV",
+                Type = SecretProviderType.AzureKeyVault,
+                EncryptedConfigJson = "{}",
+                IsEnabled = true
+            });
+        });
+
+        var client = AsUser(factory, adminId, AppRoles.Admin);
+        var request = new CreateCredentialDto
+        {
+            Name = "external-link",
+            Username = "svc-user",
+            CredentialType = "password",
+            StorageMode = "External",
+            SecretProviderId = providerId,
+            PushToVault = false,
+            ExternalSecretName = "existing-secret",
+            ExternalSecretVersion = "v2"
+        };
+
+        var response = await client.PostAsJsonAsync("/api/credentials", request);
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var created = await response.Content.ReadFromJsonAsync<CredentialDto>();
+        Assert.NotNull(created);
+        Assert.Equal("existing-secret", created.ExternalSecretName);
+        Assert.Equal("v2", created.ExternalSecretVersion);
+    }
+
+    [Fact]
+    public async Task CreateCredential_ExternalWithoutProviderId_ReturnsBadRequest()
+    {
+        var adminId = Guid.NewGuid();
+        await using var factory = new TestWebApplicationFactory(db =>
+        {
+            var admin = new User { Id = adminId, Email = "a@x", Name = "a", IsActive = true, CreatedAt = DateTime.UtcNow };
+            AttachRoles(db, admin, AppRoles.Admin);
+            db.Users.Add(admin);
+        });
+
+        var client = AsUser(factory, adminId, AppRoles.Admin);
+        var request = new CreateCredentialDto
+        {
+            Name = "invalid-external",
+            Username = "svc-user",
+            CredentialType = "password",
+            StorageMode = "External",
+            PushToVault = false,
+            ExternalSecretName = "existing-secret"
+        };
+
+        var response = await client.PostAsJsonAsync("/api/credentials", request);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task CreateCredential_ExternalWithUnknownProvider_ReturnsNotFound()
+    {
+        var adminId = Guid.NewGuid();
+        await using var factory = new TestWebApplicationFactory(db =>
+        {
+            var admin = new User { Id = adminId, Email = "a@x", Name = "a", IsActive = true, CreatedAt = DateTime.UtcNow };
+            AttachRoles(db, admin, AppRoles.Admin);
+            db.Users.Add(admin);
+        });
+
+        var client = AsUser(factory, adminId, AppRoles.Admin);
+        var request = new CreateCredentialDto
+        {
+            Name = "unknown-provider",
+            Username = "svc-user",
+            CredentialType = "password",
+            StorageMode = "External",
+            SecretProviderId = Guid.NewGuid(),
+            PushToVault = false,
+            ExternalSecretName = "existing-secret"
+        };
+
+        var response = await client.PostAsJsonAsync("/api/credentials", request);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 }
