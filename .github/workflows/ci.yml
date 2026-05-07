@@ -133,11 +133,11 @@ jobs:
 
       - name: Install dependencies
         working-directory: frontend
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       - name: Check formatting
         working-directory: frontend
-        run: npx prettier --check "src/**/*.{ts,html,css,scss,json}"
+        run: npx prettier@3.8.3 --check "src/**/*.{ts,html,css,scss,json}"
 
       - name: Lint
         working-directory: frontend
@@ -149,7 +149,7 @@ jobs:
 
       - name: Run tests with coverage
         working-directory: frontend
-        run: npx ng test --coverage
+        run: npx @angular/cli@21.2.8 ng test --coverage
 
       - name: Upload coverage to Codecov
         if: always() && github.actor != 'dependabot[bot]'
