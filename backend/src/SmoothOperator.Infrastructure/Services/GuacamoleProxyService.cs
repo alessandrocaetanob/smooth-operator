@@ -177,42 +177,68 @@ namespace SmoothOperator.Infrastructure.Services
             using var scope = _scopeFactory.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-            var dbUser = await dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
-            if (dbUser == null || !dbUser.IsActive)
+            var dbUser = await LoadAuthorizedUserAsync(dbContext, userId);
+            if (dbUser == null)
             {
                 _logger.LogWarning("User {UserId} not found or inactive. Connection denied.", userId);
                 await webSocket.CloseAsync(WebSocketCloseStatus.PolicyViolation, "User not authorized", CancellationToken.None);
                 return;
             }
 
-            var connection = await dbContext.Connections
+            var connection = await LoadConnectionAsync(dbContext, connectionId);
+            if (connection == null || connection.Host == null)
+            {
+                await HandleMissingConnectionAsync(webSocket, dbContext, dbUser.Id, connectionId, ipAddress);
+                return;
+            }
+
+            var (targetHost, targetPort) = ResolveTargetEndpoint(connection);
+            if (!await ProbeWithTimeoutAsync(targetHost, targetPort, TimeSpan.FromSeconds(5)))
+            {
+                await HandleUnreachableHostAsync(webSocket, dbContext, dbUser.Id, connectionId, ipAddress, targetHost, targetPort);
+                return;
+            }
+
+            await RecordConnectionStartedAuditAsync(dbContext, dbUser.Id, connectionId, ipAddress, connection, sessionId);
+
+            var db = _redis.GetDatabase();
+            await RegisterSessionAsync(db, sessionId, dbUser.Id, connectionId);
+
+            await RunGuacamoleSessionAsync(webSocket, connection, sessionId, dbUser, ipAddress, dbContext, db);
+        }
+
+        private static Task<User?> LoadAuthorizedUserAsync(AppDbContext dbContext, Guid userId) =>
+            dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId && u.IsActive);
+
+        private static Task<Connection?> LoadConnectionAsync(AppDbContext dbContext, Guid connectionId) =>
+            dbContext.Connections
                 .Include(c => c.Host)
                 .Include(c => c.Credential).ThenInclude(cr => cr!.SecretProvider)
                 .Include(c => c.Users)
                 .FirstOrDefaultAsync(c => c.Id == connectionId);
 
-            if (connection == null || connection.Host == null)
+        private async Task HandleMissingConnectionAsync(
+            WebSocket webSocket, AppDbContext dbContext, Guid userId, Guid connectionId, string ipAddress)
+        {
+            _logger.LogWarning("Connection {ConnectionId} not found or has no host.", connectionId);
+
+            dbContext.AuditLogs.Add(new AuditLog
             {
-                _logger.LogWarning("Connection {ConnectionId} not found or has no host.", connectionId);
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                Action = "connection.failed",
+                ResourceType = ResourceTypeConnection,
+                ResourceId = connectionId.ToString(),
+                Details = "{\"reason\":\"connection_not_found\"}",
+                IpAddress = ipAddress
+            });
+            await dbContext.SaveChangesAsync();
 
-                dbContext.AuditLogs.Add(new AuditLog
-                {
-                    Id = Guid.NewGuid(),
-                    UserId = dbUser.Id,
-                    Action = "connection.failed",
-                    ResourceType = ResourceTypeConnection,
-                    ResourceId = connectionId.ToString(),
-                    Details = "{\"reason\":\"connection_not_found\"}",
-                    IpAddress = ipAddress
-                });
-                await dbContext.SaveChangesAsync();
+            await webSocket.CloseAsync(WebSocketCloseStatus.InvalidMessageType, "Connection not found", CancellationToken.None);
+        }
 
-                await webSocket.CloseAsync(WebSocketCloseStatus.InvalidMessageType, "Connection not found", CancellationToken.None);
-                return;
-            }
-
-            // Pre-flight: verify the target host is reachable before involving guacd.
-            // This prevents black-screen sessions when the remote VM is down.
+        private (string host, int port) ResolveTargetEndpoint(Connection connection)
+        {
             var defaultPort = (connection.Protocol ?? "rdp").ToLowerInvariant() switch
             {
                 "ssh" => 22,
@@ -220,66 +246,75 @@ namespace SmoothOperator.Infrastructure.Services
                 "telnet" => 23,
                 _ => 3389
             };
-            var targetHost = connection.Host.Address;
+            var targetHost = connection.Host!.Address;
             var targetPort = int.TryParse(
                 ParseSettings(connection.Settings).GetValueOrDefault("port"),
                 out var parsedPort) ? parsedPort : defaultPort;
+            return (targetHost, targetPort);
+        }
 
-            using var probeCts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-            if (!await ProbeHostAsync(targetHost, targetPort, probeCts.Token))
-            {
-                var unreachableMsg = $"Host {targetHost}:{targetPort} is not reachable";
-                _logger.LogWarning("Pre-flight check failed for connection {ConnectionId}: {Message}", connectionId, unreachableMsg);
+        private static async Task<bool> ProbeWithTimeoutAsync(string host, int port, TimeSpan timeout)
+        {
+            using var probeCts = new CancellationTokenSource(timeout);
+            return await ProbeHostAsync(host, port, probeCts.Token);
+        }
 
-                dbContext.AuditLogs.Add(new AuditLog
-                {
-                    Id = Guid.NewGuid(),
-                    UserId = dbUser.Id,
-                    Action = "connection.host_unreachable",
-                    ResourceType = ResourceTypeConnection,
-                    ResourceId = connectionId.ToString(),
-                    Details = $"{{\"host\":{JsonSerializer.Serialize(targetHost)},\"port\":{targetPort}}}",
-                    IpAddress = ipAddress
-                });
-                await dbContext.SaveChangesAsync();
+        private async Task HandleUnreachableHostAsync(
+            WebSocket webSocket, AppDbContext dbContext, Guid userId, Guid connectionId, string ipAddress,
+            string targetHost, int targetPort)
+        {
+            var unreachableMsg = $"Host {targetHost}:{targetPort} is not reachable";
+            _logger.LogWarning("Pre-flight check failed for connection {ConnectionId}: {Message}", connectionId, unreachableMsg);
 
-                if (webSocket.State == WebSocketState.Open)
-                {
-                    await TrySendGuacErrorAsync(webSocket, unreachableMsg, GuacStatus.UpstreamNotFound);
-                    await webSocket.CloseAsync(WebSocketCloseStatus.InternalServerError, unreachableMsg[..Math.Min(unreachableMsg.Length, 120)], CancellationToken.None);
-                }
-                return;
-            }
-
-            // Audit log - connection started (after probe confirms host is reachable)
             dbContext.AuditLogs.Add(new AuditLog
             {
                 Id = Guid.NewGuid(),
-                UserId = dbUser.Id,
+                UserId = userId,
+                Action = "connection.host_unreachable",
+                ResourceType = ResourceTypeConnection,
+                ResourceId = connectionId.ToString(),
+                Details = $"{{\"host\":{JsonSerializer.Serialize(targetHost)},\"port\":{targetPort}}}",
+                IpAddress = ipAddress
+            });
+            await dbContext.SaveChangesAsync();
+
+            if (webSocket.State == WebSocketState.Open)
+            {
+                await TrySendGuacErrorAsync(webSocket, unreachableMsg, GuacStatus.UpstreamNotFound);
+                await webSocket.CloseAsync(WebSocketCloseStatus.InternalServerError, unreachableMsg[..Math.Min(unreachableMsg.Length, 120)], CancellationToken.None);
+            }
+        }
+
+        private static async Task RecordConnectionStartedAuditAsync(
+            AppDbContext dbContext, Guid userId, Guid connectionId, string ipAddress, Connection connection, string sessionId)
+        {
+            dbContext.AuditLogs.Add(new AuditLog
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
                 Action = "connection.started",
                 ResourceType = ResourceTypeConnection,
                 ResourceId = connectionId.ToString(),
                 Details = JsonSerializer.Serialize(new
                 {
-                    host = connection.Host.Name,
+                    host = connection.Host!.Name,
                     protocol = connection.Protocol,
                     sessionId = sessionId
                 }),
                 IpAddress = ipAddress
             });
             await dbContext.SaveChangesAsync();
+        }
 
-            // Register session in Redis
-            var db = _redis.GetDatabase();
+        private static async Task RegisterSessionAsync(IDatabase db, string sessionId, Guid userId, Guid connectionId)
+        {
             await db.HashSetAsync($"session:{sessionId}", new HashEntry[]
             {
-                new HashEntry("UserId", dbUser.Id.ToString()),
+                new HashEntry("UserId", userId.ToString()),
                 new HashEntry("ConnectionId", connectionId.ToString()),
                 new HashEntry("StartTime", DateTime.UtcNow.ToString("O"))
             });
             await db.KeyExpireAsync($"session:{sessionId}", TimeSpan.FromHours(24));
-
-            await RunGuacamoleSessionAsync(webSocket, connection, sessionId, dbUser, ipAddress, dbContext, db);
         }
 
         private async Task RunGuacamoleSessionAsync(
