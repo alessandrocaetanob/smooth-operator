@@ -36,75 +36,125 @@ namespace SmoothOperator.Application.Features.Connections.Queries
             if (ids.Count == 0)
                 return new Dictionary<Guid, string>();
 
-            // 1. Find which requested IDs exist in the database.
-            var existingConnections = await _context.Connections
-                .AsNoTracking()
-                .Where(c => ids.Contains(c.Id))
-                .Select(c => new { c.Id, c.Protocol, c.Settings, c.HostId, c.ConnectionGroupId })
-                .ToListAsync(cancellationToken);
-
+            var existingConnections = await LoadExistingConnectionsAsync(ids, cancellationToken);
             var existingSet = existingConnections.Select(c => c.Id).ToHashSet();
 
-            // 2. Determine which existing connections the user can access.
-            var accessibleIds = await _access.ApplyConnectionScope(_context.Connections.AsNoTracking(), profile)
-                .Where(c => ids.Contains(c.Id))
-                .Select(c => c.Id)
-                .ToListAsync(cancellationToken);
-
-            var accessibleSet = accessibleIds.ToHashSet();
+            var accessibleSet = await LoadAccessibleIdSetAsync(ids, profile, cancellationToken);
             var accessibleById = existingConnections
                 .Where(c => accessibleSet.Contains(c.Id))
                 .ToDictionary(c => c.Id);
 
-            var hostIds = accessibleById.Values.Select(c => c.HostId).Distinct().ToList();
-            var hostLookup = await _context.Hosts
+            var hostLookup = await LoadHostLookupAsync(accessibleById.Values, cancellationToken);
+
+            var results = new ConcurrentDictionary<Guid, string>();
+            ClassifyMissingOrInaccessible(ids, existingSet, accessibleSet, accessibleById, hostLookup, results);
+
+            await ProbeReachableConnectionsAsync(accessibleById.Values, hostLookup, results, cancellationToken);
+
+            return new Dictionary<Guid, string>(results);
+        }
+
+        private async Task<List<ConnectionProbeInfo>> LoadExistingConnectionsAsync(IReadOnlyList<Guid> ids, CancellationToken cancellationToken) =>
+            await _context.Connections
+                .AsNoTracking()
+                .Where(c => ids.Contains(c.Id))
+                .Select(c => new ConnectionProbeInfo(c.Id, c.Protocol, c.Settings, c.HostId))
+                .ToListAsync(cancellationToken);
+
+        private async Task<HashSet<Guid>> LoadAccessibleIdSetAsync(IReadOnlyList<Guid> ids, AccessProfile profile, CancellationToken cancellationToken)
+        {
+            var accessibleIds = await _access.ApplyConnectionScope(_context.Connections.AsNoTracking(), profile)
+                .Where(c => ids.Contains(c.Id))
+                .Select(c => c.Id)
+                .ToListAsync(cancellationToken);
+            return accessibleIds.ToHashSet();
+        }
+
+        private async Task<Dictionary<Guid, string>> LoadHostLookupAsync(IEnumerable<ConnectionProbeInfo> accessible, CancellationToken cancellationToken)
+        {
+            var hostIds = accessible.Select(c => c.HostId).Distinct().ToList();
+            return await _context.Hosts
                 .AsNoTracking()
                 .Where(h => hostIds.Contains(h.Id))
                 .Select(h => new { h.Id, h.Address })
-                .ToDictionaryAsync(h => h.Id, cancellationToken);
+                .ToDictionaryAsync(h => h.Id, h => h.Address, cancellationToken);
+        }
 
-            var results = new ConcurrentDictionary<Guid, string>();
-
-            // 3. Classify each requested ID.
+        private static void ClassifyMissingOrInaccessible(
+            IReadOnlyList<Guid> ids,
+            HashSet<Guid> existingSet,
+            HashSet<Guid> accessibleSet,
+            Dictionary<Guid, ConnectionProbeInfo> accessibleById,
+            Dictionary<Guid, string> hostLookup,
+            ConcurrentDictionary<Guid, string> results)
+        {
             foreach (var id in ids)
             {
-                if (!existingSet.Contains(id))
-                    results[id] = "not_found";
-                else if (!accessibleSet.Contains(id))
-                    results[id] = "forbidden";
-                else if (!hostLookup.ContainsKey(accessibleById[id].HostId))
-                    results[id] = "no_host";
+                var status = ClassifyId(id, existingSet, accessibleSet, accessibleById, hostLookup);
+                if (status != null)
+                    results[id] = status;
             }
+        }
 
-            // 4. Probe accessible connections that have a host.
-            var probeCandidates = accessibleById.Values
-                .Where(c => hostLookup.ContainsKey(c.HostId))
-                .ToList();
+        private static string? ClassifyId(
+            Guid id,
+            HashSet<Guid> existingSet,
+            HashSet<Guid> accessibleSet,
+            Dictionary<Guid, ConnectionProbeInfo> accessibleById,
+            Dictionary<Guid, string> hostLookup)
+        {
+            if (!existingSet.Contains(id))
+                return "not_found";
+            if (!accessibleSet.Contains(id))
+                return "forbidden";
+            if (!hostLookup.ContainsKey(accessibleById[id].HostId))
+                return "no_host";
+            return null;
+        }
 
+        private static async Task ProbeReachableConnectionsAsync(
+            IEnumerable<ConnectionProbeInfo> accessible,
+            Dictionary<Guid, string> hostLookup,
+            ConcurrentDictionary<Guid, string> results,
+            CancellationToken cancellationToken)
+        {
+            var probeCandidates = accessible.Where(c => hostLookup.ContainsKey(c.HostId)).ToList();
             using var semaphore = new SemaphoreSlim(BulkProbeMaxConcurrency, BulkProbeMaxConcurrency);
 
-            var tasks = probeCandidates.Select(conn => Task.Run(async () =>
+            var tasks = probeCandidates
+                .Select(conn => ProbeOneAsync(conn, hostLookup[conn.HostId], semaphore, results, cancellationToken))
+                .ToList();
+
+            await Task.WhenAll(tasks);
+        }
+
+        private static Task ProbeOneAsync(
+            ConnectionProbeInfo conn,
+            string hostAddress,
+            SemaphoreSlim semaphore,
+            ConcurrentDictionary<Guid, string> results,
+            CancellationToken cancellationToken) =>
+            Task.Run(async () =>
             {
                 await semaphore.WaitAsync(cancellationToken);
                 try
                 {
-                    var defaultPort = GetDefaultPort(conn.Protocol);
-                    var settings = ProbeConnectionQueryHandler.ParseConnectionSettings(conn.Settings);
-                    var port = int.TryParse(settings.GetValueOrDefault("port"), out var p) ? p : defaultPort;
-
+                    var port = ResolvePort(conn);
                     using var probeCts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
-                    var reachable = await ProbeConnectionQueryHandler.TcpProbeAsync(
-                        hostLookup[conn.HostId].Address, port, probeCts.Token);
+                    var reachable = await ProbeConnectionQueryHandler.TcpProbeAsync(hostAddress, port, probeCts.Token);
                     results[conn.Id] = reachable ? "up" : "down";
                 }
                 finally
                 {
                     semaphore.Release();
                 }
-            }, cancellationToken)).ToList();
+            }, cancellationToken);
 
-            await Task.WhenAll(tasks);
-            return new Dictionary<Guid, string>(results);
+        private static int ResolvePort(ConnectionProbeInfo conn)
+        {
+            var settings = ProbeConnectionQueryHandler.ParseConnectionSettings(conn.Settings);
+            var defaultPort = GetDefaultPort(conn.Protocol);
+            return int.TryParse(settings.GetValueOrDefault("port"), out var p) ? p : defaultPort;
         }
 
         private static int GetDefaultPort(string? protocol) =>
@@ -115,5 +165,7 @@ namespace SmoothOperator.Application.Features.Connections.Queries
                 "telnet" => 23,
                 _ => 3389
             };
+
+        private sealed record ConnectionProbeInfo(Guid Id, string? Protocol, string? Settings, Guid HostId);
     }
 }
