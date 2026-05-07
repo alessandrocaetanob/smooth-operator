@@ -1,4 +1,5 @@
 using System.Net;
+using Microsoft.AspNetCore.Hosting;
 using SmoothOperator.Api.Tests.Infrastructure;
 using Xunit;
 
@@ -65,6 +66,30 @@ public class PrometheusEndpointTests
     }
 
     [Fact]
+    public async Task Metrics_WithTokenConfigured_LowercaseBearerScheme_ReturnsSuccess()
+    {
+        await using var factory = CreateFactoryWithToken();
+        var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Add("Authorization", $"bearer {DevToken}");
+
+        var response = await client.GetAsync("/metrics");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Metrics_WithTokenConfigured_ExtraWhitespaceAroundToken_ReturnsSuccess()
+    {
+        await using var factory = CreateFactoryWithToken();
+        var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Add("Authorization", $"Bearer   {DevToken}   ");
+
+        var response = await client.GetAsync("/metrics");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact]
     public async Task Metrics_WithTokenConfigured_MalformedAuthScheme_Returns401()
     {
         await using var factory = CreateFactoryWithToken();
@@ -75,5 +100,15 @@ public class PrometheusEndpointTests
         var response = await client.GetAsync("/metrics");
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public void Metrics_InProductionWithoutToken_ThrowsConfigurationError()
+    {
+        Assert.Throws<InvalidOperationException>(() =>
+        {
+            using var factory = new TestWebApplicationFactory().WithWebHostBuilder(builder => builder.UseEnvironment("Production"));
+            _ = factory.CreateClient();
+        });
     }
 }

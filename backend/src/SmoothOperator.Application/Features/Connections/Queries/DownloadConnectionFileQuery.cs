@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Net;
+using System.Net.Sockets;
 using System.Security.Claims;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -122,9 +124,9 @@ namespace SmoothOperator.Application.Features.Connections.Queries
         private static readonly Regex SshUsernamePattern =
             new(@"^[A-Za-z0-9_][A-Za-z0-9._-]{0,254}$", RegexOptions.Compiled);
 
-        // Host: DNS labels / IPv4 / IPv6 bracket notation (e.g. [::1]), max 253.
-        private static readonly Regex SshHostPattern =
-            new(@"^[A-Za-z0-9]([A-Za-z0-9._:\-\[\]]{0,251}[A-Za-z0-9\]])?$", RegexOptions.Compiled);
+        // Hostname: DNS labels, max 253.
+        private static readonly Regex SshDnsHostPattern =
+            new(@"^(?=.{1,253}$)(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)(?:\.(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?))*$", RegexOptions.Compiled);
 
         private static ConnectionFileDto GenerateSshFile(string name, string host, int port, string username)
         {
@@ -133,7 +135,7 @@ namespace SmoothOperator.Application.Features.Connections.Queries
             // Validate raw inputs before any sanitisation — reject instead of silently stripping.
             if (string.IsNullOrWhiteSpace(host))
                 throw new BadRequestException("SSH connection requires a valid host address.");
-            if (!SshHostPattern.IsMatch(host))
+            if (!IsValidSshHost(host))
                 throw new BadRequestException("Host address contains characters not permitted in SSH connections.");
             if (!string.IsNullOrEmpty(username) && !SshUsernamePattern.IsMatch(username))
                 throw new BadRequestException("Username contains characters not permitted in SSH connections.");
@@ -186,5 +188,22 @@ namespace SmoothOperator.Application.Features.Connections.Queries
 
         private static string ShellEscape(string value) =>
             "'" + value.Replace("'", "'\\''") + "'";
+
+        private static bool IsValidSshHost(string host)
+        {
+            if (host.StartsWith('[') || host.EndsWith(']'))
+            {
+                if (!host.StartsWith('[') || !host.EndsWith(']') || host.Length <= 2)
+                    return false;
+
+                var ipv6Candidate = host[1..^1];
+                return IPAddress.TryParse(ipv6Candidate, out var ip) && ip.AddressFamily == AddressFamily.InterNetworkV6;
+            }
+
+            if (IPAddress.TryParse(host, out var parsed))
+                return parsed.AddressFamily == AddressFamily.InterNetwork;
+
+            return SshDnsHostPattern.IsMatch(host);
+        }
     }
 }

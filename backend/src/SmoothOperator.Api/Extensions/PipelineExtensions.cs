@@ -1,3 +1,4 @@
+using System.Net.Http.Headers;
 using Microsoft.Extensions.Options;
 using Prometheus;
 using Serilog;
@@ -47,18 +48,25 @@ public static class PipelineExtensions
         app.MapControllers();
         app.MapHealthChecks("/health");
 
-        // Guard the Prometheus scrape endpoint with an optional bearer token.
-        // When Metrics:BearerToken is not configured the endpoint is open (dev mode).
-        // In production always set Metrics__BearerToken to a strong random secret.
+        var metricsOptions = app.Services.GetRequiredService<IOptions<MetricsOptions>>().Value;
+        if (!app.Environment.IsDevelopment()
+            && !app.Environment.IsEnvironment("Testing")
+            && string.IsNullOrWhiteSpace(metricsOptions.BearerToken))
+        {
+            throw new InvalidOperationException("Metrics:BearerToken must be configured outside Development/Testing environments.");
+        }
+
+        // Guard the Prometheus scrape endpoint with a bearer token when configured.
         app.UseWhen(
             ctx => ctx.Request.Path.StartsWithSegments("/metrics"),
             branch => branch.Use(async (ctx, next) =>
             {
-                var opts = ctx.RequestServices.GetRequiredService<IOptions<MetricsOptions>>().Value;
-                if (!string.IsNullOrWhiteSpace(opts.BearerToken))
+                if (!string.IsNullOrWhiteSpace(metricsOptions.BearerToken))
                 {
                     var authHeader = ctx.Request.Headers.Authorization.FirstOrDefault();
-                    if (authHeader != $"Bearer {opts.BearerToken}")
+                    if (!AuthenticationHeaderValue.TryParse(authHeader, out var parsedAuth)
+                        || !string.Equals(parsedAuth.Scheme, "Bearer", StringComparison.OrdinalIgnoreCase)
+                        || !string.Equals(parsedAuth.Parameter?.Trim(), metricsOptions.BearerToken, StringComparison.Ordinal))
                     {
                         ctx.Response.StatusCode = StatusCodes.Status401Unauthorized;
                         return;

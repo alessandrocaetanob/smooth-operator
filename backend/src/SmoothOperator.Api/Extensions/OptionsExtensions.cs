@@ -4,8 +4,9 @@ namespace SmoothOperator.Api.Extensions;
 
 public static class OptionsExtensions
 {
-    // All options classes are registered with DataAnnotations validation and
+    // Most options classes are registered with DataAnnotations validation and
     // ValidateOnStart() so misconfiguration is caught at startup, not at first request.
+    // MetricsOptions is intentionally excluded because BearerToken is optional in Development/Testing.
     public static IServiceCollection AddApplicationOptions(this IServiceCollection services)
     {
         services.AddOptions<JwtOptions>()
@@ -46,7 +47,7 @@ public static class OptionsExtensions
         // BearerToken is intentionally optional — no ValidateOnStart() so dev environments
         // can run without configuring it. Production should always set Metrics__BearerToken.
         services.AddOptions<MetricsOptions>()
-            .BindConfiguration("Metrics");
+            .BindConfiguration(MetricsOptions.SectionName);
 
         return services;
     }
