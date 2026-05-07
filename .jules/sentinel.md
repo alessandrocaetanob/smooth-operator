@@ -189,3 +189,8 @@ Opened PR #50 to master: all 151 tests pass (142 integration + 9 architecture). 
 **Vulnerability:** User-controlled fields (`name`, `host`, `username`, `domain`) used to generate configuration and script files (RDP, VNC, SSH) were not sanitized against newline characters, permitting CRLF/Command injection attacks.
 **Learning:** Interpolating unvalidated input into `.sh`, `.rdp`, or `.vnc` strings permits attackers to inject extra commands or configuration options by introducing `\n` or `\r`.
 **Prevention:** All user input that gets mapped into plain-text connection profiles or scripts must have carriage returns and line feeds aggressively stripped to ensure the user cannot escape the intended single-line parameter context.
+
+## 2026-05-07 - Missing Rate Limiting on Invite Preview
+**Vulnerability:** The `[HttpGet("{token}")]` endpoint in `InvitesController` allowed unauthenticated users to validate invite tokens without rate limiting.
+**Learning:** Even read-only or "preview" endpoints that expose the validity of sensitive tokens (like invites, password resets, or one-time codes) are vulnerable to enumeration and brute-force attacks if left unthrottled. The global rate limiter is often too permissive (e.g., 100 requests/min) to prevent targeted token discovery.
+**Prevention:** Apply strict rate limiting (e.g., `[EnableRateLimiting("auth")]`) to any endpoint that validates, redeems, or checks the status of sensitive tokens, especially those accessible via `[AllowAnonymous]`.

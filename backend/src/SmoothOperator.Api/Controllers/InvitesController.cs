@@ -19,6 +19,7 @@ namespace SmoothOperator.Api.Controllers
         public InvitesController(IMediator mediator) => _mediator = mediator;
 
         [HttpGet("{token}")]
+        [EnableRateLimiting("auth")]
         public async Task<IActionResult> Preview(string token)
         {
             try
