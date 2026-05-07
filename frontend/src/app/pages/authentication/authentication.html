@@ -95,7 +95,7 @@
               formControlName="password"
               placeholder="••••••••"
               [type]="passwordVisible() ? 'text' : 'password'"
-              autocomplete="current-password"
+              [attr.autocomplete]="passwordVisible() ? 'off' : 'current-password'"
               (focus)="onPasswordFocus()"
               (blur)="onPasswordBlur()"
             />

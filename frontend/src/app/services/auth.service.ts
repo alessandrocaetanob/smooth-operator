@@ -244,7 +244,7 @@ export class AuthService {
   private jwtPayload(token: string): Record<string, unknown> | null {
     const parts = token.split('.');
     if (parts.length < 2) return null;
-    const segment = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const segment = parts[1].replaceAll(/-/g, '+').replaceAll(/_/g, '/');
     const padded = segment.padEnd(segment.length + ((4 - (segment.length % 4)) % 4), '=');
     try {
       return JSON.parse(atob(padded));
