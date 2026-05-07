@@ -273,5 +273,78 @@ public class SecretProvidersControllerIntegrationTests
         Assert.Equal(HttpStatusCode.NotFound, res.StatusCode);
     }
 
+    [Fact]
+    public async Task ListSecrets_AsRegularUser_Returns403()
+    {
+        var userId = Guid.NewGuid();
+        await using var factory = new TestWebApplicationFactory(db =>
+        {
+            var user = new User { Id = userId, Email = "u@x", Name = "u", IsActive = true, CreatedAt = DateTime.UtcNow };
+            AttachRoles(db, user, AppRoles.User);
+            db.Users.Add(user);
+        });
+
+        var client = AsUser(factory, userId, AppRoles.User);
+        var res = await client.GetAsync($"/api/secretproviders/{Guid.NewGuid()}/secrets");
+
+        Assert.Equal(HttpStatusCode.Forbidden, res.StatusCode);
+    }
+
+    [Fact]
+    public async Task ListSecrets_NonExistentProvider_Returns404()
+    {
+        var adminId = Guid.NewGuid();
+        await using var factory = new TestWebApplicationFactory(db =>
+        {
+            var admin = new User { Id = adminId, Email = "a@x", Name = "a", IsActive = true, CreatedAt = DateTime.UtcNow };
+            AttachRoles(db, admin, AppRoles.Admin);
+            db.Users.Add(admin);
+        });
+
+        var client = AsUser(factory, adminId, AppRoles.Admin);
+        var res = await client.GetAsync($"/api/secretproviders/{Guid.NewGuid()}/secrets");
+
+        Assert.Equal(HttpStatusCode.NotFound, res.StatusCode);
+    }
+
+    [Fact]
+    public async Task ListSecrets_ExistingProvider_ReturnsNamesFromProvider()
+    {
+        var adminId = Guid.NewGuid();
+        var mockProvider = new Mock<ISecretProvider>();
+        mockProvider.Setup(p => p.ListSecretNamesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string> { "db-password", "smtp-key" });
+        var mockFactory = new Mock<ISecretProviderFactory>();
+        mockFactory.Setup(f => f.Create(It.IsAny<SecretProvider>()))
+            .Returns(mockProvider.Object);
+
+        await using var factory = new TestWebApplicationFactory(
+            seed: db =>
+            {
+                var admin = new User { Id = adminId, Email = "a@x", Name = "a", IsActive = true, CreatedAt = DateTime.UtcNow };
+                AttachRoles(db, admin, AppRoles.Admin);
+                db.Users.Add(admin);
+            },
+            overrideServices: services =>
+            {
+                services.RemoveAll<ISecretProviderFactory>();
+                services.AddSingleton(mockFactory.Object);
+            });
+
+        var client = AsUser(factory, adminId, AppRoles.Admin);
+        var createRes = await client.PostAsJsonAsync("/api/secretproviders", ValidCreateDto("Secrets KV"));
+        Assert.Equal(HttpStatusCode.Created, createRes.StatusCode);
+        var created = await createRes.Content.ReadFromJsonAsync<SecretProviderDto>();
+        Assert.NotNull(created);
+
+        var listRes = await client.GetAsync($"/api/secretproviders/{created.Id}/secrets");
+        Assert.Equal(HttpStatusCode.OK, listRes.StatusCode);
+        var names = await listRes.Content.ReadFromJsonAsync<List<string>>();
+        Assert.NotNull(names);
+        Assert.Equal(2, names.Count);
+        Assert.Contains("db-password", names);
+        Assert.Contains("smtp-key", names);
+    }
+
     // ── Helpers ──────────────────────────────────────────────────────────────
 }

@@ -6,8 +6,10 @@ codecov:
 coverage:
   status:
     project:
-      default:
-        target: auto
+      backend:
+        flags:
+          - backend
+        target: 80%
         threshold: 1%
     patch:
       default:

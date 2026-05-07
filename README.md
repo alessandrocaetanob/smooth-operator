@@ -353,7 +353,7 @@ GitHub Actions workflows run on every push and PR:
 
 ## 🧪 Testing
 
-We maintain high code quality with automated test coverage enforcement (80% backend / 70% frontend).
+We maintain high code quality with automated test coverage enforcement (80% on Codecov `backend` flag / 70% frontend patch).
 
 ### Test Stack
 - **Backend:** xUnit + FluentAssertions + WebApplicationFactory integration tests
