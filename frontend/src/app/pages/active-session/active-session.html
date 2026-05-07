@@ -173,12 +173,13 @@
     <div
       data-guac-modal-open="true"
       class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      tabindex="-1"
       (click)="closeKeyComboModal()"
       (keydown.escape)="closeKeyComboModal()"
-      aria-hidden="true"
     >
       <dialog
         open
+        tabindex="-1"
         aria-labelledby="key-combo-title"
         class="glass-card rounded-xl w-full max-w-lg p-6 relative"
         (click)="$event.stopPropagation()"
@@ -275,12 +276,13 @@
     <div
       data-guac-modal-open="true"
       class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      tabindex="-1"
       (click)="closeClipboardModal()"
       (keydown.escape)="closeClipboardModal()"
-      aria-hidden="true"
     >
       <dialog
         open
+        tabindex="-1"
         aria-labelledby="clipboard-title"
         class="glass-card rounded-xl w-full max-w-xl p-6 relative"
         (click)="$event.stopPropagation()"

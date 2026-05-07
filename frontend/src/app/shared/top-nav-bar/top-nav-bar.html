@@ -52,7 +52,7 @@
       "
       aria-live="polite"
     >
-      <div class="w-2 h-2 rounded-full status-pulse" [ngClass]="healthDotClasses()"></div>
+      <span class="w-2 h-2 rounded-full status-pulse" [ngClass]="healthDotClasses()"></span>
       <span class="text-xs font-medium" [ngClass]="healthTextClasses()">
         {{
           health() === 'healthy'

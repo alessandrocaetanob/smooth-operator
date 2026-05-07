@@ -131,13 +131,14 @@
   @if (membersModalGroup(); as group) {
     <div
       class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+      tabindex="-1"
       (click)="closeMembers()"
       (keydown.enter)="closeMembers()"
       (keydown.escape)="closeMembers()"
-      aria-hidden="true"
     >
       <dialog
         open
+        tabindex="-1"
         class="w-full max-w-lg glass-panel rounded-lg p-5"
         (click)="$event.stopPropagation()"
         (keydown.enter)="$event.stopPropagation()"
