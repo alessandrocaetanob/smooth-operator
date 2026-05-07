@@ -204,4 +204,40 @@ public class UsersControllerIntegrationTests
         var t2 = await db.Users.Include(u => u.ConnectionGroups).FirstAsync(u => u.Id == targetId);
         Assert.Equal(2, t2.ConnectionGroups.Count);
     }
+
+    [Fact]
+    public async Task GetVaultAssignments_ReturnsAssignedVaultIds()
+    {
+        var ownerId = Guid.NewGuid();
+        var targetId = Guid.NewGuid();
+        var vaultAId = Guid.NewGuid();
+        var vaultBId = Guid.NewGuid();
+
+        await using var factory = new TestWebApplicationFactory(db =>
+        {
+            var owner = new User { Id = ownerId, Email = "owner@x", Name = "owner", IsActive = true, CreatedAt = DateTime.UtcNow };
+            AttachRoles(db, owner, AppRoles.Owner);
+            db.Users.Add(owner);
+
+            var vaultA = new ConnectionGroup { Id = vaultAId, Name = "Vault A" };
+            var vaultB = new ConnectionGroup { Id = vaultBId, Name = "Vault B" };
+            db.ConnectionGroups.AddRange(vaultA, vaultB);
+
+            var target = new User { Id = targetId, Email = "target@x", Name = "target", IsActive = true, CreatedAt = DateTime.UtcNow };
+            AttachRoles(db, target, AppRoles.User);
+            target.ConnectionGroups.Add(vaultA);
+            target.ConnectionGroups.Add(vaultB);
+            db.Users.Add(target);
+        });
+
+        var client = AsUser(factory, ownerId, AppRoles.Owner);
+        var response = await client.GetAsync($"/api/users/{targetId}/vaults");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var vaultIds = await response.Content.ReadFromJsonAsync<List<Guid>>();
+        Assert.NotNull(vaultIds);
+        Assert.Equal(2, vaultIds!.Count);
+        Assert.Contains(vaultAId, vaultIds);
+        Assert.Contains(vaultBId, vaultIds);
+    }
 }

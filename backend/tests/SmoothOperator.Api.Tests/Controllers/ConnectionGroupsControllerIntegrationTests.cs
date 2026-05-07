@@ -94,4 +94,31 @@ public class ConnectionGroupsControllerIntegrationTests
         var delRes2 = await client.DeleteAsync($"/api/vaults/{vaultId}");
         Assert.Equal(HttpStatusCode.NoContent, delRes2.StatusCode);
     }
+
+    [Fact]
+    public async Task ListVaults_ReturnsExistingVaults_ForAdmin()
+    {
+        var adminId = Guid.NewGuid();
+        var vaultA = Guid.NewGuid();
+        var vaultB = Guid.NewGuid();
+
+        await using var factory = new TestWebApplicationFactory(db =>
+        {
+            var admin = new User { Id = adminId, Email = "admin@x", Name = "admin", IsActive = true, CreatedAt = DateTime.UtcNow };
+            AttachRoles(db, admin, AppRoles.Admin);
+            db.Users.Add(admin);
+
+            db.ConnectionGroups.Add(new ConnectionGroup { Id = vaultA, Name = "A Team Vault" });
+            db.ConnectionGroups.Add(new ConnectionGroup { Id = vaultB, Name = "B Team Vault" });
+        });
+
+        var client = AsUser(factory, adminId, AppRoles.Admin);
+        var response = await client.GetAsync("/api/vaults");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var vaults = await response.Content.ReadFromJsonAsync<List<ConnectionGroupDto>>();
+        Assert.NotNull(vaults);
+        Assert.Contains(vaults, v => v.Id == vaultA);
+        Assert.Contains(vaults, v => v.Id == vaultB);
+    }
 }

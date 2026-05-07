@@ -181,4 +181,63 @@ public class MetricsControllerTests
         Assert.Equal(1, breakdown!.Success);
         Assert.Equal(2, breakdown.Failure);
     }
+
+    [Fact]
+    public async Task ConnectionsTimeseries_ReturnsBucketsAndEventCounts()
+    {
+        var adminId = Guid.NewGuid();
+        var now = DateTime.UtcNow;
+        await using var factory = new TestWebApplicationFactory(db =>
+        {
+            db.Users.Add(new User { Id = adminId, Email = "a@test.local", Name = "a", IsActive = true, CreatedAt = now });
+            db.AuditLogs.AddRange(
+                NewLog("connection.started", "success", now.AddMinutes(-7), adminId),
+                NewLog("connection.ended", "success", now.AddMinutes(-7), adminId),
+                NewLog("connection.started", "success", now.AddMinutes(-3), adminId));
+        });
+
+        var client = AsAdmin(factory, adminId);
+        var buckets = await client.GetFromJsonAsync<List<TimeseriesBucketDto>>(
+            "/api/metrics/connections/timeseries?hours=1&bucketMinutes=5");
+
+        Assert.NotNull(buckets);
+        Assert.NotEmpty(buckets!);
+
+        var started = buckets.Sum(b => b.Values.TryGetValue("connection.started", out var c) ? c : 0);
+        var ended = buckets.Sum(b => b.Values.TryGetValue("connection.ended", out var c) ? c : 0);
+        Assert.Equal(2, started);
+        Assert.Equal(1, ended);
+    }
+
+    [Fact]
+    public async Task AuditEventTimeseries_ReturnsTopActionsOnly()
+    {
+        var adminId = Guid.NewGuid();
+        var now = DateTime.UtcNow;
+        await using var factory = new TestWebApplicationFactory(db =>
+        {
+            db.Users.Add(new User { Id = adminId, Email = "a@test.local", Name = "a", IsActive = true, CreatedAt = now });
+            db.AuditLogs.AddRange(
+                NewLog("user.login", "success", now.AddMinutes(-5), adminId),
+                NewLog("user.login", "failure", now.AddMinutes(-4), adminId),
+                NewLog("vault.updated", "success", now.AddMinutes(-4), adminId),
+                NewLog("vault.updated", "success", now.AddMinutes(-3), adminId),
+                NewLog("group.updated", "success", now.AddMinutes(-2), adminId));
+        });
+
+        var client = AsAdmin(factory, adminId);
+        var buckets = await client.GetFromJsonAsync<List<TimeseriesBucketDto>>(
+            "/api/metrics/audit-events/timeseries?hours=1&bucketMinutes=10");
+
+        Assert.NotNull(buckets);
+        Assert.NotEmpty(buckets!);
+
+        var nonZeroKeys = buckets
+            .SelectMany(b => b.Values.Where(kv => kv.Value > 0).Select(kv => kv.Key))
+            .Distinct()
+            .ToList();
+
+        Assert.Contains("user.login", nonZeroKeys);
+        Assert.Contains("vault.updated", nonZeroKeys);
+    }
 }

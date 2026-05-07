@@ -124,4 +124,39 @@ public class UserGroupsControllerIntegrationTests
         Assert.Equal(1, group2.MemberCount);
         Assert.Equal(user2Id, group2.Members[0].Id);
     }
+
+    [Fact]
+    public async Task ListVaults_ReturnsAssignedVaultsForGroup()
+    {
+        var adminId = Guid.NewGuid();
+        var groupId = Guid.NewGuid();
+        var vaultAId = Guid.NewGuid();
+        var vaultBId = Guid.NewGuid();
+
+        await using var factory = new TestWebApplicationFactory(db =>
+        {
+            var admin = new User { Id = adminId, Email = "a@x", Name = "a", IsActive = true, CreatedAt = DateTime.UtcNow };
+            AttachRoles(db, admin, AppRoles.Admin);
+            db.Users.Add(admin);
+
+            var group = new UserGroup { Id = groupId, Name = "Ops" };
+            var vaultA = new ConnectionGroup { Id = vaultAId, Name = "Alpha" };
+            var vaultB = new ConnectionGroup { Id = vaultBId, Name = "Beta" };
+            group.Vaults.Add(vaultA);
+            group.Vaults.Add(vaultB);
+
+            db.UserGroups.Add(group);
+            db.ConnectionGroups.AddRange(vaultA, vaultB);
+        });
+
+        var client = AsUser(factory, adminId, AppRoles.Admin);
+        var response = await client.GetAsync($"/api/groups/{groupId}/vaults");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var vaults = await response.Content.ReadFromJsonAsync<List<UserGroupVaultDto>>();
+        Assert.NotNull(vaults);
+        Assert.Equal(2, vaults!.Count);
+        Assert.Contains(vaults, v => v.Id == vaultAId);
+        Assert.Contains(vaults, v => v.Id == vaultBId);
+    }
 }

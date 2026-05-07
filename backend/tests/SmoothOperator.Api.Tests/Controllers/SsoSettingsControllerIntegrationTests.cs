@@ -205,4 +205,53 @@ public class SsoSettingsControllerIntegrationTests
         var second = await asOwner.DeleteAsync("/api/settings/sso");
         Assert.Equal(HttpStatusCode.NotFound, second.StatusCode);
     }
+
+    [Fact]
+    public async Task UpsertSaml_PersistsConfig_AndGetReturnsSanitizedView()
+    {
+        var (factory, ownerId, _) = NewFactoryWithUsers();
+        await using var _f = factory;
+
+        var asOwner = AsUser(factory, ownerId, AppRoles.Owner);
+        var put = await asOwner.PutAsJsonAsync("/api/settings/sso/saml", new UpsertSamlRequest
+        {
+            Name = "Corporate SAML",
+            SpEntityId = "smooth-operator-sp",
+            IdpEntityId = "idp-entity",
+            IdpSsoUrl = "https://idp.example.com/sso",
+            IdpCertificate = "CERTIFICATE_DATA",
+            SpCertificate = "SP_CERTIFICATE_DATA",
+            SpPrivateKey = "SUPER_PRIVATE_KEY",
+            NameIdFormat = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress",
+            AttributeEmail = "email",
+            AttributeName = "name",
+            WantAssertionsSigned = true,
+            WantResponseSigned = true
+        });
+        Assert.Equal(HttpStatusCode.NoContent, put.StatusCode);
+
+        var get = await asOwner.GetAsync("/api/settings/sso");
+        Assert.Equal(HttpStatusCode.OK, get.StatusCode);
+        var dto = await get.Content.ReadFromJsonAsync<SsoProviderDto>();
+        Assert.NotNull(dto);
+        Assert.Equal("Saml", dto!.Type);
+        Assert.Equal("Corporate SAML", dto.Name);
+        Assert.NotNull(dto.Saml);
+        Assert.True(dto.Saml!.HasSpPrivateKey);
+
+        var raw = await get.Content.ReadAsStringAsync();
+        Assert.DoesNotContain("SUPER_PRIVATE_KEY", raw);
+    }
+
+    [Fact]
+    public async Task TestConnection_WithoutProvider_ReturnsBadRequest()
+    {
+        var (factory, ownerId, _) = NewFactoryWithUsers();
+        await using var _f = factory;
+
+        var asOwner = AsUser(factory, ownerId, AppRoles.Owner);
+        var response = await asOwner.PostAsync("/api/settings/sso/test", content: null);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
 }
