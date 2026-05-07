@@ -9,7 +9,7 @@ export interface Credential {
   id: string;
   name: string;
   username: string;
-  credentialType: 'password' | 'private_key' | string;
+  credentialType: string;
   publicKey?: string;
   storageMode: SecretStorageMode;
   secretProviderId?: string;

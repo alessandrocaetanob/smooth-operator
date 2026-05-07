@@ -18,7 +18,8 @@ namespace SmoothOperator.Application.Features.Users.Commands
 
     public sealed class SetUserRoleCommandHandler : IRequestHandler<SetUserRoleCommand, UserListItemDto>
     {
-        private static readonly string[] ValidRoles = { "Owner", "Admin", "TeamAdmin", "User" };
+        private const string RoleOwner = "Owner";
+        private static readonly string[] ValidRoles = { RoleOwner, "Admin", "TeamAdmin", "User" };
 
         private static readonly IReadOnlyDictionary<string, string> RoleDescriptions =
             new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
@@ -54,15 +55,15 @@ namespace SmoothOperator.Application.Features.Users.Commands
             if (user == null)
                 throw new NotFoundException("User not found.");
 
-            var wasOwner = user.Roles.Any(r => r.Name.Equals("Owner", StringComparison.OrdinalIgnoreCase));
-            var becomesOwner = string.Equals(normalizedRole, "Owner", StringComparison.OrdinalIgnoreCase);
+            var wasOwner = user.Roles.Any(r => r.Name.Equals(RoleOwner, StringComparison.OrdinalIgnoreCase));
+            var becomesOwner = string.Equals(normalizedRole, RoleOwner, StringComparison.OrdinalIgnoreCase);
 
             if (wasOwner && !becomesOwner && user.IsActive)
             {
                 var otherActiveOwners = await _context.Users
                     .Include(u => u.Roles)
                     .CountAsync(u => u.Id != request.UserId && u.IsActive
-                        && u.Roles.Any(r => r.Name == "Owner"), cancellationToken);
+                        && u.Roles.Any(r => r.Name == RoleOwner), cancellationToken);
 
                 if (otherActiveOwners == 0)
                     throw new ConflictException("Cannot remove the Owner role from the last active Owner.");

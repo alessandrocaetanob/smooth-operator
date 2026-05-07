@@ -19,6 +19,9 @@ namespace SmoothOperator.Api.Controllers
     [AllowAnonymous]
     public class SsoController : ControllerBase
     {
+        private const string AuditLoginFailed = "sso.login_failed";
+        private const string ResourceTypeSso = "sso";
+
         private readonly IMediator _mediator;
         private readonly ISsoProviderService _providers;
         private readonly IOidcFlowService _oidc;
@@ -79,7 +82,7 @@ namespace SmoothOperator.Api.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to build SSO authorization URL");
-                await _audit.WriteAsync("sso.login_failed", "sso", "",
+                await _audit.WriteAsync(AuditLoginFailed, ResourceTypeSso, "",
                     new { stage = "initiate", error = ex.Message, providerType = p.Type.ToString() });
                 return Redirect(_urls.FinalizeErrorUrl(Request, "initiate_failed"));
             }
@@ -92,7 +95,7 @@ namespace SmoothOperator.Api.Controllers
         {
             if (!string.IsNullOrEmpty(error))
             {
-                await _audit.WriteAsync("sso.login_failed", "sso", "",
+                await _audit.WriteAsync(AuditLoginFailed, ResourceTypeSso, "",
                     new { stage = "callback", reason = "idp_error", error });
                 return Redirect(_urls.FinalizeErrorUrl(Request, error!));
             }
@@ -101,21 +104,21 @@ namespace SmoothOperator.Api.Controllers
             {
                 var (identity, returnUrl) = await _oidc.HandleCallbackAsync(code ?? "", state ?? "", _urls.CallbackUrl(Request));
                 var result = await _provisioning.ProvisionOrLinkAsync(SsoProviderType.Oidc, identity.ExternalId, identity.Email, identity.Name);
-                await _audit.WriteAsync("sso.login_success", "sso", result.User.Id.ToString(),
+                await _audit.WriteAsync("sso.login_success", ResourceTypeSso, result.User.Id.ToString(),
                     new { providerType = "Oidc", email = identity.Email });
                 return Redirect(_urls.FinalizeUrl(Request, result.Token, returnUrl));
             }
             catch (UnauthorizedAccessException ex)
             {
                 _logger.LogWarning(ex, "OIDC callback rejected");
-                await _audit.WriteAsync("sso.login_failed", "sso", "",
+                await _audit.WriteAsync(AuditLoginFailed, ResourceTypeSso, "",
                     new { stage = "callback", reason = ex.Message, providerType = "Oidc" });
                 return Redirect(_urls.FinalizeErrorUrl(Request, "unauthorized"));
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "OIDC callback failed");
-                await _audit.WriteAsync("sso.login_failed", "sso", "",
+                await _audit.WriteAsync(AuditLoginFailed, ResourceTypeSso, "",
                     new { stage = "callback", reason = "exception", error = ex.Message, providerType = "Oidc" });
                 return Redirect(_urls.FinalizeErrorUrl(Request, "callback_failed"));
             }
@@ -130,21 +133,21 @@ namespace SmoothOperator.Api.Controllers
             {
                 var (identity, returnUrl) = await _saml.HandleAssertionAsync(Request);
                 var result = await _provisioning.ProvisionOrLinkAsync(SsoProviderType.Saml, identity.ExternalId, identity.Email, identity.Name);
-                await _audit.WriteAsync("sso.login_success", "sso", result.User.Id.ToString(),
+                await _audit.WriteAsync("sso.login_success", ResourceTypeSso, result.User.Id.ToString(),
                     new { providerType = "Saml", email = identity.Email });
                 return Redirect(_urls.FinalizeUrl(Request, result.Token, returnUrl));
             }
             catch (UnauthorizedAccessException ex)
             {
                 _logger.LogWarning(ex, "SAML ACS rejected");
-                await _audit.WriteAsync("sso.login_failed", "sso", "",
+                await _audit.WriteAsync(AuditLoginFailed, ResourceTypeSso, "",
                     new { stage = "acs", reason = ex.Message, providerType = "Saml" });
                 return Redirect(_urls.FinalizeErrorUrl(Request, "unauthorized"));
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "SAML ACS failed");
-                await _audit.WriteAsync("sso.login_failed", "sso", "",
+                await _audit.WriteAsync(AuditLoginFailed, ResourceTypeSso, "",
                     new { stage = "acs", reason = "exception", error = ex.Message, providerType = "Saml" });
                 return Redirect(_urls.FinalizeErrorUrl(Request, "acs_failed"));
             }

@@ -86,6 +86,6 @@ export class Authentication {
     // Backend mints the JWT and redirects the browser to /auth/sso/finalize?token=...
     // The finalize page completes the handoff and routes the user into the app.
     const returnUrl = '/vault';
-    window.location.href = `/api/auth/sso/initiate?returnUrl=${encodeURIComponent(returnUrl)}`;
+    globalThis.location.href = `/api/auth/sso/initiate?returnUrl=${encodeURIComponent(returnUrl)}`;
   }
 }

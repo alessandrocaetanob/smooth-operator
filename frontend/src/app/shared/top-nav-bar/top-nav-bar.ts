@@ -95,15 +95,7 @@ export class TopNavBar implements OnInit {
       document.addEventListener('scroll', checkScroll, { passive: true });
       checkScroll();
 
-      const reset = () => {
-        if (this.idleTimer) clearTimeout(this.idleTimer);
-        if (this._idleState() === 'sleep') {
-          this.zone.run(() => this._idleState.set('idle'));
-        }
-        this.idleTimer = setTimeout(() => {
-          this.zone.run(() => this._idleState.set('sleep'));
-        }, IDLE_TIMEOUT_MS);
-      };
+      const reset = () => this.resetIdleTimer();
 
       const events: (keyof DocumentEventMap)[] = ['pointermove', 'pointerdown', 'keydown'];
       events.forEach((evt) => document.addEventListener(evt, reset, { passive: true }));
@@ -127,6 +119,16 @@ export class TopNavBar implements OnInit {
       next: () => this.health.set('healthy'),
       error: () => this.health.set('down'),
     });
+  }
+
+  private resetIdleTimer(): void {
+    if (this.idleTimer) clearTimeout(this.idleTimer);
+    if (this._idleState() === 'sleep') {
+      this.zone.run(() => this._idleState.set('idle'));
+    }
+    this.idleTimer = setTimeout(() => {
+      this.zone.run(() => this._idleState.set('sleep'));
+    }, IDLE_TIMEOUT_MS);
   }
 
   toggleTheme(): void {

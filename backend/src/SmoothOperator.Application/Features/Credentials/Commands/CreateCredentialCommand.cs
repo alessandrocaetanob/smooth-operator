@@ -49,47 +49,7 @@ namespace SmoothOperator.Application.Features.Credentials.Commands
             };
 
             if (isExternal)
-            {
-                if (dto.SecretProviderId == null)
-                    throw new BadRequestException("SecretProviderId is required when StorageMode is External.");
-
-                var provider = await _context.SecretProviders
-                    .FirstOrDefaultAsync(p => p.Id == dto.SecretProviderId, cancellationToken)
-                    ?? throw new NotFoundException("Secret provider not found.");
-
-                credential.SecretProviderId = provider.Id;
-
-                if (dto.PushToVault)
-                {
-                    // Push flow: write secret to KV, store only the reference
-                    if (string.IsNullOrWhiteSpace(dto.Secret))
-                        throw new BadRequestException("Secret value is required for push-to-vault flow.");
-
-                    var secretProvider = _secretProviderFactory.Create(provider);
-                    var secretName = $"smoothoperator-{SanitizeName(dto.Name)}-{Guid.NewGuid():N}";
-                    await secretProvider.SetSecretAsync(secretName, dto.Secret!, cancellationToken);
-
-                    credential.ExternalSecretName = secretName;
-                    credential.ExternalSecretVersion = null; // track latest
-                    credential.EncryptedSecret = string.Empty;
-
-                    await _audit.WriteAsync("credential.pushed", "Credential", credential.Id.ToString(),
-                        new { credential.Name, SecretName = secretName, ProviderId = provider.Id });
-                }
-                else
-                {
-                    // Link flow: reference an existing KV secret
-                    if (string.IsNullOrWhiteSpace(dto.ExternalSecretName))
-                        throw new BadRequestException("ExternalSecretName is required when linking to an existing vault secret.");
-
-                    credential.ExternalSecretName = dto.ExternalSecretName;
-                    credential.ExternalSecretVersion = dto.ExternalSecretVersion;
-                    credential.EncryptedSecret = string.Empty;
-
-                    await _audit.WriteAsync("credential.linked", "Credential", credential.Id.ToString(),
-                        new { credential.Name, dto.ExternalSecretName, ProviderId = provider.Id });
-                }
-            }
+                await HandleExternalCredentialAsync(credential, dto, cancellationToken);
             else
             {
                 // Local flow
@@ -120,6 +80,47 @@ namespace SmoothOperator.Application.Features.Credentials.Commands
             ExternalSecretName = c.ExternalSecretName,
             ExternalSecretVersion = c.ExternalSecretVersion
         };
+
+        private async Task HandleExternalCredentialAsync(Credential credential, CreateCredentialDto dto, CancellationToken cancellationToken)
+        {
+            if (dto.SecretProviderId == null)
+                throw new BadRequestException("SecretProviderId is required when StorageMode is External.");
+
+            var provider = await _context.SecretProviders
+                .FirstOrDefaultAsync(p => p.Id == dto.SecretProviderId, cancellationToken)
+                ?? throw new NotFoundException("Secret provider not found.");
+
+            credential.SecretProviderId = provider.Id;
+
+            if (dto.PushToVault)
+            {
+                if (string.IsNullOrWhiteSpace(dto.Secret))
+                    throw new BadRequestException("Secret value is required for push-to-vault flow.");
+
+                var secretProvider = _secretProviderFactory.Create(provider);
+                var secretName = $"smoothoperator-{SanitizeName(dto.Name)}-{Guid.NewGuid():N}";
+                await secretProvider.SetSecretAsync(secretName, dto.Secret!, cancellationToken);
+
+                credential.ExternalSecretName = secretName;
+                credential.ExternalSecretVersion = null;
+                credential.EncryptedSecret = string.Empty;
+
+                await _audit.WriteAsync("credential.pushed", "Credential", credential.Id.ToString(),
+                    new { credential.Name, SecretName = secretName, ProviderId = provider.Id });
+            }
+            else
+            {
+                if (string.IsNullOrWhiteSpace(dto.ExternalSecretName))
+                    throw new BadRequestException("ExternalSecretName is required when linking to an existing vault secret.");
+
+                credential.ExternalSecretName = dto.ExternalSecretName;
+                credential.ExternalSecretVersion = dto.ExternalSecretVersion;
+                credential.EncryptedSecret = string.Empty;
+
+                await _audit.WriteAsync("credential.linked", "Credential", credential.Id.ToString(),
+                    new { credential.Name, dto.ExternalSecretName, ProviderId = provider.Id });
+            }
+        }
 
         private static string SanitizeName(string name) =>
             System.Text.RegularExpressions.Regex.Replace(

@@ -217,81 +217,93 @@ export class Credentials implements OnInit {
   save(): void {
     if (!this.canManageCredentials()) return;
     if (this.busy()) return;
+    if (!this.validateSaveForm()) return;
+    const f = this.form();
+    this.busy.set(true);
+    this.errorMessage.set(null);
+    if (f.id) {
+      this.svc.update(f.id, this.buildUpdatePayload(f)).subscribe({
+        next: () => this.done(),
+        error: (err) => this.fail(err),
+      });
+    } else {
+      this.svc.create(this.buildCreatePayload(f)).subscribe({
+        next: () => this.done(),
+        error: (err) => this.fail(err),
+      });
+    }
+  }
+
+  private validateSaveForm(): boolean {
     const f = this.form();
     if (!f.name.trim() || !f.username.trim()) {
       this.errorMessage.set('Name and username are required.');
-      return;
+      return false;
     }
     if (f.storageMode === 'External') {
       if (!f.secretProviderId) {
         this.errorMessage.set('Please select a secret provider.');
-        return;
+        return false;
       }
       if (f.pushToVault && !f.id && !f.secret) {
         this.errorMessage.set('Secret value is required when pushing to vault.');
-        return;
+        return false;
       }
       if (!f.pushToVault && !f.externalSecretName) {
         this.errorMessage.set('Please select an existing secret to link.');
-        return;
+        return false;
       }
-    } else {
-      if (!f.id && !f.secret) {
-        this.errorMessage.set('Secret is required when creating a credential.');
-        return;
-      }
+    } else if (!f.id && !f.secret) {
+      this.errorMessage.set('Secret is required when creating a credential.');
+      return false;
     }
-    this.busy.set(true);
-    this.errorMessage.set(null);
-    if (f.id) {
-      const upd: UpdateCredentialPayload = {
-        name: f.name.trim(),
-        username: f.username.trim(),
-        credentialType: f.credentialType,
-        publicKey: f.publicKey,
-        storageMode: f.storageMode,
-      };
-      if (f.storageMode === 'External') {
-        upd.secretProviderId = f.secretProviderId;
-        if (f.pushToVault && f.secret) {
-          upd.pushToVault = true;
-          upd.secret = f.secret;
-        } else if (!f.pushToVault) {
-          upd.externalSecretName = f.externalSecretName;
-          upd.externalSecretVersion = f.externalSecretVersion || undefined;
-        }
-      } else if (f.secret) {
+    return true;
+  }
+
+  private buildUpdatePayload(f: FormState): UpdateCredentialPayload {
+    const upd: UpdateCredentialPayload = {
+      name: f.name.trim(),
+      username: f.username.trim(),
+      credentialType: f.credentialType,
+      publicKey: f.publicKey,
+      storageMode: f.storageMode,
+    };
+    if (f.storageMode === 'External') {
+      upd.secretProviderId = f.secretProviderId;
+      if (f.pushToVault && f.secret) {
+        upd.pushToVault = true;
         upd.secret = f.secret;
+      } else if (!f.pushToVault) {
+        upd.externalSecretName = f.externalSecretName;
+        upd.externalSecretVersion = f.externalSecretVersion || undefined;
       }
-      this.svc.update(f.id, upd).subscribe({
-        next: () => this.done(),
-        error: (err) => this.fail(err),
-      });
-    } else {
-      const create: CreateCredentialPayload = {
-        name: f.name.trim(),
-        username: f.username.trim(),
-        credentialType: f.credentialType,
-        publicKey: f.publicKey,
-        storageMode: f.storageMode,
-      };
-      if (f.storageMode === 'External') {
-        create.secretProviderId = f.secretProviderId;
-        if (f.pushToVault) {
-          create.pushToVault = true;
-          create.secret = f.secret;
-        } else {
-          create.externalSecretName = f.externalSecretName;
-          create.externalSecretVersion = f.externalSecretVersion || undefined;
-        }
-      } else {
-        create.secret = f.secret;
-      }
-      this.svc.create(create).subscribe({
-        next: () => this.done(),
-        error: (err) => this.fail(err),
-      });
+    } else if (f.secret) {
+      upd.secret = f.secret;
     }
+    return upd;
+  }
+
+  private buildCreatePayload(f: FormState): CreateCredentialPayload {
+    const create: CreateCredentialPayload = {
+      name: f.name.trim(),
+      username: f.username.trim(),
+      credentialType: f.credentialType,
+      publicKey: f.publicKey,
+      storageMode: f.storageMode,
+    };
+    if (f.storageMode === 'External') {
+      create.secretProviderId = f.secretProviderId;
+      if (f.pushToVault) {
+        create.pushToVault = true;
+        create.secret = f.secret;
+      } else {
+        create.externalSecretName = f.externalSecretName;
+        create.externalSecretVersion = f.externalSecretVersion || undefined;
+      }
+    } else {
+      create.secret = f.secret;
+    }
+    return create;
   }
 
   async remove(c: Credential): Promise<void> {

@@ -18,9 +18,6 @@ using Microsoft.AspNetCore.HttpOverrides;
 using System.Net;
 using IPNetwork = System.Net.IPNetwork;
 using Serilog;
-using OpenTelemetry.Metrics;
-using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
 using Microsoft.AspNetCore.ResponseCompression;
 using System.IO.Compression;
 using Prometheus;
@@ -28,6 +25,7 @@ using StackExchange.Redis;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.AspNetCore.DataProtection;
+using SmoothOperator.Api.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -206,38 +204,7 @@ builder.Services.AddDataProtection()
     .SetApplicationName("smooth-operator");
 
 // ─── CORS ────────────────────────────────────────────────────────────────────
-// Allowed origins are read from AppUrls:Frontend and AppUrls:AllowedOrigins[] so
-// the policy adjusts to the deployment environment without code changes.
-// Set AppUrls__AllowedOrigins__0, __1, … environment variables to add origins.
-const string CorsPolicyName = "AllowConfiguredOrigins";
-var appUrlsCfg = builder.Configuration.GetSection("AppUrls");
-var frontendOrigin = appUrlsCfg["Frontend"];
-var appOrigin = appUrlsCfg["App"];
-var extraOrigins = appUrlsCfg.GetSection("AllowedOrigins").Get<string[]>() ?? [];
-
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy(CorsPolicyName, policy =>
-    {
-        var origins = new List<string>();
-        if (!string.IsNullOrWhiteSpace(frontendOrigin))
-            origins.Add(frontendOrigin.TrimEnd('/'));
-        if (!string.IsNullOrWhiteSpace(appOrigin) && appOrigin != frontendOrigin)
-            origins.Add(appOrigin.TrimEnd('/'));
-        origins.AddRange(extraOrigins
-            .Where(o => !string.IsNullOrWhiteSpace(o))
-            .Select(o => o.TrimEnd('/')));
-
-        if (origins.Count > 0)
-            policy.WithOrigins([.. origins])
-                  .AllowAnyHeader()
-                  .AllowAnyMethod()
-                  .AllowCredentials();
-        else
-            // No origins configured — permissive dev fallback (no credentials).
-            policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
-    });
-});
+builder.Services.AddApplicationCors(builder.Configuration);
 
 builder.Services.AddControllers();
 
@@ -272,64 +239,13 @@ builder.Services.AddScoped<IMapper, Mapper>();
 builder.Services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<AppDbContext>());
 
 // ─── OpenTelemetry ───────────────────────────────────────────────────────────
-var otelSection = builder.Configuration.GetSection("Otel");
-var otelEndpoint = otelSection["Endpoint"];
-var otelServiceName = otelSection["ServiceName"] ?? "smooth-operator-backend";
-if (!string.IsNullOrWhiteSpace(otelEndpoint))
-{
-    builder.Services.AddOpenTelemetry()
-        .ConfigureResource(r => r.AddService(otelServiceName))
-        .WithTracing(tracing => tracing
-            .AddAspNetCoreInstrumentation()
-            .AddHttpClientInstrumentation()
-            .AddOtlpExporter(o => o.Endpoint = new Uri(otelEndpoint)))
-        .WithMetrics(metrics => metrics
-            .AddAspNetCoreInstrumentation()
-            .AddHttpClientInstrumentation()
-            .AddRuntimeInstrumentation()
-            .AddOtlpExporter(o => o.Endpoint = new Uri(otelEndpoint)));
-}
+builder.AddSmoothOperatorOpenTelemetry();
 
 // ─── Build ───────────────────────────────────────────────────────────────────
 var app = builder.Build();
 
 // Apply any pending EF Core migrations on startup.
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("Migrations");
-    try
-    {
-        if (db.Database.IsRelational())
-        {
-            var pending = (await db.Database.GetPendingMigrationsAsync()).ToList();
-            if (pending.Count > 0)
-            {
-                logger.LogInformation("Applying {Count} pending migration(s): {Migrations}",
-                    pending.Count, string.Join(", ", pending));
-                await db.Database.MigrateAsync();
-                logger.LogInformation("Migrations applied successfully.");
-            }
-            else
-            {
-                logger.LogInformation("Database is up to date; no migrations to apply.");
-            }
-        }
-        else
-        {
-            await db.Database.EnsureCreatedAsync();
-        }
-
-        await RoleSeeder.SeedDefaultsAsync(db, logger);
-    }
-#pragma warning disable S2139 // Intentionally log before rethrowing for startup diagnostics
-    catch (Exception ex)
-    {
-        logger.LogError(ex, "Failed to apply database migrations on startup.");
-        throw;
-    }
-#pragma warning restore S2139
-}
+await app.ApplyPendingMigrationsAsync();
 
 app.UseWebSockets();
 
@@ -359,7 +275,7 @@ app.UseSerilogRequestLogging(opts =>
 app.UseResponseCompression();
 app.UseHttpsRedirection();
 app.UseRouting();
-app.UseCors(CorsPolicyName);   // Must be after UseRouting, before UseAuthentication/OutputCache
+app.UseCors(CorsExtensions.CorsPolicyName);   // Must be after UseRouting, before UseAuthentication/OutputCache
 app.UseOutputCache();
 app.UseHttpMetrics();
 app.UseRateLimiter();

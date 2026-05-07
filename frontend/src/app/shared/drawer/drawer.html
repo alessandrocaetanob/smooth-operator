@@ -7,11 +7,10 @@
 ></div>
 
 <!-- Drawer panel -->
-<aside
+<dialog
+  open
   @drawerPanel
   class="fixed inset-y-0 right-0 z-50 flex flex-col w-full max-w-xl bg-surface border-l border-outline-variant/30 shadow-2xl"
-  role="dialog"
-  aria-modal="true"
   aria-labelledby="drawer-title"
 >
   <!-- Header -->
@@ -33,4 +32,4 @@
   <div class="flex-1 overflow-y-auto px-6 py-6">
     <ng-content></ng-content>
   </div>
-</aside>
+</dialog>

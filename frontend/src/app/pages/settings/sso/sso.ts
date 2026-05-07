@@ -55,9 +55,9 @@ export class SsoSettings implements OnInit {
   readonly samlWantAssertionsSigned = signal(true);
   readonly samlWantResponseSigned = signal(true);
 
-  readonly metadataUrl = computed(() => `${window.location.origin}/api/auth/sso/metadata`);
-  readonly callbackUrl = computed(() => `${window.location.origin}/api/auth/sso/callback`);
-  readonly acsUrl = computed(() => `${window.location.origin}/api/auth/sso/acs`);
+  readonly metadataUrl = computed(() => `${globalThis.location.origin}/api/auth/sso/metadata`);
+  readonly callbackUrl = computed(() => `${globalThis.location.origin}/api/auth/sso/callback`);
+  readonly acsUrl = computed(() => `${globalThis.location.origin}/api/auth/sso/acs`);
   readonly hasProvider = computed(() => !!this.current()?.type);
   readonly providerLabel = computed(() => {
     const c = this.current();

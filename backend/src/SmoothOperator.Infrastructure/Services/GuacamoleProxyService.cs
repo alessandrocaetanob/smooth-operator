@@ -23,6 +23,9 @@ namespace SmoothOperator.Infrastructure.Services
 {
     public class GuacamoleProxyService
     {
+        private const string ResourceTypeConnection = "Connection";
+        private const string TicketInvalidAction = "connection.ticket.invalid";
+
         private readonly ILogger<GuacamoleProxyService> _logger;
         private readonly string _guacdHost;
         private readonly int _guacdPort;
@@ -75,7 +78,7 @@ namespace SmoothOperator.Infrastructure.Services
                 Id = Guid.NewGuid(),
                 UserId = userId,
                 Action = "connection.ticket.issued",
-                ResourceType = "Connection",
+                ResourceType = ResourceTypeConnection,
                 ResourceId = connectionId.ToString(),
                 Details = "{}",
                 IpAddress = ipAddress ?? string.Empty
@@ -97,7 +100,7 @@ namespace SmoothOperator.Infrastructure.Services
             var raw = await db.StringGetDeleteAsync(key);
             if (raw.IsNullOrEmpty)
             {
-                await LogTicketEventAsync(null, connectionId, "connection.ticket.invalid", ipAddress, "missing_or_expired");
+                await LogTicketEventAsync(null, connectionId, TicketInvalidAction, ipAddress, "missing_or_expired");
                 return null;
             }
 
@@ -108,13 +111,13 @@ namespace SmoothOperator.Infrastructure.Services
             }
             catch
             {
-                await LogTicketEventAsync(null, connectionId, "connection.ticket.invalid", ipAddress, "deserialize_failed");
+                await LogTicketEventAsync(null, connectionId, TicketInvalidAction, ipAddress, "deserialize_failed");
                 return null;
             }
 
             if (payload == null || payload.ConnectionId != connectionId)
             {
-                await LogTicketEventAsync(payload?.UserId, connectionId, "connection.ticket.invalid", ipAddress, "connection_mismatch");
+                await LogTicketEventAsync(payload?.UserId, connectionId, TicketInvalidAction, ipAddress, "connection_mismatch");
                 return null;
             }
 
@@ -124,7 +127,7 @@ namespace SmoothOperator.Infrastructure.Services
                 && !string.IsNullOrEmpty(ipAddress)
                 && !string.Equals(payload.IpAddress, ipAddress, StringComparison.OrdinalIgnoreCase))
             {
-                await LogTicketEventAsync(payload.UserId, connectionId, "connection.ticket.invalid", ipAddress, "ip_mismatch");
+                await LogTicketEventAsync(payload.UserId, connectionId, TicketInvalidAction, ipAddress, "ip_mismatch");
                 return null;
             }
 
@@ -145,7 +148,7 @@ namespace SmoothOperator.Infrastructure.Services
                     Id = Guid.NewGuid(),
                     UserId = userId,
                     Action = action,
-                    ResourceType = "Connection",
+                    ResourceType = ResourceTypeConnection,
                     ResourceId = connectionId.ToString(),
                     Details = reason == null ? "{}" : $"{{\"reason\":\"{reason}\"}}",
                     IpAddress = ipAddress ?? string.Empty
@@ -197,7 +200,7 @@ namespace SmoothOperator.Infrastructure.Services
                     Id = Guid.NewGuid(),
                     UserId = dbUser.Id,
                     Action = "connection.failed",
-                    ResourceType = "Connection",
+                    ResourceType = ResourceTypeConnection,
                     ResourceId = connectionId.ToString(),
                     Details = "{\"reason\":\"connection_not_found\"}",
                     IpAddress = ipAddress
@@ -233,7 +236,7 @@ namespace SmoothOperator.Infrastructure.Services
                     Id = Guid.NewGuid(),
                     UserId = dbUser.Id,
                     Action = "connection.host_unreachable",
-                    ResourceType = "Connection",
+                    ResourceType = ResourceTypeConnection,
                     ResourceId = connectionId.ToString(),
                     Details = $"{{\"host\":{JsonSerializer.Serialize(targetHost)},\"port\":{targetPort}}}",
                     IpAddress = ipAddress
@@ -254,7 +257,7 @@ namespace SmoothOperator.Infrastructure.Services
                 Id = Guid.NewGuid(),
                 UserId = dbUser.Id,
                 Action = "connection.started",
-                ResourceType = "Connection",
+                ResourceType = ResourceTypeConnection,
                 ResourceId = connectionId.ToString(),
                 Details = JsonSerializer.Serialize(new
                 {
@@ -276,6 +279,18 @@ namespace SmoothOperator.Infrastructure.Services
             });
             await db.KeyExpireAsync($"session:{sessionId}", TimeSpan.FromHours(24));
 
+            await RunGuacamoleSessionAsync(webSocket, connection, sessionId, dbUser, ipAddress, dbContext, db);
+        }
+
+        private async Task RunGuacamoleSessionAsync(
+            WebSocket webSocket,
+            Connection connection,
+            string sessionId,
+            User dbUser,
+            string ipAddress,
+            AppDbContext dbContext,
+            IDatabase db)
+        {
             using var tcpClient = new TcpClient();
             var connectionSuccessful = false;
             var sessionMetricRecorded = false;
@@ -312,7 +327,7 @@ namespace SmoothOperator.Infrastructure.Services
                 var serverVersion = paramNames.Count > 0 && paramNames[0].StartsWith("VERSION_", StringComparison.Ordinal)
                     ? paramNames[0]
                     : "VERSION_1_0_0";
-                var paramValues = await ResolveConnectionParametersAsync(connection, paramNames, serverVersion, dbContext, CancellationToken.None, userId, ipAddress);
+                var paramValues = await ResolveConnectionParametersAsync(connection, paramNames, serverVersion, dbContext, CancellationToken.None, dbUser.Id, ipAddress);
 
                 _logger.LogInformation(
                     "guacd handshake for {Protocol}: server={ServerVersion}, sending {ValueCount} connect values for {NameCount} arg names",
@@ -344,7 +359,7 @@ namespace SmoothOperator.Infrastructure.Services
                 var receiveTask = ProxyGuacdToWebSocket(reader, webSocket, msg =>
                 {
                     failureReason ??= msg;
-                    _logger.LogWarning("guacd reported error for connection {ConnectionId}: {Error}", connectionId, msg);
+                    _logger.LogWarning("guacd reported error for connection {ConnectionId}: {Error}", connection.Id, msg);
                 });
                 var sendTask = ProxyWebSocketToGuacd(webSocket, networkStream);
 
@@ -353,15 +368,15 @@ namespace SmoothOperator.Infrastructure.Services
             catch (SocketException ex)
             {
                 failureReason = $"Cannot reach Guacamole service ({_guacdHost}:{_guacdPort}): {ex.Message}";
-                _logger.LogError(ex, "Network error connecting to guacd for connection {ConnectionId}", connectionId);
+                _logger.LogError(ex, "Network error connecting to guacd for connection {ConnectionId}", connection.Id);
 
                 dbContext.AuditLogs.Add(new AuditLog
                 {
                     Id = Guid.NewGuid(),
                     UserId = dbUser.Id,
                     Action = "connection.error",
-                    ResourceType = "Connection",
-                    ResourceId = connectionId.ToString(),
+                    ResourceType = ResourceTypeConnection,
+                    ResourceId = connection.Id.ToString(),
                     Details = $"{{\"error\":\"network_error\",\"message\":{JsonSerializer.Serialize(ex.Message)}}}",
                     IpAddress = ipAddress
                 });
@@ -370,15 +385,15 @@ namespace SmoothOperator.Infrastructure.Services
             catch (Exception ex)
             {
                 failureReason = $"Session error: {ex.Message}";
-                _logger.LogError(ex, "Error during Guacamole session for connection {ConnectionId}", connectionId);
+                _logger.LogError(ex, "Error during Guacamole session for connection {ConnectionId}", connection.Id);
 
                 dbContext.AuditLogs.Add(new AuditLog
                 {
                     Id = Guid.NewGuid(),
                     UserId = dbUser.Id,
                     Action = "connection.error",
-                    ResourceType = "Connection",
-                    ResourceId = connectionId.ToString(),
+                    ResourceType = ResourceTypeConnection,
+                    ResourceId = connection.Id.ToString(),
                     Details = $"{{\"error\":\"session_error\",\"message\":{JsonSerializer.Serialize(ex.Message)}}}",
                     IpAddress = ipAddress
                 });
@@ -396,8 +411,8 @@ namespace SmoothOperator.Infrastructure.Services
                         Id = Guid.NewGuid(),
                         UserId = dbUser.Id,
                         Action = "connection.ended",
-                        ResourceType = "Connection",
-                        ResourceId = connectionId.ToString(),
+                        ResourceType = ResourceTypeConnection,
+                        ResourceId = connection.Id.ToString(),
                         Details = $"{{\"sessionId\":\"{sessionId}\",\"endTime\":\"{endTime:O}\"}}",
                         IpAddress = ipAddress
                     });
@@ -409,27 +424,25 @@ namespace SmoothOperator.Infrastructure.Services
                     _metrics.RecordConnectionEnded();
                 }
 
-                // Surface the cause to the Guacamole client. Sending a Guacamole
-                // `error` instruction before the WS close lets the browser-side
-                // Guacamole.Client fire `client.onerror` with a real message
-                // instead of the user seeing a generic "Tunnel error: Closed".
-                if (failureReason != null && webSocket.State == WebSocketState.Open)
-                {
-                    await TrySendGuacErrorAsync(webSocket, failureReason, GuacStatus.UpstreamError);
-                }
-
-                if (webSocket.State == WebSocketState.Open)
-                {
-                    var status = failureReason != null
-                        ? WebSocketCloseStatus.InternalServerError
-                        : WebSocketCloseStatus.NormalClosure;
-                    var reason = failureReason ?? "Session ended";
-                    // WebSocket close reason has a 123-byte cap.
-                    if (reason.Length > 120) reason = reason.Substring(0, 120);
-                    await webSocket.CloseAsync(status, reason, CancellationToken.None);
-                }
+                await CloseGuacSessionAsync(webSocket, failureReason);
                 tcpClient.Close();
             }
+        }
+
+        private async Task CloseGuacSessionAsync(WebSocket webSocket, string? failureReason)
+        {
+            if (failureReason != null && webSocket.State == WebSocketState.Open)
+                await TrySendGuacErrorAsync(webSocket, failureReason, GuacStatus.UpstreamError);
+
+            if (webSocket.State != WebSocketState.Open) return;
+
+            var status = failureReason != null
+                ? WebSocketCloseStatus.InternalServerError
+                : WebSocketCloseStatus.NormalClosure;
+            var reason = failureReason ?? "Session ended";
+            // WebSocket close reason has a 123-byte cap.
+            if (reason.Length > 120) reason = reason.Substring(0, 120);
+            await webSocket.CloseAsync(status, reason, CancellationToken.None);
         }
 
         // Guacamole protocol error codes (subset). See:
@@ -501,100 +514,9 @@ namespace SmoothOperator.Infrastructure.Services
             var username = connection.Credential?.Username ?? string.Empty;
             var credentialType = (connection.Credential?.CredentialType ?? "password").ToLowerInvariant();
             var isKeyAuth = credentialType is "private_key" or "ssh_key" or "key";
-            var decryptedSecret = string.Empty;
-
-            if (connection.Credential != null)
-            {
-                var cred = connection.Credential;
-                if (cred.StorageMode == Domain.Models.SecretStorageMode.External
-                    && cred.SecretProvider != null
-                    && !string.IsNullOrEmpty(cred.ExternalSecretName))
-                {
-                    try
-                    {
-                        var secretProvider = _secretProviderFactory.Create(cred.SecretProvider);
-                        decryptedSecret = await secretProvider.GetSecretAsync(
-                            cred.ExternalSecretName, cred.ExternalSecretVersion, cancellationToken);
-
-                        dbContext.AuditLogs.Add(new AuditLog
-                        {
-                            Id = Guid.NewGuid(),
-                            UserId = userId,
-                            IpAddress = ipAddress,
-                            Action = "secret.fetched",
-                            ResourceType = "Credential",
-                            ResourceId = cred.Id.ToString(),
-                            Details = System.Text.Json.JsonSerializer.Serialize(new
-                            {
-                                credentialId = cred.Id,
-                                providerId = cred.SecretProviderId,
-                                secretName = cred.ExternalSecretName,
-                                success = true
-                            })
-                        });
-                        await dbContext.SaveChangesAsync(cancellationToken);
-                    }
-                    catch (SecretProviderException ex)
-                    {
-                        _logger.LogError(ex, "Secret provider error for credential {CredentialId}: [{ErrorCode}] {Message}", cred.Id, ex.ErrorCode, ex.Message);
-                        dbContext.AuditLogs.Add(new AuditLog
-                        {
-                            Id = Guid.NewGuid(),
-                            UserId = userId,
-                            IpAddress = ipAddress,
-                            Action = "secret.fetched",
-                            ResourceType = "Credential",
-                            ResourceId = cred.Id.ToString(),
-                            Outcome = "failure",
-                            Details = System.Text.Json.JsonSerializer.Serialize(new
-                            {
-                                credentialId = cred.Id,
-                                providerId = cred.SecretProviderId,
-                                secretName = cred.ExternalSecretName,
-                                success = false,
-                                error = ex.ErrorCode
-                            })
-                        });
-                        await dbContext.SaveChangesAsync(cancellationToken);
-                        throw new InvalidOperationException(ex.Message, ex);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, "Failed to fetch secret from vault for credential {CredentialId}", cred.Id);
-                        dbContext.AuditLogs.Add(new AuditLog
-                        {
-                            Id = Guid.NewGuid(),
-                            UserId = userId,
-                            IpAddress = ipAddress,
-                            Action = "secret.fetched",
-                            ResourceType = "Credential",
-                            ResourceId = cred.Id.ToString(),
-                            Outcome = "failure",
-                            Details = System.Text.Json.JsonSerializer.Serialize(new
-                            {
-                                credentialId = cred.Id,
-                                providerId = cred.SecretProviderId,
-                                secretName = cred.ExternalSecretName,
-                                success = false,
-                                error = "vault_unreachable"
-                            })
-                        });
-                        await dbContext.SaveChangesAsync(cancellationToken);
-                        throw new InvalidOperationException("Vault unreachable — cannot retrieve credential. Check secret provider configuration.", ex);
-                    }
-                }
-                else if (!string.IsNullOrEmpty(cred.EncryptedSecret))
-                {
-                    try
-                    {
-                        decryptedSecret = _encryptionService.Decrypt(cred.EncryptedSecret);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogWarning(ex, "Failed to decrypt credential for connection {ConnectionId}", connection.Id);
-                    }
-                }
-            }
+            var decryptedSecret = connection.Credential != null
+                ? await ResolveDecryptedSecretAsync(connection.Credential, dbContext, userId, ipAddress, cancellationToken)
+                : string.Empty;
 
             // For key auth the decrypted secret is the PEM private key, not a password.
             var password = isKeyAuth ? string.Empty : decryptedSecret;
@@ -604,27 +526,7 @@ namespace SmoothOperator.Infrastructure.Services
             // "passphrase":"..."}). `passphrase` falls through to the override path below.
             Dictionary<string, string> overrides = ParseSettings(connection.Settings);
 
-            string ResolveValue(string name)
-            {
-                if (overrides.TryGetValue(name, out var v)) return v ?? string.Empty;
-                return name switch
-                {
-                    "hostname" => hostname,
-                    "port" => defaultPort,
-                    "username" => username,
-                    "password" => password,
-                    // SSH key auth — guacd's SSH plugin reads the PEM body from
-                    // `private-key` and an optional `passphrase`. When the
-                    // credential is key-based we route the decrypted secret here
-                    // and leave `password` empty so guacd doesn't fall back to
-                    // password/keyboard-interactive auth.
-                    "private-key" => privateKey,
-                    "ignore-cert" => protocol == "rdp" ? "true" : string.Empty,
-                    "security" => protocol == "rdp" ? "any" : string.Empty,
-                    "resize-method" => protocol == "rdp" ? "display-update" : string.Empty,
-                    _ => string.Empty
-                };
-            }
+            var ctx = new GuacConnectionContext(overrides, hostname, defaultPort, username, password, privateKey, protocol);
 
             var values = new List<string>(paramNames.Count);
             foreach (var name in paramNames)
@@ -637,9 +539,31 @@ namespace SmoothOperator.Infrastructure.Services
                     values.Add(serverVersion);
                     continue;
                 }
-                values.Add(ResolveValue(name) ?? string.Empty);
+                values.Add(ResolveConnectionParameter(name, ctx));
             }
             return values;
+        }
+
+        private static string ResolveConnectionParameter(string name, GuacConnectionContext ctx)
+        {
+            if (ctx.Overrides.TryGetValue(name, out var v)) return v ?? string.Empty;
+            return name switch
+            {
+                "hostname" => ctx.Hostname,
+                "port" => ctx.DefaultPort,
+                "username" => ctx.Username,
+                "password" => ctx.Password,
+                // SSH key auth — guacd's SSH plugin reads the PEM body from
+                // `private-key` and an optional `passphrase`. When the
+                // credential is key-based we route the decrypted secret here
+                // and leave `password` empty so guacd doesn't fall back to
+                // password/keyboard-interactive auth.
+                "private-key" => ctx.PrivateKey,
+                "ignore-cert" => ctx.Protocol == "rdp" ? "true" : string.Empty,
+                "security" => ctx.Protocol == "rdp" ? "any" : string.Empty,
+                "resize-method" => ctx.Protocol == "rdp" ? "display-update" : string.Empty,
+                _ => string.Empty
+            };
         }
 
         private static Dictionary<string, string> ParseSettings(string? settingsJson)
@@ -829,16 +753,7 @@ namespace SmoothOperator.Infrastructure.Services
                 // Inspect for guacd `error` instruction so we can surface it
                 // as the WS close reason if the session ends right after.
                 // Format: `5.error,LEN.MESSAGE,LEN.CODE;`
-                if (raw.Length > 7 && raw.StartsWith("5.error,", StringComparison.Ordinal))
-                {
-                    var parsed = ParseInstruction(raw);
-                    if (parsed != null && parsed.Count >= 2)
-                    {
-                        var msg = parsed[1];
-                        var code = parsed.Count >= 3 ? parsed[2] : "?";
-                        onGuacError($"guacd: {msg} (code {code})");
-                    }
-                }
+                TryReportGuacError(raw, onGuacError);
 
                 var bytes = Encoding.UTF8.GetBytes(raw);
                 await webSocket.SendAsync(
@@ -891,6 +806,127 @@ namespace SmoothOperator.Infrastructure.Services
                 if (payload.Length == 0) continue;
                 await guacdStream.WriteAsync(payload, 0, payload.Length);
                 await guacdStream.FlushAsync();
+            }
+        }
+
+        private sealed record GuacConnectionContext(
+            Dictionary<string, string> Overrides,
+            string Hostname,
+            string DefaultPort,
+            string Username,
+            string Password,
+            string PrivateKey,
+            string Protocol);
+
+        private async Task<string> ResolveDecryptedSecretAsync(
+            Credential cred,
+            AppDbContext dbContext,
+            Guid userId,
+            string ipAddress,
+            CancellationToken cancellationToken)
+        {
+            if (cred.StorageMode == Domain.Models.SecretStorageMode.External
+                && cred.SecretProvider != null
+                && !string.IsNullOrEmpty(cred.ExternalSecretName))
+            {
+                try
+                {
+                    var secretProvider = _secretProviderFactory.Create(cred.SecretProvider);
+                    var secret = await secretProvider.GetSecretAsync(
+                        cred.ExternalSecretName, cred.ExternalSecretVersion, cancellationToken);
+
+                    dbContext.AuditLogs.Add(new AuditLog
+                    {
+                        Id = Guid.NewGuid(),
+                        UserId = userId,
+                        IpAddress = ipAddress,
+                        Action = "secret.fetched",
+                        ResourceType = "Credential",
+                        ResourceId = cred.Id.ToString(),
+                        Details = System.Text.Json.JsonSerializer.Serialize(new
+                        {
+                            credentialId = cred.Id,
+                            providerId = cred.SecretProviderId,
+                            secretName = cred.ExternalSecretName,
+                            success = true
+                        })
+                    });
+                    await dbContext.SaveChangesAsync(cancellationToken);
+                    return secret;
+                }
+                catch (SecretProviderException ex)
+                {
+                    _logger.LogError(ex, "Secret provider error for credential {CredentialId}: [{ErrorCode}] {Message}", cred.Id, ex.ErrorCode, ex.Message);
+                    dbContext.AuditLogs.Add(new AuditLog
+                    {
+                        Id = Guid.NewGuid(),
+                        UserId = userId,
+                        IpAddress = ipAddress,
+                        Action = "secret.fetched",
+                        ResourceType = "Credential",
+                        ResourceId = cred.Id.ToString(),
+                        Outcome = "failure",
+                        Details = System.Text.Json.JsonSerializer.Serialize(new
+                        {
+                            credentialId = cred.Id,
+                            providerId = cred.SecretProviderId,
+                            secretName = cred.ExternalSecretName,
+                            success = false,
+                            error = ex.ErrorCode
+                        })
+                    });
+                    await dbContext.SaveChangesAsync(cancellationToken);
+                    throw new InvalidOperationException(ex.Message, ex);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to fetch secret from vault for credential {CredentialId}", cred.Id);
+                    dbContext.AuditLogs.Add(new AuditLog
+                    {
+                        Id = Guid.NewGuid(),
+                        UserId = userId,
+                        IpAddress = ipAddress,
+                        Action = "secret.fetched",
+                        ResourceType = "Credential",
+                        ResourceId = cred.Id.ToString(),
+                        Outcome = "failure",
+                        Details = System.Text.Json.JsonSerializer.Serialize(new
+                        {
+                            credentialId = cred.Id,
+                            providerId = cred.SecretProviderId,
+                            secretName = cred.ExternalSecretName,
+                            success = false,
+                            error = "vault_unreachable"
+                        })
+                    });
+                    await dbContext.SaveChangesAsync(cancellationToken);
+                    throw new InvalidOperationException("Vault unreachable — cannot retrieve credential. Check secret provider configuration.", ex);
+                }
+            }
+            else if (!string.IsNullOrEmpty(cred.EncryptedSecret))
+            {
+                try
+                {
+                    return _encryptionService.Decrypt(cred.EncryptedSecret);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to decrypt credential for connection");
+                }
+            }
+            return string.Empty;
+        }
+
+        private static void TryReportGuacError(string raw, Action<string> onGuacError)
+        {
+            if (raw.Length <= 7 || !raw.StartsWith("5.error,", StringComparison.Ordinal))
+                return;
+            var parsed = ParseInstruction(raw);
+            if (parsed != null && parsed.Count >= 2)
+            {
+                var msg = parsed[1];
+                var code = parsed.Count >= 3 ? parsed[2] : "?";
+                onGuacError($"guacd: {msg} (code {code})");
             }
         }
     }

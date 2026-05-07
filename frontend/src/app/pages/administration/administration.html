@@ -241,16 +241,14 @@
       (click)="closeVaultAssignments()"
       (keydown.enter)="closeVaultAssignments()"
       (keydown.escape)="closeVaultAssignments()"
-      tabindex="-1"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Vault assignments"
+      aria-hidden="true"
     >
-      <div
+      <dialog
+        open
         class="w-full max-w-lg glass-panel rounded-lg p-5"
         (click)="$event.stopPropagation()"
         (keydown.enter)="$event.stopPropagation()"
-        tabindex="-1"
+        aria-label="Vault assignments"
       >
         <h3 class="text-sm font-semibold text-on-surface uppercase tracking-widest">
           Vault assignments
@@ -285,7 +283,7 @@
             {{ vaultAssignmentBusy() ? 'Saving…' : 'Save assignments' }}
           </button>
         </div>
-      </div>
+      </dialog>
     </div>
   }
 </div>

@@ -208,7 +208,6 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
     const s = this.state();
     if (s === 'idle' || s === 'disconnected') {
       this.router.navigate(['/connecting', id]);
-      return;
     }
   }
 
@@ -366,7 +365,7 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
 
   // ── Toolbar auto-hide ──────────────────────────────────────────────────────
   onCanvasMouseMove(): void {
-    if (!this.toolbarVisible()) this.toolbarVisible.set(true);
+    this.toolbarVisible.set(true);
     if (this.toolbarHideTimer) clearTimeout(this.toolbarHideTimer);
     this.toolbarHideTimer = setTimeout(() => this.toolbarVisible.set(false), 3000);
   }

@@ -177,16 +177,13 @@
       (keydown.escape)="closeKeyComboModal()"
       aria-hidden="true"
     >
-      <div
-        role="dialog"
-        aria-modal="true"
+      <dialog
+        open
         aria-labelledby="key-combo-title"
-        aria-hidden="false"
         class="glass-card rounded-xl w-full max-w-lg p-6 relative"
         (click)="$event.stopPropagation()"
         (keydown.enter)="$event.stopPropagation()"
         (keydown.escape)="closeKeyComboModal()"
-        tabindex="-1"
       >
         <h2 id="key-combo-title" class="text-base font-semibold mb-3 flex items-center gap-2">
           <span class="material-symbols-outlined text-sm text-primary" aria-hidden="true"
@@ -269,7 +266,7 @@
             }
           </button>
         </div>
-      </div>
+      </dialog>
     </div>
   }
 
@@ -282,16 +279,13 @@
       (keydown.escape)="closeClipboardModal()"
       aria-hidden="true"
     >
-      <div
-        role="dialog"
-        aria-modal="true"
+      <dialog
+        open
         aria-labelledby="clipboard-title"
-        aria-hidden="false"
         class="glass-card rounded-xl w-full max-w-xl p-6 relative"
         (click)="$event.stopPropagation()"
         (keydown.enter)="$event.stopPropagation()"
         (keydown.escape)="closeClipboardModal()"
-        tabindex="-1"
       >
         <h2 id="clipboard-title" class="text-base font-semibold mb-1 flex items-center gap-2">
           <span class="material-symbols-outlined text-sm text-primary" aria-hidden="true"
@@ -348,7 +342,7 @@
             </button>
           </div>
         </div>
-      </div>
+      </dialog>
     </div>
   }
 </main>

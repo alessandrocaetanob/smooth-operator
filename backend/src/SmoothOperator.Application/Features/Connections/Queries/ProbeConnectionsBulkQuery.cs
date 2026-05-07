@@ -88,13 +88,7 @@ namespace SmoothOperator.Application.Features.Connections.Queries
                 await semaphore.WaitAsync(cancellationToken);
                 try
                 {
-                    var defaultPort = (conn.Protocol ?? "rdp").ToLowerInvariant() switch
-                    {
-                        "ssh" => 22,
-                        "vnc" => 5900,
-                        "telnet" => 23,
-                        _ => 3389
-                    };
+                    var defaultPort = GetDefaultPort(conn.Protocol);
                     var settings = ProbeConnectionQueryHandler.ParseConnectionSettings(conn.Settings);
                     var port = int.TryParse(settings.GetValueOrDefault("port"), out var p) ? p : defaultPort;
 
@@ -112,5 +106,14 @@ namespace SmoothOperator.Application.Features.Connections.Queries
             await Task.WhenAll(tasks);
             return new Dictionary<Guid, string>(results);
         }
+
+        private static int GetDefaultPort(string? protocol) =>
+            (protocol ?? "rdp").ToLowerInvariant() switch
+            {
+                "ssh" => 22,
+                "vnc" => 5900,
+                "telnet" => 23,
+                _ => 3389
+            };
     }
 }
