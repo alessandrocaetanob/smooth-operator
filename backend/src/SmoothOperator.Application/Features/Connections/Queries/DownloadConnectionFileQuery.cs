@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Security.Claims;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
@@ -116,11 +117,26 @@ namespace SmoothOperator.Application.Features.Connections.Queries
             };
         }
 
+        // Whitelists for SSH identifiers — defence-in-depth on top of ShellEscape.
+        // Username: POSIX portable characters (alphanumeric, dot, hyphen, underscore), max 255.
+        private static readonly Regex SshUsernamePattern =
+            new(@"^[A-Za-z0-9_][A-Za-z0-9._-]{0,254}$", RegexOptions.Compiled);
+
+        // Host: DNS labels / IPv4 / IPv6 bracket notation (e.g. [::1]), max 253.
+        private static readonly Regex SshHostPattern =
+            new(@"^[A-Za-z0-9]([A-Za-z0-9._:\-\[\]]{0,251}[A-Za-z0-9\]])?$", RegexOptions.Compiled);
+
         private static ConnectionFileDto GenerateSshFile(string name, string host, int port, string username)
         {
             name = StripNewlines(name);
-            host = StripNewlines(host);
-            username = StripNewlines(username);
+
+            // Validate raw inputs before any sanitisation — reject instead of silently stripping.
+            if (string.IsNullOrWhiteSpace(host))
+                throw new BadRequestException("SSH connection requires a valid host address.");
+            if (!SshHostPattern.IsMatch(host))
+                throw new BadRequestException("Host address contains characters not permitted in SSH connections.");
+            if (!string.IsNullOrEmpty(username) && !SshUsernamePattern.IsMatch(username))
+                throw new BadRequestException("Username contains characters not permitted in SSH connections.");
 
             var sb = new StringBuilder();
             sb.AppendLine("#!/bin/bash");
