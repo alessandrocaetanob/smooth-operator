@@ -241,20 +241,26 @@ export class Credentials implements OnInit {
       return false;
     }
     if (f.storageMode === 'External') {
-      if (!f.secretProviderId) {
-        this.errorMessage.set('Please select a secret provider.');
-        return false;
-      }
-      if (f.pushToVault && !f.id && !f.secret) {
-        this.errorMessage.set('Secret value is required when pushing to vault.');
-        return false;
-      }
-      if (!f.pushToVault && !f.externalSecretName) {
-        this.errorMessage.set('Please select an existing secret to link.');
-        return false;
-      }
-    } else if (!f.id && !f.secret) {
+      return this.validateExternalStorage(f);
+    }
+    if (!f.id && !f.secret) {
       this.errorMessage.set('Secret is required when creating a credential.');
+      return false;
+    }
+    return true;
+  }
+
+  private validateExternalStorage(f: FormState): boolean {
+    if (!f.secretProviderId) {
+      this.errorMessage.set('Please select a secret provider.');
+      return false;
+    }
+    if (f.pushToVault && !f.id && !f.secret) {
+      this.errorMessage.set('Secret value is required when pushing to vault.');
+      return false;
+    }
+    if (!f.pushToVault && !f.externalSecretName) {
+      this.errorMessage.set('Please select an existing secret to link.');
       return false;
     }
     return true;
