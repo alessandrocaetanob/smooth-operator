@@ -7,6 +7,10 @@ scrape_configs:
     static_configs:
       - targets: ['backend:8080']
     metrics_path: /metrics
+    authorization:
+      # Must match Metrics__BearerToken in docker-compose.yml / your production secret manager.
+      # WARNING: FOR DEVELOPMENT ONLY! Use a strong random secret in production.
+      credentials: "dev-metrics-token"
 
   - job_name: prometheus
     static_configs:

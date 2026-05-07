@@ -39,6 +39,7 @@ services:
       - AppUrls__Frontend=http://localhost:4200
       - Otel__Endpoint=http://tempo:4317
       - Otel__ServiceName=smooth-operator-backend
+      - Metrics__BearerToken=dev-metrics-token # WARNING: FOR DEVELOPMENT ONLY! Use a strong random secret in production
     volumes:
       - dp_keys:/data/protection-keys
     depends_on:
@@ -59,8 +60,6 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=smoothoperator
-    ports:
-      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
@@ -69,8 +68,6 @@ services:
 
   redis:
     image: redis:7-alpine
-    ports:
-      - "6379:6379"
     volumes:
       - redis_data:/data
     restart: unless-stopped
@@ -79,8 +76,6 @@ services:
 
   guacd:
     image: guacamole/guacd:1.6.0
-    ports:
-      - "4822:4822"
     restart: unless-stopped
     networks:
       - smooth-operator-net
@@ -103,8 +98,6 @@ services:
     image: grafana/loki:3.4.1
     profiles: [observability]
     command: -config.file=/etc/loki/local-config.yaml
-    ports:
-      - "3100:3100"
     volumes:
       - loki_data:/loki
       - ./observability/loki-config.yaml:/etc/loki/local-config.yaml
@@ -128,9 +121,6 @@ services:
     image: grafana/tempo:2.8.0
     profiles: [observability]
     command: -config.file=/etc/tempo.yaml
-    ports:
-      - "4317:4317"
-      - "3200:3200"
     volumes:
       - tempo_data:/tmp/tempo
       - ./observability/tempo.yaml:/etc/tempo.yaml

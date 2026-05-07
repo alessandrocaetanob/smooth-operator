@@ -1,6 +1,8 @@
+using Microsoft.Extensions.Options;
 using Prometheus;
 using Serilog;
 using SmoothOperator.Api.Middleware;
+using SmoothOperator.Application.Options;
 
 namespace SmoothOperator.Api.Extensions;
 
@@ -44,6 +46,27 @@ public static class PipelineExtensions
         app.UseAuthorization();
         app.MapControllers();
         app.MapHealthChecks("/health");
+
+        // Guard the Prometheus scrape endpoint with an optional bearer token.
+        // When Metrics:BearerToken is not configured the endpoint is open (dev mode).
+        // In production always set Metrics__BearerToken to a strong random secret.
+        app.UseWhen(
+            ctx => ctx.Request.Path.StartsWithSegments("/metrics"),
+            branch => branch.Use(async (ctx, next) =>
+            {
+                var opts = ctx.RequestServices.GetRequiredService<IOptions<MetricsOptions>>().Value;
+                if (!string.IsNullOrWhiteSpace(opts.BearerToken))
+                {
+                    var authHeader = ctx.Request.Headers.Authorization.FirstOrDefault();
+                    if (authHeader != $"Bearer {opts.BearerToken}")
+                    {
+                        ctx.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                        return;
+                    }
+                }
+                await next(ctx);
+            }));
+
         app.MapMetrics("/metrics");
 
         return app;
