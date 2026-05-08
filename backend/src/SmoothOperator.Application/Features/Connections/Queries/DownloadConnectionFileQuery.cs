@@ -193,7 +193,9 @@ namespace SmoothOperator.Application.Features.Connections.Queries
         {
             if (host.StartsWith('[') || host.EndsWith(']'))
             {
-                if (!host.StartsWith('[') || !host.EndsWith(']') || host.Length <= 2)
+                if (!host.StartsWith('[') || !host.EndsWith(']'))
+                    return false;
+                if (host.Length <= 2)
                     return false;
 
                 var ipv6Candidate = host[1..^1];

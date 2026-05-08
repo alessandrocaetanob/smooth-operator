@@ -65,6 +65,7 @@ public static class PipelineExtensions
                 {
                     var authHeader = ctx.Request.Headers.Authorization.FirstOrDefault();
                     if (!AuthenticationHeaderValue.TryParse(authHeader, out var parsedAuth)
+                        || parsedAuth is null
                         || !string.Equals(parsedAuth.Scheme, "Bearer", StringComparison.OrdinalIgnoreCase)
                         || !string.Equals(parsedAuth.Parameter?.Trim(), metricsOptions.BearerToken, StringComparison.Ordinal))
                     {
