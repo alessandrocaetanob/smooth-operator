@@ -122,11 +122,11 @@ namespace SmoothOperator.Application.Features.Connections.Queries
         // Whitelists for SSH identifiers — defence-in-depth on top of ShellEscape.
         // Username: POSIX portable characters (alphanumeric, dot, hyphen, underscore), max 255.
         private static readonly Regex SshUsernamePattern =
-            new(@"^[A-Za-z0-9_][A-Za-z0-9._-]{0,254}$", RegexOptions.Compiled);
+            new(@"^[A-Za-z0-9_][A-Za-z0-9._-]{0,254}$", RegexOptions.Compiled, TimeSpan.FromMilliseconds(100));
 
         // Hostname: DNS labels, max 253.
         private static readonly Regex SshDnsHostPattern =
-            new(@"^(?=.{1,253}$)(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)(?:\.(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?))*$", RegexOptions.Compiled);
+            new(@"^(?=.{1,253}$)(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)(?:\.(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?))*$", RegexOptions.Compiled, TimeSpan.FromMilliseconds(100));
 
         private static ConnectionFileDto GenerateSshFile(string name, string host, int port, string username)
         {

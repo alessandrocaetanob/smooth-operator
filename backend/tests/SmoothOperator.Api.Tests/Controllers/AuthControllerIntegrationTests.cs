@@ -62,10 +62,11 @@ public class AuthControllerIntegrationTests
         var res = await client.PostAsJsonAsync("/api/auth/setup", req);
         Assert.Equal(HttpStatusCode.OK, res.StatusCode);
 
-        var authRes = await res.Content.ReadFromJsonAsync<AuthResponse>();
-        Assert.NotNull(authRes);
-        Assert.NotNull(authRes.Token);
-        Assert.Equal("root@x", authRes.User.Email);
+        // Auth is delivered via httpOnly cookie, not response body.
+        Assert.Contains(res.Headers.GetValues("Set-Cookie"), c => c.Contains(SmoothOperator.Api.Extensions.AuthCookieExtensions.CookieName));
+        var body = await res.Content.ReadAsStringAsync();
+        Assert.DoesNotContain("\"token\"", body, System.StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("root@x", body);
     }
 
     [Fact]
@@ -98,10 +99,11 @@ public class AuthControllerIntegrationTests
         var res = await client.PostAsJsonAsync("/api/auth/login", req);
         Assert.Equal(HttpStatusCode.OK, res.StatusCode);
 
-        var authRes = await res.Content.ReadFromJsonAsync<AuthResponse>();
-        Assert.NotNull(authRes);
-        Assert.NotNull(authRes.Token);
-        Assert.Equal("login@x", authRes.User.Email);
+        // Auth is delivered via httpOnly cookie, not response body.
+        Assert.Contains(res.Headers.GetValues("Set-Cookie"), c => c.Contains(SmoothOperator.Api.Extensions.AuthCookieExtensions.CookieName));
+        var body = await res.Content.ReadAsStringAsync();
+        Assert.DoesNotContain("\"token\"", body, System.StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("login@x", body);
     }
 
     [Fact]

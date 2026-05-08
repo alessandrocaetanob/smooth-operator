@@ -61,7 +61,8 @@ namespace SmoothOperator.Api.Controllers
             {
                 var result = await _mediator.Send(new SetupCommand(request.Email, request.Name, request.Password));
                 Response.SetAuthCookie(result.Token);
-                return Ok(result);
+                // Token intentionally omitted from response body — auth is delivered via httpOnly cookie.
+                return Ok(new { result.User, result.ExpiresAt });
             }
             catch (ConflictException ex)
             {
@@ -100,7 +101,8 @@ namespace SmoothOperator.Api.Controllers
             {
                 var result = await _mediator.Send(new LoginCommand(request.Email, request.Password));
                 Response.SetAuthCookie(result.Token);
-                return Ok(result);
+                // Token intentionally omitted from response body — auth is delivered via httpOnly cookie.
+                return Ok(new { result.User, result.ExpiresAt });
             }
             catch (UnauthorizedException ex)
             {

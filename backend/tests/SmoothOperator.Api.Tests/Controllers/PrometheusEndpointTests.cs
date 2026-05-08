@@ -1,3 +1,4 @@
+using System;
 using System.Net;
 using Microsoft.AspNetCore.Hosting;
 using SmoothOperator.Api.Tests.Infrastructure;
@@ -26,8 +27,11 @@ public class PrometheusEndpointTests
 
         var response = await client.GetAsync("/metrics");
 
-        Assert.NotEqual(HttpStatusCode.Unauthorized, response.StatusCode);
-        Assert.NotEqual(HttpStatusCode.Forbidden, response.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var body = await response.Content.ReadAsStringAsync();
+        // Prometheus exposition format always emits HELP/TYPE comment lines for registered metrics.
+        Assert.True(body.Contains("# HELP", StringComparison.Ordinal) || body.Contains("# TYPE", StringComparison.Ordinal),
+            $"Expected Prometheus exposition output (# HELP/# TYPE), got: {body[..Math.Min(body.Length, 200)]}");
     }
 
     [Fact]

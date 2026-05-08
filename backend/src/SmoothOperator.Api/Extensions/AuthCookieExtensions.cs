@@ -15,7 +15,7 @@ public static class AuthCookieExtensions
         response.Cookies.Append(CookieName, token, new CookieOptions
         {
             HttpOnly = true,
-            Secure = true,
+            Secure = response.HttpContext.Request.IsHttps,
             SameSite = SameSiteMode.Strict,
             Path = "/api/",
             Expires = expiry,
@@ -27,7 +27,7 @@ public static class AuthCookieExtensions
         response.Cookies.Delete(CookieName, new CookieOptions
         {
             HttpOnly = true,
-            Secure = true,
+            Secure = response.HttpContext.Request.IsHttps,
             SameSite = SameSiteMode.Strict,
             Path = "/api/",
         });

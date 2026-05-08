@@ -91,6 +91,13 @@ services:
   prometheus:
     image: prom/prometheus:v3.4.0
     profiles: [observability]
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --config.expand-env
+      - --storage.tsdb.path=/prometheus
+    environment:
+      # Must match Metrics__BearerToken used by the backend. Override per-environment.
+      - METRICS_TOKEN=${METRICS_TOKEN:-dev-metrics-token}
     ports:
       - "9090:9090"
     volumes:

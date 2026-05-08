@@ -11,7 +11,7 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       enabled: process.env.CI === 'true',
-      reporter: ['text', 'lcov'],
+      reporter: ['text', 'lcov', 'clover'],
       exclude: [
         'src/main.ts',
         'src/environments/**',
