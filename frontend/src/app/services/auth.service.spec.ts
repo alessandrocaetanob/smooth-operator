@@ -172,9 +172,11 @@ describe('AuthService', () => {
     it('should POST /api/auth/login and set currentUser from response', () => {
       let result: { user: { id: string } } | undefined;
       service.login({ email: 'a@b.com', password: 'secret' }).subscribe((r) => (result = r));
-      httpTesting
-        .expectOne('/api/auth/login')
-        .flush({ token: 'ignored', expiresAt: '2099-01-01T00:00:00Z', user: { id: '42', name: 'Test' } });
+      httpTesting.expectOne('/api/auth/login').flush({
+        token: 'ignored',
+        expiresAt: '2099-01-01T00:00:00Z',
+        user: { id: '42', name: 'Test' },
+      });
       expect(result?.user.id).toBe('42');
       expect(service.currentUser()?.id).toBe('42');
     });
@@ -204,9 +206,11 @@ describe('AuthService', () => {
       service
         .setup({ name: 'Admin', email: 'admin@test.com', password: 'pass' })
         .subscribe((r) => (result = r));
-      httpTesting
-        .expectOne('/api/auth/setup')
-        .flush({ token: 'ignored', expiresAt: '2099-01-01T00:00:00Z', user: { id: '1', name: 'Admin' } });
+      httpTesting.expectOne('/api/auth/setup').flush({
+        token: 'ignored',
+        expiresAt: '2099-01-01T00:00:00Z',
+        user: { id: '1', name: 'Admin' },
+      });
       expect(result?.user.id).toBe('1');
     });
   });

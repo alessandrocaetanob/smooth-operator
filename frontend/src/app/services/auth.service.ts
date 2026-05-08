@@ -117,7 +117,10 @@ export class AuthService {
   logout(): void {
     if (!this._user()) return;
     this._user.set(null);
-    this.http.post<void>('/api/auth/logout', {}).pipe(catchError(() => EMPTY)).subscribe();
+    this.http
+      .post<void>('/api/auth/logout', {})
+      .pipe(catchError(() => EMPTY))
+      .subscribe();
   }
 
   private currentRoles(): string[] {
@@ -157,9 +160,7 @@ export class AuthService {
     };
   }
 
-  private normalizeUser(
-    raw: Record<string, unknown> | null | undefined,
-  ): UserInfo {
+  private normalizeUser(raw: Record<string, unknown> | null | undefined): UserInfo {
     const roles = this.normalizeRoles(raw?.['roles'] ?? raw?.['Roles']);
     return {
       id: (raw?.['id'] ?? raw?.['Id'] ?? '') as string,

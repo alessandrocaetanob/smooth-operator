@@ -54,8 +54,13 @@ describe('authInterceptor', () => {
 
   it('should redirect to /login on 401 from /api/ when authenticated', () => {
     authService.setCurrentUser({
-      id: '1', email: 'a@b.com', name: 'A', hasPassword: true,
-      ssoLinked: false, ssoProviderType: null, roles: [],
+      id: '1',
+      email: 'a@b.com',
+      name: 'A',
+      hasPassword: true,
+      ssoLinked: false,
+      ssoProviderType: null,
+      roles: [],
     });
     http.get('/api/connections').subscribe({ error: vi.fn() });
     const req = httpMock.expectOne('/api/connections');
@@ -67,8 +72,13 @@ describe('authInterceptor', () => {
 
   it('should NOT redirect on 401 from /api/auth/login', () => {
     authService.setCurrentUser({
-      id: '1', email: 'a@b.com', name: 'A', hasPassword: true,
-      ssoLinked: false, ssoProviderType: null, roles: [],
+      id: '1',
+      email: 'a@b.com',
+      name: 'A',
+      hasPassword: true,
+      ssoLinked: false,
+      ssoProviderType: null,
+      roles: [],
     });
     http.post('/api/auth/login', {}).subscribe({ error: vi.fn() });
     const req = httpMock.expectOne('/api/auth/login');
@@ -78,8 +88,13 @@ describe('authInterceptor', () => {
 
   it('should NOT redirect on 401 from /api/auth/logout', () => {
     authService.setCurrentUser({
-      id: '1', email: 'a@b.com', name: 'A', hasPassword: true,
-      ssoLinked: false, ssoProviderType: null, roles: [],
+      id: '1',
+      email: 'a@b.com',
+      name: 'A',
+      hasPassword: true,
+      ssoLinked: false,
+      ssoProviderType: null,
+      roles: [],
     });
     http.post('/api/auth/logout', {}).subscribe({ error: vi.fn() });
     const req = httpMock.expectOne('/api/auth/logout');

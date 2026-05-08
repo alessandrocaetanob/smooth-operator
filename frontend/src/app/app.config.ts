@@ -36,11 +36,7 @@ export const appConfig: ApplicationConfig = {
       const auth = inject(AuthService);
       await firstValueFrom(auth.loadSetupStatus());
 
-      await firstValueFrom(
-        auth.me().pipe(
-          catchError(() => of(null)),
-        ),
-      );
+      await firstValueFrom(auth.me().pipe(catchError(() => of(null))));
     }),
   ],
 };
