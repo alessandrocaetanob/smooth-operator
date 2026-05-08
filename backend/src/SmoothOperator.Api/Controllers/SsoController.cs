@@ -7,6 +7,7 @@ using SmoothOperator.Application.Interfaces;
 using SmoothOperator.Application.Interfaces.Sso;
 using SmoothOperator.Application.Features.SsoProvider.Queries;
 using SmoothOperator.Infrastructure.Services.Sso;
+using SmoothOperator.Api.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -106,7 +107,8 @@ namespace SmoothOperator.Api.Controllers
                 var result = await _provisioning.ProvisionOrLinkAsync(SsoProviderType.Oidc, identity.ExternalId, identity.Email, identity.Name);
                 await _audit.WriteAsync("sso.login_success", ResourceTypeSso, result.User.Id.ToString(),
                     new { providerType = "Oidc", email = identity.Email });
-                return Redirect(_urls.FinalizeUrl(Request, result.Token, returnUrl));
+                Response.SetAuthCookie(result.Token);
+                return Redirect(_urls.FinalizeUrl(Request, returnUrl));
             }
             catch (UnauthorizedAccessException ex)
             {
@@ -135,7 +137,8 @@ namespace SmoothOperator.Api.Controllers
                 var result = await _provisioning.ProvisionOrLinkAsync(SsoProviderType.Saml, identity.ExternalId, identity.Email, identity.Name);
                 await _audit.WriteAsync("sso.login_success", ResourceTypeSso, result.User.Id.ToString(),
                     new { providerType = "Saml", email = identity.Email });
-                return Redirect(_urls.FinalizeUrl(Request, result.Token, returnUrl));
+                Response.SetAuthCookie(result.Token);
+                return Redirect(_urls.FinalizeUrl(Request, returnUrl));
             }
             catch (UnauthorizedAccessException ex)
             {

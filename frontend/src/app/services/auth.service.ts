@@ -1,6 +1,6 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap, of, catchError, map } from 'rxjs';
+import { Observable, tap, of, catchError, map, EMPTY } from 'rxjs';
 
 export interface SsoInfo {
   enabled: boolean;
@@ -35,30 +35,23 @@ export interface AuthResponse {
   user: UserInfo;
 }
 
-const TOKEN_KEY = 'smooth-operator.token';
-
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly http = inject(HttpClient);
 
   // Backend returns PascalCase by default (no JsonOptions configured), so we
   // normalise on read instead of forcing the server to camelCase.
-  private readonly _token = signal<string | null>(this.readStoredToken());
   private readonly _setup = signal<SetupStatus>({
     requiresSetup: false,
     providers: { local: true, sso: null },
   });
-  private readonly _user = signal<UserInfo | null>(this.userFromStoredToken(this._token()));
+  private readonly _user = signal<UserInfo | null>(null);
 
-  readonly token = this._token.asReadonly();
   readonly setupStatus = this._setup.asReadonly();
   readonly providers = computed(() => this._setup().providers);
   readonly requiresSetup = computed(() => this._setup().requiresSetup);
   readonly currentUser = this._user.asReadonly();
-  readonly isAuthenticated = computed(() => {
-    const t = this._token();
-    return !!t && !this.isJwtExpired(t);
-  });
+  readonly isAuthenticated = computed(() => this._user() !== null);
 
   readonly isOwnerOrAdmin = computed(() => this.hasAnyRole('Owner', 'Admin'));
   readonly isTeamAdmin = computed(() => this.hasRole('TeamAdmin'));
@@ -105,8 +98,9 @@ export class AuthService {
   me(): Observable<UserInfo> {
     return this.http.get<Record<string, unknown>>('/api/auth/me').pipe(
       map((u) => {
-        this._user.set(this.normalizeUser(u, this._token()));
-        return this.normalizeUser(u, this._token());
+        const user = this.normalizeUser(u);
+        this._user.set(user);
+        return user;
       }),
     );
   }
@@ -121,13 +115,13 @@ export class AuthService {
   }
 
   logout(): void {
-    localStorage.removeItem(TOKEN_KEY);
-    this._token.set(null);
+    if (!this._user()) return;
     this._user.set(null);
+    this.http.post<void>('/api/auth/logout', {}).pipe(catchError(() => EMPTY)).subscribe();
   }
 
   private currentRoles(): string[] {
-    return this._user()?.roles ?? this.rolesFromToken(this._token());
+    return this._user()?.roles ?? [];
   }
 
   private acceptAuth(raw: Record<string, unknown>): AuthResponse {
@@ -135,10 +129,7 @@ export class AuthService {
     const expiresAt = (raw['expiresAt'] ?? raw['ExpiresAt']) as string;
     const user = this.normalizeUser(
       (raw['user'] ?? raw['User']) as Record<string, unknown> | null | undefined,
-      token,
     );
-    localStorage.setItem(TOKEN_KEY, token);
-    this._token.set(token);
     this._user.set(user);
     // After bootstrap the next visitor should NOT see the setup screen.
     this._setup.update((s) => ({ ...s, requiresSetup: false }));
@@ -168,11 +159,8 @@ export class AuthService {
 
   private normalizeUser(
     raw: Record<string, unknown> | null | undefined,
-    fallbackToken: string | null = null,
   ): UserInfo {
-    const roles = this.normalizeRoles(
-      raw?.['roles'] ?? raw?.['Roles'] ?? this.rolesFromToken(fallbackToken),
-    );
+    const roles = this.normalizeRoles(raw?.['roles'] ?? raw?.['Roles']);
     return {
       id: (raw?.['id'] ?? raw?.['Id'] ?? '') as string,
       email: (raw?.['email'] ?? raw?.['Email'] ?? '') as string,
@@ -189,86 +177,6 @@ export class AuthService {
 
   setCurrentUser(user: UserInfo): void {
     this._user.set(user);
-  }
-
-  /**
-   * Accepts a JWT minted by the backend after a successful SSO callback.
-   * Persists it like a normal local-login token; caller is expected to
-   * follow up with `me()` to populate the user signal.
-   */
-  acceptSsoToken(token: string): void {
-    if (!token) return;
-    localStorage.setItem(TOKEN_KEY, token);
-    this._token.set(token);
-    this._user.set(this.userFromStoredToken(token));
-    this._setup.update((s) => ({ ...s, requiresSetup: false }));
-  }
-
-  private userFromStoredToken(token: string | null): UserInfo | null {
-    if (!token) return null;
-    const payload = this.jwtPayload(token);
-    if (!payload) return null;
-
-    const roleClaim =
-      payload['role'] ?? payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
-
-    return {
-      id: (payload['nameid'] ??
-        payload['sub'] ??
-        payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'] ??
-        '') as string,
-      email: (payload['email'] ??
-        payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'] ??
-        '') as string,
-      name: (payload['unique_name'] ??
-        payload['name'] ??
-        payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] ??
-        payload['email'] ??
-        '') as string,
-      hasPassword: false,
-      ssoLinked: false,
-      ssoProviderType: null,
-      roles: this.normalizeRoles(roleClaim),
-    };
-  }
-
-  private rolesFromToken(token: string | null): string[] {
-    if (!token) return [];
-    const payload = this.jwtPayload(token);
-    return this.normalizeRoles(
-      payload?.['role'] ??
-        payload?.['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'],
-    );
-  }
-
-  private jwtPayload(token: string): Record<string, unknown> | null {
-    const parts = token.split('.');
-    if (parts.length < 2) return null;
-    const segment = parts[1].replaceAll('-', '+').replaceAll('_', '/');
-    const padded = segment.padEnd(segment.length + ((4 - (segment.length % 4)) % 4), '=');
-    try {
-      return JSON.parse(atob(padded));
-    } catch {
-      return null;
-    }
-  }
-
-  private isJwtExpired(token: string): boolean {
-    const payload = this.jwtPayload(token);
-    if (!payload || typeof payload['exp'] !== 'number') return true;
-    // Treat 5s before server expiry as already expired so guards fail-fast
-    // instead of letting an about-to-die token through.
-    return payload['exp'] * 1000 < Date.now() + 5_000;
-  }
-
-  private readStoredToken(): string | null {
-    const t = localStorage.getItem(TOKEN_KEY);
-    if (!t) return null;
-    if (this.isJwtExpired(t)) {
-      localStorage.removeItem(TOKEN_KEY);
-      return null;
-    }
-    return t;
   }
 
   private normalizeRoles(raw: unknown): string[] {

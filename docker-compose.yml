@@ -22,24 +22,7 @@ services:
     ports:
       - "5000:8080"
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=smoothoperator;Username=postgres;Password=postgres
-      - ConnectionStrings__Redis=redis:6379
-      - Guacd__Host=guacd
-      - Guacd__Port=4822
-      - Encryption__Key=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef # WARNING: FOR DEVELOPMENT ONLY! Use Docker secrets or a secrets manager in production
-      - Jwt__Key=7e589cea4a11cdcc9c35a1cf55e9cbe2bf793a59d1c7c106e218749b6c2308ad # WARNING: FOR DEVELOPMENT ONLY! Replace with a strong random secret in production
-      - Jwt__Issuer=smooth-operator
-      - Jwt__Audience=smooth-operator-api
-      # Optional: enable Entra ID by setting AzureAd__ClientId and AzureAd__TenantId (and AzureAd__Instance/Domain as needed).
-      # - AzureAd__Instance=https://login.microsoftonline.com/
-      # - AzureAd__TenantId=<your-tenant-id>
-      # - AzureAd__ClientId=<your-client-id>
-      - AppUrls__App=http://localhost:4200
-      - AppUrls__Frontend=http://localhost:4200
-      - Otel__Endpoint=http://tempo:4317
-      - Otel__ServiceName=smooth-operator-backend
-      - Metrics__BearerToken=dev-metrics-token # WARNING: FOR DEVELOPMENT ONLY! Use a strong random secret in production
+      - ASPNETCORE_ENVIRONMENT=Production
     volumes:
       - dp_keys:/data/protection-keys
     depends_on:

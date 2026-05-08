@@ -4,7 +4,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using Moq;
 using SmoothOperator.Api.Extensions;
 using SmoothOperator.Infrastructure.Data;
 using SmoothOperator.Infrastructure.Services;
@@ -67,5 +69,32 @@ public class StartupExtensionsTests
         Assert.Contains(AppRoles.Admin, roles);
         Assert.Contains(AppRoles.TeamAdmin, roles);
         Assert.Contains(AppRoles.User, roles);
+    }
+
+    [Fact]
+    public void AddApplicationCors_NoOriginsConfigured_NonDevelopment_Throws()
+    {
+        var configuration = new ConfigurationBuilder().Build();
+        var services = new ServiceCollection();
+        var environment = new Mock<IHostEnvironment>();
+        environment.Setup(e => e.EnvironmentName).Returns("Production");
+
+        var ex = Assert.Throws<InvalidOperationException>(() =>
+            services.AddApplicationCors(configuration, environment.Object));
+
+        Assert.Contains("CORS is not configured", ex.Message);
+    }
+
+    [Fact]
+    public void AddApplicationCors_NoOriginsConfigured_Development_DoesNotThrow()
+    {
+        var configuration = new ConfigurationBuilder().Build();
+        var services = new ServiceCollection();
+        var environment = new Mock<IHostEnvironment>();
+        environment.Setup(e => e.EnvironmentName).Returns("Development");
+
+        var exception = Record.Exception(() => services.AddApplicationCors(configuration, environment.Object));
+
+        Assert.Null(exception);
     }
 }

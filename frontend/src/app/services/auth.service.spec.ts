@@ -5,20 +5,6 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 
 import { AuthService, UserInfo } from './auth.service';
 
-const TOKEN_KEY = 'smooth-operator.token';
-
-function makeJwt(payload: Record<string, unknown>): string {
-  const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
-  const body = btoa(JSON.stringify(payload))
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/, '');
-  return `${header}.${body}.sig`;
-}
-
-const FUTURE_EXP = Math.floor(Date.now() / 1000) + 3600;
-const PAST_EXP = Math.floor(Date.now() / 1000) - 3600;
-
 describe('AuthService', () => {
   let service: AuthService;
   let httpTesting: HttpTestingController;
@@ -27,7 +13,6 @@ describe('AuthService', () => {
     TestBed.configureTestingModule({
       providers: [AuthService, provideHttpClient(), provideHttpClientTesting()],
     });
-    localStorage.clear();
     service = TestBed.inject(AuthService);
     httpTesting = TestBed.inject(HttpTestingController);
   });
@@ -184,79 +169,49 @@ describe('AuthService', () => {
   });
 
   describe('login()', () => {
-    it('should POST /api/auth/login and set token signal', () => {
-      const token = makeJwt({ sub: '42', exp: FUTURE_EXP });
-      let result: { token: string } | undefined;
+    it('should POST /api/auth/login and set currentUser from response', () => {
+      let result: { user: { id: string } } | undefined;
       service.login({ email: 'a@b.com', password: 'secret' }).subscribe((r) => (result = r));
       httpTesting
         .expectOne('/api/auth/login')
-        .flush({ token, expiresAt: '2099-01-01T00:00:00Z', user: { id: '42', name: 'Test' } });
-      expect(service.token()).toBe(token);
-      expect(result?.token).toBe(token);
-    });
-
-    it('should persist token to localStorage on login', () => {
-      const token = makeJwt({ sub: '42', exp: FUTURE_EXP });
-      service.login({ email: 'a@b.com', password: 'secret' }).subscribe();
-      httpTesting
-        .expectOne('/api/auth/login')
-        .flush({ token, expiresAt: '2099-01-01T00:00:00Z', user: {} });
-      expect(localStorage.getItem(TOKEN_KEY)).toBe(token);
+        .flush({ token: 'ignored', expiresAt: '2099-01-01T00:00:00Z', user: { id: '42', name: 'Test' } });
+      expect(result?.user.id).toBe('42');
+      expect(service.currentUser()?.id).toBe('42');
     });
 
     it('should normalize PascalCase login response', () => {
-      const token = makeJwt({ sub: '42', exp: FUTURE_EXP });
       service.login({ email: 'a@b.com', password: 'secret' }).subscribe();
       httpTesting.expectOne('/api/auth/login').flush({
-        Token: token,
+        Token: 'ignored',
         ExpiresAt: '2099-01-01T00:00:00Z',
         User: { Id: '42', Name: 'Test' },
       });
-      expect(service.token()).toBe(token);
+      expect(service.currentUser()?.name).toBe('Test');
     });
 
     it('should mark requiresSetup as false after login', () => {
-      const token = makeJwt({ sub: '1', exp: FUTURE_EXP });
       service.login({ email: 'a@b.com', password: 'secret' }).subscribe();
       httpTesting
         .expectOne('/api/auth/login')
-        .flush({ token, expiresAt: '2099-01-01T00:00:00Z', user: {} });
+        .flush({ token: 'ignored', expiresAt: '2099-01-01T00:00:00Z', user: {} });
       expect(service.requiresSetup()).toBe(false);
     });
   });
 
   describe('setup()', () => {
-    it('should POST /api/auth/setup and return auth response', () => {
-      const token = makeJwt({ sub: '1', exp: FUTURE_EXP });
-      let result: { token: string } | undefined;
+    it('should POST /api/auth/setup and return auth response with user', () => {
+      let result: { user: { id: string } } | undefined;
       service
         .setup({ name: 'Admin', email: 'admin@test.com', password: 'pass' })
         .subscribe((r) => (result = r));
       httpTesting
         .expectOne('/api/auth/setup')
-        .flush({ token, expiresAt: '2099-01-01T00:00:00Z', user: { id: '1', name: 'Admin' } });
-      expect(result?.token).toBe(token);
+        .flush({ token: 'ignored', expiresAt: '2099-01-01T00:00:00Z', user: { id: '1', name: 'Admin' } });
+      expect(result?.user.id).toBe('1');
     });
   });
 
   describe('logout()', () => {
-    it('should clear token signal after login', () => {
-      const token = makeJwt({ sub: '1', exp: FUTURE_EXP });
-      service.login({ email: 'a@b.com', password: 'p' }).subscribe();
-      httpTesting.expectOne('/api/auth/login').flush({ token, expiresAt: '', user: {} });
-      expect(service.token()).toBe(token);
-      service.logout();
-      expect(service.token()).toBeNull();
-    });
-
-    it('should remove token from localStorage', () => {
-      const token = makeJwt({ sub: '1', exp: FUTURE_EXP });
-      service.login({ email: 'a@b.com', password: 'p' }).subscribe();
-      httpTesting.expectOne('/api/auth/login').flush({ token, expiresAt: '', user: {} });
-      service.logout();
-      expect(localStorage.getItem(TOKEN_KEY)).toBeNull();
-    });
-
     it('should clear currentUser signal', () => {
       service.setCurrentUser({
         id: '1',
@@ -268,21 +223,29 @@ describe('AuthService', () => {
         roles: [],
       });
       service.logout();
+      httpTesting.expectOne('/api/auth/logout').flush({});
       expect(service.currentUser()).toBeNull();
     });
-  });
 
-  describe('acceptSsoToken()', () => {
-    it('should set token signal and persist to localStorage', () => {
-      const token = makeJwt({ sub: '5', exp: FUTURE_EXP });
-      service.acceptSsoToken(token);
-      expect(service.token()).toBe(token);
-      expect(localStorage.getItem(TOKEN_KEY)).toBe(token);
+    it('should POST /api/auth/logout to invalidate server session', () => {
+      service.setCurrentUser({
+        id: '1',
+        email: 'a@b.com',
+        name: 'A',
+        hasPassword: true,
+        ssoLinked: false,
+        ssoProviderType: null,
+        roles: [],
+      });
+      service.logout();
+      const req = httpTesting.expectOne('/api/auth/logout');
+      expect(req.request.method).toBe('POST');
+      req.flush({});
     });
 
-    it('should be a no-op for empty string', () => {
-      service.acceptSsoToken('');
-      expect(service.token()).toBeNull();
+    it('should be a no-op when no user is set', () => {
+      service.logout();
+      httpTesting.expectNone('/api/auth/logout');
     });
   });
 
@@ -303,8 +266,21 @@ describe('AuthService', () => {
   });
 
   describe('computed role signals', () => {
-    it('isAuthenticated is false with no token', () => {
+    it('isAuthenticated is false without a user', () => {
       expect(service.isAuthenticated()).toBe(false);
+    });
+
+    it('isAuthenticated is true when currentUser is set', () => {
+      service.setCurrentUser({
+        id: '1',
+        email: 'a@b.com',
+        name: 'A',
+        hasPassword: true,
+        ssoLinked: false,
+        ssoProviderType: null,
+        roles: [],
+      });
+      expect(service.isAuthenticated()).toBe(true);
     });
 
     it('isOwnerOrAdmin is true for Owner role', () => {
@@ -344,34 +320,6 @@ describe('AuthService', () => {
         roles: ['TeamAdmin'],
       });
       expect(service.canAccessSettings()).toBe(false);
-    });
-  });
-
-  describe('initial state from localStorage', () => {
-    it('should start authenticated when valid token in localStorage', () => {
-      const token = makeJwt({ sub: '1', exp: FUTURE_EXP });
-      localStorage.setItem(TOKEN_KEY, token);
-      TestBed.resetTestingModule();
-      TestBed.configureTestingModule({
-        providers: [AuthService, provideHttpClient(), provideHttpClientTesting()],
-      });
-      const svc = TestBed.inject(AuthService);
-      httpTesting = TestBed.inject(HttpTestingController);
-      expect(svc.isAuthenticated()).toBe(true);
-      expect(svc.token()).toBe(token);
-    });
-
-    it('should discard expired token from localStorage on init', () => {
-      const token = makeJwt({ sub: '1', exp: PAST_EXP });
-      localStorage.setItem(TOKEN_KEY, token);
-      TestBed.resetTestingModule();
-      TestBed.configureTestingModule({
-        providers: [AuthService, provideHttpClient(), provideHttpClientTesting()],
-      });
-      const svc = TestBed.inject(AuthService);
-      httpTesting = TestBed.inject(HttpTestingController);
-      expect(svc.token()).toBeNull();
-      expect(svc.isAuthenticated()).toBe(false);
     });
   });
 });

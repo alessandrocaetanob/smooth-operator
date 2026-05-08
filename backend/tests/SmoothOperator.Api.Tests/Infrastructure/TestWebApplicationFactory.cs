@@ -45,6 +45,10 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
         Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "Testing");
         // EncryptionService requires a 64-char hex key (32 bytes for AES-256).
         Environment.SetEnvironmentVariable("Encryption__Key", TestEncryptionKey);
+        // CORS fail-closed: provide frontend origin so AddApplicationCors doesn't throw
+        // (these must be env vars because they're read before ConfigureAppConfiguration fires).
+        Environment.SetEnvironmentVariable("AppUrls__Frontend", "http://localhost:4200");
+        Environment.SetEnvironmentVariable("AppUrls__App", "http://localhost:5000");
     }
 
     public TestWebApplicationFactory(Action<AppDbContext>? seed = null, bool seedPhantomOwner = true, Action<IServiceCollection>? overrideServices = null, IReadOnlyDictionary<string, string?>? overrideConfig = null)

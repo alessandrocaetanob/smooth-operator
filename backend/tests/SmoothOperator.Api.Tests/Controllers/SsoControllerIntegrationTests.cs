@@ -206,8 +206,10 @@ public class SsoControllerIntegrationTests
         var res = await client.GetAsync("/api/auth/sso/callback?code=123&state=abc");
         Assert.Equal(HttpStatusCode.Redirect, res.StatusCode);
         var location = res.Headers.Location?.ToString();
-        Assert.Contains("test-token", location);
+        Assert.DoesNotContain("test-token", location);
         Assert.Contains("returnUrl=%2Fdash", location);
+        Assert.True(res.Headers.TryGetValues("Set-Cookie", out var cookies));
+        Assert.Contains(cookies, c => c.StartsWith("access_token=test-token"));
     }
 
     [Fact]

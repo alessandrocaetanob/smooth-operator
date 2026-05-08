@@ -6,6 +6,7 @@ using SmoothOperator.Application.Exceptions;
 using SmoothOperator.Application.Features.Auth.Commands;
 using SmoothOperator.Application.Features.Auth.Queries;
 using SmoothOperator.Infrastructure.Services;
+using SmoothOperator.Api.Extensions;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -59,6 +60,7 @@ namespace SmoothOperator.Api.Controllers
             try
             {
                 var result = await _mediator.Send(new SetupCommand(request.Email, request.Name, request.Password));
+                Response.SetAuthCookie(result.Token);
                 return Ok(result);
             }
             catch (ConflictException ex)
@@ -97,6 +99,7 @@ namespace SmoothOperator.Api.Controllers
             try
             {
                 var result = await _mediator.Send(new LoginCommand(request.Email, request.Password));
+                Response.SetAuthCookie(result.Token);
                 return Ok(result);
             }
             catch (UnauthorizedException ex)
@@ -178,6 +181,14 @@ namespace SmoothOperator.Api.Controllers
 
             var result = await _mediator.Send(new ForgotPasswordCommand(request.Email));
             return Ok(new { Message = result.Message });
+        }
+
+        [HttpPost("logout")]
+        [AllowAnonymous]
+        public IActionResult Logout()
+        {
+            Response.ClearAuthCookie();
+            return NoContent();
         }
     }
 }
