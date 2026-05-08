@@ -7,17 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
     <!-- Apply theme before first paint to prevent FOUC -->
-    <script>
-      (function () {
-        try {
-          var saved = localStorage.getItem('theme');
-          var theme = saved === 'light' || saved === 'dark' ? saved : 'dark';
-          if (theme === 'dark') document.documentElement.classList.add('dark');
-        } catch (e) {
-          document.documentElement.classList.add('dark');
-        }
-      })();
-    </script>
+    <script src="/theme-init.js"></script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
