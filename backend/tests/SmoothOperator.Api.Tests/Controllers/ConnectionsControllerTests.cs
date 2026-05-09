@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Http.Json;
@@ -452,6 +453,226 @@ public class ConnectionsControllerTests
 
         var client = AsUser(factory, userId, AppRoles.User);
         var response = await client.GetAsync($"/api/connections/{connectionId}/file?format=telnet");
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task DownloadSshFile_ReturnsValidShellScript()
+    {
+        var userId = Guid.NewGuid();
+        var vaultId = Guid.NewGuid();
+        var hostId = Guid.NewGuid();
+        var credentialId = Guid.NewGuid();
+        var connectionId = Guid.NewGuid();
+
+        await using var factory = new TestWebApplicationFactory(db =>
+        {
+            var vault = new ConnectionGroup { Id = vaultId, Name = "Vault" };
+            db.ConnectionGroups.Add(vault);
+
+            db.Hosts.Add(new SmoothOperator.Domain.Models.Host
+            {
+                Id = hostId,
+                Name = "SSH Host",
+                Address = "ssh.example.com"
+            });
+
+            db.Credentials.Add(new Credential
+            {
+                Id = credentialId,
+                Name = "SSHCred",
+                CredentialType = "password",
+                Username = "deploy",
+                EncryptedSecret = "encrypted"
+            });
+
+            db.Connections.Add(new Connection
+            {
+                Id = connectionId,
+                Name = "SSH Conn",
+                Protocol = "ssh",
+                HostId = hostId,
+                CredentialId = credentialId,
+                ConnectionGroupId = vaultId,
+                Settings = "{\"port\":\"2222\"}"
+            });
+
+            var user = new User { Id = userId, Email = "u@x", Name = "u", IsActive = true, CreatedAt = DateTime.UtcNow };
+            AttachRoles(db, user, AppRoles.User);
+            user.ConnectionGroups.Add(vault);
+            db.Users.Add(user);
+        });
+
+        var client = AsUser(factory, userId, AppRoles.User);
+        var response = await client.GetAsync($"/api/connections/{connectionId}/file?format=ssh");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("application/x-sh", response.Content.Headers.ContentType?.MediaType);
+
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.Contains("#!/bin/bash", body);
+        Assert.Contains("ssh -p 2222 'deploy'@'ssh.example.com'", body);
+    }
+
+    [Fact]
+    public async Task DownloadSshFile_WithBracketedIpv6Host_ReturnsValidShellScript()
+    {
+        var userId = Guid.NewGuid();
+        var vaultId = Guid.NewGuid();
+        var hostId = Guid.NewGuid();
+        var credentialId = Guid.NewGuid();
+        var connectionId = Guid.NewGuid();
+
+        await using var factory = new TestWebApplicationFactory(db =>
+        {
+            var vault = new ConnectionGroup { Id = vaultId, Name = "Vault" };
+            db.ConnectionGroups.Add(vault);
+
+            db.Hosts.Add(new SmoothOperator.Domain.Models.Host
+            {
+                Id = hostId,
+                Name = "IPv6 Host",
+                Address = "[::1]"
+            });
+
+            db.Credentials.Add(new Credential
+            {
+                Id = credentialId,
+                Name = "SSHCred",
+                CredentialType = "password",
+                Username = "deploy",
+                EncryptedSecret = "encrypted"
+            });
+
+            db.Connections.Add(new Connection
+            {
+                Id = connectionId,
+                Name = "SSH Conn IPv6",
+                Protocol = "ssh",
+                HostId = hostId,
+                CredentialId = credentialId,
+                ConnectionGroupId = vaultId,
+                Settings = "{}"
+            });
+
+            var user = new User { Id = userId, Email = "u@x", Name = "u", IsActive = true, CreatedAt = DateTime.UtcNow };
+            AttachRoles(db, user, AppRoles.User);
+            user.ConnectionGroups.Add(vault);
+            db.Users.Add(user);
+        });
+
+        var client = AsUser(factory, userId, AppRoles.User);
+        var response = await client.GetAsync($"/api/connections/{connectionId}/file?format=ssh");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.Contains("ssh -p 22 'deploy'@'[::1]'", body);
+    }
+
+    [Theory]
+    [InlineData("'; rm -rf /")]
+    [InlineData("`whoami`")]
+    [InlineData("$(evil)")]
+    [InlineData("user\nmalicious")]
+    [InlineData("user;id")]
+    [InlineData("user|cat /etc/passwd")]
+    [InlineData("user&background")]
+    public async Task DownloadSshFile_WithMaliciousUsername_ReturnsBadRequest(string maliciousUsername)
+    {
+        var userId = Guid.NewGuid();
+        var vaultId = Guid.NewGuid();
+        var hostId = Guid.NewGuid();
+        var credentialId = Guid.NewGuid();
+        var connectionId = Guid.NewGuid();
+
+        await using var factory = new TestWebApplicationFactory(db =>
+        {
+            var vault = new ConnectionGroup { Id = vaultId, Name = "Vault" };
+            db.ConnectionGroups.Add(vault);
+
+            db.Hosts.Add(new SmoothOperator.Domain.Models.Host
+            {
+                Id = hostId,
+                Name = "Host",
+                Address = "safe-host.example.com"
+            });
+
+            db.Credentials.Add(new Credential
+            {
+                Id = credentialId,
+                Name = "Cred",
+                CredentialType = "password",
+                Username = maliciousUsername,
+                EncryptedSecret = "encrypted"
+            });
+
+            db.Connections.Add(new Connection
+            {
+                Id = connectionId,
+                Name = "SSH Conn",
+                Protocol = "ssh",
+                HostId = hostId,
+                CredentialId = credentialId,
+                ConnectionGroupId = vaultId,
+                Settings = "{}"
+            });
+
+            var user = new User { Id = userId, Email = "u@x", Name = "u", IsActive = true, CreatedAt = DateTime.UtcNow };
+            AttachRoles(db, user, AppRoles.User);
+            user.ConnectionGroups.Add(vault);
+            db.Users.Add(user);
+        });
+
+        var client = AsUser(factory, userId, AppRoles.User);
+        var response = await client.GetAsync($"/api/connections/{connectionId}/file?format=ssh");
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Theory]
+    [InlineData("'; rm -rf /")]
+    [InlineData("host`whoami`")]
+    [InlineData("$(evil).com")]
+    [InlineData("host\nmalicious")]
+    [InlineData("host;id")]
+    [InlineData("host|ls")]
+    [InlineData("a]")]
+    [InlineData("[::1")]
+    public async Task DownloadSshFile_WithMaliciousHost_ReturnsBadRequest(string maliciousHost)
+    {
+        var userId = Guid.NewGuid();
+        var vaultId = Guid.NewGuid();
+        var hostId = Guid.NewGuid();
+        var connectionId = Guid.NewGuid();
+
+        await using var factory = new TestWebApplicationFactory(db =>
+        {
+            var vault = new ConnectionGroup { Id = vaultId, Name = "Vault" };
+            db.ConnectionGroups.Add(vault);
+
+            db.Hosts.Add(new SmoothOperator.Domain.Models.Host
+            {
+                Id = hostId,
+                Name = "Host",
+                Address = maliciousHost
+            });
+
+            db.Connections.Add(new Connection
+            {
+                Id = connectionId,
+                Name = "SSH Conn",
+                Protocol = "ssh",
+                HostId = hostId,
+                ConnectionGroupId = vaultId,
+                Settings = "{}"
+            });
+
+            var user = new User { Id = userId, Email = "u@x", Name = "u", IsActive = true, CreatedAt = DateTime.UtcNow };
+            AttachRoles(db, user, AppRoles.User);
+            user.ConnectionGroups.Add(vault);
+            db.Users.Add(user);
+        });
+
+        var client = AsUser(factory, userId, AppRoles.User);
+        var response = await client.GetAsync($"/api/connections/{connectionId}/file?format=ssh");
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 }

@@ -20,7 +20,7 @@ builder.Services.AddApplicationRateLimiting(builder.Configuration);
 builder.Services.AddApplicationForwardedHeaders();
 builder.Services.AddApplicationHealthChecks(builder.Configuration);
 builder.Services.AddApplicationDataProtection(builder.Configuration);
-builder.Services.AddApplicationCors(builder.Configuration);
+builder.Services.AddApplicationCors(builder.Configuration, builder.Environment);
 builder.Services.AddControllers();
 builder.Services.AddApplicationResponseCompression();
 builder.Services.AddApplicationOutputCache();

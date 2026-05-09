@@ -194,3 +194,45 @@ Opened PR #50 to master: all 151 tests pass (142 integration + 9 architecture). 
 **Vulnerability:** The `[HttpGet("{token}")]` endpoint in `InvitesController` allowed unauthenticated users to validate invite tokens without rate limiting.
 **Learning:** Even read-only or "preview" endpoints that expose the validity of sensitive tokens (like invites, password resets, or one-time codes) are vulnerable to enumeration and brute-force attacks if left unthrottled. The global rate limiter is often too permissive (e.g., 100 requests/min) to prevent targeted token discovery.
 **Prevention:** Apply strict rate limiting (e.g., `[EnableRateLimiting("auth")]`) to any endpoint that validates, redeems, or checks the status of sensitive tokens, especially those accessible via `[AllowAnonymous]`.
+
+## 2025-07-29 - Full-Stack Security Audit & Triage
+
+### Phase 1 — Fixed Issues (committed to branch `ac/fix-security-issues`, PR #69)
+
+| # | Issue | Resolution | Commit |
+|---|-------|------------|--------|
+| Dependabot #4/#5 | `serialize-javascript` RCE/DoS in docs/ | `npm overrides` → 7.0.5; `npm install` | `90111b9` |
+| GitHub #64 | `[AllowAnonymous]` on UpdateMyProfile | Already resolved in prior refactor; issue closed | — |
+| GitHub #65 | SSH command injection in `.ssh` file gen | Whitelist regex for username/hostname; validate before StripNewlines; 14 tests | `188454b` |
+
+### Phase 2 — Audit Findings Opened as GitHub Issues
+
+| Issue | Severity | Area | Summary |
+|-------|----------|------|---------|
+| [#70](https://github.com/alessandrocaetanob/smooth-operator/issues/70) | HIGH | Backend | `/metrics` endpoint publicly accessible — no auth on `MapMetrics()` |
+| [#71](https://github.com/alessandrocaetanob/smooth-operator/issues/71) | MEDIUM | CI | Floating GitHub Action tags in `codeql-analysis.yml` and `ci.yml` (supply chain risk) |
+| [#72](https://github.com/alessandrocaetanob/smooth-operator/issues/72) | MEDIUM | Backend | CORS `AllowAnyOrigin` fallback when `AppUrls:Frontend` not configured |
+| [#73](https://github.com/alessandrocaetanob/smooth-operator/issues/73) | MEDIUM | Frontend | Missing `Content-Security-Policy` header in `nginx.conf` |
+| [#74](https://github.com/alessandrocaetanob/smooth-operator/issues/74) | MEDIUM | Frontend | Missing HSTS (`Strict-Transport-Security`) header in `nginx.conf` |
+| [#75](https://github.com/alessandrocaetanob/smooth-operator/issues/75) | MEDIUM | Frontend | JWT stored in `localStorage` — XSS token theft risk |
+| [#76](https://github.com/alessandrocaetanob/smooth-operator/issues/76) | LOW | Infra | Docker Compose: postgres/redis/guacd ports bound to all host interfaces |
+| [#77](https://github.com/alessandrocaetanob/smooth-operator/issues/77) | LOW | Infra | Docker Compose: `ASPNETCORE_ENVIRONMENT=Development` enables Swagger in compose deploys |
+| [#78](https://github.com/alessandrocaetanob/smooth-operator/issues/78) | LOW | Backend | CSP `style-src 'unsafe-inline'` in `SecurityHeadersMiddleware` |
+
+### Suggested Fix Order (Phase 3 triage)
+
+1. **#70 (HIGH)** — Add `.RequireAuthorization()` to `/metrics`; quick, isolated change.
+2. **#75 (MEDIUM)** — Move JWT to in-memory + httpOnly refresh cookie; architectural but high-value.
+3. **#73 (MEDIUM)** — Add CSP header to `nginx.conf`; pairs well with #78.
+4. **#74 (MEDIUM)** — Add HSTS to `nginx.conf`; one-liner alongside #73.
+5. **#72 (MEDIUM)** — Harden CORS fallback to fail-closed; small, targeted change.
+6. **#71 (MEDIUM)** — Pin all GitHub Action SHAs; semi-automated with `pin-github-action`.
+7. **#76 (LOW)** — Bind internal ports to 127.0.0.1 or remove bindings.
+8. **#77 (LOW)** — Extract `ASPNETCORE_ENVIRONMENT=Development` to `docker-compose.override.yml`.
+9. **#78 (LOW)** — Remove `'unsafe-inline'` from CSP `style-src`.
+
+### Key Lessons
+
+- **Validate before sanitizing**: In `DownloadConnectionFileQuery.cs`, `StripNewlines()` was called before the regex check — allowing newlines to bypass the pattern by being stripped first. Always validate raw input, then sanitize for encoding.
+- **Fail-closed on missing config**: The CORS fallback (#72) and the `ASPNETCORE_ENVIRONMENT=Development` setting (#77) both create silent production misconfigurations. Security-critical config should assert/fail at startup if misconfigured rather than silently opening up.
+- **Token storage is a threat model decision**: `localStorage` (#75) is convenient but makes every XSS a complete account takeover. For a PAM tool, httpOnly cookies with CSRF mitigation is the right default.

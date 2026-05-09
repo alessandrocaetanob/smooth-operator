@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace SmoothOperator.Api.Extensions;
 
@@ -12,26 +13,31 @@ public static class CorsExtensions
     // Set AppUrls__AllowedOrigins__0, __1, … environment variables to add origins.
     public static IServiceCollection AddApplicationCors(
         this IServiceCollection services,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        IHostEnvironment environment)
     {
         var appUrlsCfg = configuration.GetSection("AppUrls");
         var frontendOrigin = appUrlsCfg["Frontend"];
         var appOrigin = appUrlsCfg["App"];
         var extraOrigins = appUrlsCfg.GetSection("AllowedOrigins").Get<string[]>() ?? [];
 
+        var origins = new List<string>();
+        if (!string.IsNullOrWhiteSpace(frontendOrigin))
+            origins.Add(frontendOrigin.TrimEnd('/'));
+        if (!string.IsNullOrWhiteSpace(appOrigin) && appOrigin != frontendOrigin)
+            origins.Add(appOrigin.TrimEnd('/'));
+        origins.AddRange(extraOrigins
+            .Where(o => !string.IsNullOrWhiteSpace(o))
+            .Select(o => o.TrimEnd('/')));
+
+        if (origins.Count == 0 && !environment.IsDevelopment())
+            throw new InvalidOperationException(
+                "CORS is not configured. Set AppUrls__Frontend or AppUrls__AllowedOrigins__0 before running in a non-Development environment.");
+
         services.AddCors(options =>
         {
             options.AddPolicy(CorsPolicyName, policy =>
             {
-                var origins = new List<string>();
-                if (!string.IsNullOrWhiteSpace(frontendOrigin))
-                    origins.Add(frontendOrigin.TrimEnd('/'));
-                if (!string.IsNullOrWhiteSpace(appOrigin) && appOrigin != frontendOrigin)
-                    origins.Add(appOrigin.TrimEnd('/'));
-                origins.AddRange(extraOrigins
-                    .Where(o => !string.IsNullOrWhiteSpace(o))
-                    .Select(o => o.TrimEnd('/')));
-
                 if (origins.Count > 0)
                     policy.WithOrigins([.. origins])
                           .AllowAnyHeader()

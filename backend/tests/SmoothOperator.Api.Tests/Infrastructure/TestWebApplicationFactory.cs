@@ -28,6 +28,7 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
     private readonly Action<AppDbContext>? _seed;
     private readonly bool _seedPhantomOwner;
     private readonly Action<IServiceCollection>? _overrideServices;
+    private readonly IReadOnlyDictionary<string, string?>? _overrideConfig;
 
     static TestWebApplicationFactory()
     {
@@ -44,13 +45,18 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
         Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "Testing");
         // EncryptionService requires a 64-char hex key (32 bytes for AES-256).
         Environment.SetEnvironmentVariable("Encryption__Key", TestEncryptionKey);
+        // CORS fail-closed: provide frontend origin so AddApplicationCors doesn't throw
+        // (these must be env vars because they're read before ConfigureAppConfiguration fires).
+        Environment.SetEnvironmentVariable("AppUrls__Frontend", "http://localhost:4200");
+        Environment.SetEnvironmentVariable("AppUrls__App", "http://localhost:5000");
     }
 
-    public TestWebApplicationFactory(Action<AppDbContext>? seed = null, bool seedPhantomOwner = true, Action<IServiceCollection>? overrideServices = null)
+    public TestWebApplicationFactory(Action<AppDbContext>? seed = null, bool seedPhantomOwner = true, Action<IServiceCollection>? overrideServices = null, IReadOnlyDictionary<string, string?>? overrideConfig = null)
     {
         _seed = seed;
         _seedPhantomOwner = seedPhantomOwner;
         _overrideServices = overrideServices;
+        _overrideConfig = overrideConfig;
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -77,6 +83,9 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
                 // Default to false (invite-only). Tests that need self-register override this explicitly.
                 ["Auth:AllowSelfRegister"] = "false",
             });
+
+            if (_overrideConfig is not null)
+                cfg.AddInMemoryCollection(_overrideConfig);
         });
 
         builder.ConfigureServices(services =>

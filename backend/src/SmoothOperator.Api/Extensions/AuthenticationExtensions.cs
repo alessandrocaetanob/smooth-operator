@@ -1,4 +1,5 @@
 using System.Text;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using SmoothOperator.Infrastructure.Services;
@@ -34,6 +35,15 @@ public static class AuthenticationExtensions
                 ValidAudience = jwtCfg["Audience"] ?? TokenService.LocalAudience,
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
                 ClockSkew = TimeSpan.Zero,
+            };
+            options.Events = new JwtBearerEvents
+            {
+                OnMessageReceived = ctx =>
+                {
+                    if (string.IsNullOrEmpty(ctx.Token))
+                        ctx.Token = ctx.Request.Cookies[AuthCookieExtensions.CookieName];
+                    return Task.CompletedTask;
+                },
             };
         });
 

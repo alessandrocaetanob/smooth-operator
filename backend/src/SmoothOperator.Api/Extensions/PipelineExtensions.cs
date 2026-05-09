@@ -1,6 +1,9 @@
+using System.Net.Http.Headers;
+using Microsoft.Extensions.Options;
 using Prometheus;
 using Serilog;
 using SmoothOperator.Api.Middleware;
+using SmoothOperator.Application.Options;
 
 namespace SmoothOperator.Api.Extensions;
 
@@ -44,8 +47,55 @@ public static class PipelineExtensions
         app.UseAuthorization();
         app.MapControllers();
         app.MapHealthChecks("/health");
-        app.MapMetrics("/metrics");
+
+        var metricsOptions = app.Services.GetRequiredService<IOptions<MetricsOptions>>().Value;
+        EnsureMetricsBearerTokenConfigured(app, metricsOptions);
+        ConfigureMetricsEndpoint(app, metricsOptions);
 
         return app;
+    }
+
+    private static void EnsureMetricsBearerTokenConfigured(WebApplication app, MetricsOptions metricsOptions)
+    {
+        if (app.Environment.IsDevelopment()
+            || app.Environment.IsEnvironment("Testing")
+            || !string.IsNullOrWhiteSpace(metricsOptions.BearerToken))
+        {
+            return;
+        }
+
+        throw new InvalidOperationException("Metrics:BearerToken must be configured outside Development/Testing environments.");
+    }
+
+    private static void ConfigureMetricsEndpoint(WebApplication app, MetricsOptions metricsOptions)
+    {
+        // Guard the Prometheus scrape endpoint with a bearer token when configured.
+        app.UseWhen(
+            ctx => ctx.Request.Path.StartsWithSegments("/metrics"),
+            branch => branch.Use(async (ctx, next) =>
+            {
+                if (!HasValidMetricsBearerToken(ctx, metricsOptions.BearerToken))
+                {
+                    ctx.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                    return;
+                }
+
+                await next(ctx);
+            }));
+
+        app.MapMetrics("/metrics");
+    }
+
+    private static bool HasValidMetricsBearerToken(HttpContext context, string? expectedToken)
+    {
+        if (string.IsNullOrWhiteSpace(expectedToken))
+        {
+            return true;
+        }
+
+        var authHeader = context.Request.Headers.Authorization.FirstOrDefault();
+        return AuthenticationHeaderValue.TryParse(authHeader, out var parsedAuth)
+            && string.Equals(parsedAuth.Scheme, "Bearer", StringComparison.OrdinalIgnoreCase)
+            && string.Equals(parsedAuth.Parameter?.Trim(), expectedToken, StringComparison.Ordinal);
     }
 }

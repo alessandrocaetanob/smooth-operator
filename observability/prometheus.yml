@@ -7,6 +7,10 @@ scrape_configs:
     static_configs:
       - targets: ['backend:8080']
     metrics_path: /metrics
+    authorization:
+      # Must match Metrics__BearerToken in docker-compose / your production secret manager.
+      # Uses env var expansion (requires --config.expand-env on prometheus startup).
+      credentials: "${METRICS_TOKEN}"
 
   - job_name: prometheus
     static_configs:

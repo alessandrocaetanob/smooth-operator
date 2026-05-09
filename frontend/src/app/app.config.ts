@@ -35,16 +35,8 @@ export const appConfig: ApplicationConfig = {
     provideAppInitializer(async () => {
       const auth = inject(AuthService);
       await firstValueFrom(auth.loadSetupStatus());
-      if (!auth.token()) return;
 
-      await firstValueFrom(
-        auth.me().pipe(
-          catchError(() => {
-            auth.logout();
-            return of(null);
-          }),
-        ),
-      );
+      await firstValueFrom(auth.me().pipe(catchError(() => of(null))));
     }),
   ],
 };

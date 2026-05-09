@@ -19,7 +19,6 @@ export class SsoFinalize implements OnInit {
     const fragment = this.route.snapshot.fragment ?? '';
     const params = new URLSearchParams(fragment);
     const error = params.get('error');
-    const token = params.get('token');
     const returnUrl = params.get('returnUrl') || '/vault';
 
     if (error) {
@@ -27,18 +26,10 @@ export class SsoFinalize implements OnInit {
       return;
     }
 
-    if (!token) {
-      this.errorMessage.set('Missing authentication token from SSO callback.');
-      return;
-    }
-
-    this.auth.acceptSsoToken(token);
     this.auth.me().subscribe({
       next: () => this.router.navigateByUrl(this.safeReturnUrl(returnUrl)),
       error: () => {
-        // Token was minted but /me failed — keep token and try to navigate
-        // anyway; route guards will gracefully bounce to /login if invalid.
-        this.router.navigateByUrl(this.safeReturnUrl(returnUrl));
+        this.errorMessage.set('Authentication failed. Please try logging in again.');
       },
     });
   }
