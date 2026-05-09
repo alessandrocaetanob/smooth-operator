@@ -1,9 +1,13 @@
-(function () {
+(() => {
+  const root = document.documentElement;
+
   try {
-    var saved = localStorage.getItem('theme');
-    var theme = saved === 'light' || saved === 'dark' ? saved : 'dark';
-    if (theme === 'dark') document.documentElement.classList.add('dark');
-  } catch (e) {
-    document.documentElement.classList.add('dark');
+    const saved = localStorage.getItem('theme');
+    const theme = saved === 'light' || saved === 'dark' ? saved : 'dark';
+
+    root.classList.toggle('dark', theme === 'dark');
+  } catch (error) {
+    console.warn('Failed to restore saved theme preference.', error);
+    root.classList.add('dark');
   }
 })();

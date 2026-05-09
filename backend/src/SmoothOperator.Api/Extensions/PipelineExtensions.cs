@@ -49,35 +49,53 @@ public static class PipelineExtensions
         app.MapHealthChecks("/health");
 
         var metricsOptions = app.Services.GetRequiredService<IOptions<MetricsOptions>>().Value;
-        if (!app.Environment.IsDevelopment()
-            && !app.Environment.IsEnvironment("Testing")
-            && string.IsNullOrWhiteSpace(metricsOptions.BearerToken))
+        EnsureMetricsBearerTokenConfigured(app, metricsOptions);
+        ConfigureMetricsEndpoint(app, metricsOptions);
+
+        return app;
+    }
+
+    private static void EnsureMetricsBearerTokenConfigured(WebApplication app, MetricsOptions metricsOptions)
+    {
+        if (app.Environment.IsDevelopment()
+            || app.Environment.IsEnvironment("Testing")
+            || !string.IsNullOrWhiteSpace(metricsOptions.BearerToken))
         {
-            throw new InvalidOperationException("Metrics:BearerToken must be configured outside Development/Testing environments.");
+            return;
         }
 
+        throw new InvalidOperationException("Metrics:BearerToken must be configured outside Development/Testing environments.");
+    }
+
+    private static void ConfigureMetricsEndpoint(WebApplication app, MetricsOptions metricsOptions)
+    {
         // Guard the Prometheus scrape endpoint with a bearer token when configured.
         app.UseWhen(
             ctx => ctx.Request.Path.StartsWithSegments("/metrics"),
             branch => branch.Use(async (ctx, next) =>
             {
-                if (!string.IsNullOrWhiteSpace(metricsOptions.BearerToken))
+                if (!HasValidMetricsBearerToken(ctx, metricsOptions.BearerToken))
                 {
-                    var authHeader = ctx.Request.Headers.Authorization.FirstOrDefault();
-                    if (!AuthenticationHeaderValue.TryParse(authHeader, out var parsedAuth)
-                        || parsedAuth is null
-                        || !string.Equals(parsedAuth.Scheme, "Bearer", StringComparison.OrdinalIgnoreCase)
-                        || !string.Equals(parsedAuth.Parameter?.Trim(), metricsOptions.BearerToken, StringComparison.Ordinal))
-                    {
-                        ctx.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                        return;
-                    }
+                    ctx.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                    return;
                 }
+
                 await next(ctx);
             }));
 
         app.MapMetrics("/metrics");
+    }
 
-        return app;
+    private static bool HasValidMetricsBearerToken(HttpContext context, string? expectedToken)
+    {
+        if (string.IsNullOrWhiteSpace(expectedToken))
+        {
+            return true;
+        }
+
+        var authHeader = context.Request.Headers.Authorization.FirstOrDefault();
+        return AuthenticationHeaderValue.TryParse(authHeader, out var parsedAuth)
+            && string.Equals(parsedAuth.Scheme, "Bearer", StringComparison.OrdinalIgnoreCase)
+            && string.Equals(parsedAuth.Parameter?.Trim(), expectedToken, StringComparison.Ordinal);
     }
 }

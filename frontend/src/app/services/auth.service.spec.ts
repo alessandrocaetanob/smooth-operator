@@ -248,8 +248,10 @@ describe('AuthService', () => {
     });
 
     it('should be a no-op when no user is set', () => {
+      expect(service.currentUser()).toBeNull();
       service.logout();
       httpTesting.expectNone('/api/auth/logout');
+      expect(service.currentUser()).toBeNull();
     });
   });
 
