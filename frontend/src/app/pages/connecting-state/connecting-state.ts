@@ -6,6 +6,7 @@ import { CommonModule } from '@angular/common';
 import { GuacamoleSessionManagerService, GuacState } from '../../services/guacamole.service';
 import { ConnectionsService, Connection } from '../../services/connections.service';
 import { Mascot, MascotState } from '../../shared/mascot/mascot';
+import { ThemeToggle } from '../../shared/theme-toggle/theme-toggle';
 
 interface Step {
   key: GuacState;
@@ -21,7 +22,7 @@ const STEP_ORDER: Step[] = [
 
 @Component({
   selector: 'app-connecting-state',
-  imports: [CommonModule, Mascot],
+  imports: [CommonModule, Mascot, ThemeToggle],
   templateUrl: './connecting-state.html',
   styleUrl: './connecting-state.css',
 })

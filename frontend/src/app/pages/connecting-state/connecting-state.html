@@ -1,6 +1,8 @@
 <main
   class="min-h-screen w-full flex items-center justify-center p-8 relative bg-surface text-on-surface overflow-hidden"
 >
+  <app-theme-toggle variant="floating" />
+
   <!-- Dot-matrix scan background -->
   <div class="scan-bg absolute inset-0 z-0 pointer-events-none" aria-hidden="true"></div>
 
@@ -77,7 +79,7 @@
       <!-- Mascot + stepper side by side -->
       <div class="flex items-center gap-8 mb-6">
         <!-- Mascot — the emotional core of this page -->
-        <div class="shrink-0 flex flex-col items-center gap-2">
+        <div class="shrink-0 flex flex-col items-center gap-2 animate-float">
           <app-mascot [state]="mascotState()" [isSmall]="false"></app-mascot>
           @if (state() === 'connected') {
             <span class="font-label-caps text-label-caps text-tertiary animate-fade-in"
