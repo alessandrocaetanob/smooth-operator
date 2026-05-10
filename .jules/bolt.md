@@ -42,3 +42,6 @@
 
 **Learning:** Using O(N) array methods like `.includes()` directly inside component methods that are called from Angular templates (e.g., `isVaultSelected(id)`) inside loops like `@for` causes O(M*N) performance bottlenecks during change detection.
 **Action:** Transform array references into `Set` lookups using `computed` signals (`computed(() => new Set(...))`) and use `Set.prototype.has()` instead of `Array.prototype.includes()` to reduce lookup time complexity to O(1).
+## 2024-05-10 - O(N) Array Lookup in GetEffectiveUsersQuery Loop
+**Learning:** Using `FirstOrDefault` on a collection inside a `foreach` loop (like `vault.Users.FirstOrDefault(u => u.Id == uid)`) results in O(N*M) time complexity. In large directories or with many assigned users, this creates a performance bottleneck during authorization/access queries.
+**Action:** Transformed the collection into a dictionary map `vault.Users.ToDictionary(u => u.Id)` before the loop and used `TryGetValue(uid, out var directUser)` to reduce lookup time complexity to O(1) inside the loop.
