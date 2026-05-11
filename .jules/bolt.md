@@ -42,3 +42,6 @@
 
 **Learning:** Using O(N) array methods like `.includes()` directly inside component methods that are called from Angular templates (e.g., `isVaultSelected(id)`) inside loops like `@for` causes O(M*N) performance bottlenecks during change detection.
 **Action:** Transform array references into `Set` lookups using `computed` signals (`computed(() => new Set(...))`) and use `Set.prototype.has()` instead of `Array.prototype.includes()` to reduce lookup time complexity to O(1).
+## 2026-07-14 - Replace O(N) array method inside O(N) loops with O(1) Dictionary lookups
+**Learning:** For C# backend performance optimization, using `.FirstOrDefault()` inside loops to query elements within lists causes O(N*M) linear scan bottlenecks. In `GetEffectiveUsersQuery.cs`, looping through all user IDs while calling `vault.Users.FirstOrDefault` was evaluated repeatedly within a loop.
+**Action:** Convert target collections to lookup dictionaries via `.ToDictionary(k => k.Id)` outside the loop, and use `.TryGetValue()` inside the loop for O(1) evaluation.
