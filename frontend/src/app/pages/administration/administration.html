@@ -116,7 +116,10 @@
           required
           class="input-field"
         />
-        <label for="inviteRole" class="md:col-span-2 flex flex-col gap-1 text-xs text-on-surface-variant">
+        <label
+          for="inviteRole"
+          class="md:col-span-2 flex flex-col gap-1 text-xs text-on-surface-variant"
+        >
           <span class="uppercase tracking-widest">Role</span>
           <select
             id="inviteRole"
@@ -163,7 +166,9 @@
             <td class="px-4 py-3 text-on-surface">{{ u.name }}</td>
             <td class="px-4 py-3 text-on-surface-variant">{{ u.email }}</td>
             <td class="px-4 py-3">
-              <label [attr.for]="'role-select-' + u.id" class="sr-only">Change role for {{ u.name }}</label>
+              <label [attr.for]="'role-select-' + u.id" class="sr-only"
+                >Change role for {{ u.name }}</label
+              >
               <select
                 [id]="'role-select-' + u.id"
                 [ngModel]="primaryRole(u)"
@@ -269,7 +274,10 @@
 
         <div class="mt-4 max-h-64 overflow-y-auto space-y-2">
           @for (vault of vaults(); track trackVault($index, vault)) {
-            <label [attr.for]="'vault-assign-' + vault.id" class="flex items-center gap-2 text-sm text-on-surface">
+            <label
+              [attr.for]="'vault-assign-' + vault.id"
+              class="flex items-center gap-2 text-sm text-on-surface"
+            >
               <input
                 [id]="'vault-assign-' + vault.id"
                 type="checkbox"
