@@ -14,13 +14,7 @@
       "description": "Total login attempts (successful + failed) in the last 24 hours.",
       "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 },
       "datasource": { "type": "prometheus", "uid": "Prometheus" },
-      "targets": [
-        {
-          "expr": "sum(increase(smooth_operator_login_attempts_total[24h]))",
-          "legendFormat": "total",
-          "refId": "A"
-        }
-      ],
+      "targets": [{ "expr": "sum(increase(smooth_operator_login_attempts_total[24h]))", "legendFormat": "total", "refId": "A" }],
       "options": {
         "reduceOptions": { "values": false, "calcs": ["lastNotNull"], "fields": "" },
         "orientation": "auto",
@@ -46,13 +40,7 @@
       "description": "Failed login attempts in the last hour. Values above 10 may indicate a brute-force attack.",
       "gridPos": { "x": 6, "y": 0, "w": 6, "h": 4 },
       "datasource": { "type": "prometheus", "uid": "Prometheus" },
-      "targets": [
-        {
-          "expr": "increase(smooth_operator_login_attempts_total{outcome=\"failure\"}[1h])",
-          "legendFormat": "failures",
-          "refId": "A"
-        }
-      ],
+      "targets": [{ "expr": "increase(smooth_operator_login_attempts_total{outcome=\"failure\"}[1h])", "legendFormat": "failures", "refId": "A" }],
       "options": {
         "reduceOptions": { "values": false, "calcs": ["lastNotNull"], "fields": "" },
         "orientation": "auto",
@@ -85,13 +73,7 @@
       "description": "Percentage of login attempts that succeeded in the last 24 hours.",
       "gridPos": { "x": 12, "y": 0, "w": 6, "h": 4 },
       "datasource": { "type": "prometheus", "uid": "Prometheus" },
-      "targets": [
-        {
-          "expr": "100 * sum(increase(smooth_operator_login_attempts_total{outcome=\"success\"}[24h])) / clamp_min(sum(increase(smooth_operator_login_attempts_total[24h])), 1)",
-          "legendFormat": "success %",
-          "refId": "A"
-        }
-      ],
+      "targets": [{ "expr": "100 * sum(increase(smooth_operator_login_attempts_total{outcome=\"success\"}[24h])) / clamp_min(sum(increase(smooth_operator_login_attempts_total[24h])), 1)", "legendFormat": "success %", "refId": "A" }],
       "options": {
         "reduceOptions": { "values": false, "calcs": ["lastNotNull"], "fields": "" },
         "orientation": "auto",
@@ -127,13 +109,7 @@
       "description": "Current rate of failed logins per second over the last 5 minutes.",
       "gridPos": { "x": 18, "y": 0, "w": 6, "h": 4 },
       "datasource": { "type": "prometheus", "uid": "Prometheus" },
-      "targets": [
-        {
-          "expr": "rate(smooth_operator_login_attempts_total{outcome=\"failure\"}[5m])",
-          "legendFormat": "fail/s",
-          "refId": "A"
-        }
-      ],
+      "targets": [{ "expr": "rate(smooth_operator_login_attempts_total{outcome=\"failure\"}[5m])", "legendFormat": "fail/s", "refId": "A" }],
       "options": {
         "reduceOptions": { "values": false, "calcs": ["lastNotNull"], "fields": "" },
         "orientation": "auto",
@@ -168,24 +144,12 @@
       "gridPos": { "x": 0, "y": 4, "w": 24, "h": 9 },
       "datasource": { "type": "prometheus", "uid": "Prometheus" },
       "targets": [
-        {
-          "expr": "rate(smooth_operator_login_attempts_total{outcome=\"success\"}[5m])",
-          "legendFormat": "Successful Logins",
-          "refId": "A"
-        },
-        {
-          "expr": "rate(smooth_operator_login_attempts_total{outcome=\"failure\"}[5m])",
-          "legendFormat": "Failed Logins",
-          "refId": "B"
-        }
+        { "expr": "rate(smooth_operator_login_attempts_total{outcome=\"success\"}[5m])", "legendFormat": "Successful Logins", "refId": "A" },
+        { "expr": "rate(smooth_operator_login_attempts_total{outcome=\"failure\"}[5m])", "legendFormat": "Failed Logins", "refId": "B" }
       ],
       "options": {
         "tooltip": { "mode": "multi", "sort": "none" },
-        "legend": {
-          "displayMode": "table",
-          "placement": "bottom",
-          "calcs": ["mean", "max", "last"]
-        }
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max", "last"] }
       },
       "fieldConfig": {
         "defaults": {
@@ -219,13 +183,7 @@
       "description": "Structured log entries for failed login attempts, shipped from the application to Loki.",
       "gridPos": { "x": 0, "y": 13, "w": 24, "h": 9 },
       "datasource": { "type": "loki", "uid": "Loki" },
-      "targets": [
-        {
-          "expr": "{app=\"smooth-operator\"} | json | action = `user.login_failed`",
-          "legendFormat": "",
-          "refId": "A"
-        }
-      ],
+      "targets": [{ "expr": "{app=\"smooth-operator\"} | json | action = `user.login_failed`", "legendFormat": "", "refId": "A" }],
       "options": {
         "showLabels": false,
         "showTime": true,
@@ -243,20 +201,10 @@
       "description": "Rate of audit events per second grouped by action. Helps detect unusual activity patterns.",
       "gridPos": { "x": 0, "y": 22, "w": 24, "h": 8 },
       "datasource": { "type": "prometheus", "uid": "Prometheus" },
-      "targets": [
-        {
-          "expr": "sum by (action) (rate(smooth_operator_audit_events_total[5m]))",
-          "legendFormat": "{{action}}",
-          "refId": "A"
-        }
-      ],
+      "targets": [{ "expr": "sum by (action) (rate(smooth_operator_audit_events_total[5m]))", "legendFormat": "{{action}}", "refId": "A" }],
       "options": {
         "tooltip": { "mode": "multi", "sort": "desc" },
-        "legend": {
-          "displayMode": "table",
-          "placement": "bottom",
-          "calcs": ["mean", "max", "last"]
-        }
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max", "last"] }
       },
       "fieldConfig": {
         "defaults": {

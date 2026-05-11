@@ -14,13 +14,7 @@
       "description": "HTTP requests per second over the last 1 minute.",
       "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 },
       "datasource": { "type": "prometheus", "uid": "Prometheus" },
-      "targets": [
-        {
-          "expr": "sum(rate(http_requests_received_total[1m]))",
-          "legendFormat": "req/s",
-          "refId": "A"
-        }
-      ],
+      "targets": [{ "expr": "sum(rate(http_requests_received_total[1m]))", "legendFormat": "req/s", "refId": "A" }],
       "options": {
         "reduceOptions": { "values": false, "calcs": ["lastNotNull"], "fields": "" },
         "orientation": "auto",
@@ -54,13 +48,7 @@
       "description": "Percentage of HTTP requests returning a 5xx status code.",
       "gridPos": { "x": 6, "y": 0, "w": 6, "h": 4 },
       "datasource": { "type": "prometheus", "uid": "Prometheus" },
-      "targets": [
-        {
-          "expr": "100 * sum(rate(http_requests_received_total{code=~\"5..\"}[1m])) / clamp_min(sum(rate(http_requests_received_total[1m])), 1)",
-          "legendFormat": "error %",
-          "refId": "A"
-        }
-      ],
+      "targets": [{ "expr": "100 * sum(rate(http_requests_received_total{code=~\"5..\"}[1m])) / clamp_min(sum(rate(http_requests_received_total[1m])), 1)", "legendFormat": "error %", "refId": "A" }],
       "options": {
         "reduceOptions": { "values": false, "calcs": ["lastNotNull"], "fields": "" },
         "orientation": "auto",
@@ -96,13 +84,7 @@
       "description": "95th percentile response time. Values above 1s indicate potential performance issues.",
       "gridPos": { "x": 12, "y": 0, "w": 6, "h": 4 },
       "datasource": { "type": "prometheus", "uid": "Prometheus" },
-      "targets": [
-        {
-          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le)) * 1000",
-          "legendFormat": "p95 ms",
-          "refId": "A"
-        }
-      ],
+      "targets": [{ "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le)) * 1000", "legendFormat": "p95 ms", "refId": "A" }],
       "options": {
         "reduceOptions": { "values": false, "calcs": ["lastNotNull"], "fields": "" },
         "orientation": "auto",
@@ -136,9 +118,7 @@
       "description": "Number of currently open RDP/SSH sessions through the Guacamole proxy.",
       "gridPos": { "x": 18, "y": 0, "w": 6, "h": 4 },
       "datasource": { "type": "prometheus", "uid": "Prometheus" },
-      "targets": [
-        { "expr": "smooth_operator_active_sessions", "legendFormat": "sessions", "refId": "A" }
-      ],
+      "targets": [{ "expr": "smooth_operator_active_sessions", "legendFormat": "sessions", "refId": "A" }],
       "options": {
         "reduceOptions": { "values": false, "calcs": ["lastNotNull"], "fields": "" },
         "orientation": "auto",
@@ -171,13 +151,7 @@
       "description": "Total number of HTTP requests handled in the last hour.",
       "gridPos": { "x": 0, "y": 4, "w": 6, "h": 4 },
       "datasource": { "type": "prometheus", "uid": "Prometheus" },
-      "targets": [
-        {
-          "expr": "sum(increase(http_requests_received_total[1h]))",
-          "legendFormat": "total",
-          "refId": "A"
-        }
-      ],
+      "targets": [{ "expr": "sum(increase(http_requests_received_total[1h]))", "legendFormat": "total", "refId": "A" }],
       "options": {
         "reduceOptions": { "values": false, "calcs": ["lastNotNull"], "fields": "" },
         "orientation": "auto",
@@ -203,13 +177,7 @@
       "description": "Median (50th percentile) response time.",
       "gridPos": { "x": 6, "y": 4, "w": 6, "h": 4 },
       "datasource": { "type": "prometheus", "uid": "Prometheus" },
-      "targets": [
-        {
-          "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket[5m])) by (le)) * 1000",
-          "legendFormat": "p50 ms",
-          "refId": "A"
-        }
-      ],
+      "targets": [{ "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket[5m])) by (le)) * 1000", "legendFormat": "p50 ms", "refId": "A" }],
       "options": {
         "reduceOptions": { "values": false, "calcs": ["lastNotNull"], "fields": "" },
         "orientation": "auto",
@@ -243,13 +211,7 @@
       "description": "Number of Guacamole proxy connections started in the last hour.",
       "gridPos": { "x": 12, "y": 4, "w": 6, "h": 4 },
       "datasource": { "type": "prometheus", "uid": "Prometheus" },
-      "targets": [
-        {
-          "expr": "increase(smooth_operator_connections_started_total[1h])",
-          "legendFormat": "connections",
-          "refId": "A"
-        }
-      ],
+      "targets": [{ "expr": "increase(smooth_operator_connections_started_total[1h])", "legendFormat": "connections", "refId": "A" }],
       "options": {
         "reduceOptions": { "values": false, "calcs": ["lastNotNull"], "fields": "" },
         "orientation": "auto",
@@ -275,13 +237,7 @@
       "description": "Percentage of HTTP requests returning a 4xx client-error status code.",
       "gridPos": { "x": 18, "y": 4, "w": 6, "h": 4 },
       "datasource": { "type": "prometheus", "uid": "Prometheus" },
-      "targets": [
-        {
-          "expr": "100 * sum(rate(http_requests_received_total{code=~\"4..\"}[1m])) / clamp_min(sum(rate(http_requests_received_total[1m])), 1)",
-          "legendFormat": "4xx %",
-          "refId": "A"
-        }
-      ],
+      "targets": [{ "expr": "100 * sum(rate(http_requests_received_total{code=~\"4..\"}[1m])) / clamp_min(sum(rate(http_requests_received_total[1m])), 1)", "legendFormat": "4xx %", "refId": "A" }],
       "options": {
         "reduceOptions": { "values": false, "calcs": ["lastNotNull"], "fields": "" },
         "orientation": "auto",
@@ -318,29 +274,13 @@
       "gridPos": { "x": 0, "y": 8, "w": 16, "h": 9 },
       "datasource": { "type": "prometheus", "uid": "Prometheus" },
       "targets": [
-        {
-          "expr": "sum by (code) (rate(http_requests_received_total{code=~\"2..\"}[1m]))",
-          "legendFormat": "{{code}}",
-          "refId": "A"
-        },
-        {
-          "expr": "sum by (code) (rate(http_requests_received_total{code=~\"4..\"}[1m]))",
-          "legendFormat": "{{code}}",
-          "refId": "B"
-        },
-        {
-          "expr": "sum by (code) (rate(http_requests_received_total{code=~\"5..\"}[1m]))",
-          "legendFormat": "{{code}}",
-          "refId": "C"
-        }
+        { "expr": "sum by (code) (rate(http_requests_received_total{code=~\"2..\"}[1m]))", "legendFormat": "{{code}}", "refId": "A" },
+        { "expr": "sum by (code) (rate(http_requests_received_total{code=~\"4..\"}[1m]))", "legendFormat": "{{code}}", "refId": "B" },
+        { "expr": "sum by (code) (rate(http_requests_received_total{code=~\"5..\"}[1m]))", "legendFormat": "{{code}}", "refId": "C" }
       ],
       "options": {
         "tooltip": { "mode": "multi", "sort": "desc" },
-        "legend": {
-          "displayMode": "table",
-          "placement": "bottom",
-          "calcs": ["mean", "max", "last"]
-        }
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max", "last"] }
       },
       "fieldConfig": {
         "defaults": {
@@ -366,21 +306,9 @@
       "gridPos": { "x": 16, "y": 8, "w": 8, "h": 9 },
       "datasource": { "type": "prometheus", "uid": "Prometheus" },
       "targets": [
-        {
-          "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket[5m])) by (le)) * 1000",
-          "legendFormat": "p50",
-          "refId": "A"
-        },
-        {
-          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le)) * 1000",
-          "legendFormat": "p95",
-          "refId": "B"
-        },
-        {
-          "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by (le)) * 1000",
-          "legendFormat": "p99",
-          "refId": "C"
-        }
+        { "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket[5m])) by (le)) * 1000", "legendFormat": "p50", "refId": "A" },
+        { "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le)) * 1000", "legendFormat": "p95", "refId": "B" },
+        { "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by (le)) * 1000", "legendFormat": "p99", "refId": "C" }
       ],
       "options": {
         "tooltip": { "mode": "multi", "sort": "desc" },
