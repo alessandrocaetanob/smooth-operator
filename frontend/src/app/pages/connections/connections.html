@@ -441,7 +441,7 @@
               >
                 Color scheme
               </p>
-              <div class="grid grid-cols-3 gap-2">
+              <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 @for (scheme of termColorSchemes; track scheme.value) {
                   <button
                     type="button"
@@ -465,7 +465,7 @@
             </div>
 
             <!-- Font -->
-            <div class="grid grid-cols-2 gap-3">
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
                 <label
                   class="block text-xs font-medium text-on-surface-variant mb-1 uppercase tracking-widest"
@@ -540,7 +540,7 @@
               Protocol examples
             </div>
             <div
-              class="grid md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-outline-variant/20"
+              class="grid grid-cols-1 divide-y divide-outline-variant/20 md:grid-cols-3 md:divide-y-0 md:divide-x"
             >
               <div class="p-3">
                 <p class="text-[10px] font-bold uppercase tracking-widest text-primary/80 mb-1.5">

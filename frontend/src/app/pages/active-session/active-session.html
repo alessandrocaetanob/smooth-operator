@@ -49,6 +49,16 @@
 
   <div class="flex items-center gap-2">
     <app-theme-toggle [compact]="true" aria-label="Toggle theme"></app-theme-toggle>
+    @if (isSshConnection()) {
+      <button
+        class="tool-btn-sm"
+        (click)="openTerminalThemeModal()"
+        aria-label="Session terminal theme"
+        type="button"
+      >
+        <span class="material-symbols-outlined text-sm" aria-hidden="true">palette</span>
+      </button>
+    }
     <button
       class="tool-btn-sm"
       (click)="minimize()"
@@ -343,6 +353,124 @@
               }
             </button>
           </div>
+        </div>
+      </dialog>
+    </div>
+  }
+
+  <!-- ── Session Terminal Theme Modal (SSH) ────────────────────────────── -->
+  @if (showTerminalThemeModal() && isSshConnection()) {
+    <div
+      data-guac-modal-open="true"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+      tabindex="-1"
+      (click)="closeTerminalThemeModal()"
+      (keydown.escape)="closeTerminalThemeModal()"
+    >
+      <dialog
+        open
+        tabindex="-1"
+        aria-labelledby="terminal-theme-title"
+        class="glass-card relative w-full max-w-xl rounded-xl p-6"
+        (click)="$event.stopPropagation()"
+        (keydown.enter)="$event.stopPropagation()"
+      >
+        <h2 id="terminal-theme-title" class="mb-1 flex items-center gap-2 text-base font-semibold">
+          <span class="material-symbols-outlined text-sm text-primary" aria-hidden="true"
+            >palette</span
+          >
+          Session Terminal Theme
+        </h2>
+        <p class="mb-4 text-xs text-on-surface-variant/60">
+          Applies on the next connect/reconnect for this browser session only.
+        </p>
+
+        <div class="space-y-4">
+          <div>
+            <p
+              class="mb-2 block text-xs font-medium uppercase tracking-widest text-on-surface-variant"
+            >
+              Color scheme
+            </p>
+            <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              @for (scheme of termColorSchemes; track scheme.value) {
+                <button
+                  type="button"
+                  class="flex items-center gap-2 rounded-lg border px-3 py-2 text-left text-xs font-mono transition-all"
+                  [ngClass]="
+                    termColorScheme() === scheme.value
+                      ? 'border-primary/60 bg-primary/10 text-primary'
+                      : 'border-outline-variant/30 bg-surface-container/30 text-on-surface-variant hover:border-primary/30'
+                  "
+                  (click)="termColorScheme.set(scheme.value)"
+                  [attr.aria-pressed]="termColorScheme() === scheme.value"
+                >
+                  <span
+                    class="h-4 w-4 shrink-0 rounded-sm border border-white/10"
+                    [style.background]="scheme.preview"
+                  ></span>
+                  {{ scheme.label }}
+                </button>
+              }
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div>
+              <label
+                class="mb-1 block text-xs font-medium uppercase tracking-widest text-on-surface-variant"
+                for="sessionTermFontName"
+              >
+                Font
+              </label>
+              <select
+                id="sessionTermFontName"
+                name="sessionTermFontName"
+                [ngModel]="termFontName()"
+                (ngModelChange)="termFontName.set($event)"
+                class="input-field w-full text-sm font-mono"
+              >
+                @for (f of termFontNames; track f) {
+                  <option [value]="f">{{ f }}</option>
+                }
+              </select>
+            </div>
+            <div>
+              <label
+                class="mb-1 block text-xs font-medium uppercase tracking-widest text-on-surface-variant"
+                for="sessionTermFontSize"
+              >
+                Size (px)
+              </label>
+              <input
+                id="sessionTermFontSize"
+                type="number"
+                name="sessionTermFontSize"
+                min="8"
+                max="28"
+                [ngModel]="termFontSize()"
+                (ngModelChange)="termFontSize.set(+$event)"
+                class="input-field w-full text-sm"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-5 flex justify-end gap-3">
+          <button
+            class="btn-ghost px-4 py-2 text-sm"
+            type="button"
+            (click)="closeTerminalThemeModal()"
+          >
+            Close
+          </button>
+          <button
+            class="btn-primary px-5 py-2 text-sm"
+            type="button"
+            (click)="saveTerminalThemeForSession()"
+          >
+            Save for session
+          </button>
         </div>
       </dialog>
     </div>
