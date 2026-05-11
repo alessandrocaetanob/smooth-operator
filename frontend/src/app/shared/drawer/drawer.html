@@ -10,8 +10,9 @@
 <dialog
   open
   @drawerPanel
-  class="fixed inset-y-0 right-0 z-50 flex flex-col w-full max-w-xl bg-surface border-l border-outline-variant/30 shadow-2xl"
+  class="fixed inset-y-0 right-0 z-50 flex flex-col w-full max-w-xl glass-panel border-l border-outline-variant/30 shadow-2xl"
   aria-labelledby="drawer-title"
+  aria-modal="true"
 >
   <!-- Header -->
   <div
@@ -23,8 +24,14 @@
         <p class="text-xs text-on-surface-variant mt-0.5">{{ subtitle }}</p>
       }
     </div>
-    <button (click)="closed.emit()" class="btn-ghost p-2" aria-label="Close drawer" type="button">
-      <span class="material-symbols-outlined text-xl">close</span>
+    <button
+      #closeButton
+      (click)="closed.emit()"
+      class="btn-ghost p-2"
+      aria-label="Close drawer"
+      type="button"
+    >
+      <span class="material-symbols-outlined text-xl" aria-hidden="true">close</span>
     </button>
   </div>
 

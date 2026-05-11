@@ -81,7 +81,11 @@
                   <div
                     class="w-8 h-8 rounded-lg bg-secondary-container/20 border border-secondary-container/40 flex items-center justify-center shrink-0"
                   >
-                    <span class="material-symbols-outlined text-secondary text-[16px]">dns</span>
+                    <span
+                      class="material-symbols-outlined text-secondary text-[16px]"
+                      aria-hidden="true"
+                      >dns</span
+                    >
                   </div>
                   <span class="text-on-surface font-medium">{{ h.name }}</span>
                 </div>
@@ -89,18 +93,20 @@
               <td class="px-5 py-4 font-mono text-xs text-on-surface-variant">{{ h.address }}</td>
               <td class="px-5 py-4">
                 <div
-                  class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                  class="flex items-center justify-end gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
                 >
                   @if (canManageConnections()) {
                     <button (click)="edit(h)" class="btn-ghost p-2 rounded-lg" title="Edit">
-                      <span class="material-symbols-outlined text-lg">edit</span>
+                      <span class="material-symbols-outlined text-lg" aria-hidden="true">edit</span>
                     </button>
                     <button
                       (click)="remove(h)"
                       class="p-2 text-error hover:bg-error/10 rounded-lg transition-colors"
                       title="Delete"
                     >
-                      <span class="material-symbols-outlined text-lg">delete</span>
+                      <span class="material-symbols-outlined text-lg" aria-hidden="true"
+                        >delete</span
+                      >
                     </button>
                   }
                 </div>

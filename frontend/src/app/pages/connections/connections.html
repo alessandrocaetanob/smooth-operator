@@ -106,10 +106,7 @@
         </thead>
         <tbody class="divide-y divide-outline-variant/10">
           @for (c of filteredConnections(); track trackById($index, c)) {
-            <tr
-              class="hover:bg-on-surface/5 group transition-colors animate-slide-up"
-              [style.animation-delay]="$index * 50 + 'ms'"
-            >
+            <tr class="hover:bg-on-surface/5 group transition-colors">
               <td class="px-5 py-4">
                 <div class="flex items-center gap-3">
                   <div
@@ -141,7 +138,9 @@
               <td class="px-5 py-4 text-on-surface-variant">
                 @if (c.credentialId) {
                   <div class="flex items-center gap-1 text-xs">
-                    <span class="material-symbols-outlined text-[14px]">key</span>
+                    <span class="material-symbols-outlined text-[14px]" aria-hidden="true"
+                      >key</span
+                    >
                     {{ credentialName(c.credentialId) }}
                   </div>
                 } @else {
@@ -164,17 +163,17 @@
               </td>
               <td class="px-5 py-4">
                 <div
-                  class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                  class="flex items-center justify-end gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
                 >
                   <button (click)="edit(c)" class="btn-ghost p-2 rounded-lg" title="Edit">
-                    <span class="material-symbols-outlined text-lg">edit</span>
+                    <span class="material-symbols-outlined text-lg" aria-hidden="true">edit</span>
                   </button>
                   <button
                     (click)="remove(c)"
                     class="p-2 text-error hover:bg-error/10 rounded-lg transition-colors"
                     title="Delete"
                   >
-                    <span class="material-symbols-outlined text-lg">delete</span>
+                    <span class="material-symbols-outlined text-lg" aria-hidden="true">delete</span>
                   </button>
                 </div>
               </td>
