@@ -53,9 +53,12 @@ namespace SmoothOperator.Application.Features.ConnectionGroups.Queries
             var allUserIds = directIds.Union(groupedByUser.Keys).ToList();
             var users = new List<EffectiveUserSourceDto>();
 
+            // Optimize: O(1) lookup dictionary instead of O(N) linear scan inside the loop
+            var directUsersDict = vault.Users.ToDictionary(u => u.Id);
+
             foreach (var uid in allUserIds)
             {
-                var directUser = vault.Users.FirstOrDefault(u => u.Id == uid);
+                directUsersDict.TryGetValue(uid, out var directUser);
                 groupedByUser.TryGetValue(uid, out var viaGroups);
 
                 var name = directUser?.Name ?? viaGroups![0].User.Name;

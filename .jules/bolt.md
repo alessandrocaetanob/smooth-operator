@@ -42,3 +42,7 @@
 
 **Learning:** Using O(N) array methods like `.includes()` directly inside component methods that are called from Angular templates (e.g., `isVaultSelected(id)`) inside loops like `@for` causes O(M*N) performance bottlenecks during change detection.
 **Action:** Transform array references into `Set` lookups using `computed` signals (`computed(() => new Set(...))`) and use `Set.prototype.has()` instead of `Array.prototype.includes()` to reduce lookup time complexity to O(1).
+
+## 2026-05-11 - Optimize O(N*M) linear scan bottleneck in C# loops
+**Learning:** In C#, evaluating `.FirstOrDefault()` repeatedly inside a loop against a collection causes an O(N*M) linear scan bottleneck.
+**Action:** Convert the collection to a lookup dictionary (`.ToDictionary(k => k.Id)`) outside the loop and use `.TryGetValue()` inside to achieve O(1) lookups.
