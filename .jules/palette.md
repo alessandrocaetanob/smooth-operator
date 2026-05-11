@@ -10,3 +10,6 @@
 ## 2026-05-06 - Password Visibility Toggle
 **Learning:** For authentication forms, users need the ability to verify their input, particularly for passwords, reducing input errors and friction. Providing a password visibility toggle with proper ARIA attributes ('aria-label', 'aria-pressed') ensures screen readers can accurately interpret the state, enhancing both general usability and accessibility.
 **Action:** Always include a password visibility toggle button on password fields, ensuring it is positioned carefully within a relative container, uses accessible icons, and dynamically updates its ARIA state to reflect visibility.
+## 2026-05-09 - Form Accessibility Labels
+**Learning:** In complex angular pages like Administration, nested forms and repeated items in tables or modals frequently lack explicit id/for label connections, especially when visual labels are not present or implicitly wrapped. Implicit wrapping does not provide perfect screen-reader support compared to explicitly linked labels.
+**Action:** Always add explicit `id` attributes to inputs/selects and associate them strongly with explicitly declared `<label>` elements using the `for` attribute, even if the label is screen-reader-only (`sr-only`), particularly in dynamically rendered lists and tables (e.g. `[id]="'id-' + item.id"`).
