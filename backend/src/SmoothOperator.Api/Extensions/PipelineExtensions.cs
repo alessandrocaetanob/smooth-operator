@@ -90,7 +90,7 @@ public static class PipelineExtensions
     {
         if (string.IsNullOrWhiteSpace(expectedToken))
         {
-            return true;
+            return false;
         }
 
         var authHeader = context.Request.Headers.Authorization.FirstOrDefault();

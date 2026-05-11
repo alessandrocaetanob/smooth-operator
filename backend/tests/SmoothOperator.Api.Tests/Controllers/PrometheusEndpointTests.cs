@@ -20,18 +20,14 @@ public class PrometheusEndpointTests
         });
 
     [Fact]
-    public async Task Metrics_WithoutTokenConfigured_IsPubliclyAccessible()
+    public async Task Metrics_WithoutTokenConfigured_Returns401()
     {
         await using var factory = new TestWebApplicationFactory();
         var client = factory.CreateClient();
 
         var response = await client.GetAsync("/metrics");
 
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var body = await response.Content.ReadAsStringAsync();
-        // Prometheus exposition format always emits HELP/TYPE comment lines for registered metrics.
-        Assert.True(body.Contains("# HELP", StringComparison.Ordinal) || body.Contains("# TYPE", StringComparison.Ordinal),
-            $"Expected Prometheus exposition output (# HELP/# TYPE), got: {body[..Math.Min(body.Length, 200)]}");
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
     [Fact]
