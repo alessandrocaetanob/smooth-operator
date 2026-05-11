@@ -10,3 +10,6 @@
 ## 2026-05-06 - Password Visibility Toggle
 **Learning:** For authentication forms, users need the ability to verify their input, particularly for passwords, reducing input errors and friction. Providing a password visibility toggle with proper ARIA attributes ('aria-label', 'aria-pressed') ensures screen readers can accurately interpret the state, enhancing both general usability and accessibility.
 **Action:** Always include a password visibility toggle button on password fields, ensuring it is positioned carefully within a relative container, uses accessible icons, and dynamically updates its ARIA state to reflect visibility.
+## 2026-05-11 - Search Clear Icon Button Accessibility
+**Learning:** Found a pattern across multiple list pages (Connections, Credentials, Hosts) where the search input's 'Clear search' adornment button was icon-only and lacked both an 'aria-label' and a 'title'. Screen readers would simply read this as 'button', making it confusing for users to know its purpose.
+**Action:** Always ensure that icon-only buttons, especially those functioning as input adornments like 'Clear', have an explicit 'aria-label' attribute to make their purpose clear to screen reader users.
