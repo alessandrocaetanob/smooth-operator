@@ -236,3 +236,8 @@ Opened PR #50 to master: all 151 tests pass (142 integration + 9 architecture). 
 - **Validate before sanitizing**: In `DownloadConnectionFileQuery.cs`, `StripNewlines()` was called before the regex check — allowing newlines to bypass the pattern by being stripped first. Always validate raw input, then sanitize for encoding.
 - **Fail-closed on missing config**: The CORS fallback (#72) and the `ASPNETCORE_ENVIRONMENT=Development` setting (#77) both create silent production misconfigurations. Security-critical config should assert/fail at startup if misconfigured rather than silently opening up.
 - **Token storage is a threat model decision**: `localStorage` (#75) is convenient but makes every XSS a complete account takeover. For a PAM tool, httpOnly cookies with CSRF mitigation is the right default.
+
+## 2025-08-01 - Add `.RequireAuthorization()` to `/metrics` endpoint
+**Vulnerability:** The `/metrics` endpoint was relying solely on custom middleware (`HasValidMetricsBearerToken`) returning 401 on failure, but lacked ASP.NET Core's `.RequireAuthorization()` enforcement on the endpoint itself.
+**Learning:** Custom middleware guards can be bypassed if the routing order changes or if other parts of the system interact directly with the endpoint configuration. Security should follow defense-in-depth principles, hooking into ASP.NET Core's native endpoint authorization framework.
+**Prevention:** Ensure that custom token validators populate `ctx.User` with a valid `ClaimsPrincipal` so that standard `RequireAuthorization()` can be appended to `MapMetrics()`, preventing accidental exposure.
