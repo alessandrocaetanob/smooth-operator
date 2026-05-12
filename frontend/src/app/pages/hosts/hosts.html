@@ -47,7 +47,9 @@
       />
       @if (searchQuery()) {
         <button
+          type="button"
           (click)="searchQuery.set('')"
+          aria-label="Clear search"
           class="absolute right-2 top-1/2 -translate-y-1/2 text-on-surface-variant/60 hover:text-on-surface transition-colors"
         >
           <span class="material-symbols-outlined text-base">close</span>

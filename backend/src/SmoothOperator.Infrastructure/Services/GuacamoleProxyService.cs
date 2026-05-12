@@ -639,7 +639,7 @@ namespace SmoothOperator.Infrastructure.Services
             {
                 using var doc = JsonDocument.Parse(settingsJson);
                 if (doc.RootElement.ValueKind != JsonValueKind.Object) return dict;
-                foreach (var prop in doc.RootElement.EnumerateObject().Select(prop => new { prop.Name, prop.Value }))
+                foreach (var prop in doc.RootElement.EnumerateObject())
                 {
                     dict[prop.Name] = prop.Value.ValueKind switch
                     {

@@ -24,11 +24,13 @@
 
   <div class="mb-4">
     <div class="relative">
+      <label for="admin-user-search" class="sr-only">Search users</label>
       <span
         class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-base"
         >search</span
       >
       <input
+        id="admin-user-search"
         type="text"
         placeholder="Search users by name, email, or role…"
         [ngModel]="searchQuery()"
@@ -93,7 +95,9 @@
         until the link is redeemed.
       </p>
       <form (ngSubmit)="submitInvite()" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <label for="invite-name" class="sr-only">Full name</label>
         <input
+          id="invite-name"
           type="text"
           placeholder="Full name (optional)"
           [ngModel]="inviteName()"
@@ -101,7 +105,9 @@
           name="name"
           class="input-field"
         />
+        <label for="invite-email" class="sr-only">Email</label>
         <input
+          id="invite-email"
           type="email"
           placeholder="Email"
           [ngModel]="inviteEmail()"

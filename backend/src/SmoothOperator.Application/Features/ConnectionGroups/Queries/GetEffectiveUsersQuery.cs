@@ -51,11 +51,12 @@ namespace SmoothOperator.Application.Features.ConnectionGroups.Queries
                 .ToDictionary(g => g.Key, g => g.ToList());
 
             var allUserIds = directIds.Union(groupedByUser.Keys).ToList();
+            var directUsersById = vault.Users.ToDictionary(u => u.Id);
             var users = new List<EffectiveUserSourceDto>();
 
             foreach (var uid in allUserIds)
             {
-                var directUser = vault.Users.FirstOrDefault(u => u.Id == uid);
+                directUsersById.TryGetValue(uid, out var directUser);
                 groupedByUser.TryGetValue(uid, out var viaGroups);
 
                 var name = directUser?.Name ?? viaGroups![0].User.Name;

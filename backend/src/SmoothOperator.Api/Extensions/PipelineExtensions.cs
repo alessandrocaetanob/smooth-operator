@@ -1,4 +1,5 @@
 using System.Net.Http.Headers;
+using System.Security.Claims;
 using Microsoft.Extensions.Options;
 using Prometheus;
 using Serilog;
@@ -44,13 +45,14 @@ public static class PipelineExtensions
         app.UseHttpMetrics();
         app.UseRateLimiter();
         app.UseAuthentication();
-        app.UseAuthorization();
-        app.MapControllers();
-        app.MapHealthChecks("/health");
 
         var metricsOptions = app.Services.GetRequiredService<IOptions<MetricsOptions>>().Value;
         EnsureMetricsBearerTokenConfigured(app, metricsOptions);
         ConfigureMetricsEndpoint(app, metricsOptions);
+
+        app.UseAuthorization();
+        app.MapControllers();
+        app.MapHealthChecks("/health");
 
         return app;
     }
@@ -80,10 +82,15 @@ public static class PipelineExtensions
                     return;
                 }
 
+                if (!(ctx.User.Identity?.IsAuthenticated ?? false))
+                {
+                    ctx.User = CreateMetricsPrincipal();
+                }
+
                 await next(ctx);
             }));
 
-        app.MapMetrics("/metrics");
+        app.MapMetrics("/metrics").RequireAuthorization();
     }
 
     private static bool HasValidMetricsBearerToken(HttpContext context, string? expectedToken)
@@ -97,5 +104,13 @@ public static class PipelineExtensions
         return AuthenticationHeaderValue.TryParse(authHeader, out var parsedAuth)
             && string.Equals(parsedAuth.Scheme, "Bearer", StringComparison.OrdinalIgnoreCase)
             && string.Equals(parsedAuth.Parameter?.Trim(), expectedToken, StringComparison.Ordinal);
+    }
+
+    private static ClaimsPrincipal CreateMetricsPrincipal()
+    {
+        var identity = new ClaimsIdentity(
+            [new Claim(ClaimTypes.Name, "metrics"), new Claim(ClaimTypes.Role, "MetricsReader")],
+            authenticationType: "MetricsBearer");
+        return new ClaimsPrincipal(identity);
     }
 }
