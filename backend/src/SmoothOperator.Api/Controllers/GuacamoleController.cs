@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Net.WebSockets;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -35,7 +34,7 @@ namespace SmoothOperator.Api.Controllers
         // headers can't be sent on a WS upgrade, so this is the secure handshake.
         [HttpPost("ticket/{connectionId}")]
         [Authorize]
-        public async Task<IActionResult> IssueTicket(Guid connectionId, [FromBody] IssueTicketRequest? request)
+        public async Task<IActionResult> IssueTicket(Guid connectionId)
         {
             var profile = await _accessControl.GetCurrentProfileAsync(HttpContext.User);
             if (profile == null)
@@ -57,8 +56,7 @@ namespace SmoothOperator.Api.Controllers
             }
 
             var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? string.Empty;
-            var sessionOverrides = BuildSessionOverrides(connection.Protocol, request?.TerminalAppearance);
-            var ticket = await _proxyService.IssueTicketAsync(profile.UserId, connectionId, ip, sessionOverrides);
+            var ticket = await _proxyService.IssueTicketAsync(profile.UserId, connectionId, ip);
             return Ok(new { ticket });
         }
 
@@ -90,57 +88,7 @@ namespace SmoothOperator.Api.Controllers
             }
 
             using var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync("guacamole");
-            await _proxyService.HandleWebSocketAsync(
-                webSocket,
-                connectionId,
-                consumed.UserId,
-                ip,
-                consumed.SessionSettingsOverrides);
-        }
-
-        private static Dictionary<string, string>? BuildSessionOverrides(
-            string? protocol,
-            TerminalAppearanceRequest? terminalAppearance)
-        {
-            if (!string.Equals(protocol, "ssh", StringComparison.OrdinalIgnoreCase))
-            {
-                return null;
-            }
-
-            if (terminalAppearance == null)
-            {
-                return null;
-            }
-
-            var overrides = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            if (!string.IsNullOrWhiteSpace(terminalAppearance.ColorScheme))
-            {
-                overrides["color-scheme"] = terminalAppearance.ColorScheme.Trim();
-            }
-
-            if (!string.IsNullOrWhiteSpace(terminalAppearance.FontName))
-            {
-                overrides["font-name"] = terminalAppearance.FontName.Trim();
-            }
-
-            if (terminalAppearance.FontSize is >= 8 and <= 28)
-            {
-                overrides["font-size"] = terminalAppearance.FontSize.Value.ToString();
-            }
-
-            return overrides.Count > 0 ? overrides : null;
-        }
-
-        public sealed class IssueTicketRequest
-        {
-            public TerminalAppearanceRequest? TerminalAppearance { get; set; }
-        }
-
-        public sealed class TerminalAppearanceRequest
-        {
-            public string? ColorScheme { get; set; }
-            public string? FontName { get; set; }
-            public int? FontSize { get; set; }
+            await _proxyService.HandleWebSocketAsync(webSocket, connectionId, consumed.Value, ip);
         }
     }
 }

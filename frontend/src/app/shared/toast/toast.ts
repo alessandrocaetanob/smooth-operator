@@ -25,10 +25,6 @@ export class ToastContainer {
     this.svc.dismiss(id);
   }
 
-  ariaRole(kind: Toast['kind']): 'status' | 'alert' {
-    return kind === 'error' || kind === 'warning' ? 'alert' : 'status';
-  }
-
   toneClass(kind: Toast['kind']): string {
     switch (kind) {
       case 'success':

@@ -48,7 +48,6 @@
           <button
             (click)="searchQuery.set('')"
             class="absolute right-2 top-1/2 -translate-y-1/2 text-on-surface-variant/60 hover:text-on-surface transition-colors"
-            aria-label="Clear search"
           >
             <span class="material-symbols-outlined text-base">close</span>
           </button>
@@ -106,7 +105,10 @@
         </thead>
         <tbody class="divide-y divide-outline-variant/10">
           @for (c of filteredConnections(); track trackById($index, c)) {
-            <tr class="hover:bg-on-surface/5 group transition-colors">
+            <tr
+              class="hover:bg-on-surface/5 group transition-colors animate-slide-up"
+              [style.animation-delay]="$index * 50 + 'ms'"
+            >
               <td class="px-5 py-4">
                 <div class="flex items-center gap-3">
                   <div
@@ -138,9 +140,7 @@
               <td class="px-5 py-4 text-on-surface-variant">
                 @if (c.credentialId) {
                   <div class="flex items-center gap-1 text-xs">
-                    <span class="material-symbols-outlined text-[14px]" aria-hidden="true"
-                      >key</span
-                    >
+                    <span class="material-symbols-outlined text-[14px]">key</span>
                     {{ credentialName(c.credentialId) }}
                   </div>
                 } @else {
@@ -163,17 +163,17 @@
               </td>
               <td class="px-5 py-4">
                 <div
-                  class="flex items-center justify-end gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+                  class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
                 >
                   <button (click)="edit(c)" class="btn-ghost p-2 rounded-lg" title="Edit">
-                    <span class="material-symbols-outlined text-lg" aria-hidden="true">edit</span>
+                    <span class="material-symbols-outlined text-lg">edit</span>
                   </button>
                   <button
                     (click)="remove(c)"
                     class="p-2 text-error hover:bg-error/10 rounded-lg transition-colors"
                     title="Delete"
                   >
-                    <span class="material-symbols-outlined text-lg" aria-hidden="true">delete</span>
+                    <span class="material-symbols-outlined text-lg">delete</span>
                   </button>
                 </div>
               </td>
@@ -441,7 +441,7 @@
               >
                 Color scheme
               </p>
-              <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              <div class="grid grid-cols-3 gap-2">
                 @for (scheme of termColorSchemes; track scheme.value) {
                   <button
                     type="button"
@@ -465,7 +465,7 @@
             </div>
 
             <!-- Font -->
-            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div class="grid grid-cols-2 gap-3">
               <div>
                 <label
                   class="block text-xs font-medium text-on-surface-variant mb-1 uppercase tracking-widest"
@@ -540,7 +540,7 @@
               Protocol examples
             </div>
             <div
-              class="grid grid-cols-1 divide-y divide-outline-variant/20 md:grid-cols-3 md:divide-y-0 md:divide-x"
+              class="grid md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-outline-variant/20"
             >
               <div class="p-3">
                 <p class="text-[10px] font-bold uppercase tracking-widest text-primary/80 mb-1.5">

@@ -34,30 +34,6 @@ interface KeyOption {
   keysym: number;
 }
 
-interface TermColorScheme {
-  value: string;
-  label: string;
-  preview: string;
-}
-
-const TERM_COLOR_SCHEMES: TermColorScheme[] = [
-  { value: 'gray-black', label: 'Gray / Black', preview: '#111' },
-  { value: 'green-black', label: 'Green / Black', preview: '#0d1a0d' },
-  { value: 'white-black', label: 'White / Black', preview: '#1a1a1a' },
-  { value: 'black-white', label: 'Black / White', preview: '#f5f5f5' },
-  { value: 'solarized-dark', label: 'Solarized Dark', preview: '#002b36' },
-  { value: 'solarized-light', label: 'Solarized Light', preview: '#fdf6e3' },
-];
-
-const TERM_FONT_NAMES = [
-  'monospace',
-  'Courier New',
-  'Consolas',
-  'DejaVu Sans Mono',
-  'Source Code Pro',
-  'Inconsolata',
-];
-
 const COMBO_KEYS: KeyOption[] = [
   { label: 'Delete', keysym: Keysyms.Delete },
   { label: 'Backspace', keysym: Keysyms.Backspace },
@@ -145,7 +121,6 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
   readonly comboKeys = COMBO_KEYS;
   readonly showKeyComboModal = signal(false);
   readonly showClipboardModal = signal(false);
-  readonly showTerminalThemeModal = signal(false);
   readonly comboCtrl = signal(true);
   readonly comboAlt = signal(false);
   readonly comboShift = signal(false);
@@ -155,14 +130,6 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
 
   // Protocol badge
   readonly protocol = computed(() => (this.connection()?.protocol ?? '').toUpperCase());
-  readonly isSshConnection = computed(
-    () => (this.connection()?.protocol ?? '').toLowerCase() === 'ssh',
-  );
-  readonly termColorScheme = signal('gray-black');
-  readonly termFontName = signal('monospace');
-  readonly termFontSize = signal(12);
-  readonly termColorSchemes = TERM_COLOR_SCHEMES;
-  readonly termFontNames = TERM_FONT_NAMES;
 
   // Mascot sparkle flash on first connect (3 s)
   readonly mascotConnectedFlash = signal(false);
@@ -190,7 +157,6 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
   private readonly injector = inject(Injector);
   private mascotFlashStarted = false;
   private toolbarHideTimer: ReturnType<typeof setTimeout> | null = null;
-  private terminalThemeLoadedFor: string | null = null;
 
   constructor() {
     // On error: go to connecting page so the user sees logs and can retry.
@@ -221,15 +187,6 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
       } else if (s === 'disconnected' || s === 'error') {
         this.mascotFlashStarted = false;
       }
-    });
-
-    effect(() => {
-      const id = this.connectionId();
-      const connection = this.connection();
-      if (!id || !connection || connection.protocol.toLowerCase() !== 'ssh') return;
-      if (this.terminalThemeLoadedFor === id) return;
-      this.terminalThemeLoadedFor = id;
-      this.loadSessionTerminalTheme(connection.settings || '{}');
     });
   }
 
@@ -351,26 +308,6 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  openTerminalThemeModal(): void {
-    this.showTerminalThemeModal.set(true);
-  }
-
-  closeTerminalThemeModal(): void {
-    this.showTerminalThemeModal.set(false);
-  }
-
-  saveTerminalThemeForSession(): void {
-    const id = this.connectionId();
-    if (!id || typeof sessionStorage === 'undefined') return;
-    const payload = {
-      colorScheme: this.termColorScheme(),
-      fontName: this.termFontName(),
-      fontSize: this.termFontSize(),
-    };
-    sessionStorage.setItem(`smooth-operator.session-terminal.${id}`, JSON.stringify(payload));
-    this.closeTerminalThemeModal();
-  }
-
   takeScreenshot(): void {
     const url = this.session()?.captureScreenshot();
     if (!url) return;
@@ -435,47 +372,5 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
 
   toggleToolbarCollapse(): void {
     this.toolbarCollapsed.update((v) => !v);
-  }
-
-  private loadSessionTerminalTheme(connectionSettings: string): void {
-    const fromConnection = this.parseSettings(connectionSettings);
-    let colorScheme = fromConnection['color-scheme'] ?? 'gray-black';
-    let fontName = fromConnection['font-name'] ?? 'monospace';
-    let fontSize = Number(fromConnection['font-size']);
-    if (!Number.isFinite(fontSize)) fontSize = 12;
-
-    const id = this.connectionId();
-    if (id && typeof sessionStorage !== 'undefined') {
-      const raw = sessionStorage.getItem(`smooth-operator.session-terminal.${id}`);
-      if (raw) {
-        try {
-          const parsed = JSON.parse(raw) as {
-            colorScheme?: string;
-            fontName?: string;
-            fontSize?: number;
-          };
-          if (parsed.colorScheme) colorScheme = parsed.colorScheme;
-          if (parsed.fontName) fontName = parsed.fontName;
-          const parsedFontSize = parsed.fontSize;
-          if (typeof parsedFontSize === 'number' && Number.isFinite(parsedFontSize)) {
-            fontSize = parsedFontSize;
-          }
-        } catch {
-          // Ignore malformed payload and use connection defaults.
-        }
-      }
-    }
-
-    this.termColorScheme.set(colorScheme);
-    this.termFontName.set(fontName);
-    this.termFontSize.set(fontSize);
-  }
-
-  private parseSettings(json: string): Record<string, string> {
-    try {
-      return JSON.parse(json) ?? {};
-    } catch {
-      return {};
-    }
   }
 }

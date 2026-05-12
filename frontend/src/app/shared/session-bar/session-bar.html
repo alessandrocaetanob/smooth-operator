@@ -1,19 +1,14 @@
 @if (minimizedSessions().length > 0) {
-  <div class="session-bar" role="region" aria-label="Minimized sessions">
+  <div class="session-bar">
     @for (session of minimizedSessions(); track session.connectionId) {
-      <div
-        class="session-chip"
-        role="group"
-        [attr.aria-label]="'Minimized session ' + connectionName(session)"
-      >
+      <div class="session-chip">
         <button
           class="chip-restore"
           (click)="restore(session)"
           [title]="'Restore: ' + connectionName(session)"
           type="button"
-          [attr.aria-label]="'Restore session ' + connectionName(session)"
         >
-          <span class="live-dot" aria-hidden="true"></span>
+          <span class="live-dot"></span>
           <span class="chip-name">{{ connectionName(session) }}</span>
           <span class="chip-timer">{{ session.formattedElapsed() }}</span>
         </button>
@@ -24,7 +19,7 @@
           type="button"
           aria-label="Terminate session"
         >
-          <span aria-hidden="true">✕</span>
+          ✕
         </button>
       </div>
     }

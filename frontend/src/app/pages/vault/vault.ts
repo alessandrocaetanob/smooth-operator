@@ -1,7 +1,6 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { catchError, forkJoin, of } from 'rxjs';
 import { Connection, ConnectionsService } from '../../services/connections.service';
 import { AuthService } from '../../services/auth.service';
@@ -12,7 +11,7 @@ import { listStagger } from '../../shared/animations';
 @Component({
   selector: 'app-vault',
   standalone: true,
-  imports: [RouterLink, CommonModule, FormsModule, Mascot],
+  imports: [RouterLink, CommonModule, Mascot],
   templateUrl: './vault.html',
   styleUrl: './vault.css',
   animations: [listStagger],

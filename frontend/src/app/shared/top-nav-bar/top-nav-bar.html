@@ -4,12 +4,8 @@
 >
   <div class="flex items-center gap-4">
     <button
-      type="button"
-      (click)="toggleMobileNav()"
       class="md:hidden text-on-surface-variant hover:text-on-surface p-1 rounded-md hover:bg-on-surface/5 transition-colors"
-      [attr.aria-label]="mobileNavOpen() ? 'Close menu' : 'Open menu'"
-      aria-controls="primary-sidebar"
-      [attr.aria-expanded]="mobileNavOpen()"
+      aria-label="Open menu"
     >
       <span class="material-symbols-outlined" aria-hidden="true">menu</span>
     </button>

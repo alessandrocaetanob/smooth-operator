@@ -172,7 +172,6 @@
     </div>
     <div class="flex items-center gap-1">
       <button
-        type="button"
         (click)="goToPage(1)"
         [disabled]="result().page <= 1"
         class="px-3 py-1.5 rounded-lg border border-outline-variant/30 hover:bg-surface-container disabled:opacity-30 transition-colors"
@@ -181,7 +180,6 @@
         «
       </button>
       <button
-        type="button"
         (click)="goToPage(result().page - 1)"
         [disabled]="result().page <= 1"
         class="px-3 py-1.5 rounded-lg border border-outline-variant/30 hover:bg-surface-container disabled:opacity-30 transition-colors"
@@ -189,7 +187,6 @@
         Prev
       </button>
       <button
-        type="button"
         (click)="goToPage(result().page + 1)"
         [disabled]="result().page >= result().totalPages"
         class="px-3 py-1.5 rounded-lg border border-outline-variant/30 hover:bg-surface-container disabled:opacity-30 transition-colors"
@@ -197,7 +194,6 @@
         Next
       </button>
       <button
-        type="button"
         (click)="goToPage(result().totalPages || 1)"
         [disabled]="result().page >= result().totalPages"
         class="px-3 py-1.5 rounded-lg border border-outline-variant/30 hover:bg-surface-container disabled:opacity-30 transition-colors"
@@ -218,9 +214,9 @@
     ></button>
     <dialog
       open
+      tabindex="-1"
       class="detail-panel"
       aria-labelledby="detail-panel-title"
-      aria-modal="true"
       tabindex="-1"
       (keydown.escape)="closeDetail()"
     >
@@ -234,7 +230,6 @@
         </div>
         <button
           #closeBtn
-          type="button"
           (click)="closeDetail()"
           class="btn-ghost !px-2 !py-1"
           aria-label="Close detail panel"

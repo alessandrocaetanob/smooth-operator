@@ -58,11 +58,7 @@ namespace SmoothOperator.Infrastructure.Services
 
         // ---- Ticket lifecycle (REST issue / WS consume) ------------------------------
 
-        public async Task<string> IssueTicketAsync(
-            Guid userId,
-            Guid connectionId,
-            string ipAddress,
-            IDictionary<string, string>? sessionSettingsOverrides = null)
+        public async Task<string> IssueTicketAsync(Guid userId, Guid connectionId, string ipAddress)
         {
             var ticket = Guid.NewGuid().ToString("N");
             var key = TicketKey(ticket);
@@ -71,10 +67,7 @@ namespace SmoothOperator.Infrastructure.Services
             {
                 UserId = userId,
                 ConnectionId = connectionId,
-                IpAddress = ipAddress ?? string.Empty,
-                SessionSettingsOverrides = sessionSettingsOverrides == null
-                    ? null
-                    : new Dictionary<string, string>(sessionSettingsOverrides, StringComparer.OrdinalIgnoreCase)
+                IpAddress = ipAddress ?? string.Empty
             });
             await db.StringSetAsync(key, payload, TicketTtl);
 
@@ -98,7 +91,7 @@ namespace SmoothOperator.Infrastructure.Services
         // Atomically consume a ticket. Returns the userId on success, null on
         // missing/expired/mismatched ticket. Uses GETDEL so a concurrent reader
         // can't replay the ticket.
-        public async Task<TicketPayload?> ConsumeTicketAsync(string ticket, Guid connectionId, string ipAddress)
+        public async Task<Guid?> ConsumeTicketAsync(string ticket, Guid connectionId, string ipAddress)
         {
             if (string.IsNullOrWhiteSpace(ticket)) return null;
             var key = TicketKey(ticket);
@@ -139,7 +132,7 @@ namespace SmoothOperator.Infrastructure.Services
             }
 
             await LogTicketEventAsync(payload.UserId, connectionId, "connection.ticket.consumed", ipAddress, null);
-            return payload;
+            return payload.UserId;
         }
 
         private static string TicketKey(string ticket) => $"guac:ticket:{ticket}";
@@ -168,22 +161,16 @@ namespace SmoothOperator.Infrastructure.Services
             }
         }
 
-        public sealed class TicketPayload
+        private sealed class TicketPayload
         {
             public Guid UserId { get; set; }
             public Guid ConnectionId { get; set; }
             public string IpAddress { get; set; } = string.Empty;
-            public Dictionary<string, string>? SessionSettingsOverrides { get; set; }
         }
 
         // ---- WebSocket proxy ---------------------------------------------------------
 
-        public async Task HandleWebSocketAsync(
-            WebSocket webSocket,
-            Guid connectionId,
-            Guid userId,
-            string ipAddress,
-            IDictionary<string, string>? sessionSettingsOverrides = null)
+        public async Task HandleWebSocketAsync(WebSocket webSocket, Guid connectionId, Guid userId, string ipAddress)
         {
             var sessionId = Guid.NewGuid().ToString();
 
@@ -217,15 +204,7 @@ namespace SmoothOperator.Infrastructure.Services
             var db = _redis.GetDatabase();
             await RegisterSessionAsync(db, sessionId, dbUser.Id, connectionId);
 
-            await RunGuacamoleSessionAsync(
-                webSocket,
-                connection,
-                sessionId,
-                dbUser,
-                ipAddress,
-                dbContext,
-                db,
-                sessionSettingsOverrides);
+            await RunGuacamoleSessionAsync(webSocket, connection, sessionId, dbUser, ipAddress, dbContext, db);
         }
 
         private static Task<User?> LoadAuthorizedUserAsync(AppDbContext dbContext, Guid userId) =>
@@ -345,8 +324,7 @@ namespace SmoothOperator.Infrastructure.Services
             User dbUser,
             string ipAddress,
             AppDbContext dbContext,
-            IDatabase db,
-            IDictionary<string, string>? sessionSettingsOverrides)
+            IDatabase db)
         {
             using var tcpClient = new TcpClient();
             var connectionSuccessful = false;
@@ -358,14 +336,7 @@ namespace SmoothOperator.Infrastructure.Services
                 using var networkStream = tcpClient.GetStream();
                 var reader = new GuacInstructionReader(networkStream);
 
-                await PerformGuacamoleHandshakeAsync(
-                    networkStream,
-                    reader,
-                    connection,
-                    dbContext,
-                    dbUser,
-                    ipAddress,
-                    sessionSettingsOverrides);
+                await PerformGuacamoleHandshakeAsync(networkStream, reader, connection, dbContext, dbUser, ipAddress);
 
                 _metrics.RecordConnectionStarted();
                 sessionMetricRecorded = true;
@@ -414,8 +385,7 @@ namespace SmoothOperator.Infrastructure.Services
             Connection connection,
             AppDbContext dbContext,
             User dbUser,
-            string ipAddress,
-            IDictionary<string, string>? sessionSettingsOverrides)
+            string ipAddress)
         {
             string protocol = (connection.Protocol ?? "rdp").ToLowerInvariant();
             await SendGuacMessage(networkStream, BuildGuacInstruction("select", protocol));
@@ -423,14 +393,7 @@ namespace SmoothOperator.Infrastructure.Services
             var (paramNames, serverVersion) = await ReadHandshakeArgsAsync(reader);
 
             var paramValues = await ResolveConnectionParametersAsync(
-                connection,
-                paramNames,
-                serverVersion,
-                dbContext,
-                CancellationToken.None,
-                dbUser.Id,
-                ipAddress,
-                sessionSettingsOverrides);
+                connection, paramNames, serverVersion, dbContext, CancellationToken.None, dbUser.Id, ipAddress);
 
             _logger.LogInformation(
                 "guacd handshake for {Protocol}: server={ServerVersion}, sending {ValueCount} connect values for {NameCount} arg names",
@@ -602,8 +565,7 @@ namespace SmoothOperator.Infrastructure.Services
             AppDbContext dbContext,
             CancellationToken cancellationToken,
             Guid userId,
-            string ipAddress,
-            IDictionary<string, string>? sessionSettingsOverrides)
+            string ipAddress)
         {
             var protocol = (connection.Protocol ?? "rdp").ToLowerInvariant();
             var hostname = connection.Host?.Address ?? string.Empty;
@@ -628,15 +590,6 @@ namespace SmoothOperator.Infrastructure.Services
             // Optional per-connection settings JSON (e.g. {"domain":"corp","ignore-cert":"true",
             // "passphrase":"..."}). `passphrase` falls through to the override path below.
             Dictionary<string, string> overrides = ParseSettings(connection.Settings);
-            if (sessionSettingsOverrides != null)
-            {
-                foreach (var pair in sessionSettingsOverrides.Where(static pair =>
-                             !string.IsNullOrWhiteSpace(pair.Key)
-                             && pair.Value != null))
-                {
-                    overrides[pair.Key.Trim()] = pair.Value.Trim();
-                }
-            }
 
             var ctx = new GuacConnectionContext(overrides, hostname, defaultPort, username, password, privateKey, protocol);
 
@@ -686,7 +639,7 @@ namespace SmoothOperator.Infrastructure.Services
             {
                 using var doc = JsonDocument.Parse(settingsJson);
                 if (doc.RootElement.ValueKind != JsonValueKind.Object) return dict;
-                foreach (var prop in doc.RootElement.EnumerateObject())
+                foreach (var prop in doc.RootElement.EnumerateObject().Select(prop => new { prop.Name, prop.Value }))
                 {
                     dict[prop.Name] = prop.Value.ValueKind switch
                     {
@@ -707,7 +660,6 @@ namespace SmoothOperator.Infrastructure.Services
         }
 
         // ---- Instruction framing & I/O ----------------------------------------------
-
         private static string BuildGuacInstruction(params string[] args)
         {
             var sb = new StringBuilder();

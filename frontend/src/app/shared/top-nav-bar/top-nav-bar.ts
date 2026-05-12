@@ -8,7 +8,6 @@ import { ThemeToggle } from '../theme-toggle/theme-toggle';
 import { AuthService } from '../../services/auth.service';
 import { ThemeService } from '../../services/theme.service';
 import { ToastService } from '../toast/toast.service';
-import { LayoutService } from '../../services/layout.service';
 
 const IDLE_TIMEOUT_MS = 3 * 60 * 1000;
 const HEALTH_POLL_MS = 30_000;
@@ -28,7 +27,6 @@ export class TopNavBar implements OnInit {
   private readonly http = inject(HttpClient);
   readonly themeService = inject(ThemeService);
   private readonly toastService = inject(ToastService);
-  private readonly layout = inject(LayoutService);
 
   private readonly _idleState = signal<'idle' | 'sleep'>('idle');
   private idleTimer: ReturnType<typeof setTimeout> | null = null;
@@ -72,7 +70,6 @@ export class TopNavBar implements OnInit {
   });
 
   readonly searchTerm = signal('');
-  readonly mobileNavOpen = this.layout.mobileNavOpen;
 
   menuOpen = false;
 
@@ -92,12 +89,7 @@ export class TopNavBar implements OnInit {
   submitSearch(): void {
     const q = this.searchTerm().trim();
     if (!q) return;
-    this.layout.closeMobileNav();
     this.router.navigate(['/search'], { queryParams: { q } });
-  }
-
-  toggleMobileNav(): void {
-    this.layout.toggleMobileNav();
   }
 
   ngOnInit(): void {
@@ -166,7 +158,6 @@ export class TopNavBar implements OnInit {
   logout(): void {
     this.auth.logout();
     this.menuOpen = false;
-    this.layout.closeMobileNav();
     this.router.navigate(['/login']);
   }
 }

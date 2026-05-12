@@ -77,14 +77,6 @@ interface TicketResponse {
   ticket: string;
 }
 
-interface TicketRequest {
-  terminalAppearance?: {
-    colorScheme?: string;
-    fontName?: string;
-    fontSize?: number;
-  };
-}
-
 /**
  * Per-connection session unit. Holds one Guacamole client + all its reactive
  * signals. Instantiated by GuacamoleSessionManagerService — not an Angular
@@ -169,18 +161,8 @@ export class GuacamoleSession {
   private async doConnect(): Promise<void> {
     let ticket: string;
     try {
-      const overrides = this.readSessionTerminalOverrides();
-      const request: TicketRequest = overrides
-        ? {
-            terminalAppearance: {
-              colorScheme: overrides['color-scheme'],
-              fontName: overrides['font-name'],
-              fontSize: Number(overrides['font-size']),
-            },
-          }
-        : {};
       const res = await firstValueFrom(
-        this.http.post<TicketResponse>(`/api/Guacamole/ticket/${this.connectionId}`, request),
+        this.http.post<TicketResponse>(`/api/Guacamole/ticket/${this.connectionId}`, {}),
       );
       ticket = res.ticket;
       this.log('ok', 'Ticket issued');
@@ -570,28 +552,6 @@ export class GuacamoleSession {
     }
     if (code >= 0x20 && code <= 0x7e) return code;
     return 0x01000000 | code;
-  }
-
-  private readSessionTerminalOverrides(): Record<string, string> | null {
-    if (typeof sessionStorage === 'undefined') return null;
-    const key = `smooth-operator.session-terminal.${this.connectionId}`;
-    const raw = sessionStorage.getItem(key);
-    if (!raw) return null;
-
-    try {
-      const parsed = JSON.parse(raw) as {
-        colorScheme?: string;
-        fontName?: string;
-        fontSize?: number;
-      };
-      const result: Record<string, string> = {};
-      if (parsed.colorScheme?.trim()) result['color-scheme'] = parsed.colorScheme.trim();
-      if (parsed.fontName?.trim()) result['font-name'] = parsed.fontName.trim();
-      if (Number.isFinite(parsed.fontSize)) result['font-size'] = String(parsed.fontSize);
-      return Object.keys(result).length > 0 ? result : null;
-    } catch {
-      return null;
-    }
   }
 }
 

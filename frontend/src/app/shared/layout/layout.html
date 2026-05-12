@@ -19,8 +19,8 @@
 <main
   id="main-content"
   class="pt-16 min-h-screen transition-[padding] duration-300 ease-out relative z-[1]"
-  [class.md:pl-56]="!collapsed()"
-  [class.md:pl-20]="collapsed()"
+  [class.md:pl-64]="!collapsed()"
+  [class.md:pl-16]="collapsed()"
 >
   <div [@routeFade]="outlet.isActivated">
     <router-outlet #outlet="outlet"></router-outlet>

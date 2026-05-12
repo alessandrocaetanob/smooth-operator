@@ -5,9 +5,7 @@ const STORAGE_KEY = 'smooth-operator.sidebar.collapsed';
 @Injectable({ providedIn: 'root' })
 export class LayoutService {
   private readonly _collapsed = signal<boolean>(this.readInitial());
-  private readonly _mobileNavOpen = signal(false);
   readonly collapsed = this._collapsed.asReadonly();
-  readonly mobileNavOpen = this._mobileNavOpen.asReadonly();
 
   constructor() {
     effect(() => {
@@ -26,18 +24,6 @@ export class LayoutService {
 
   setCollapsed(value: boolean): void {
     this._collapsed.set(value);
-  }
-
-  toggleMobileNav(): void {
-    this._mobileNavOpen.update((v) => !v);
-  }
-
-  openMobileNav(): void {
-    this._mobileNavOpen.set(true);
-  }
-
-  closeMobileNav(): void {
-    this._mobileNavOpen.set(false);
   }
 
   private readInitial(): boolean {

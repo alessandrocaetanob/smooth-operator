@@ -27,11 +27,6 @@ const INTERVAL_MS: Record<string, number> = {
 })
 export class Monitoring implements OnInit, OnDestroy {
   private readonly metricsService = inject(MetricsService);
-  private readonly handleVisibilityChange = (): void => {
-    if (document.visibilityState === 'visible' && this.autoRefresh() !== 'off') {
-      this.loadAll();
-    }
-  };
 
   readonly selectedRange = signal<TimeRange>('24h');
   readonly ranges: TimeRange[] = ['1h', '6h', '24h', '7d'];
@@ -62,14 +57,12 @@ export class Monitoring implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadAll();
-    document.addEventListener('visibilitychange', this.handleVisibilityChange, { passive: true });
   }
 
   ngOnDestroy(): void {
     if (this.intervalId) clearInterval(this.intervalId);
     this.inflight?.unsubscribe();
     this.inflight = null;
-    document.removeEventListener('visibilitychange', this.handleVisibilityChange);
   }
 
   setRange(range: TimeRange): void {
@@ -86,13 +79,7 @@ export class Monitoring implements OnInit, OnDestroy {
     if (this.intervalId) clearInterval(this.intervalId);
     this.intervalId = null;
     const ms = INTERVAL_MS[this.autoRefresh()];
-    if (ms) {
-      this.intervalId = setInterval(() => {
-        if (document.visibilityState === 'visible') {
-          this.loadAll();
-        }
-      }, ms);
-    }
+    if (ms) this.intervalId = setInterval(() => this.loadAll(), ms);
   }
 
   private get hours(): number {

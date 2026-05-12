@@ -43,10 +43,7 @@
         class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium glass-card rounded-lg hover:bg-surface-variant/50 transition-colors disabled:opacity-50"
         title="Refresh now"
       >
-        <span
-          class="material-symbols-outlined text-sm"
-          [class.animate-spin]="loading()"
-          aria-hidden="true"
+        <span class="material-symbols-outlined text-sm" [class.animate-spin]="loading()"
           >autorenew</span
         >
         @if (lastRefreshed()) {

@@ -44,32 +44,13 @@ public static class PipelineExtensions
         app.UseHttpMetrics();
         app.UseRateLimiter();
         app.UseAuthentication();
-
-        var metricsOptions = app.Services.GetRequiredService<IOptions<MetricsOptions>>().Value;
-        EnsureMetricsBearerTokenConfigured(app, metricsOptions);
-
-        // Guard the Prometheus scrape endpoint with a bearer token when configured.
-        app.UseWhen(
-            ctx => ctx.Request.Path.StartsWithSegments("/metrics"),
-            branch => branch.Use(async (ctx, next) =>
-            {
-                if (HasValidMetricsBearerToken(ctx, metricsOptions.BearerToken))
-                {
-                    ctx.User = new System.Security.Claims.ClaimsPrincipal(new System.Security.Claims.ClaimsIdentity("Prometheus"));
-                }
-                else
-                {
-                    ctx.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                    return;
-                }
-
-                await next(ctx);
-            }));
-
         app.UseAuthorization();
         app.MapControllers();
         app.MapHealthChecks("/health");
-        app.MapMetrics("/metrics").RequireAuthorization();
+
+        var metricsOptions = app.Services.GetRequiredService<IOptions<MetricsOptions>>().Value;
+        EnsureMetricsBearerTokenConfigured(app, metricsOptions);
+        ConfigureMetricsEndpoint(app, metricsOptions);
 
         return app;
     }
@@ -84,6 +65,25 @@ public static class PipelineExtensions
         }
 
         throw new InvalidOperationException("Metrics:BearerToken must be configured outside Development/Testing environments.");
+    }
+
+    private static void ConfigureMetricsEndpoint(WebApplication app, MetricsOptions metricsOptions)
+    {
+        // Guard the Prometheus scrape endpoint with a bearer token when configured.
+        app.UseWhen(
+            ctx => ctx.Request.Path.StartsWithSegments("/metrics"),
+            branch => branch.Use(async (ctx, next) =>
+            {
+                if (!HasValidMetricsBearerToken(ctx, metricsOptions.BearerToken))
+                {
+                    ctx.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                    return;
+                }
+
+                await next(ctx);
+            }));
+
+        app.MapMetrics("/metrics");
     }
 
     private static bool HasValidMetricsBearerToken(HttpContext context, string? expectedToken)

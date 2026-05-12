@@ -1,37 +1,17 @@
-@if (mobileNavOpen()) {
-  <button
-    type="button"
-    class="md:hidden fixed inset-0 z-30 bg-black/45 backdrop-blur-[2px]"
-    (click)="closeMobileNav()"
-    aria-label="Close navigation menu"
-  ></button>
-}
-
 <nav
-  id="primary-sidebar"
-  class="sidebar-shell fixed z-40 flex flex-col font-inter text-xs font-medium uppercase tracking-widest antialiased transition-[width,transform,opacity] duration-300 ease-out left-3 top-[4.75rem] bottom-3 w-[min(20rem,calc(100vw-1.5rem))] rounded-2xl border border-outline-variant/30 md:left-0 md:top-16 md:bottom-0 md:rounded-none md:border-x-0 md:border-l-0 md:border-r md:w-auto md:translate-x-0 md:opacity-100 md:pointer-events-auto"
-  [class.translate-x-0]="mobileNavOpen()"
-  [class.opacity-100]="mobileNavOpen()"
-  [class.pointer-events-auto]="mobileNavOpen()"
-  [class.-translate-x-[120%]]="!mobileNavOpen()"
-  [class.opacity-0]="!mobileNavOpen()"
-  [class.pointer-events-none]="!mobileNavOpen()"
-  [class.sidebar-shell--collapsed]="collapsed()"
-  [class.sidebar-shell--expanded]="!collapsed()"
-  [class.md:w-56]="!collapsed()"
-  [class.md:w-20]="collapsed()"
+  class="hidden md:flex flex-col fixed left-0 top-16 bottom-0 z-40 glass-panel border-r border-outline-variant/30 shadow-2xl font-inter text-xs font-medium uppercase tracking-widest antialiased transition-[width] duration-300 ease-out"
+  [class.w-64]="!collapsed()"
+  [class.w-16]="collapsed()"
   [attr.aria-label]="'Primary navigation'"
-  [attr.aria-modal]="mobileNavOpen() ? 'true' : null"
 >
-  <div class="sidebar-body flex-1 overflow-y-auto py-3">
+  <div class="flex-1 overflow-y-auto py-2">
     <ul class="space-y-1 px-2">
       <li>
         <a
           routerLink="/my-access"
-          (click)="closeMobileNav()"
-          routerLinkActive="nav-link-active"
+          routerLinkActive="bg-primary-container/15 text-primary border-l-primary"
           class="nav-link"
-          [class.nav-link--icon-only]="collapsed()"
+          [class.justify-center]="collapsed()"
           [attr.title]="collapsed() ? 'My Access' : null"
         >
           <span class="material-symbols-outlined" aria-hidden="true">verified_user</span>
@@ -43,11 +23,10 @@
       <li>
         <a
           routerLink="/vault"
-          (click)="closeMobileNav()"
-          routerLinkActive="nav-link-active"
+          routerLinkActive="bg-primary-container/15 text-primary border-l-primary"
           [routerLinkActiveOptions]="{ exact: false }"
           class="nav-link"
-          [class.nav-link--icon-only]="collapsed()"
+          [class.justify-center]="collapsed()"
           [attr.title]="collapsed() ? 'My Vaults' : null"
         >
           <span class="material-symbols-outlined" aria-hidden="true">dashboard</span>
@@ -60,10 +39,9 @@
         <li>
           <a
             routerLink="/connections"
-            (click)="closeMobileNav()"
-            routerLinkActive="nav-link-active"
+            routerLinkActive="bg-primary-container/15 text-primary border-l-primary"
             class="nav-link"
-            [class.nav-link--icon-only]="collapsed()"
+            [class.justify-center]="collapsed()"
             [attr.title]="collapsed() ? 'Connections' : null"
           >
             <span class="material-symbols-outlined" aria-hidden="true">hub</span>
@@ -75,10 +53,9 @@
         <li>
           <a
             routerLink="/hosts"
-            (click)="closeMobileNav()"
-            routerLinkActive="nav-link-active"
+            routerLinkActive="bg-primary-container/15 text-primary border-l-primary"
             class="nav-link"
-            [class.nav-link--icon-only]="collapsed()"
+            [class.justify-center]="collapsed()"
             [attr.title]="collapsed() ? 'Known Hosts' : null"
           >
             <span class="material-symbols-outlined" aria-hidden="true">dns</span>
@@ -92,10 +69,9 @@
         <li>
           <a
             routerLink="/credentials"
-            (click)="closeMobileNav()"
-            routerLinkActive="nav-link-active"
+            routerLinkActive="bg-primary-container/15 text-primary border-l-primary"
             class="nav-link"
-            [class.nav-link--icon-only]="collapsed()"
+            [class.justify-center]="collapsed()"
             [attr.title]="collapsed() ? 'Credentials' : null"
           >
             <span class="material-symbols-outlined" aria-hidden="true">key</span>
@@ -109,11 +85,10 @@
         <li>
           <a
             routerLink="/auditing"
-            (click)="closeMobileNav()"
-            routerLinkActive="nav-link-active"
+            routerLinkActive="bg-primary-container/15 text-primary border-l-primary"
             [routerLinkActiveOptions]="{ exact: false }"
             class="nav-link"
-            [class.nav-link--icon-only]="collapsed()"
+            [class.justify-center]="collapsed()"
             [attr.title]="collapsed() ? 'Audit Logs' : null"
           >
             <span class="material-symbols-outlined" aria-hidden="true">receipt_long</span>
@@ -127,11 +102,10 @@
         <li>
           <a
             routerLink="/monitoring"
-            (click)="closeMobileNav()"
-            routerLinkActive="nav-link-active"
+            routerLinkActive="bg-primary-container/15 text-primary border-l-primary"
             [routerLinkActiveOptions]="{ exact: false }"
             class="nav-link"
-            [class.nav-link--icon-only]="collapsed()"
+            [class.justify-center]="collapsed()"
             [attr.title]="collapsed() ? 'Monitoring' : null"
           >
             <span class="material-symbols-outlined" aria-hidden="true">monitoring</span>
@@ -145,10 +119,9 @@
         <li>
           <a
             routerLink="/settings"
-            (click)="closeMobileNav()"
-            routerLinkActive="nav-link-active"
+            routerLinkActive="bg-primary-container/15 text-primary border-l-primary"
             class="nav-link"
-            [class.nav-link--icon-only]="collapsed()"
+            [class.justify-center]="collapsed()"
             [attr.title]="collapsed() ? 'Settings' : null"
           >
             <span class="material-symbols-outlined" aria-hidden="true">settings</span>
@@ -161,11 +134,11 @@
     </ul>
   </div>
 
-  <div class="sidebar-divider p-2">
+  <div class="p-2 border-t border-outline-variant/20">
     <button
       (click)="toggleCollapsed()"
-      class="sidebar-toggle hidden md:flex w-full items-center gap-3"
-      [class.nav-link--icon-only]="collapsed()"
+      class="w-full flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:text-on-surface hover:bg-on-surface/5 transition-all rounded-lg"
+      [class.justify-center]="collapsed()"
       [attr.title]="collapsed() ? 'Expand sidebar' : 'Collapse sidebar'"
       [attr.aria-label]="collapsed() ? 'Expand sidebar' : 'Collapse sidebar'"
     >
@@ -178,14 +151,13 @@
     </button>
   </div>
 
-  <div class="sidebar-divider p-2 space-y-1">
+  <div class="p-2 border-t border-outline-variant/20 space-y-1">
     <a
       [href]="helpUrl"
       target="_blank"
       rel="noopener noreferrer"
-      (click)="closeMobileNav()"
-      class="sidebar-footer-link w-full flex items-center gap-3"
-      [class.nav-link--icon-only]="collapsed()"
+      class="w-full flex items-center gap-3 px-3 py-2.5 text-on-surface-variant hover:text-primary hover:bg-primary/5 transition-all rounded-lg"
+      [class.justify-center]="collapsed()"
       [attr.title]="collapsed() ? 'Help & Documentation' : null"
       [attr.aria-label]="'Help & Documentation'"
     >
@@ -196,8 +168,8 @@
     </a>
     <button
       (click)="logout()"
-      class="sidebar-footer-link sidebar-footer-link--danger w-full flex items-center gap-3"
-      [class.nav-link--icon-only]="collapsed()"
+      class="w-full flex items-center gap-3 px-3 py-2.5 text-on-surface-variant hover:text-error hover:bg-error/10 transition-all rounded-lg"
+      [class.justify-center]="collapsed()"
       [attr.title]="collapsed() ? 'Sign out' : null"
       [attr.aria-label]="'Sign out'"
     >
