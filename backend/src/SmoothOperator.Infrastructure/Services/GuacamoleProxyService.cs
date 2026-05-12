@@ -632,7 +632,7 @@ namespace SmoothOperator.Infrastructure.Services
             {
                 foreach (var pair in sessionSettingsOverrides.Where(static pair =>
                              !string.IsNullOrWhiteSpace(pair.Key)
-                             && !string.IsNullOrWhiteSpace(pair.Value)))
+                             && pair.Value != null))
                 {
                     overrides[pair.Key.Trim()] = pair.Value.Trim();
                 }
