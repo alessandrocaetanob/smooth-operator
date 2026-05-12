@@ -92,13 +92,14 @@
                   class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
                 >
                   @if (canManageConnections()) {
-                    <button (click)="edit(h)" class="btn-ghost p-2 rounded-lg" title="Edit">
+                    <button (click)="edit(h)" class="btn-ghost p-2 rounded-lg" title="Edit" aria-label="Edit host">
                       <span class="material-symbols-outlined text-lg">edit</span>
                     </button>
                     <button
                       (click)="remove(h)"
                       class="p-2 text-error hover:bg-error/10 rounded-lg transition-colors"
                       title="Delete"
+                      aria-label="Delete host"
                     >
                       <span class="material-symbols-outlined text-lg">delete</span>
                     </button>
