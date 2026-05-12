@@ -630,12 +630,11 @@ namespace SmoothOperator.Infrastructure.Services
             Dictionary<string, string> overrides = ParseSettings(connection.Settings);
             if (sessionSettingsOverrides != null)
             {
-                foreach (var pair in sessionSettingsOverrides)
+                foreach (var pair in sessionSettingsOverrides.Where(static pair =>
+                             !string.IsNullOrWhiteSpace(pair.Key)
+                             && !string.IsNullOrWhiteSpace(pair.Value)))
                 {
-                    if (!string.IsNullOrWhiteSpace(pair.Key) && !string.IsNullOrWhiteSpace(pair.Value))
-                    {
-                        overrides[pair.Key.Trim()] = pair.Value.Trim();
-                    }
+                    overrides[pair.Key.Trim()] = pair.Value.Trim();
                 }
             }
 
