@@ -228,7 +228,7 @@ namespace SmoothOperator.Infrastructure.Services
                 sessionSettingsOverrides));
         }
 
-        private record GuacSessionRequest(
+        private sealed record GuacSessionRequest(
             WebSocket WebSocket,
             Connection Connection,
             string SessionId,
@@ -597,7 +597,7 @@ namespace SmoothOperator.Infrastructure.Services
         // Build the value list for guacd's `connect` instruction in the order
         // requested by its `args` reply. Parameters we don't recognise are sent
         // as empty strings (guacd treats those as "use default").
-        private record ConnectionParametersRequest(
+        private sealed record ConnectionParametersRequest(
             Connection Connection,
             IReadOnlyList<string> ParamNames,
             string ServerVersion,
