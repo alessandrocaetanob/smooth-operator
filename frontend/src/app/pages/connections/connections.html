@@ -46,9 +46,10 @@
         />
         @if (searchQuery()) {
           <button
+            type="button"
             (click)="searchQuery.set('')"
-            class="absolute right-2 top-1/2 -translate-y-1/2 text-on-surface-variant/60 hover:text-on-surface transition-colors"
             aria-label="Clear search"
+            class="absolute right-2 top-1/2 -translate-y-1/2 text-on-surface-variant/60 hover:text-on-surface transition-colors"
           >
             <span class="material-symbols-outlined text-base">close</span>
           </button>
@@ -106,7 +107,10 @@
         </thead>
         <tbody class="divide-y divide-outline-variant/10">
           @for (c of filteredConnections(); track trackById($index, c)) {
-            <tr class="hover:bg-on-surface/5 group transition-colors">
+            <tr
+              class="hover:bg-on-surface/5 group transition-colors animate-slide-up"
+              [style.animation-delay]="$index * 50 + 'ms'"
+            >
               <td class="px-5 py-4">
                 <div class="flex items-center gap-3">
                   <div

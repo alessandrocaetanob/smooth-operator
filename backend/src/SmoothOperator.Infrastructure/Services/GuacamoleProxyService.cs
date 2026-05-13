@@ -660,7 +660,6 @@ namespace SmoothOperator.Infrastructure.Services
         }
 
         // ---- Instruction framing & I/O ----------------------------------------------
-
         private static string BuildGuacInstruction(params string[] args)
         {
             var sb = new StringBuilder();

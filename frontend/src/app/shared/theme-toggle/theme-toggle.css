@@ -23,7 +23,7 @@
   border-radius: 8px;
   border: 1px solid rgb(var(--color-outline-variant) / 0.3);
   color: rgb(var(--color-on-surface-variant) / 0.6);
-  background: transparent;
+  background: rgb(var(--color-surface-container-highest) / 0.8);
   cursor: pointer;
   transition: all 0.2s ease;
 }
