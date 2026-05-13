@@ -7,12 +7,12 @@
 ></div>
 
 <!-- Drawer panel -->
-<div
+<section
+  @drawerPanel
+  class="fixed inset-y-0 right-0 z-50 flex h-dvh max-h-dvh w-full max-w-[min(42rem,100vw)] flex-col overflow-hidden glass-panel border-l border-outline-variant/30 shadow-2xl"
+  aria-labelledby="drawer-title"
   role="dialog"
   aria-modal="true"
-  @drawerPanel
-  class="fixed inset-y-0 right-0 z-50 flex flex-col w-full max-w-xl bg-surface border-l border-outline-variant/30 shadow-2xl"
-  aria-labelledby="drawer-title"
 >
   <!-- Header -->
   <div
@@ -24,13 +24,19 @@
         <p class="text-xs text-on-surface-variant mt-0.5">{{ subtitle }}</p>
       }
     </div>
-    <button (click)="closed.emit()" class="btn-ghost p-2" aria-label="Close drawer" type="button">
-      <span class="material-symbols-outlined text-xl">close</span>
+    <button
+      #closeButton
+      (click)="closed.emit()"
+      class="btn-ghost p-2"
+      aria-label="Close drawer"
+      type="button"
+    >
+      <span class="material-symbols-outlined text-xl" aria-hidden="true">close</span>
     </button>
   </div>
 
   <!-- Scrollable body -->
-  <div class="flex-1 overflow-y-auto px-6 py-6">
+  <div class="flex-1 overflow-y-auto overflow-x-hidden px-4 py-5 sm:px-6 sm:py-6">
     <ng-content></ng-content>
   </div>
-</div>
+</section>

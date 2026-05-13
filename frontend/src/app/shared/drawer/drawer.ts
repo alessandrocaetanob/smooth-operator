@@ -1,10 +1,13 @@
 import {
+  AfterViewInit,
   Component,
   Input,
   Output,
   EventEmitter,
   HostListener,
   ChangeDetectionStrategy,
+  ElementRef,
+  ViewChild,
 } from '@angular/core';
 import { animate, style, transition, trigger } from '@angular/animations';
 
@@ -30,10 +33,15 @@ const backdrop = trigger('backdrop', [
   changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [drawerPanel, backdrop],
 })
-export class Drawer {
+export class Drawer implements AfterViewInit {
   @Input() title = '';
   @Input() subtitle = '';
   @Output() closed = new EventEmitter<void>();
+  @ViewChild('closeButton') closeButton?: ElementRef<HTMLButtonElement>;
+
+  ngAfterViewInit(): void {
+    queueMicrotask(() => this.closeButton?.nativeElement?.focus());
+  }
 
   @HostListener('keydown.escape')
   onEscape(): void {

@@ -4,6 +4,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
 import { VaultsService, Vault } from '../../services/vaults.service';
 import { ConnectionsService, Connection } from '../../services/connections.service';
+import { Mascot } from '../../shared/mascot/mascot';
 
 interface VaultMatch {
   kind: 'vault';
@@ -23,7 +24,7 @@ interface ConnectionMatch {
 @Component({
   selector: 'app-search-results',
   standalone: true,
-  imports: [],
+  imports: [Mascot],
   templateUrl: './search-results.html',
   styleUrl: './search-results.css',
 })

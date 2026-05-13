@@ -283,7 +283,7 @@
 
   /* Animation utilities */
   --animate-float: float 4s ease-in-out infinite;
-  --animate-slide-up: slide-up 0.3s ease both;
+  --animate-slide-up: slide-up 0.3s ease forwards;
   --animate-fade-in: fade-in 0.3s ease forwards;
   --animate-scale-in: scale-in 0.25s ease forwards;
   --animate-slide-in-right: slide-in-right 0.3s ease forwards;
@@ -572,7 +572,7 @@
 
   /* Slide-in transitions (kept for legacy usage) */
   .animate-slide-up {
-    animation: slide-up 0.3s ease both;
+    animation: slide-up 0.3s ease forwards;
   }
   .animate-slide-in-right {
     animation: slide-in-right 0.3s ease forwards;

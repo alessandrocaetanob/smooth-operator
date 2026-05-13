@@ -6,75 +6,78 @@
     </p>
   </div>
 
-  <nav class="flex gap-1 border-b border-outline-variant/20 mb-6">
+  <nav
+    class="settings-tabs mb-6 -mx-2 flex flex-nowrap items-stretch overflow-x-auto border-b border-outline-variant/20 px-2"
+    aria-label="Settings sections"
+  >
     <a
       routerLink="users"
       routerLinkActive="text-primary border-primary"
       [routerLinkActiveOptions]="{ exact: false }"
-      class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-on-surface-variant border-b-2 border-transparent hover:text-on-surface transition-colors"
+      class="settings-tab flex items-center gap-2 whitespace-nowrap px-4 py-2 text-sm font-medium text-on-surface-variant border-b-2 border-transparent hover:text-on-surface transition-colors"
     >
-      <span class="material-symbols-outlined text-base" aria-hidden="true">group</span>
+      <span class="material-symbols-outlined text-base">group</span>
       Users
     </a>
     <a
       routerLink="groups"
       routerLinkActive="text-primary border-primary"
       [routerLinkActiveOptions]="{ exact: false }"
-      class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-on-surface-variant border-b-2 border-transparent hover:text-on-surface transition-colors"
+      class="settings-tab flex items-center gap-2 whitespace-nowrap px-4 py-2 text-sm font-medium text-on-surface-variant border-b-2 border-transparent hover:text-on-surface transition-colors"
     >
-      <span class="material-symbols-outlined text-base" aria-hidden="true">workspaces</span>
+      <span class="material-symbols-outlined text-base">workspaces</span>
       Groups
     </a>
     <a
       routerLink="vaults"
       routerLinkActive="text-primary border-primary"
       [routerLinkActiveOptions]="{ exact: false }"
-      class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-on-surface-variant border-b-2 border-transparent hover:text-on-surface transition-colors"
+      class="settings-tab flex items-center gap-2 whitespace-nowrap px-4 py-2 text-sm font-medium text-on-surface-variant border-b-2 border-transparent hover:text-on-surface transition-colors"
     >
-      <span class="material-symbols-outlined text-base" aria-hidden="true">lock</span>
+      <span class="material-symbols-outlined text-base">lock</span>
       Vaults
     </a>
     <a
       routerLink="roles"
       routerLinkActive="text-primary border-primary"
       [routerLinkActiveOptions]="{ exact: false }"
-      class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-on-surface-variant border-b-2 border-transparent hover:text-on-surface transition-colors"
+      class="settings-tab flex items-center gap-2 whitespace-nowrap px-4 py-2 text-sm font-medium text-on-surface-variant border-b-2 border-transparent hover:text-on-surface transition-colors"
     >
-      <span class="material-symbols-outlined text-base" aria-hidden="true">verified_user</span>
+      <span class="material-symbols-outlined text-base">verified_user</span>
       Roles
     </a>
     <a
       routerLink="email"
       routerLinkActive="text-primary border-primary"
       [routerLinkActiveOptions]="{ exact: false }"
-      class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-on-surface-variant border-b-2 border-transparent hover:text-on-surface transition-colors"
+      class="settings-tab flex items-center gap-2 whitespace-nowrap px-4 py-2 text-sm font-medium text-on-surface-variant border-b-2 border-transparent hover:text-on-surface transition-colors"
     >
-      <span class="material-symbols-outlined text-base" aria-hidden="true">mail</span>
+      <span class="material-symbols-outlined text-base">mail</span>
       Email
     </a>
     <a
       routerLink="sso"
       routerLinkActive="text-primary border-primary"
       [routerLinkActiveOptions]="{ exact: false }"
-      class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-on-surface-variant border-b-2 border-transparent hover:text-on-surface transition-colors"
+      class="settings-tab flex items-center gap-2 whitespace-nowrap px-4 py-2 text-sm font-medium text-on-surface-variant border-b-2 border-transparent hover:text-on-surface transition-colors"
     >
-      <span class="material-symbols-outlined text-base" aria-hidden="true">key</span>
+      <span class="material-symbols-outlined text-base">key</span>
       SSO
     </a>
     <a
       routerLink="retention"
       routerLinkActive="text-primary border-primary"
       [routerLinkActiveOptions]="{ exact: false }"
-      class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-on-surface-variant border-b-2 border-transparent hover:text-on-surface transition-colors"
+      class="settings-tab flex items-center gap-2 whitespace-nowrap px-4 py-2 text-sm font-medium text-on-surface-variant border-b-2 border-transparent hover:text-on-surface transition-colors"
     >
-      <span class="material-symbols-outlined text-base" aria-hidden="true">schedule</span>
+      <span class="material-symbols-outlined text-base">schedule</span>
       Retention
     </a>
     <a
       routerLink="integrations"
       routerLinkActive="text-primary border-primary"
       [routerLinkActiveOptions]="{ exact: false }"
-      class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-on-surface-variant border-b-2 border-transparent hover:text-on-surface transition-colors"
+      class="settings-tab flex items-center gap-2 whitespace-nowrap px-4 py-2 text-sm font-medium text-on-surface-variant border-b-2 border-transparent hover:text-on-surface transition-colors"
     >
       <span class="material-symbols-outlined text-base">hub</span>
       Integrations
@@ -83,7 +86,7 @@
       routerLink="secret-providers"
       routerLinkActive="text-primary border-primary"
       [routerLinkActiveOptions]="{ exact: false }"
-      class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-on-surface-variant border-b-2 border-transparent hover:text-on-surface transition-colors"
+      class="settings-tab flex items-center gap-2 whitespace-nowrap px-4 py-2 text-sm font-medium text-on-surface-variant border-b-2 border-transparent hover:text-on-surface transition-colors"
     >
       <span class="material-symbols-outlined text-base">lock_open</span>
       Key Vault

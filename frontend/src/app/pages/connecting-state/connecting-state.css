@@ -3,7 +3,16 @@
   background-image: radial-gradient(circle, rgba(0, 102, 255, 0.18) 1px, transparent 1px);
   background-size: 28px 28px;
   background-position: center center;
-  animation: background-drift 12s linear infinite;
+  animation: bg-scroll 12s linear infinite;
+}
+
+@keyframes bg-scroll {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 28px 28px;
+  }
 }
 
 /* Pulsing status indicator dot */
@@ -112,6 +121,10 @@
   }
 }
 
+.scan-bg {
+  animation: background-drift 12s linear infinite;
+}
+
 @keyframes float {
   0%,
   100% {
@@ -124,14 +137,4 @@
 
 .animate-float {
   animation: float 4s ease-in-out infinite;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .scan-bg,
-  .status-pulse,
-  .animate-shimmer,
-  .glow-pulse,
-  .animate-float {
-    animation: none !important;
-  }
 }

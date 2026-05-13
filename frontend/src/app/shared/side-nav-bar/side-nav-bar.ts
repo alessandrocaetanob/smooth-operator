@@ -21,6 +21,7 @@ export class SideNavBar {
   readonly canViewCredentials = this.auth.canViewCredentials;
   readonly canAccessSettings = this.auth.canAccessSettings;
   readonly collapsed = this.layout.collapsed;
+  readonly mobileNavOpen = this.layout.mobileNavOpen;
 
   get helpUrl(): string {
     return this.runtimeConfig.config.helpUrl;
@@ -28,6 +29,10 @@ export class SideNavBar {
 
   toggleCollapsed(): void {
     this.layout.toggle();
+  }
+
+  closeMobileNav(): void {
+    this.layout.closeMobileNav();
   }
 
   newConnection(): void {
@@ -40,6 +45,7 @@ export class SideNavBar {
 
   logout(): void {
     this.auth.logout();
+    this.layout.closeMobileNav();
     this.router.navigate(['/login']);
   }
 }
