@@ -167,7 +167,7 @@
                     (click)="edit(c)"
                     class="btn-ghost p-2 rounded-lg"
                     title="Edit"
-                    aria-label="Edit connection {{ c.name }} to {{ c.host?.name || hostName(c.hostId) || 'unknown target' }}"
+                    aria-label="Edit connection"
                   >
                     <span class="material-symbols-outlined text-lg">edit</span>
                   </button>
@@ -175,7 +175,7 @@
                     (click)="remove(c)"
                     class="p-2 text-error hover:bg-error/10 rounded-lg transition-colors"
                     title="Delete"
-                    aria-label="Delete connection {{ c.name }} to {{ c.host?.name || hostName(c.hostId) || 'unknown target' }}"
+                    aria-label="Delete connection"
                   >
                     <span class="material-symbols-outlined text-lg">delete</span>
                   </button>

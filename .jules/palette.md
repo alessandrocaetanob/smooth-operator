@@ -16,6 +16,6 @@
 ## 2026-05-10 - Missing Clear Button on Search Fields
 **Learning:** Search inputs in this application frequently lack a clear button to easily remove the search term. For instance, the administration page had a search input but no clear button, unlike other pages which had the button but lacked ARIA labels.
 **Action:** When working on search or filter inputs, always ensure a clear action is provided for ease of use, and verify that the button has an appropriate `aria-label` (e.g., `aria-label="Clear search"`) for screen reader accessibility. Also, update empty states to offer a one-click way to clear the search when no results are found.
-## 2026-05-13 - Missing ARIA Labels on Icon-Only Buttons
+## 2024-05-12 - Missing ARIA Labels on Icon-Only Buttons
 **Learning:** Icon-only buttons (using Material Symbols) throughout the data tables (Connections, Hosts, Credentials) were relying solely on the `title` attribute for accessibility. While `title` provides a tooltip on hover, it is often insufficient for screen readers or keyboard navigation without a clear `aria-label`.
 **Action:** Ensure that all icon-only interactive elements explicitly include an `aria-label` attribute in addition to any tooltips to provide full accessibility for screen reader users.
