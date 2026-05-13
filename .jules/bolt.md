@@ -42,3 +42,10 @@
 
 **Learning:** Using O(N) array methods like `.includes()` directly inside component methods that are called from Angular templates (e.g., `isVaultSelected(id)`) inside loops like `@for` causes O(M*N) performance bottlenecks during change detection.
 **Action:** Transform array references into `Set` lookups using `computed` signals (`computed(() => new Set(...))`) and use `Set.prototype.has()` instead of `Array.prototype.includes()` to reduce lookup time complexity to O(1).
+## 2026-05-11 - Optimize O(N*M) linear scan bottleneck in C# loops
+**Learning:** In C#, evaluating `.FirstOrDefault()` repeatedly inside a loop against a collection causes an O(N*M) linear scan bottleneck.
+**Action:** Convert the collection to a lookup dictionary (`.ToDictionary(k => k.Id)`) outside the loop and use `.TryGetValue()` inside to achieve O(1) lookups.
+
+## 2026-05-13 - Replace .Clear() in EF Core relationships with RemoveAll
+**Learning:** Using `.Clear()` and `.Add()` when updating many-to-many or one-to-many relationships in EF Core forces it to delete all existing records in the junction table and re-insert them, causing massive churn, index fragmentation, and database overhead.
+**Action:** Replace the `.Clear()` pattern with a hashset-based delta update that identifies and removes only missing relationships. If the EF Core navigation property is instantiated as a `List<T>`, optimize the removal by using `.RemoveAll()` instead of calling `.Remove()` iteratively.

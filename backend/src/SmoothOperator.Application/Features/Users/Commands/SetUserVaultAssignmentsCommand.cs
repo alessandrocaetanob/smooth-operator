@@ -10,6 +10,7 @@ using SmoothOperator.Application.DTOs;
 using SmoothOperator.Application.Exceptions;
 using SmoothOperator.Application.Features.Users.Queries;
 using SmoothOperator.Application.Interfaces;
+using SmoothOperator.Domain.Models;
 
 namespace SmoothOperator.Application.Features.Users.Commands
 {
@@ -49,8 +50,25 @@ namespace SmoothOperator.Application.Features.Users.Commands
             if (groups.Count != requestedIds.Count)
                 throw new BadRequestException("One or more vault IDs are invalid.");
 
-            user.ConnectionGroups.Clear();
-            foreach (var group in groups)
+            // ⚡ Bolt Optimization: Use HashSets and delta updates instead of .Clear() and .Add().
+            // This prevents EF Core from generating DELETE/INSERT statements for all existing relationships,
+            // reducing database churn, index fragmentation, and massive transaction overhead.
+            var currentGroupsIds = user.ConnectionGroups.Select(g => g.Id).ToHashSet();
+            var newGroupsIds = groups.Select(g => g.Id).ToHashSet();
+
+            if (user.ConnectionGroups is List<ConnectionGroup> listGroups)
+            {
+                // List.RemoveAll is an O(N) linear scan optimization over repeated List.Remove O(N*M).
+                listGroups.RemoveAll(g => !newGroupsIds.Contains(g.Id));
+            }
+            else
+            {
+                var toRemoveGroups = user.ConnectionGroups.Where(g => !newGroupsIds.Contains(g.Id)).ToList();
+                foreach (var group in toRemoveGroups)
+                    user.ConnectionGroups.Remove(group);
+            }
+
+            foreach (var group in groups.Where(g => !currentGroupsIds.Contains(g.Id)))
                 user.ConnectionGroups.Add(group);
 
             await _context.SaveChangesAsync(cancellationToken);
