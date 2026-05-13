@@ -72,12 +72,8 @@ namespace SmoothOperator.Application.Features.ConnectionGroups.Commands
                     vault.Users.Remove(user);
             }
 
-            var toAddUsersIds = newUsersIds.Where(uid => !currentUsersIds.Contains(uid)).ToList();
-            foreach (var newId in toAddUsersIds)
-            {
-                var user = users.First(u => u.Id == newId);
+            foreach (var user in users.Where(u => !currentUsersIds.Contains(u.Id)))
                 vault.Users.Add(user);
-            }
 
             var currentGroupsIds = vault.Groups.Select(g => g.Id).ToHashSet();
             var newGroupsIds = groups.Select(g => g.Id).ToHashSet();
@@ -93,12 +89,8 @@ namespace SmoothOperator.Application.Features.ConnectionGroups.Commands
                     vault.Groups.Remove(group);
             }
 
-            var toAddGroupsIds = newGroupsIds.Where(gid => !currentGroupsIds.Contains(gid)).ToList();
-            foreach (var newId in toAddGroupsIds)
-            {
-                var group = groups.First(g => g.Id == newId);
+            foreach (var group in groups.Where(g => !currentGroupsIds.Contains(g.Id)))
                 vault.Groups.Add(group);
-            }
 
             await _context.SaveChangesAsync(cancellationToken);
             await _audit.WriteAsync("vault.assignments.updated", "ConnectionGroup", request.VaultId.ToString(),

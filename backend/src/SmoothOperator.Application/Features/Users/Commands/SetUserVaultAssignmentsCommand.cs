@@ -68,12 +68,8 @@ namespace SmoothOperator.Application.Features.Users.Commands
                     user.ConnectionGroups.Remove(group);
             }
 
-            var toAddGroupsIds = newGroupsIds.Where(gid => !currentGroupsIds.Contains(gid)).ToList();
-            foreach (var newId in toAddGroupsIds)
-            {
-                var group = groups.First(g => g.Id == newId);
+            foreach (var group in groups.Where(g => !currentGroupsIds.Contains(g.Id)))
                 user.ConnectionGroups.Add(group);
-            }
 
             await _context.SaveChangesAsync(cancellationToken);
             await _audit.WriteAsync("user.vaults_updated", "User", user.Id.ToString(),
