@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__contextstream__init",
+      "mcp__contextstream__context",
+      "mcp__contextstream__search"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "sonarqube"
+  ]
+}
