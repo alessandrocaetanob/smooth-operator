@@ -85,7 +85,7 @@
 }
 
 .proto-rdp {
-  background: rgb(var(--color-primary) / 0.15);
+  background: rgb(var(--color-primary-container));
   color: rgb(var(--color-primary));
   border: 1px solid rgb(var(--color-primary) / 0.4);
 }
@@ -139,7 +139,7 @@
   border-radius: 8px;
   border: 1px solid rgb(var(--color-outline-variant) / 0.3);
   color: rgb(var(--color-on-surface-variant) / 0.6);
-  background: transparent;
+  background: rgb(var(--color-surface-container-high) / 0.6);
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -232,8 +232,8 @@
   right: calc(100% + 10px);
   top: 50%;
   transform: translateY(-50%) translateX(6px);
-  background: rgba(10, 10, 28, 0.92);
-  color: rgba(255, 255, 255, 0.8);
+  background: rgb(var(--color-inverse-surface));
+  color: rgb(var(--color-inverse-on-surface));
   padding: 4px 8px;
   border-radius: 5px;
   font-size: 11px;
@@ -244,7 +244,7 @@
   transition:
     opacity 0.15s ease,
     transform 0.15s ease;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgb(var(--color-outline-variant) / 0.8);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
@@ -256,19 +256,19 @@
 .tool-btn {
   padding: 10px;
   border-radius: 50%;
-  color: rgb(var(--color-on-surface-variant) / 0.5);
+  color: rgb(var(--color-on-surface));
   border: 1px solid transparent;
   transition: all 0.2s ease;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: transparent;
+  background: rgb(var(--color-surface-container-high) / 0.6);
 }
 
 .tool-btn:hover {
-  color: rgba(255, 255, 255, 0.9);
-  background: rgb(var(--color-primary) / 0.15);
+  color: rgb(var(--color-on-primary-container));
+  background: rgb(var(--color-primary-container));
   border-color: rgb(var(--color-primary) / 0.3);
   box-shadow: 0 0 14px rgb(var(--color-primary) / 0.2);
 }
