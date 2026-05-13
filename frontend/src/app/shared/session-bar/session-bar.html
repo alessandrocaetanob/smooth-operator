@@ -13,9 +13,14 @@
             type="button"
             [attr.aria-label]="'Restore session ' + connectionName(session)"
           >
-            <span class="live-dot w-2 h-2 rounded-full bg-success animate-pulse" aria-hidden="true"></span>
+            <span
+              class="live-dot w-2 h-2 rounded-full bg-success animate-pulse"
+              aria-hidden="true"
+            ></span>
             <span class="chip-name text-xs font-medium">{{ connectionName(session) }}</span>
-            <span class="chip-timer text-[10px] font-mono opacity-60">{{ session.formattedElapsed() }}</span>
+            <span class="chip-timer text-[10px] font-mono opacity-60">{{
+              session.formattedElapsed()
+            }}</span>
           </button>
           <button
             class="chip-close p-1.5 hover:bg-error/10 text-on-surface-variant hover:text-error transition-colors"

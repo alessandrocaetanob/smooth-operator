@@ -460,7 +460,11 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
     return Number.isFinite(size) ? size : 12;
   }
 
-  private getStoredTerminalTheme(): { colorScheme?: string; fontName?: string; fontSize?: number } | null {
+  private getStoredTerminalTheme(): {
+    colorScheme?: string;
+    fontName?: string;
+    fontSize?: number;
+  } | null {
     const id = this.connectionId();
     if (!id || typeof sessionStorage === 'undefined') return null;
 
