@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using SmoothOperator.Application.DTOs;
 using SmoothOperator.Application.Exceptions;
 using SmoothOperator.Application.Interfaces;
+using SmoothOperator.Domain.Models;
 
 namespace SmoothOperator.Application.Features.ConnectionGroups.Commands
 {
@@ -53,11 +54,42 @@ namespace SmoothOperator.Application.Features.ConnectionGroups.Commands
             if (missingUserIds.Count > 0 || missingGroupIds.Count > 0)
                 throw new BadRequestException("One or more assignment IDs are invalid.");
 
-            vault.Users.Clear();
-            foreach (var u in users) vault.Users.Add(u);
+            // Performance Optimization: Use delta updates instead of Clear() and Add().
+            // This prevents EF Core from generating massive DELETE and INSERT churn
+            // for relationships that haven't actually changed.
+            var newUserIds = users.Select(u => u.Id).ToHashSet();
+            if (vault.Users is List<User> userList)
+            {
+                userList.RemoveAll(u => !newUserIds.Contains(u.Id));
+            }
+            else
+            {
+                var toRemove = vault.Users.Where(u => !newUserIds.Contains(u.Id)).ToList();
+                foreach (var u in toRemove) vault.Users.Remove(u);
+            }
 
-            vault.Groups.Clear();
-            foreach (var g in groups) vault.Groups.Add(g);
+            var currentUserIds = vault.Users.Select(u => u.Id).ToHashSet();
+            foreach (var u in users.Where(u => !currentUserIds.Contains(u.Id)))
+            {
+                vault.Users.Add(u);
+            }
+
+            var newGroupIds = groups.Select(g => g.Id).ToHashSet();
+            if (vault.Groups is List<UserGroup> groupList)
+            {
+                groupList.RemoveAll(g => !newGroupIds.Contains(g.Id));
+            }
+            else
+            {
+                var toRemove = vault.Groups.Where(g => !newGroupIds.Contains(g.Id)).ToList();
+                foreach (var g in toRemove) vault.Groups.Remove(g);
+            }
+
+            var currentGroupIds = vault.Groups.Select(g => g.Id).ToHashSet();
+            foreach (var g in groups.Where(g => !currentGroupIds.Contains(g.Id)))
+            {
+                vault.Groups.Add(g);
+            }
 
             await _context.SaveChangesAsync(cancellationToken);
             await _audit.WriteAsync("vault.assignments.updated", "ConnectionGroup", request.VaultId.ToString(),
