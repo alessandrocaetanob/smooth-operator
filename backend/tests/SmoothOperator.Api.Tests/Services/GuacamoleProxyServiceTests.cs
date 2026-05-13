@@ -495,6 +495,35 @@ public class GuacamoleProxyServiceInternalTests
         })!;
     }
 
+    private Task<List<string>> InvokeResolveConnectionParametersAsync(
+        Connection connection,
+        List<string> paramNames,
+        string serverVersion,
+        IDictionary<string, string>? settingsOverrides = null)
+    {
+        var method = typeof(GuacamoleProxyService).GetMethod(
+            "ResolveConnectionParametersAsync",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+        var requestType = typeof(GuacamoleProxyService).GetNestedType(
+            "ConnectionParametersRequest",
+            System.Reflection.BindingFlags.NonPublic);
+
+        var request = Activator.CreateInstance(requestType!, new object?[]
+        {
+            connection,
+            paramNames,
+            serverVersion,
+            _dbContext,
+            CancellationToken.None,
+            Guid.NewGuid(),
+            "127.0.0.1",
+            settingsOverrides
+        });
+
+        return (Task<List<string>>)method!.Invoke(_service, new object[] { request! })!;
+    }
+
     [Fact]
     public async Task ResolveConnectionParametersAsync_WithExternalSecret_FetchesFromProvider()
     {
@@ -517,19 +546,10 @@ public class GuacamoleProxyServiceInternalTests
         _secretProviderFactoryMock.Setup(f => f.Create(provider)).Returns(secretProviderMock.Object);
 
         // Act
-        var method = typeof(GuacamoleProxyService).GetMethod("ResolveConnectionParametersAsync", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        var task = (Task<List<string>>)method!.Invoke(_service, new object[]
-        {
+        var result = await InvokeResolveConnectionParametersAsync(
             connection,
             new List<string> { "username", "password" },
-            "VERSION_1_5_0",
-            _dbContext,
-            CancellationToken.None,
-            Guid.NewGuid(),
-            "127.0.0.1",
-            null
-        })!;
-        var result = await task;
+            "VERSION_1_5_0");
 
         // Assert
         Assert.Equal("guac-user", result[0]);
@@ -590,8 +610,7 @@ public class GuacamoleProxyServiceInternalTests
         _secretProviderFactoryMock.Setup(f => f.Create(provider)).Returns(secretProviderMock.Object);
 
         // Act & Assert
-        var method = typeof(GuacamoleProxyService).GetMethod("ResolveConnectionParametersAsync", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        var task = (Task<List<string>>)method!.Invoke(_service, new object[] { connection, new List<string> { "password" }, "VERSION_1_5_0", _dbContext, CancellationToken.None, Guid.NewGuid(), "127.0.0.1", null })!;
+        var task = InvokeResolveConnectionParametersAsync(connection, new List<string> { "password" }, "VERSION_1_5_0");
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => task);
 
@@ -683,9 +702,7 @@ public class GuacamoleProxyServiceInternalTests
         _encryptionServiceMock.Setup(e => e.Decrypt("encrypted-key")).Returns("pem-key-content");
 
         // Act
-        var method = typeof(GuacamoleProxyService).GetMethod("ResolveConnectionParametersAsync", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        var task = (Task<List<string>>)method!.Invoke(_service, new object[] { connection, new List<string> { "password", "private-key" }, "VERSION_1_5_0", _dbContext, CancellationToken.None, Guid.NewGuid(), "127.0.0.1", null })!;
-        var result = await task;
+        var result = await InvokeResolveConnectionParametersAsync(connection, new List<string> { "password", "private-key" }, "VERSION_1_5_0");
 
         // Assert
         Assert.Equal(string.Empty, result[0]); // password should be empty for key auth
@@ -699,9 +716,7 @@ public class GuacamoleProxyServiceInternalTests
         var connection = new Connection { Protocol = "rdp" };
 
         // Act
-        var method = typeof(GuacamoleProxyService).GetMethod("ResolveConnectionParametersAsync", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        var task = (Task<List<string>>)method!.Invoke(_service, new object[] { connection, new List<string> { "VERSION_1_5_0", "hostname" }, "VERSION_1_5_0", _dbContext, CancellationToken.None, Guid.NewGuid(), "127.0.0.1", null })!;
-        var result = await task;
+        var result = await InvokeResolveConnectionParametersAsync(connection, new List<string> { "VERSION_1_5_0", "hostname" }, "VERSION_1_5_0");
 
         // Assert
         Assert.Equal("VERSION_1_5_0", result[0]);

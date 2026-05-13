@@ -226,7 +226,7 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
     effect(() => {
       const id = this.connectionId();
       const connection = this.connection();
-      if (!id || !connection || connection.protocol.toLowerCase() !== 'ssh') return;
+      if (!id || connection?.protocol?.toLowerCase() !== 'ssh') return;
       if (this.terminalThemeLoadedFor === id) return;
       this.terminalThemeLoadedFor = id;
       this.loadSessionTerminalTheme(connection.settings || '{}');
@@ -441,34 +441,37 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
     const fromConnection = this.parseSettings(connectionSettings);
     let colorScheme = fromConnection['color-scheme'] ?? 'gray-black';
     let fontName = fromConnection['font-name'] ?? 'monospace';
-    let fontSize = Number(fromConnection['font-size']);
-    if (!Number.isFinite(fontSize)) fontSize = 12;
+    let fontSize = this.parseFontSize(fromConnection['font-size']);
 
-    const id = this.connectionId();
-    if (id && typeof sessionStorage !== 'undefined') {
-      const raw = sessionStorage.getItem(`smooth-operator.session-terminal.${id}`);
-      if (raw) {
-        try {
-          const parsed = JSON.parse(raw) as {
-            colorScheme?: string;
-            fontName?: string;
-            fontSize?: number;
-          };
-          if (parsed.colorScheme) colorScheme = parsed.colorScheme;
-          if (parsed.fontName) fontName = parsed.fontName;
-          const parsedFontSize = parsed.fontSize;
-          if (typeof parsedFontSize === 'number' && Number.isFinite(parsedFontSize)) {
-            fontSize = parsedFontSize;
-          }
-        } catch {
-          // Ignore malformed payload and use connection defaults.
-        }
-      }
+    const stored = this.getStoredTerminalTheme();
+    if (stored) {
+      colorScheme = stored.colorScheme ?? colorScheme;
+      fontName = stored.fontName ?? fontName;
+      fontSize = stored.fontSize ?? fontSize;
     }
 
     this.termColorScheme.set(colorScheme);
     this.termFontName.set(fontName);
     this.termFontSize.set(fontSize);
+  }
+
+  private parseFontSize(value: string | undefined): number {
+    const size = Number(value);
+    return Number.isFinite(size) ? size : 12;
+  }
+
+  private getStoredTerminalTheme(): { colorScheme?: string; fontName?: string; fontSize?: number } | null {
+    const id = this.connectionId();
+    if (!id || typeof sessionStorage === 'undefined') return null;
+
+    const raw = sessionStorage.getItem(`smooth-operator.session-terminal.${id}`);
+    if (!raw) return null;
+
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
   }
 
   private parseSettings(json: string): Record<string, string> {

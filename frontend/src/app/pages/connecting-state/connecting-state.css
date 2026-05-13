@@ -3,15 +3,15 @@
   background-image: radial-gradient(circle, rgba(0, 102, 255, 0.18) 1px, transparent 1px);
   background-size: 28px 28px;
   background-position: center center;
-  animation: bg-scroll 12s linear infinite;
+  animation: background-drift 12s linear infinite;
 }
 
-@keyframes bg-scroll {
-  from {
+@keyframes background-drift {
+  0% {
     background-position: 0 0;
   }
-  to {
-    background-position: 28px 28px;
+  100% {
+    background-position: 50px 50px;
   }
 }
 
@@ -112,18 +112,6 @@
   }
 }
 
-@keyframes background-drift {
-  0% {
-    background-position: 0 0;
-  }
-  100% {
-    background-position: 50px 50px;
-  }
-}
-
-.scan-bg {
-  animation: background-drift 12s linear infinite;
-}
 
 @keyframes float {
   0%,
