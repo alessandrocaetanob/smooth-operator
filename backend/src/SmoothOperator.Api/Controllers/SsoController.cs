@@ -1,11 +1,9 @@
 using System;
 using System.Threading.Tasks;
-using MediatR;
 using SmoothOperator.Application.DTOs;
 using SmoothOperator.Domain.Models;
 using SmoothOperator.Application.Interfaces;
 using SmoothOperator.Application.Interfaces.Sso;
-using SmoothOperator.Application.Features.SsoProvider.Queries;
 using SmoothOperator.Infrastructure.Services.Sso;
 using SmoothOperator.Api.Extensions;
 using Microsoft.AspNetCore.Authorization;
@@ -23,7 +21,6 @@ namespace SmoothOperator.Api.Controllers
         private const string AuditLoginFailed = "sso.login_failed";
         private const string ResourceTypeSso = "sso";
 
-        private readonly IMediator _mediator;
         private readonly ISsoProviderService _providers;
         private readonly IOidcFlowService _oidc;
         private readonly ISamlFlowService _saml;
@@ -33,7 +30,6 @@ namespace SmoothOperator.Api.Controllers
         private readonly SsoUrlHelper _urls;
 
         public SsoController(
-            IMediator mediator,
             ISsoProviderService providers,
             IOidcFlowService oidc,
             ISamlFlowService saml,
@@ -42,7 +38,6 @@ namespace SmoothOperator.Api.Controllers
             ILogger<SsoController> logger,
             SsoUrlHelper urls)
         {
-            _mediator = mediator;
             _providers = providers;
             _oidc = oidc;
             _saml = saml;
@@ -57,8 +52,15 @@ namespace SmoothOperator.Api.Controllers
         [EnableRateLimiting("auth")]
         public async Task<ActionResult<SsoStatusDto>> GetProvider()
         {
-            var result = await _mediator.Send(new GetSsoProviderQuery());
-            return Ok(result);
+            var p = await _providers.GetActiveProviderAsync();
+            if (p == null) return Ok(new SsoStatusDto { Enabled = false });
+
+            return Ok(new SsoStatusDto
+            {
+                Enabled = p.IsEnabled,
+                Type = p.Type.ToString(),
+                Name = p.Name,
+            });
         }
 
         /// <summary>Begins an SSO flow. Redirects browser to the configured IdP.</summary>

@@ -58,7 +58,11 @@ namespace SmoothOperator.Infrastructure.Services
 
         // ---- Ticket lifecycle (REST issue / WS consume) ------------------------------
 
-        public async Task<string> IssueTicketAsync(Guid userId, Guid connectionId, string ipAddress)
+        public async Task<string> IssueTicketAsync(
+            Guid userId,
+            Guid connectionId,
+            string ipAddress,
+            IDictionary<string, string>? sessionSettingsOverrides = null)
         {
             var ticket = Guid.NewGuid().ToString("N");
             var key = TicketKey(ticket);
@@ -67,7 +71,10 @@ namespace SmoothOperator.Infrastructure.Services
             {
                 UserId = userId,
                 ConnectionId = connectionId,
-                IpAddress = ipAddress ?? string.Empty
+                IpAddress = ipAddress ?? string.Empty,
+                SessionSettingsOverrides = sessionSettingsOverrides == null
+                    ? null
+                    : new Dictionary<string, string>(sessionSettingsOverrides, StringComparer.OrdinalIgnoreCase)
             });
             await db.StringSetAsync(key, payload, TicketTtl);
 
@@ -91,7 +98,7 @@ namespace SmoothOperator.Infrastructure.Services
         // Atomically consume a ticket. Returns the userId on success, null on
         // missing/expired/mismatched ticket. Uses GETDEL so a concurrent reader
         // can't replay the ticket.
-        public async Task<Guid?> ConsumeTicketAsync(string ticket, Guid connectionId, string ipAddress)
+        public async Task<TicketPayload?> ConsumeTicketAsync(string ticket, Guid connectionId, string ipAddress)
         {
             if (string.IsNullOrWhiteSpace(ticket)) return null;
             var key = TicketKey(ticket);
@@ -132,7 +139,7 @@ namespace SmoothOperator.Infrastructure.Services
             }
 
             await LogTicketEventAsync(payload.UserId, connectionId, "connection.ticket.consumed", ipAddress, null);
-            return payload.UserId;
+            return payload;
         }
 
         private static string TicketKey(string ticket) => $"guac:ticket:{ticket}";
@@ -161,16 +168,22 @@ namespace SmoothOperator.Infrastructure.Services
             }
         }
 
-        private sealed class TicketPayload
+        public sealed class TicketPayload
         {
             public Guid UserId { get; set; }
             public Guid ConnectionId { get; set; }
             public string IpAddress { get; set; } = string.Empty;
+            public Dictionary<string, string>? SessionSettingsOverrides { get; set; }
         }
 
         // ---- WebSocket proxy ---------------------------------------------------------
 
-        public async Task HandleWebSocketAsync(WebSocket webSocket, Guid connectionId, Guid userId, string ipAddress)
+        public async Task HandleWebSocketAsync(
+            WebSocket webSocket,
+            Guid connectionId,
+            Guid userId,
+            string ipAddress,
+            IDictionary<string, string>? sessionSettingsOverrides = null)
         {
             var sessionId = Guid.NewGuid().ToString();
 
@@ -204,8 +217,26 @@ namespace SmoothOperator.Infrastructure.Services
             var db = _redis.GetDatabase();
             await RegisterSessionAsync(db, sessionId, dbUser.Id, connectionId);
 
-            await RunGuacamoleSessionAsync(webSocket, connection, sessionId, dbUser, ipAddress, dbContext, db);
+            await RunGuacamoleSessionAsync(new GuacSessionRequest(
+                webSocket,
+                connection,
+                sessionId,
+                dbUser,
+                ipAddress,
+                dbContext,
+                db,
+                sessionSettingsOverrides));
         }
+
+        private sealed record GuacSessionRequest(
+            WebSocket WebSocket,
+            Connection Connection,
+            string SessionId,
+            User User,
+            string IpAddress,
+            AppDbContext DbContext,
+            IDatabase RedisDb,
+            IDictionary<string, string>? SettingsOverrides);
 
         private static Task<User?> LoadAuthorizedUserAsync(AppDbContext dbContext, Guid userId) =>
             dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId && u.IsActive);
@@ -317,14 +348,7 @@ namespace SmoothOperator.Infrastructure.Services
             await db.KeyExpireAsync($"session:{sessionId}", TimeSpan.FromHours(24));
         }
 
-        private async Task RunGuacamoleSessionAsync(
-            WebSocket webSocket,
-            Connection connection,
-            string sessionId,
-            User dbUser,
-            string ipAddress,
-            AppDbContext dbContext,
-            IDatabase db)
+        private async Task RunGuacamoleSessionAsync(GuacSessionRequest req)
         {
             using var tcpClient = new TcpClient();
             var connectionSuccessful = false;
@@ -336,37 +360,44 @@ namespace SmoothOperator.Infrastructure.Services
                 using var networkStream = tcpClient.GetStream();
                 var reader = new GuacInstructionReader(networkStream);
 
-                await PerformGuacamoleHandshakeAsync(networkStream, reader, connection, dbContext, dbUser, ipAddress);
+                await PerformGuacamoleHandshakeAsync(
+                    networkStream,
+                    reader,
+                    req.Connection,
+                    req.DbContext,
+                    req.User,
+                    req.IpAddress,
+                    req.SettingsOverrides);
 
                 _metrics.RecordConnectionStarted();
                 sessionMetricRecorded = true;
                 connectionSuccessful = true;
 
-                await RunBidirectionalProxyAsync(reader, webSocket, networkStream, connection.Id, msg =>
+                await RunBidirectionalProxyAsync(reader, req.WebSocket, networkStream, req.Connection.Id, msg =>
                 {
                     failureReason ??= msg;
-                    _logger.LogWarning("guacd reported error for connection {ConnectionId}: {Error}", connection.Id, msg);
+                    _logger.LogWarning("guacd reported error for connection {ConnectionId}: {Error}", req.Connection.Id, msg);
                 });
             }
             catch (SocketException ex)
             {
                 failureReason = $"Cannot reach Guacamole service ({_guacdHost}:{_guacdPort}): {ex.Message}";
-                _logger.LogError(ex, "Network error connecting to guacd for connection {ConnectionId}", connection.Id);
-                await LogConnectionErrorAsync(dbContext, dbUser.Id, connection.Id, ipAddress, "network_error", ex.Message);
+                _logger.LogError(ex, "Network error connecting to guacd for connection {ConnectionId}", req.Connection.Id);
+                await LogConnectionErrorAsync(req.DbContext, req.User.Id, req.Connection.Id, req.IpAddress, "network_error", ex.Message);
             }
             catch (Exception ex)
             {
                 failureReason = $"Session error: {ex.Message}";
-                _logger.LogError(ex, "Error during Guacamole session for connection {ConnectionId}", connection.Id);
-                await LogConnectionErrorAsync(dbContext, dbUser.Id, connection.Id, ipAddress, "session_error", ex.Message);
+                _logger.LogError(ex, "Error during Guacamole session for connection {ConnectionId}", req.Connection.Id);
+                await LogConnectionErrorAsync(req.DbContext, req.User.Id, req.Connection.Id, req.IpAddress, "session_error", ex.Message);
             }
             finally
             {
-                await db.KeyDeleteAsync($"session:{sessionId}");
+                await req.RedisDb.KeyDeleteAsync($"session:{req.SessionId}");
 
                 if (connectionSuccessful)
                 {
-                    await LogConnectionEndedAsync(dbContext, dbUser.Id, connection.Id, ipAddress, sessionId);
+                    await LogConnectionEndedAsync(req.DbContext, req.User.Id, req.Connection.Id, req.IpAddress, req.SessionId);
                 }
 
                 if (sessionMetricRecorded)
@@ -374,7 +405,7 @@ namespace SmoothOperator.Infrastructure.Services
                     _metrics.RecordConnectionEnded();
                 }
 
-                await CloseGuacSessionAsync(webSocket, failureReason);
+                await CloseGuacSessionAsync(req.WebSocket, failureReason);
                 tcpClient.Close();
             }
         }
@@ -385,15 +416,23 @@ namespace SmoothOperator.Infrastructure.Services
             Connection connection,
             AppDbContext dbContext,
             User dbUser,
-            string ipAddress)
+            string ipAddress,
+            IDictionary<string, string>? sessionSettingsOverrides)
         {
             string protocol = (connection.Protocol ?? "rdp").ToLowerInvariant();
             await SendGuacMessage(networkStream, BuildGuacInstruction("select", protocol));
 
             var (paramNames, serverVersion) = await ReadHandshakeArgsAsync(reader);
 
-            var paramValues = await ResolveConnectionParametersAsync(
-                connection, paramNames, serverVersion, dbContext, CancellationToken.None, dbUser.Id, ipAddress);
+            var paramValues = await ResolveConnectionParametersAsync(new ConnectionParametersRequest(
+                connection,
+                paramNames,
+                serverVersion,
+                dbContext,
+                CancellationToken.None,
+                dbUser.Id,
+                ipAddress,
+                sessionSettingsOverrides));
 
             _logger.LogInformation(
                 "guacd handshake for {Protocol}: server={ServerVersion}, sending {ValueCount} connect values for {NameCount} arg names",
@@ -558,17 +597,20 @@ namespace SmoothOperator.Infrastructure.Services
         // Build the value list for guacd's `connect` instruction in the order
         // requested by its `args` reply. Parameters we don't recognise are sent
         // as empty strings (guacd treats those as "use default").
-        private async Task<List<string>> ResolveConnectionParametersAsync(
-            Connection connection,
-            IReadOnlyList<string> paramNames,
-            string serverVersion,
-            AppDbContext dbContext,
-            CancellationToken cancellationToken,
-            Guid userId,
-            string ipAddress)
+        private sealed record ConnectionParametersRequest(
+            Connection Connection,
+            IReadOnlyList<string> ParamNames,
+            string ServerVersion,
+            AppDbContext DbContext,
+            CancellationToken CancellationToken,
+            Guid UserId,
+            string IpAddress,
+            IDictionary<string, string>? SettingsOverrides);
+
+        private async Task<List<string>> ResolveConnectionParametersAsync(ConnectionParametersRequest req)
         {
-            var protocol = (connection.Protocol ?? "rdp").ToLowerInvariant();
-            var hostname = connection.Host?.Address ?? string.Empty;
+            var protocol = (req.Connection.Protocol ?? "rdp").ToLowerInvariant();
+            var hostname = req.Connection.Host?.Address ?? string.Empty;
             var defaultPort = protocol switch
             {
                 "ssh" => "22",
@@ -576,11 +618,11 @@ namespace SmoothOperator.Infrastructure.Services
                 "telnet" => "23",
                 _ => "3389"
             };
-            var username = connection.Credential?.Username ?? string.Empty;
-            var credentialType = (connection.Credential?.CredentialType ?? "password").ToLowerInvariant();
+            var username = req.Connection.Credential?.Username ?? string.Empty;
+            var credentialType = (req.Connection.Credential?.CredentialType ?? "password").ToLowerInvariant();
             var isKeyAuth = credentialType is "private_key" or "ssh_key" or "key";
-            var decryptedSecret = connection.Credential != null
-                ? await ResolveDecryptedSecretAsync(connection.Credential, dbContext, userId, ipAddress, cancellationToken)
+            var decryptedSecret = req.Connection.Credential != null
+                ? await ResolveDecryptedSecretAsync(req.Connection.Credential, req.DbContext, req.UserId, req.IpAddress, req.CancellationToken)
                 : string.Empty;
 
             // For key auth the decrypted secret is the PEM private key, not a password.
@@ -589,19 +631,26 @@ namespace SmoothOperator.Infrastructure.Services
 
             // Optional per-connection settings JSON (e.g. {"domain":"corp","ignore-cert":"true",
             // "passphrase":"..."}). `passphrase` falls through to the override path below.
-            Dictionary<string, string> overrides = ParseSettings(connection.Settings);
+            Dictionary<string, string> overrides = ParseSettings(req.Connection.Settings);
+            if (req.SettingsOverrides != null)
+            {
+                foreach (var pair in req.SettingsOverrides.Where(p => !string.IsNullOrWhiteSpace(p.Key) && !string.IsNullOrWhiteSpace(p.Value)))
+                {
+                    overrides[pair.Key.Trim()] = pair.Value.Trim();
+                }
+            }
 
             var ctx = new GuacConnectionContext(overrides, hostname, defaultPort, username, password, privateKey, protocol);
 
-            var values = new List<string>(paramNames.Count);
-            foreach (var name in paramNames)
+            var values = new List<string>(req.ParamNames.Count);
+            foreach (var name in req.ParamNames)
             {
                 // Echo the protocol version back when guacd advertised it as the
                 // first arg name; this is how the version negotiation handshake
                 // completes (see Apache ConfiguredGuacamoleSocket reference impl).
                 if (name.StartsWith("VERSION_", StringComparison.Ordinal))
                 {
-                    values.Add(serverVersion);
+                    values.Add(req.ServerVersion);
                     continue;
                 }
                 values.Add(ResolveConnectionParameter(name, ctx));
@@ -660,6 +709,7 @@ namespace SmoothOperator.Infrastructure.Services
         }
 
         // ---- Instruction framing & I/O ----------------------------------------------
+
         private static string BuildGuacInstruction(params string[] args)
         {
             var sb = new StringBuilder();

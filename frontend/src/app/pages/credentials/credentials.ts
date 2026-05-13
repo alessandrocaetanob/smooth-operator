@@ -12,6 +12,7 @@ import { AuthService } from '../../services/auth.service';
 import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { Drawer } from '../../shared/drawer/drawer';
+import { Mascot } from '../../shared/mascot/mascot';
 
 interface FormState {
   id: string | null;
@@ -43,7 +44,7 @@ const EMPTY_FORM: FormState = {
 
 @Component({
   selector: 'app-credentials',
-  imports: [FormsModule, Drawer],
+  imports: [FormsModule, Drawer, Mascot],
   templateUrl: './credentials.html',
   styleUrl: './credentials.css',
 })
@@ -69,6 +70,7 @@ export class Credentials implements OnInit {
   readonly searchQuery = signal('');
   readonly loadingSecrets = signal(false);
   readonly availableSecrets = signal<string[]>([]);
+  readonly copiedKeyIds = signal(new Set<string>());
 
   readonly filteredCredentials = computed(() => {
     const q = this.searchQuery().toLowerCase().trim();
@@ -189,6 +191,14 @@ export class Credentials implements OnInit {
   copyRowPublicKey(c: Credential): void {
     if (!c.publicKey) return;
     navigator.clipboard.writeText(c.publicKey);
+    this.copiedKeyIds.update((s) => new Set([...s, c.id]));
+    setTimeout(() => {
+      this.copiedKeyIds.update((s) => {
+        const next = new Set(s);
+        next.delete(c.id);
+        return next;
+      });
+    }, 2000);
     this.toastSvc.success(`Public key for "${c.name}" copied to clipboard`);
   }
 
@@ -344,8 +354,9 @@ export class Credentials implements OnInit {
   }
 
   private done(): void {
+    const isUpdate = !!this.form().id;
     this.busy.set(false);
-    this.toastSvc.success('Credential saved.');
+    this.toastSvc.success(isUpdate ? 'Credential updated.' : 'Credential saved.');
     this.cancel();
     this.refresh();
   }

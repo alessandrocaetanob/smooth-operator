@@ -24,19 +24,28 @@
 
   <div class="mb-4">
     <div class="relative">
-      <label for="admin-user-search" class="sr-only">Search users</label>
+      <label for="userSearch" class="sr-only">Search users</label>
       <span
         class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-base"
         >search</span
       >
       <input
-        id="admin-user-search"
+        id="userSearch"
         type="text"
         placeholder="Search users by name, email, or role…"
         [ngModel]="searchQuery()"
         (ngModelChange)="searchQuery.set($event)"
-        class="w-full input-field pl-9 pr-3"
+        class="w-full input-field pl-9 pr-10"
       />
+      @if (searchQuery()) {
+        <button
+          (click)="searchQuery.set('')"
+          class="absolute right-2 top-1/2 -translate-y-1/2 text-on-surface-variant/60 hover:text-on-surface transition-colors"
+          aria-label="Clear search"
+        >
+          <span class="material-symbols-outlined text-base">close</span>
+        </button>
+      }
     </div>
   </div>
 
@@ -95,9 +104,9 @@
         until the link is redeemed.
       </p>
       <form (ngSubmit)="submitInvite()" class="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <label for="invite-name" class="sr-only">Full name</label>
+        <label for="inviteName" class="sr-only">Full name (optional)</label>
         <input
-          id="invite-name"
+          id="inviteName"
           type="text"
           placeholder="Full name (optional)"
           [ngModel]="inviteName()"
@@ -105,9 +114,9 @@
           name="name"
           class="input-field"
         />
-        <label for="invite-email" class="sr-only">Email</label>
+        <label for="inviteEmail" class="sr-only">Email</label>
         <input
-          id="invite-email"
+          id="inviteEmail"
           type="email"
           placeholder="Email"
           [ngModel]="inviteEmail()"
@@ -116,9 +125,13 @@
           required
           class="input-field"
         />
-        <label class="md:col-span-2 flex flex-col gap-1 text-xs text-on-surface-variant">
+        <label
+          for="inviteRole"
+          class="md:col-span-2 flex flex-col gap-1 text-xs text-on-surface-variant"
+        >
           <span class="uppercase tracking-widest">Role</span>
           <select
+            id="inviteRole"
             [ngModel]="inviteRole()"
             (ngModelChange)="inviteRole.set($event)"
             name="role"
@@ -162,7 +175,11 @@
             <td class="px-4 py-3 text-on-surface">{{ u.name }}</td>
             <td class="px-4 py-3 text-on-surface-variant">{{ u.email }}</td>
             <td class="px-4 py-3">
+              <label [attr.for]="'role-select-' + u.id" class="sr-only"
+                >Change role for {{ u.name }}</label
+              >
               <select
+                [id]="'role-select-' + u.id"
                 [ngModel]="primaryRole(u)"
                 (ngModelChange)="changeRole(u, $event)"
                 [disabled]="roleBusyUserId() === u.id"
@@ -227,13 +244,16 @@
         } @empty {
           <tr>
             <td colspan="6" class="px-4 py-8 text-center text-outline">
-              {{
-                loading()
-                  ? 'Loading…'
-                  : searchQuery()
-                    ? 'No users match the search.'
-                    : 'No users yet.'
-              }}
+              @if (loading()) {
+                Loading…
+              } @else if (searchQuery()) {
+                <p>No users match the search.</p>
+                <button (click)="searchQuery.set('')" class="btn-ghost mt-3 text-xs">
+                  Clear search
+                </button>
+              } @else {
+                No users yet.
+              }
             </td>
           </tr>
         }
@@ -266,8 +286,12 @@
 
         <div class="mt-4 max-h-64 overflow-y-auto space-y-2">
           @for (vault of vaults(); track trackVault($index, vault)) {
-            <label class="flex items-center gap-2 text-sm text-on-surface">
+            <label
+              [attr.for]="'vault-assign-' + vault.id"
+              class="flex items-center gap-2 text-sm text-on-surface"
+            >
               <input
+                [id]="'vault-assign-' + vault.id"
                 type="checkbox"
                 [checked]="isVaultSelected(vault.id)"
                 (change)="toggleVaultSelection(vault.id, $any($event.target).checked)"

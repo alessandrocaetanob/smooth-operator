@@ -7,7 +7,7 @@
       </p>
     </div>
     <button (click)="refresh()" class="btn-ghost">
-      <span class="material-symbols-outlined text-base">refresh</span>
+      <span class="material-symbols-outlined text-base" aria-hidden="true">refresh</span>
       Refresh
     </button>
   </div>
@@ -134,9 +134,13 @@
       class="w-full max-w-xl glass-panel rounded-lg p-5"
       (click)="$event.stopPropagation()"
       (keydown.enter)="$event.stopPropagation()"
-      aria-label="Vault assignments"
+      aria-labelledby="vault-assignments-title"
+      aria-modal="true"
     >
-      <h3 class="text-sm font-semibold text-on-surface uppercase tracking-widest">
+      <h3
+        id="vault-assignments-title"
+        class="text-sm font-semibold text-on-surface uppercase tracking-widest"
+      >
         Assign Access — {{ vault.name }}
       </h3>
       <p class="text-xs text-on-surface-variant mt-1">

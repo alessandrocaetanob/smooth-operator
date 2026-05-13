@@ -5,6 +5,7 @@ import { AuthService } from '../../services/auth.service';
 import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { Drawer } from '../../shared/drawer/drawer';
+import { Mascot } from '../../shared/mascot/mascot';
 
 interface FormState {
   id: string | null;
@@ -20,7 +21,7 @@ const EMPTY_FORM: FormState = {
 
 @Component({
   selector: 'app-hosts',
-  imports: [FormsModule, Drawer],
+  imports: [FormsModule, Drawer, Mascot],
   templateUrl: './hosts.html',
   styleUrl: './hosts.css',
 })
@@ -143,8 +144,9 @@ export class Hosts implements OnInit {
   }
 
   private done(): void {
+    const isUpdate = !!this.form().id;
     this.busy.set(false);
-    this.toastSvc.success('Host saved.');
+    this.toastSvc.success(isUpdate ? 'Host updated.' : 'Host saved.');
     this.closeDrawer();
     this.refresh();
   }

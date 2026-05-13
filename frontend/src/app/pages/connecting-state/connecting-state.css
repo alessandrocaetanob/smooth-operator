@@ -6,6 +6,15 @@
   animation: background-drift 12s linear infinite;
 }
 
+@keyframes background-drift {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 50px 50px;
+  }
+}
+
 /* Pulsing status indicator dot */
 .status-pulse {
   animation: pulse-dot 1.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
@@ -103,15 +112,6 @@
   }
 }
 
-@keyframes background-drift {
-  0% {
-    background-position: 0 0;
-  }
-  100% {
-    background-position: 50px 50px;
-  }
-}
-
 @keyframes float {
   0%,
   100% {
@@ -124,14 +124,4 @@
 
 .animate-float {
   animation: float 4s ease-in-out infinite;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .scan-bg,
-  .status-pulse,
-  .animate-shimmer,
-  .glow-pulse,
-  .animate-float {
-    animation: none !important;
-  }
 }
