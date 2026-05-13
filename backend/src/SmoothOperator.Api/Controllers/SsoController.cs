@@ -54,6 +54,7 @@ namespace SmoothOperator.Api.Controllers
 
         /// <summary>Public probe consumed by the login page to render the SSO button.</summary>
         [HttpGet("provider")]
+        [EnableRateLimiting("auth")]
         public async Task<ActionResult<SsoStatusDto>> GetProvider()
         {
             var result = await _mediator.Send(new GetSsoProviderQuery());

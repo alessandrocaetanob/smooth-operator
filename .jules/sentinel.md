@@ -236,3 +236,9 @@ Opened PR #50 to master: all 151 tests pass (142 integration + 9 architecture). 
 - **Validate before sanitizing**: In `DownloadConnectionFileQuery.cs`, `StripNewlines()` was called before the regex check — allowing newlines to bypass the pattern by being stripped first. Always validate raw input, then sanitize for encoding.
 - **Fail-closed on missing config**: The CORS fallback (#72) and the `ASPNETCORE_ENVIRONMENT=Development` setting (#77) both create silent production misconfigurations. Security-critical config should assert/fail at startup if misconfigured rather than silently opening up.
 - **Token storage is a threat model decision**: `localStorage` (#75) is convenient but makes every XSS a complete account takeover. For a PAM tool, httpOnly cookies with CSRF mitigation is the right default.
+
+
+## 2025-10-26 - Missing Rate Limiting on SSO Provider Probe
+**Vulnerability:** The `[HttpGet("provider")]` endpoint in `SsoController` allowed unauthenticated users to query the currently active SSO provider configuration without rate limiting, exposing the system to resource exhaustion (DoS) or enumeration.
+**Learning:** Even read-only or "probe" endpoints that are publicly accessible (`[AllowAnonymous]`) can be abused if left unthrottled. The global rate limiter is often too permissive to prevent targeted abuse.
+**Prevention:** Apply strict rate limiting (e.g., `[EnableRateLimiting("auth")]`) to any public endpoint that queries system state or configuration, especially those related to authentication flows.
