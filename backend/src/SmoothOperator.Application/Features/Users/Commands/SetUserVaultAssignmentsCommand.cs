@@ -50,26 +50,25 @@ namespace SmoothOperator.Application.Features.Users.Commands
             if (groups.Count != requestedIds.Count)
                 throw new BadRequestException("One or more vault IDs are invalid.");
 
-            // ⚡ Bolt Optimization: Use HashSets and delta updates instead of .Clear() and .Add().
-            // This prevents EF Core from generating DELETE/INSERT statements for all existing relationships,
-            // reducing database churn, index fragmentation, and massive transaction overhead.
-            var currentGroupsIds = user.ConnectionGroups.Select(g => g.Id).ToHashSet();
-            var newGroupsIds = groups.Select(g => g.Id).ToHashSet();
-
-            if (user.ConnectionGroups is List<ConnectionGroup> listGroups)
+            // Performance Optimization: Use delta updates instead of Clear() and Add().
+            // This prevents EF Core from generating massive DELETE and INSERT churn
+            // for relationships that haven't actually changed.
+            var newGroupIds = groups.Select(g => g.Id).ToHashSet();
+            if (user.ConnectionGroups is List<ConnectionGroup> groupList)
             {
-                // List.RemoveAll is an O(N) linear scan optimization over repeated List.Remove O(N*M).
-                listGroups.RemoveAll(g => !newGroupsIds.Contains(g.Id));
+                groupList.RemoveAll(g => !newGroupIds.Contains(g.Id));
             }
             else
             {
-                var toRemoveGroups = user.ConnectionGroups.Where(g => !newGroupsIds.Contains(g.Id)).ToList();
-                foreach (var group in toRemoveGroups)
-                    user.ConnectionGroups.Remove(group);
+                var toRemove = user.ConnectionGroups.Where(g => !newGroupIds.Contains(g.Id)).ToList();
+                foreach (var g in toRemove) user.ConnectionGroups.Remove(g);
             }
 
-            foreach (var group in groups.Where(g => !currentGroupsIds.Contains(g.Id)))
+            var currentGroupIds = user.ConnectionGroups.Select(g => g.Id).ToHashSet();
+            foreach (var group in groups.Where(g => !currentGroupIds.Contains(g.Id)))
+            {
                 user.ConnectionGroups.Add(group);
+            }
 
             await _context.SaveChangesAsync(cancellationToken);
             await _audit.WriteAsync("user.vaults_updated", "User", user.Id.ToString(),
