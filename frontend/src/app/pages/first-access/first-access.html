@@ -6,7 +6,7 @@
 ></div>
 <!-- Main Glass Card Container -->
 <main
-  class="relative z-10 w-full max-w-[520px] bg-surface-container-low/60 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl p-app-xl flex flex-col gap-app-xl"
+  class="relative z-10 w-full max-w-[520px] bg-surface-container-low/60 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-app-xl flex flex-col gap-app-xl"
 >
   <!-- Header Section -->
   <header class="flex flex-col gap-app-sm text-center">
@@ -38,7 +38,7 @@
             >person</span
           >
           <input
-            class="w-full bg-surface-container border-0 border-b border-outline-variant text-on-surface font-body-md text-body-md py-app-md pl-app-xl pr-app-md rounded-t-DEFAULT focus:border-secondary-container focus:ring-0 focus:outline-none focus:shadow-[0_2px_12px_-2px_rgba(0,244,254,0.4)] transition-all placeholder:text-outline/50"
+            class="w-full bg-surface-container/50 border border-outline-variant/50 text-on-surface font-body-md text-body-md py-app-md pl-12 pr-app-md rounded-lg focus:border-primary focus:bg-surface focus:ring-0 focus:outline-none focus:shadow-[0_0_0_2px_rgba(0,102,255,0.2)] transition-all placeholder:text-outline-variant"
             id="fullName"
             formControlName="fullName"
             placeholder="System Administrator"
@@ -61,7 +61,7 @@
             >mail</span
           >
           <input
-            class="w-full bg-surface-container border-0 border-b border-outline-variant text-on-surface font-body-md text-body-md py-app-md pl-app-xl pr-app-md rounded-t-DEFAULT focus:border-secondary-container focus:ring-0 focus:outline-none focus:shadow-[0_2px_12px_-2px_rgba(0,244,254,0.4)] transition-all placeholder:text-outline/50 font-mono text-mono"
+            class="w-full bg-surface-container/50 border border-outline-variant/50 text-on-surface font-body-md text-body-md py-app-md pl-12 pr-app-md rounded-lg focus:border-primary focus:bg-surface focus:ring-0 focus:outline-none focus:shadow-[0_0_0_2px_rgba(0,102,255,0.2)] transition-all placeholder:text-outline-variant font-mono text-mono"
             id="email"
             formControlName="email"
             placeholder="admin@domain.com"
@@ -84,7 +84,7 @@
             >key</span
           >
           <input
-            class="w-full bg-surface-container border-0 border-b border-outline-variant text-on-surface font-body-md text-body-md py-app-md pl-app-xl pr-app-md rounded-t-DEFAULT focus:border-secondary-container focus:ring-0 focus:outline-none focus:shadow-[0_2px_12px_-2px_rgba(0,244,254,0.4)] transition-all placeholder:text-outline/50 font-mono text-mono"
+            class="w-full bg-surface-container/50 border border-outline-variant/50 text-on-surface font-body-md text-body-md py-app-md pl-12 pr-app-md rounded-lg focus:border-primary focus:bg-surface focus:ring-0 focus:outline-none focus:shadow-[0_0_0_2px_rgba(0,102,255,0.2)] transition-all placeholder:text-outline-variant font-mono text-mono"
             id="password"
             formControlName="password"
             placeholder="••••••••••••"
@@ -110,7 +110,7 @@
             >lock</span
           >
           <input
-            class="w-full bg-surface-container border-0 border-b border-outline-variant text-on-surface font-body-md text-body-md py-app-md pl-app-xl pr-app-md rounded-t-DEFAULT focus:border-secondary-container focus:ring-0 focus:outline-none focus:shadow-[0_2px_12px_-2px_rgba(0,244,254,0.4)] transition-all placeholder:text-outline/50 font-mono text-mono"
+            class="w-full bg-surface-container/50 border border-outline-variant/50 text-on-surface font-body-md text-body-md py-app-md pl-12 pr-app-md rounded-lg focus:border-primary focus:bg-surface focus:ring-0 focus:outline-none focus:shadow-[0_0_0_2px_rgba(0,102,255,0.2)] transition-all placeholder:text-outline-variant font-mono text-mono"
             id="confirmPassword"
             formControlName="confirmPassword"
             placeholder="••••••••••••"
@@ -138,7 +138,7 @@
     <!-- Action Area -->
     <div class="pt-app-sm">
       <button
-        class="w-full bg-primary-container text-on-primary-container font-body-lg text-body-lg py-app-md rounded-DEFAULT hover:shadow-[0_0_16px_rgba(0,102,255,0.6)] hover:bg-inverse-primary transition-all duration-300 flex items-center justify-center gap-app-sm disabled:opacity-50 disabled:cursor-not-allowed"
+        class="w-full bg-primary text-on-primary font-body-lg text-body-lg py-app-md rounded-lg hover:shadow-[0_0_20px_rgba(0,102,255,0.4)] hover:bg-primary/90 transition-all duration-300 flex items-center justify-center gap-app-sm disabled:opacity-50 disabled:cursor-not-allowed"
         type="submit"
         [disabled]="submitting() || form.invalid"
       >
