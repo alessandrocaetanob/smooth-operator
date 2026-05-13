@@ -7,6 +7,20 @@ Smooth Operator is a self-hosted remote access management platform. Users authen
 ## C4 Level 1 — System Context
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'mainBkg': '#ffffff',
+    'c4ShapeFill': '#ffffff',
+    'c4ShapeBorderColor': '#000000',
+    'c4ShapeTextColor': '#000000',
+    'c4LineColor': '#000000',
+    'c4BoundaryBorderColor': '#000000',
+    'c4BoundaryTextColor': '#000000',
+    'fontSize': '16px',
+    'fontFamily': 'Inter, system-ui, sans-serif'
+  }
+}}%%
 C4Context
   title System Context — Smooth Operator
 
@@ -33,6 +47,20 @@ C4Context
 ## C4 Level 2 — Container Diagram
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'mainBkg': '#ffffff',
+    'c4ShapeFill': '#ffffff',
+    'c4ShapeBorderColor': '#000000',
+    'c4ShapeTextColor': '#000000',
+    'c4LineColor': '#000000',
+    'c4BoundaryBorderColor': '#000000',
+    'c4BoundaryTextColor': '#000000',
+    'fontSize': '16px',
+    'fontFamily': 'Inter, system-ui, sans-serif'
+  }
+}}%%
 C4Container
   title Container Diagram — Smooth Operator
 
@@ -58,6 +86,20 @@ C4Container
 ## C4 Level 3 — Backend Component Diagram
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'mainBkg': '#ffffff',
+    'c4ShapeFill': '#ffffff',
+    'c4ShapeBorderColor': '#000000',
+    'c4ShapeTextColor': '#000000',
+    'c4LineColor': '#000000',
+    'c4BoundaryBorderColor': '#000000',
+    'c4BoundaryTextColor': '#000000',
+    'fontSize': '16px',
+    'fontFamily': 'Inter, system-ui, sans-serif'
+  }
+}}%%
 C4Component
   title Backend Component — SmoothOperator.Api
 
@@ -103,17 +145,24 @@ C4Component
 ## Backend Layer Dependencies
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#ffffff',
+    'primaryBorderColor': '#000000',
+    'primaryTextColor': '#000000',
+    'lineColor': '#000000',
+    'fontSize': '16px',
+    'fontFamily': 'Inter, system-ui, sans-serif',
+    'mainBkg': '#ffffff'
+  }
+}}%%
 graph TD
   Api["SmoothOperator.Api"] --> Application["SmoothOperator.Application"]
   Api --> Infrastructure["SmoothOperator.Infrastructure"]
   Infrastructure --> Application
   Infrastructure --> Domain["SmoothOperator.Domain"]
   Application --> Domain
-
-  style Domain fill:#4caf50,color:#fff
-  style Application fill:#2196f3,color:#fff
-  style Infrastructure fill:#ff9800,color:#fff
-  style Api fill:#9c27b0,color:#fff
 ```
 
 > Dependency rules are enforced by `SmoothOperator.ArchitectureTests` (NetArchTest) — any violation fails CI.
@@ -123,6 +172,20 @@ graph TD
 ## Frontend Component Architecture
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#ffffff',
+    'primaryBorderColor': '#000000',
+    'primaryTextColor': '#000000',
+    'lineColor': '#000000',
+    'fontSize': '16px',
+    'fontFamily': 'Inter, system-ui, sans-serif',
+    'mainBkg': '#ffffff',
+    'clusterBkg': '#f8f9fa',
+    'clusterBorder': '#000000'
+  }
+}}%%
 graph TD
   AppRoutes["app.routes.ts (lazy)"] --> CoreModule["core/\n(singletons: auth, interceptors, guards)"]
   AppRoutes --> SharedModule["shared/\n(dumb components, pipes, directives)"]
@@ -141,6 +204,27 @@ graph TD
 ## Request Flow (typical API call)
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'actorBkg': '#ffffff',
+    'actorBorder': '#000000',
+    'actorTextColor': '#000000',
+    'actorLineColor': '#000000',
+    'signalColor': '#000000',
+    'signalTextColor': '#000000',
+    'labelBoxBkgColor': '#ffffff',
+    'labelBoxBorderColor': '#000000',
+    'labelTextColor': '#000000',
+    'loopTextColor': '#000000',
+    'noteBkgColor': '#ffffff',
+    'noteBorderColor': '#000000',
+    'noteTextColor': '#000000',
+    'mainBkg': '#ffffff',
+    'fontSize': '16px',
+    'fontFamily': 'Inter, system-ui, sans-serif'
+  }
+}}%%
 sequenceDiagram
   participant Browser
   participant nginx

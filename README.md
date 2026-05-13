@@ -1,34 +1,57 @@
-# Smooth Operator 🕶️ 🔐
+# Smooth Operator
 
-**Smooth Operator** is a cloud-native, clientless remote access vault. It gives teams secure, browser-based access to SSH, RDP, and VNC servers—without VPN clients, exposed ports, or direct credential sharing.
+Smooth Operator is a cloud-native, clientless remote access vault. It gives teams secure, browser-based access to SSH, RDP, and VNC servers—without VPN clients, exposed ports, or direct credential sharing.
 
 End users never see actual credentials. Admins control exactly who can access what, through granular role-based permissions and vault assignments.
 
-> 📖 **Full documentation →** [http://localhost:3000](http://localhost:3000) *(start the docs container with `docker-compose up docs`)*
+> Full documentation → [http://localhost:3000](http://localhost:3000) (start the docs container with `docker-compose up docs`)
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#6750A4', 'primaryTextColor': '#FFFFFF', 'primaryBorderColor': '#4F378B', 'lineColor': '#6750A4', 'secondaryColor': '#EAD7FF', 'tertiaryColor': '#F6EDFF', 'background': '#FFFBFE', 'nodeBorder': '#4F378B', 'clusterBkg': '#F6EDFF', 'titleColor': '#21005D', 'edgeLabelBackground': '#F6EDFF'}}}%%
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#ffffff',
+    'primaryBorderColor': '#000000',
+    'primaryTextColor': '#000000',
+    'lineColor': '#000000',
+    'fontSize': '16px',
+    'fontFamily': 'Inter, system-ui, sans-serif',
+    'mainBkg': '#ffffff',
+    'edgeLabelBackground': '#ffffff',
+    'clusterBkg': '#f8f9fa',
+    'clusterBorder': '#000000'
+  }
+}}%%
 graph TD
-    Browser([🌐 Browser]) -->|HTTPS + WebSocket| Frontend
+    Browser([Browser]) -->|HTTPS + WebSocket| Frontend
 
     subgraph Docker Stack
-        Frontend["⚡ Angular 21\nnginx · :4200"]
-        Backend["🔧 .NET 10 API\n:5000"]
-        DB[("🗄️ PostgreSQL 15\n:5432")]
-        Cache[("⚡ Redis 7\n:6379")]
-        Guacd["🖥️ guacd 1.6\nApache Guacamole\n:4822"]
-        Docs["📚 Docusaurus\nDocs Site · :3000"]
+        Frontend["Angular 21\nnginx · :4200"]
+        Backend[".NET 10 API\n:5000"]
+        DB[("PostgreSQL 15\n:5432")]
+        Cache[("Redis 7\n:6379")]
+        Guacd["guacd 1.6\nApache Guacamole\n:4822"]
+        Docs["Docusaurus\nDocs Site · :3000"]
+        
+        subgraph Observability
+            Loki["Loki (Logs)"]
+            Prom["Prometheus (Metrics)"]
+            Tempo["Tempo (Traces)"]
+        end
     end
 
     Frontend -->|REST + WSS| Backend
     Backend -->|EF Core / Npgsql| DB
     Backend -->|StackExchange.Redis| Cache
     Backend -->|TCP 4822| Guacd
-    Guacd -->|SSH / RDP / VNC| Targets[🖧 Target Servers]
+    Backend -->|OTLP| Tempo
+    Backend -->|Metrics| Prom
+    Backend -->|Logs| Loki
+    Guacd -->|SSH / RDP / VNC| Targets[Target Servers]
 ```
 
 ### Component Breakdown
@@ -36,10 +59,11 @@ graph TD
 | Component | Technology | Role |
 |-----------|-----------|------|
 | **Frontend** | Angular 21, Tailwind CSS 4, guacamole-common-js | SPA served via nginx; lazy-loaded feature modules, NgRx Signal Stores, runtime config |
-| **Backend** | .NET 10, ASP.NET Core, EF Core | Clean Architecture (Domain/Application/Infrastructure/Api); CQRS via MediatR; REST API + WebSocket tunnel |
+| **Backend** | .NET 10, ASP.NET Core, EF Core 10 | Clean Architecture (Domain/Application/Infrastructure/Api); CQRS via MediatR; REST API + WebSocket tunnel |
 | **Database** | PostgreSQL 15 | Users, vaults, connections, credentials, groups, audit logs |
 | **Cache** | Redis 7 | Rate limiting, session state |
 | **Connection Engine** | Apache guacd 1.6 | Translates RDP/SSH/VNC to Guacamole protocol over WebSocket |
+| **Observability** | Prometheus, Loki, Tempo | Metrics, centralized logging, and distributed tracing |
 | **Docs** | Docusaurus 3 | User guide, admin guide, and API reference |
 
 ### Backend Architecture (Clean Architecture + CQRS)
@@ -62,12 +86,32 @@ Dependency rule: `Api → Application → Domain`; `Infrastructure → Applicati
 
 ---
 
-## 🔌 Remote Session Flow
+## Remote Session Flow
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#6750A4', 'primaryTextColor': '#FFFFFF', 'lineColor': '#6750A4', 'secondaryColor': '#EAD7FF', 'actorBkg': '#EAD7FF', 'actorBorder': '#6750A4', 'activationBkgColor': '#F6EDFF', 'activationBorderColor': '#6750A4', 'sequenceNumberColor': '#6750A4'}}}%%
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'actorBkg': '#ffffff',
+    'actorBorder': '#000000',
+    'actorTextColor': '#000000',
+    'actorLineColor': '#000000',
+    'signalColor': '#000000',
+    'signalTextColor': '#000000',
+    'labelBoxBkgColor': '#ffffff',
+    'labelBoxBorderColor': '#000000',
+    'labelTextColor': '#000000',
+    'loopTextColor': '#000000',
+    'noteBkgColor': '#ffffff',
+    'noteBorderColor': '#000000',
+    'noteTextColor': '#000000',
+    'mainBkg': '#ffffff',
+    'fontSize': '16px',
+    'fontFamily': 'Inter, system-ui, sans-serif'
+  }
+}}%%
 sequenceDiagram
-    actor User as 👤 User
+    actor User as User
     participant FE as Angular Frontend
     participant API as .NET API
     participant DB as PostgreSQL
@@ -90,10 +134,22 @@ sequenceDiagram
 
 ---
 
-## 🗄️ Data Model
+## Data Model
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#6750A4', 'primaryTextColor': '#FFFFFF', 'lineColor': '#6750A4', 'secondaryColor': '#EAD7FF'}}}%%
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#ffffff',
+    'primaryBorderColor': '#000000',
+    'primaryTextColor': '#000000',
+    'lineColor': '#000000',
+    'fontSize': '16px',
+    'fontFamily': 'Inter, system-ui, sans-serif',
+    'mainBkg': '#ffffff',
+    'edgeLabelBackground': '#ffffff'
+  }
+}}%%
 erDiagram
     USER {
         uuid    id
@@ -145,35 +201,35 @@ erDiagram
 
 ---
 
-## ✨ Features
+## Features
 
-### 🔐 Security & Access Control
+### Security & Access Control
 - **Role-Based Access Control (RBAC)** — four built-in roles: `Owner`, `Admin`, `TeamAdmin`, `User`
 - **Vault-based isolation** — users only see connections in vaults they're assigned to, never raw credentials
 - **Invite-only registration** — no public self-registration; admins send email invites
 - **Rate limiting** — fixed-window limiter on auth endpoints (5 req/min per IP)
 
-### 🔑 Authentication
+### Authentication
 - **Local auth** — username/password with BCrypt hashing + HS256 JWT
 - **SSO via OIDC** — plug in any OpenID Connect provider (Azure AD, Okta, Auth0, …)
 - **SSO via SAML 2.0** — enterprise identity federation
 - **Forgot-password flow** — email-based password reset (requires SMTP)
 
-### 🖥️ Remote Sessions
+### Remote Sessions
 - **RDP, SSH, VNC** — all three protocols via Apache Guacamole
 - **Browser-native** — zero client software; runs on any modern browser
 - **HTML5 Canvas rendering** — full keyboard/mouse capture via `guacamole-common-js`
 - **Clipboard sharing** — bidirectional clipboard between browser and remote session
 - **SSH key pair generation** — generate and store SSH keys directly in the vault
 
-### 📋 Administration
+### Administration
 - **User & group management** — create groups, assign members, bulk-grant vault access
 - **Known hosts** — store and verify SSH host fingerprints
 - **SMTP configuration** — connect any SMTP server for invite/reset emails; test with one click
 - **Audit logs** — complete action history with IP addresses, exportable to CSV
 - **Credential vault** — store passwords and SSH keys, encrypted at rest
 
-### 🎨 UX & Design
+### UX & Design
 - **Operator Glass design system** — glassmorphic UI built on Material Design 3 color tokens
 - **Light / dark theme** — auto-detects `prefers-color-scheme`; user-toggleable at runtime
 - **Fully responsive** — works on desktop and tablets
@@ -181,7 +237,7 @@ erDiagram
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 | Layer | Technology | Version |
 |-------|-----------|---------|
@@ -189,11 +245,12 @@ erDiagram
 | Frontend styling | Tailwind CSS | 4 |
 | Remote protocol rendering | guacamole-common-js | 1.6 |
 | Backend framework | ASP.NET Core | .NET 10 |
-| ORM | Entity Framework Core + Npgsql | 9 |
+| ORM | Entity Framework Core + Npgsql | 10 |
 | Authentication | JWT HS256 + OIDC + SAML 2.0 | — |
 | Database | PostgreSQL | 15 |
 | Cache / rate limiter | Redis | 7 |
 | Connection engine | Apache guacd | 1.6 |
+| Observability | Grafana, Prometheus, Loki, Tempo | — |
 | Email | MailKit | — |
 | API docs | Swagger / OpenAPI | — |
 | Docs site | Docusaurus | 3 |
@@ -201,7 +258,7 @@ erDiagram
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) (or Docker Engine + Compose)
@@ -242,7 +299,7 @@ Users see their assigned connections under **My Access** or **My Vaults** and ca
 
 ---
 
-## 🔧 Running Services Independently
+## Running Services Independently
 
 ### Frontend (Angular)
 ```bash
@@ -271,7 +328,7 @@ npm start
 
 ---
 
-## ⚙️ Environment Variables
+## Environment Variables
 
 All variables follow the **Options pattern** — nested keys use `__` as separator in environment variables.  
 See `.env.example` for a full template with generation hints.
@@ -330,12 +387,12 @@ See `.env.example` for a full template with generation hints.
 | `APP_DOCS_URL` | `http://localhost:3000` | Docs link in login page |
 | `APP_FEATURE_FLAGS` | `{}` | JSON feature-flag map |
 
-> ⚠️ **Security:** The default `Encryption__Key` and `Jwt__Key` in `docker-compose.yml` are placeholders for **development only**. Always supply strong random secrets in non-local environments — via Docker secrets, a secrets manager, or a `.env` file that is **never committed**.
+> **Security:** The default `Encryption__Key` and `Jwt__Key` in `docker-compose.yml` are placeholders for **development only**. Always supply strong random secrets in non-local environments — via Docker secrets, a secrets manager, or a `.env` file that is **never committed**.
 
 
 ---
 
-## 🔒 CI/CD & Security
+## CI/CD & Security
 
 GitHub Actions workflows run on every push and PR:
 
@@ -351,7 +408,7 @@ GitHub Actions workflows run on every push and PR:
 
 ---
 
-## 🧪 Testing
+## Testing
 
 We maintain high code quality with automated test coverage enforcement (80% on Codecov `backend` flag / 70% frontend patch).
 
@@ -394,11 +451,11 @@ npm test -- --run     # single-run (CI)
 3. **Architecture tests** — `SmoothOperator.ArchitectureTests` asserts layer dependency rules using NetArchTest so violations fail CI immediately.
 4. **Output cache invalidation** — write endpoints evict related cache tags (`EvictByTagAsync`) so subsequent GETs in tests receive fresh data.
 
-📖 Workflow details: [.github/workflows/README.md](.github/workflows/README.md)
+Workflow details: [.github/workflows/README.md](.github/workflows/README.md)
 
 ---
 
-## 📖 Documentation
+## Documentation
 
 Full user guides, admin reference, integration guides, and API documentation are available in the **Smooth Operator Docs** site.
 
