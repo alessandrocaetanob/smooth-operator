@@ -96,7 +96,7 @@
                       (click)="edit(h)"
                       class="btn-ghost p-2 rounded-lg"
                       title="Edit"
-                      [attr.aria-label]="'Edit host ' + h.name + ' at ' + h.address"
+                      aria-label="Edit host {{ h.name }} at {{ h.address }}"
                     >
                       <span class="material-symbols-outlined text-lg">edit</span>
                     </button>
@@ -104,7 +104,7 @@
                       (click)="remove(h)"
                       class="p-2 text-error hover:bg-error/10 rounded-lg transition-colors"
                       title="Delete"
-                      [attr.aria-label]="'Delete host ' + h.name + ' at ' + h.address"
+                      aria-label="Delete host {{ h.name }} at {{ h.address }}"
                     >
                       <span class="material-symbols-outlined text-lg">delete</span>
                     </button>
