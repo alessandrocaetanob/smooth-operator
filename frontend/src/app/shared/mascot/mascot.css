@@ -428,6 +428,45 @@
   }
 }
 
+/* ---- SSO state: two dots orbit the face ---- */
+.sso-orbit {
+  transition: opacity 0.3s ease;
+}
+
+.orbit-arm {
+  transform-origin: 100px 100px;
+}
+
+.state-sso .orbit-arm {
+  animation: orbit-spin 1.6s linear infinite;
+}
+
+.state-sso .od-trail {
+  animation-delay: -0.8s;
+}
+
+.orbit-dot {
+  filter: drop-shadow(0 0 4px var(--mascot-eye));
+}
+
+.od-trail .orbit-dot {
+  filter: drop-shadow(0 0 4px var(--mascot-antenna));
+}
+
+.state-sso .mascot-svg {
+  animation: sso-lean 2.4s ease-in-out infinite;
+}
+
+@keyframes orbit-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes sso-lean {
+  0%, 100% { transform: rotate(-2deg); }
+  50%       { transform: rotate(2deg); }
+}
+
 /* ---- Connected state ---- */
 
 /* Container does a triumphant bounce + the whole mascot glows */
@@ -519,7 +558,9 @@
   .think-dot,
   .crash-x-line,
   .crash-spark,
-  .face-screen {
+  .face-screen,
+  .orbit-arm,
+  .orbit-dot {
     animation: none !important;
     transition: none !important;
   }

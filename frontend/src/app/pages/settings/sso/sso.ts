@@ -9,6 +9,7 @@ import {
   UpsertOidcRequest,
   UpsertSamlRequest,
 } from '../../../services/sso-settings.service';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-sso-settings',
@@ -18,6 +19,7 @@ import {
 })
 export class SsoSettings implements OnInit {
   private readonly svc = inject(SsoSettingsService);
+  private readonly auth = inject(AuthService);
 
   readonly current = this.svc.current;
   readonly loading = signal(false);
@@ -185,6 +187,7 @@ export class SsoSettings implements OnInit {
           next: () => {
             this.toggleBusy.set(false);
             this.message.set(enable ? 'SSO enabled.' : 'SSO disabled.');
+            this.auth.loadSetupStatus().subscribe();
           },
           error: () => this.toggleBusy.set(false),
         });
@@ -209,6 +212,7 @@ export class SsoSettings implements OnInit {
             this.deleteBusy.set(false);
             this.applyToForm(p);
             this.message.set('SSO provider deleted.');
+            this.auth.loadSetupStatus().subscribe();
           },
           error: () => this.deleteBusy.set(false),
         });
