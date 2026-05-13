@@ -99,9 +99,9 @@ namespace SmoothOperator.Application.Features.AuditLogs.Queries
             if (string.IsNullOrEmpty(input)) return "";
 
             // Prevent CSV Injection (Formula Injection)
-            var trimmed = input.TrimStart(' ', '\t', '\r', '\n');
+            var trimmed = input.TrimStart(' ', '\n');
             if (trimmed.Length > 0 &&
-                (trimmed[0] == '=' || trimmed[0] == '+' || trimmed[0] == '-' || trimmed[0] == '@'))
+                (trimmed[0] == '=' || trimmed[0] == '+' || trimmed[0] == '-' || trimmed[0] == '@' || trimmed[0] == '\t' || trimmed[0] == '\r'))
             {
                 input = "'" + input;
             }
