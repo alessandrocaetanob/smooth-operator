@@ -86,15 +86,16 @@ public class StartupExtensionsTests
     }
 
     [Fact]
-    public void AddApplicationCors_NoOriginsConfigured_Development_DoesNotThrow()
+    public void AddApplicationCors_NoOriginsConfigured_Development_Throws()
     {
         var configuration = new ConfigurationBuilder().Build();
         var services = new ServiceCollection();
         var environment = new Mock<IHostEnvironment>();
         environment.Setup(e => e.EnvironmentName).Returns("Development");
 
-        var exception = Record.Exception(() => services.AddApplicationCors(configuration, environment.Object));
+        var ex = Assert.Throws<InvalidOperationException>(() =>
+            services.AddApplicationCors(configuration, environment.Object));
 
-        Assert.Null(exception);
+        Assert.Contains("CORS is not configured", ex.Message);
     }
 }

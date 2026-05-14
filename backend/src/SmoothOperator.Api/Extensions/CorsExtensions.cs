@@ -30,22 +30,18 @@ public static class CorsExtensions
             .Where(o => !string.IsNullOrWhiteSpace(o))
             .Select(o => o.TrimEnd('/')));
 
-        if (origins.Count == 0 && !environment.IsDevelopment())
+        if (origins.Count == 0)
             throw new InvalidOperationException(
-                "CORS is not configured. Set AppUrls__Frontend or AppUrls__AllowedOrigins__0 before running in a non-Development environment.");
+                "CORS is not configured. Set AppUrls__Frontend or AppUrls__AllowedOrigins__0 before running.");
 
         services.AddCors(options =>
         {
             options.AddPolicy(CorsPolicyName, policy =>
             {
-                if (origins.Count > 0)
-                    policy.WithOrigins([.. origins])
-                          .AllowAnyHeader()
-                          .AllowAnyMethod()
-                          .AllowCredentials();
-                else
-                    // No origins configured — permissive dev fallback (no credentials).
-                    policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+                policy.WithOrigins([.. origins])
+                      .AllowAnyHeader()
+                      .AllowAnyMethod()
+                      .AllowCredentials();
             });
         });
 
