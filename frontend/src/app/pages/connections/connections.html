@@ -165,13 +165,19 @@
                 <div
                   class="flex items-center justify-end gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
                 >
-                  <button (click)="edit(c)" class="btn-ghost p-2 rounded-lg" title="Edit">
+                  <button
+                    (click)="edit(c)"
+                    class="btn-ghost p-2 rounded-lg"
+                    title="Edit"
+                    aria-label="Edit connection"
+                  >
                     <span class="material-symbols-outlined text-lg" aria-hidden="true">edit</span>
                   </button>
                   <button
                     (click)="remove(c)"
                     class="p-2 text-error hover:bg-error/10 rounded-lg transition-colors"
                     title="Delete"
+                    aria-label="Delete connection"
                   >
                     <span class="material-symbols-outlined text-lg" aria-hidden="true">delete</span>
                   </button>
