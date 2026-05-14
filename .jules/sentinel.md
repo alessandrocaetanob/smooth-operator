@@ -242,3 +242,8 @@ Opened PR #50 to master: all 151 tests pass (142 integration + 9 architecture). 
 **Vulnerability:** The `[HttpGet("provider")]` endpoint in `SsoController` allowed unauthenticated users to query the currently active SSO provider configuration without rate limiting, exposing the system to resource exhaustion (DoS) or enumeration.
 **Learning:** Even read-only or "probe" endpoints that are publicly accessible (`[AllowAnonymous]`) can be abused if left unthrottled. The global rate limiter is often too permissive to prevent targeted abuse.
 **Prevention:** Apply strict rate limiting (e.g., `[EnableRateLimiting("auth")]`) to any public endpoint that queries system state or configuration, especially those related to authentication flows.
+
+## 2025-05-18 - Missing Rate Limiting on AllowAnonymous Read-Only Probe Endpoints
+**Vulnerability:** Several `[AllowAnonymous]` probe endpoints (e.g., `/api/auth/setup-status`, `/api/auth/providers`, `/api/auth/smtp-available`, and `/api/auth/sso/metadata`) lacked rate limiting.
+**Learning:** Publicly accessible endpoints, even those that only read non-sensitive system configuration or status, must be rate-limited. Without throttling, these endpoints can be exploited to perform Denial of Service (DoS) attacks by exhausting server resources or to enumerate system configurations.
+**Prevention:** Apply an appropriate rate limiting policy (e.g., `[EnableRateLimiting("auth")]`) to all `[AllowAnonymous]` endpoints, including read-only probes and configuration checks.
