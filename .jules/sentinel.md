@@ -247,3 +247,8 @@ Opened PR #50 to master: all 151 tests pass (142 integration + 9 architecture). 
 **Vulnerability:** Several `[AllowAnonymous]` probe endpoints (e.g., `/api/auth/setup-status`, `/api/auth/providers`, `/api/auth/smtp-available`, and `/api/auth/sso/metadata`) lacked rate limiting.
 **Learning:** Publicly accessible endpoints, even those that only read non-sensitive system configuration or status, must be rate-limited. Without throttling, these endpoints can be exploited to perform Denial of Service (DoS) attacks by exhausting server resources or to enumerate system configurations.
 **Prevention:** Apply an appropriate rate limiting policy (e.g., `[EnableRateLimiting("auth")]`) to all `[AllowAnonymous]` endpoints, including read-only probes and configuration checks.
+
+## 2026-05-14 - [CORS Permissive Fallback Vulnerability]
+**Vulnerability:** The CORS policy fallback in Development mode used `AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()`, allowing any site to make requests to the API if explicit origins weren't set.
+**Learning:** Overly permissive CORS fallbacks, even in development, can expose APIs to cross-origin attacks if the application is run locally by a developer who visits a malicious site, or if a dev environment is inadvertently exposed.
+**Prevention:** Always enforce explicit CORS origin configuration (e.g., throwing an exception if not configured) and never use `AllowAnyOrigin` with `AllowCredentials` or as a general fallback for an authenticated API.
