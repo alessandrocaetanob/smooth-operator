@@ -17,6 +17,10 @@ import { Mascot, MascotState } from '../../shared/mascot/mascot';
 import { Drawer } from '../../shared/drawer/drawer';
 import { Spinner } from '../../shared/spinner/spinner';
 
+interface SearchableConnection extends Connection {
+  _searchIndex: string;
+}
+
 interface FormState {
   id: string | null;
   name: string;
@@ -138,22 +142,32 @@ export class Connections implements OnInit {
     return Array.from(tagSet).sort((a, b) => a.localeCompare(b));
   });
 
+  /** Pre-computed search index for each connection to optimize filtering */
+  readonly searchableConnections = computed(() => {
+    return this.connections().map((c) => ({
+      ...c,
+      _searchIndex: [
+        c.name,
+        c.protocol,
+        c.host?.address ?? '',
+        c.host?.name ?? '',
+        ...(c.tags ?? []),
+      ]
+        .join(' ')
+        .toLowerCase(),
+    })) as SearchableConnection[];
+  });
+
   /** Filtered connection list based on search query and tag filter */
   readonly filteredConnections = computed(() => {
     const q = this.searchQuery().toLowerCase().trim();
     const tagFilter = this.activeTagFilter();
-    const conns = this.connections();
+    const conns = this.searchableConnections();
 
     return conns.filter((c) => {
       if (tagFilter && !c.tags?.includes(tagFilter)) return false;
       if (!q) return true;
-      return (
-        c.name.toLowerCase().includes(q) ||
-        c.protocol.toLowerCase().includes(q) ||
-        (c.host?.address?.toLowerCase().includes(q) ?? false) ||
-        (c.host?.name?.toLowerCase().includes(q) ?? false) ||
-        c.tags?.some((t) => t.toLowerCase().includes(q))
-      );
+      return c._searchIndex.includes(q);
     });
   });
 
