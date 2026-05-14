@@ -112,4 +112,68 @@ public class AuthRateLimitingTests
         var throttled = await client.PostAsJsonAsync("/api/invites/nonexistent-token/redeem", body);
         Assert.Equal(HttpStatusCode.TooManyRequests, throttled.StatusCode);
     }
+
+    [Fact]
+    public async Task SetupStatus_Returns429_AfterFiveRequestsInWindow()
+    {
+        await using var factory = new TestWebApplicationFactory();
+        var client = factory.CreateClient();
+
+        for (var i = 0; i < 5; i++)
+        {
+            var response = await client.GetAsync("/api/auth/setup-status");
+            Assert.NotEqual(HttpStatusCode.TooManyRequests, response.StatusCode);
+        }
+
+        var throttled = await client.GetAsync("/api/auth/setup-status");
+        Assert.Equal(HttpStatusCode.TooManyRequests, throttled.StatusCode);
+    }
+
+    [Fact]
+    public async Task Providers_Returns429_AfterFiveRequestsInWindow()
+    {
+        await using var factory = new TestWebApplicationFactory();
+        var client = factory.CreateClient();
+
+        for (var i = 0; i < 5; i++)
+        {
+            var response = await client.GetAsync("/api/auth/providers");
+            Assert.NotEqual(HttpStatusCode.TooManyRequests, response.StatusCode);
+        }
+
+        var throttled = await client.GetAsync("/api/auth/providers");
+        Assert.Equal(HttpStatusCode.TooManyRequests, throttled.StatusCode);
+    }
+
+    [Fact]
+    public async Task SmtpAvailable_Returns429_AfterFiveRequestsInWindow()
+    {
+        await using var factory = new TestWebApplicationFactory();
+        var client = factory.CreateClient();
+
+        for (var i = 0; i < 5; i++)
+        {
+            var response = await client.GetAsync("/api/auth/smtp-available");
+            Assert.NotEqual(HttpStatusCode.TooManyRequests, response.StatusCode);
+        }
+
+        var throttled = await client.GetAsync("/api/auth/smtp-available");
+        Assert.Equal(HttpStatusCode.TooManyRequests, throttled.StatusCode);
+    }
+
+    [Fact]
+    public async Task Metadata_Returns429_AfterFiveRequestsInWindow()
+    {
+        await using var factory = new TestWebApplicationFactory();
+        var client = factory.CreateClient();
+
+        for (var i = 0; i < 5; i++)
+        {
+            var response = await client.GetAsync("/api/auth/sso/metadata");
+            Assert.NotEqual(HttpStatusCode.TooManyRequests, response.StatusCode);
+        }
+
+        var throttled = await client.GetAsync("/api/auth/sso/metadata");
+        Assert.Equal(HttpStatusCode.TooManyRequests, throttled.StatusCode);
+    }
 }
