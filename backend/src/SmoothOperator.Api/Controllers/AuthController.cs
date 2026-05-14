@@ -27,6 +27,7 @@ namespace SmoothOperator.Api.Controllers
 
         [HttpGet("setup-status")]
         [AllowAnonymous]
+        [EnableRateLimiting("auth")]
         public async Task<IActionResult> GetSetupStatus()
         {
             var result = await _mediator.Send(new GetSetupStatusQuery());
@@ -45,6 +46,7 @@ namespace SmoothOperator.Api.Controllers
 
         [HttpGet("providers")]
         [AllowAnonymous]
+        [EnableRateLimiting("auth")]
         public async Task<IActionResult> GetProviders()
         {
             var result = await _mediator.Send(new GetProvidersQuery());
@@ -168,6 +170,7 @@ namespace SmoothOperator.Api.Controllers
 
         [HttpGet("smtp-available")]
         [AllowAnonymous]
+        [EnableRateLimiting("auth")]
         public async Task<IActionResult> SmtpAvailable()
         {
             var result = await _mediator.Send(new SmtpAvailableQuery());

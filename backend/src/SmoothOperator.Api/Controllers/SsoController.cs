@@ -161,6 +161,7 @@ namespace SmoothOperator.Api.Controllers
 
         /// <summary>SAML SP metadata XML for IdP admins to import.</summary>
         [HttpGet("metadata")]
+        [EnableRateLimiting("auth")]
         public async Task<IActionResult> Metadata()
         {
             var p = await _providers.GetProviderAsync();
