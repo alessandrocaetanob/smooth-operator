@@ -52,3 +52,6 @@
 ## 2026-05-13 - Replace .Clear() in EF Core relationships with RemoveAll
 **Learning:** Using `.Clear()` and `.Add()` when updating many-to-many or one-to-many relationships in EF Core forces it to delete all existing records in the junction table and re-insert them, causing massive churn, index fragmentation, and database overhead.
 **Action:** Replace the `.Clear()` pattern with a hashset-based delta update that identifies and removes only missing relationships. If the EF Core navigation property is instantiated as a `List<T>`, optimize the removal by using `.RemoveAll()` instead of calling `.Remove()` iteratively.
+## 2026-05-15 - No clear performance bottlenecks identified
+**Learning:** After reviewing the codebase, most O(N) lookups inside Angular change detection loops and Entity Framework N+1/Clear() issues have already been mitigated in previous optimizations.
+**Action:** Wait for the codebase to grow or new features to be added before attempting further performance optimizations to avoid premature micro-optimizations that don't yield measurable benefits.
