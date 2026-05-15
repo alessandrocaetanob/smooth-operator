@@ -82,8 +82,8 @@ frontend/npm_output.log
 
 # Local tooling metadata
 .contextstream/
+.claude/
 
 # Editor / IDE local config (may contain secrets)
 .cursor/
 .vscode/settings.json
-
