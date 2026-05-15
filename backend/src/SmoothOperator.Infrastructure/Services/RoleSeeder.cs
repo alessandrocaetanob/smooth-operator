@@ -22,10 +22,12 @@ namespace SmoothOperator.Infrastructure.Services
 
         public static async Task SeedDefaultsAsync(AppDbContext context, ILogger logger)
         {
-            var existingRoles = await context.Roles.ToListAsync();
+            var existingRoleNames = (await context.Roles.ToListAsync())
+                .Select(r => r.Name)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
             foreach (var roleName in AppRoles.Defaults)
             {
-                if (existingRoles.Any(r => string.Equals(r.Name, roleName, StringComparison.OrdinalIgnoreCase)))
+                if (existingRoleNames.Contains(roleName))
                 {
                     continue;
                 }

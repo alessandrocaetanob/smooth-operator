@@ -83,6 +83,10 @@ frontend/npm_output.log
 # Local tooling metadata
 .contextstream/
 .claude/
+*.lscache
+
+# Local review/planning guides
+JULES.md
 
 # Editor / IDE local config (may contain secrets)
 .cursor/
