@@ -12,7 +12,17 @@
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
       "Bash(git push *)",
-      "Bash(gh pr create --title 'feat\\(sso\\): improve SSO UX with mascot animation, email templates, and auth sync' --body ' *)"
+      "Bash(gh pr create --title 'feat\\(sso\\): improve SSO UX with mascot animation, email templates, and auth sync' --body ' *)",
+      "PowerShell(Get-Command *)",
+      "PowerShell(sonar auth *)",
+      "Skill(superpowers:writing-plans)",
+      "Bash(xargs grep -l \"SsoProvider\\\\|SsoAuthState\")",
+      "Bash(npx prettier *)",
+      "Bash(npm run *)",
+      "Bash(dotnet test *)",
+      "Bash(npm test *)",
+      "Bash(npx vitest *)",
+      "Bash(ng test *)"
     ]
   },
   "enableAllProjectMcpServers": true,
