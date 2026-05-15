@@ -55,3 +55,8 @@
 ## 2026-05-15 - No clear performance bottlenecks identified
 **Learning:** After reviewing the codebase, most O(N) lookups inside Angular change detection loops and Entity Framework N+1/Clear() issues have already been mitigated in previous optimizations.
 **Action:** Wait for the codebase to grow or new features to be added before attempting further performance optimizations to avoid premature micro-optimizations that don't yield measurable benefits.
+## 2026-05-14 - Optimize Array Filtering in Vault Component
+
+**Learning:** When filtering arrays of objects based on a text search query across multiple fields, calling `toLowerCase()` and `.includes()` multiple times per object inside the `.filter()` loop is extremely inefficient, resulting in O(N * M) string manipulations on every keystroke. Pre-computing a flattened search string (search index) for each object reduces this to a single `.includes()` check.
+
+**Action:** Whenever implementing client-side text search over arrays, use a `computed` signal or memoized function to map the array into an array of objects containing a pre-computed `_searchIndex` (a joined string of all searchable fields). Then, perform the filter against this `_searchIndex` to achieve an O(1) comparison per item.
