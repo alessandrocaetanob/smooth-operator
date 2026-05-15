@@ -9,10 +9,12 @@ export interface ConnectionHostRef {
   address: string;
 }
 
+export type ConnectionProtocol = 'rdp' | 'ssh' | 'vnc';
+
 export interface Connection {
   id: string;
   name: string;
-  protocol: 'rdp' | 'ssh' | 'vnc';
+  protocol: ConnectionProtocol;
   hostId: string;
   credentialId?: string | null;
   connectionGroupId?: string | null;
@@ -125,7 +127,7 @@ export class ConnectionsService {
     return {
       id: pickOr(raw, '', 'id', 'Id'),
       name: pickOr(raw, '', 'name', 'Name'),
-      protocol: pickOr<'rdp' | 'ssh' | 'vnc'>(raw, 'rdp', 'protocol', 'Protocol'),
+      protocol: pickOr<ConnectionProtocol>(raw, 'rdp', 'protocol', 'Protocol'),
       hostId: pickOr(raw, '', 'hostId', 'HostId'),
       credentialId: pick<string>(raw, 'credentialId', 'CredentialId') ?? null,
       connectionGroupId: pick<string>(raw, 'connectionGroupId', 'ConnectionGroupId') ?? null,

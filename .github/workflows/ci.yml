@@ -137,7 +137,7 @@ jobs:
 
       - name: Check formatting
         working-directory: frontend
-        run: npx prettier --check "src/**/*.{ts,html,css,scss,json}"
+        run: npx --ignore-scripts prettier@3.8.3 --check "src/**/*.{ts,html,css,scss,json}"
 
       - name: Lint
         working-directory: frontend
