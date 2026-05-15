@@ -12,7 +12,8 @@ export type MascotState =
   | 'wave'
   | 'sleep'
   | 'connected'
-  | 'crashed';
+  | 'crashed'
+  | 'sso';
 
 @Component({
   selector: 'app-mascot',

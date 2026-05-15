@@ -22,6 +22,7 @@ export class Authentication {
   readonly providers = this.auth.providers;
   readonly sso = computed(() => this.providers().sso);
   readonly submitting = signal(false);
+  readonly ssoLoading = signal(false);
   readonly errorMessage = signal<string | null>(null);
   readonly isPasswordFocused = signal(false);
   readonly typingLength = signal(0);
@@ -38,6 +39,7 @@ export class Authentication {
 
   readonly mascotState = computed<MascotState>(() => {
     if (this.isPasswordFocused()) return 'password';
+    if (this.ssoLoading()) return 'sso';
     if (this.submitting()) return 'loading';
     if (this.errorMessage()) return 'error';
     if (this.typingLength() > 0) return 'typing';
@@ -83,8 +85,8 @@ export class Authentication {
   }
 
   loginWithSso(): void {
-    // Backend mints the JWT and redirects the browser to /auth/sso/finalize?token=...
-    // The finalize page completes the handoff and routes the user into the app.
+    if (this.ssoLoading()) return;
+    this.ssoLoading.set(true);
     const returnUrl = '/vault';
     globalThis.location.href = `/api/auth/sso/initiate?returnUrl=${encodeURIComponent(returnUrl)}`;
   }

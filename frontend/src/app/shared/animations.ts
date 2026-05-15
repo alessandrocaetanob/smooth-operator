@@ -1,4 +1,4 @@
-import { animate, query, sequence, stagger, style, transition, trigger } from '@angular/animations';
+import { animate, group, query, stagger, style, transition, trigger } from '@angular/animations';
 
 /** Fade in from opacity 0 */
 export const fadeIn = trigger('fadeIn', [
@@ -54,8 +54,8 @@ export const listStagger = trigger('listStagger', [
 /** Page-level route transition */
 export const routeFade = trigger('routeFade', [
   transition('* <=> *', [
-    sequence([
-      query(':leave', [animate('120ms ease', style({ opacity: 0 }))], { optional: true }),
+    group([
+      query(':leave', [animate('150ms ease', style({ opacity: 0 }))], { optional: true }),
       query(':enter', [style({ opacity: 0 }), animate('200ms ease', style({ opacity: 1 }))], {
         optional: true,
       }),

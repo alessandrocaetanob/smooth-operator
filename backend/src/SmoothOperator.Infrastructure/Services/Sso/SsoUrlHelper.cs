@@ -14,25 +14,32 @@ namespace SmoothOperator.Infrastructure.Services.Sso
     /// </summary>
     public class SsoUrlHelper
     {
-        private readonly string _baseUrl;
+        private readonly string _apiBase;
+        private readonly string _frontendBase;
 
         public SsoUrlHelper(IOptions<AppUrlsOptions> options)
         {
             var urls = options.Value;
-            _baseUrl = (!string.IsNullOrEmpty(urls.Frontend) ? urls.Frontend : urls.App).TrimEnd('/');
+            // API callbacks must reach the backend directly, so prefer App URL.
+            _apiBase = (!string.IsNullOrEmpty(urls.App) ? urls.App : urls.Frontend).TrimEnd('/');
+            // Finalize is a frontend route, so prefer the Frontend URL.
+            _frontendBase = (!string.IsNullOrEmpty(urls.Frontend) ? urls.Frontend : urls.App).TrimEnd('/');
         }
 
-        private string Origin(HttpRequest req) =>
-            string.IsNullOrEmpty(_baseUrl) ? $"{req.Scheme}://{req.Host}" : _baseUrl;
+        private string ApiOrigin(HttpRequest req) =>
+            string.IsNullOrEmpty(_apiBase) ? $"{req.Scheme}://{req.Host}" : _apiBase;
+
+        private string FrontendOrigin(HttpRequest req) =>
+            string.IsNullOrEmpty(_frontendBase) ? $"{req.Scheme}://{req.Host}" : _frontendBase;
 
         public string CallbackUrl(HttpRequest req) =>
-            $"{Origin(req)}/api/auth/sso/callback";
+            $"{ApiOrigin(req)}/api/auth/sso/callback";
 
         public string AcsUrl(HttpRequest req) =>
-            $"{Origin(req)}/api/auth/sso/acs";
+            $"{ApiOrigin(req)}/api/auth/sso/acs";
 
         public string MetadataUrl(HttpRequest req) =>
-            $"{Origin(req)}/api/auth/sso/metadata";
+            $"{ApiOrigin(req)}/api/auth/sso/metadata";
 
         /// <summary>
         /// Builds the finalize redirect URL. The JWT is no longer embedded in
@@ -43,13 +50,13 @@ namespace SmoothOperator.Infrastructure.Services.Sso
         public string FinalizeUrl(HttpRequest req, string returnUrl)
         {
             var encodedReturn = Uri.EscapeDataString(returnUrl);
-            return $"{Origin(req)}/auth/sso/finalize#returnUrl={encodedReturn}";
+            return $"{FrontendOrigin(req)}/auth/sso/finalize#returnUrl={encodedReturn}";
         }
 
         public string FinalizeErrorUrl(HttpRequest req, string error)
         {
             var encoded = Uri.EscapeDataString(error);
-            return $"{Origin(req)}/auth/sso/finalize#error={encoded}";
+            return $"{FrontendOrigin(req)}/auth/sso/finalize#error={encoded}";
         }
 
         /// <summary>
