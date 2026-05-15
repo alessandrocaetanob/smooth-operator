@@ -12,5 +12,5 @@ export function pick<T = unknown>(raw: RawRecord, ...keys: string[]): T | undefi
 
 export function pickOr<T>(raw: RawRecord, fallback: T, ...keys: string[]): T {
   const v = pick<T>(raw, ...keys);
-  return v === undefined ? fallback : v;
+  return v ?? fallback;
 }

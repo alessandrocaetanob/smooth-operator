@@ -152,7 +152,7 @@ export class AuthService {
           ssoEnabled && (ssoType === 'Oidc' || ssoType === 'Saml')
             ? {
                 enabled: true,
-                type: ssoType as 'Oidc' | 'Saml',
+                type: ssoType,
                 name: (ssoName as string | null) ?? 'Single Sign-On',
               }
             : null,
@@ -181,7 +181,14 @@ export class AuthService {
   }
 
   private normalizeRoles(raw: unknown): string[] {
-    const values = Array.isArray(raw) ? raw : raw ? [raw] : [];
+    let values: unknown[];
+    if (Array.isArray(raw)) {
+      values = raw;
+    } else if (raw) {
+      values = [raw];
+    } else {
+      values = [];
+    }
     const clean = values.map((r) => String(r).trim()).filter((r) => r.length > 0);
     return Array.from(new Set(clean));
   }

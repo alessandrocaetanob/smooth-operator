@@ -3,6 +3,7 @@
   @backdrop
   class="fixed inset-0 z-40 bg-black/50 backdrop-blur-[2px]"
   (click)="closed.emit()"
+  (keydown.escape)="closed.emit()"
   aria-hidden="true"
 ></div>
 

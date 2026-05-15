@@ -385,15 +385,19 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
   toggleFullscreen(): void {
     const el = this.displayRef?.nativeElement;
     if (!el) return;
-    if (!document.fullscreenElement) {
-      el.requestFullscreen?.().catch(() => {
-        /* intentional no-op */
-      });
-    } else {
+    if (document.fullscreenElement) {
       document.exitFullscreen?.().catch(() => {
         /* intentional no-op */
       });
+    } else {
+      el.requestFullscreen?.().catch(() => {
+        /* intentional no-op */
+      });
     }
+  }
+
+  handleDisplayKeydown(_: KeyboardEvent): void {
+    // Keyboard events are handled by Guacamole's document-level listener in GuacamoleService.
   }
 
   /** Minimize session: detach display, keep WS alive, go to vault. */
