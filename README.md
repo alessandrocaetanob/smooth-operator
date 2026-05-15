@@ -263,14 +263,21 @@ erDiagram
 ![C#](https://img.shields.io/badge/C%23-512BD4?style=flat-square&logo=csharp&logoColor=white)
 ![EF Core](https://img.shields.io/badge/EF_Core_10-512BD4?style=flat-square&logo=dotnet&logoColor=white)
 ![MediatR](https://img.shields.io/badge/MediatR-512BD4?style=flat-square&logo=dotnet&logoColor=white)
+![MailKit](https://img.shields.io/badge/MailKit-0078D4?style=flat-square&logo=maildotru&logoColor=white)
 ![Swagger](https://img.shields.io/badge/Swagger-85EA2D?style=flat-square&logo=swagger&logoColor=black)
 
 **Data & Cache**
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL_15-4169E1?style=flat-square&logo=postgresql&logoColor=white)
 ![Redis](https://img.shields.io/badge/Redis_7-FF4438?style=flat-square&logo=redis&logoColor=white)
 
+**Authentication**
+![JWT](https://img.shields.io/badge/JWT_HS256-000000?style=flat-square&logo=jsonwebtokens&logoColor=white)
+![OIDC](https://img.shields.io/badge/OIDC-F78C40?style=flat-square&logo=openid&logoColor=white)
+![SAML 2.0](https://img.shields.io/badge/SAML_2.0-E8162A?style=flat-square&logoColor=white)
+
 **Remote Access**
 ![Apache Guacamole](https://img.shields.io/badge/Apache_Guacamole_1.6-0B1A2C?style=flat-square&logo=apache&logoColor=white)
+![guacamole-common-js](https://img.shields.io/badge/guacamole--common--js-0B1A2C?style=flat-square&logo=apache&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white)
 
 **Observability**
