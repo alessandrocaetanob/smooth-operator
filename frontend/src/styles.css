@@ -66,6 +66,10 @@
   --color-error-container: 255 218 214;
   --color-on-error: 255 255 255;
   --color-on-error-container: 65 0 2;
+  /* Warning (amber) */
+  --color-warning: 180 83 9;
+  /* Invite / purple accent */
+  --color-invite: 126 34 206;
 
   /* Glass utilities */
   --glass-panel-bg: rgba(255, 255, 255, 0.72);
@@ -140,6 +144,10 @@
   --color-error-container: 147 0 10;
   --color-on-error: 105 0 5;
   --color-on-error-container: 255 218 214;
+  /* Warning (amber) */
+  --color-warning: 251 191 36;
+  /* Invite / purple accent */
+  --color-invite: 192 132 252;
 
   /* Glass utilities */
   --glass-panel-bg: rgba(28, 32, 38, 0.5);
@@ -220,6 +228,9 @@
   --color-error-container: rgb(var(--color-error-container));
   --color-on-error: rgb(var(--color-on-error));
   --color-on-error-container: rgb(var(--color-on-error-container));
+  /* Warning & Invite */
+  --color-warning: rgb(var(--color-warning));
+  --color-invite: rgb(var(--color-invite));
 
   /* Spacing — prefixed with `app-` to avoid colliding with Tailwind v4's
      built-in size scale (e.g. unprefixed `--spacing-md` would hijack

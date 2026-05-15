@@ -332,7 +332,7 @@ export class GuacamoleSession {
       if (!ae) return false;
       const tag = ae.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return true;
-      if ((ae as HTMLElement).isContentEditable) return true;
+      if (ae.isContentEditable) return true;
       if (document.querySelector('[data-guac-modal-open="true"]')) return true;
       return false;
     };

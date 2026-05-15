@@ -120,7 +120,7 @@ export class SsoSettingsService {
     return {
       id: pickOr(raw, undefined as string | undefined, 'id', 'Id'),
       name: pickOr(raw, '', 'name', 'Name'),
-      type: pickOr(raw, '' as SsoProviderType | '', 'type', 'Type'),
+      type: pickOr<SsoProviderType | ''>(raw, '', 'type', 'Type'),
       isEnabled: pickOr(raw, false, 'isEnabled', 'IsEnabled'),
       createdAt: pickOr(raw, undefined as string | undefined, 'createdAt', 'CreatedAt'),
       updatedAt: pickOr(raw, undefined as string | undefined, 'updatedAt', 'UpdatedAt'),

@@ -47,7 +47,7 @@
 
 .action-invite {
   background: rgba(168, 85, 247, 0.12);
-  color: rgb(147 51 234);
+  color: var(--color-invite);
   border-color: rgba(168, 85, 247, 0.35);
 }
 
@@ -167,7 +167,7 @@
 
 .outcome-badge-success {
   background: rgba(34, 197, 94, 0.12);
-  color: rgb(21, 128, 61);
+  color: rgb(var(--color-tertiary));
   border-color: rgba(34, 197, 94, 0.3);
 }
 

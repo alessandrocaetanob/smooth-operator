@@ -75,7 +75,7 @@ function Hero() {
   );
 }
 
-function SectionCard({ emoji, title, description, link, linkText }: (typeof sections)[number]) {
+function SectionCard({ emoji, title, description, link, linkText }: Readonly<(typeof sections)[number]>) {
   return (
     <div className={styles.card}>
       <div className={styles.cardEmoji}>{emoji}</div>
