@@ -94,12 +94,11 @@ namespace SmoothOperator.Infrastructure.Services.Sso
             var stateRow = await _db.SsoAuthStates.FirstOrDefaultAsync(s => s.State == state)
                 ?? throw new UnauthorizedAccessException("Invalid SSO state.");
 
-            // Single-use: always remove, regardless of subsequent validation outcome.
-            _db.SsoAuthStates.Remove(stateRow);
-            await _db.SaveChangesAsync();
-
             if (stateRow.ExpiresAt < DateTime.UtcNow)
                 throw new UnauthorizedAccessException("Expired SSO state.");
+
+            _db.SsoAuthStates.Remove(stateRow);
+            await _db.SaveChangesAsync();
 
             var cfg = await _providers.GetDecryptedOidcAsync()
                 ?? throw new InvalidOperationException("OIDC provider configuration disappeared mid-flow.");

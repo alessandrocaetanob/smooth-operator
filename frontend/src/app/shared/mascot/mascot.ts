@@ -29,9 +29,6 @@ export class Mascot implements OnInit {
   /** When true, pupils follow the cursor. Enable only on the auth page. */
   @Input() trackPointer = false;
 
-  /** @deprecated Cursor tracking replaces typing-length math */
-  @Input() typingLength = 0;
-
   @Input() isSmall = false;
 
   private readonly destroyRef = inject(DestroyRef);
@@ -39,10 +36,6 @@ export class Mascot implements OnInit {
 
   readonly eyeOffsetX = signal(0);
   readonly eyeOffsetY = signal(0);
-
-  get effectiveState(): MascotState {
-    return this.state;
-  }
 
   ngOnInit(): void {
     if (!this.trackPointer) return;
