@@ -102,10 +102,7 @@ export class AuditLogs implements OnInit {
 
   exportCsv(): void {
     const url = this.svc.exportCsvUrl(this.buildQuery(false));
-    // Open in a new tab — interceptor adds Authorization header for /api/ XHRs,
-    // but a download URL must be authenticated server-side. Since cookies aren't
-    // used, we instead fetch with the auth header and trigger a blob download.
-    fetch(url, { headers: this.authHeaders() })
+    fetch(url, { credentials: 'include' })
       .then((r) => r.blob())
       .then((blob) => {
         const a = document.createElement('a');
@@ -115,11 +112,6 @@ export class AuditLogs implements OnInit {
         a.click();
         URL.revokeObjectURL(objectUrl);
       });
-  }
-
-  private authHeaders(): HeadersInit {
-    const t = localStorage.getItem('smooth-operator.token');
-    return t ? { Authorization: `Bearer ${t}` } : {};
   }
 
   setPageSize(size: number): void {

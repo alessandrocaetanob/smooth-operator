@@ -53,6 +53,10 @@ export class AuthService {
   readonly currentUser = this._user.asReadonly();
   readonly isAuthenticated = computed(() => this._user() !== null);
 
+  private readonly _roleSet = computed(
+    () => new Set(this._user()?.roles.map((r) => r.toLowerCase()) ?? []),
+  );
+
   readonly isOwnerOrAdmin = computed(() => this.hasAnyRole('Owner', 'Admin'));
   readonly isTeamAdmin = computed(() => this.hasRole('TeamAdmin'));
   readonly canManageUsers = computed(() => this.isOwnerOrAdmin());
@@ -106,12 +110,12 @@ export class AuthService {
   }
 
   hasRole(roleName: string): boolean {
-    return this.currentRoles().some((r) => r.toLowerCase() === roleName.toLowerCase());
+    return this._roleSet().has(roleName.toLowerCase());
   }
 
   hasAnyRole(...roleNames: string[]): boolean {
-    const roleSet = new Set(this.currentRoles().map((r) => r.toLowerCase()));
-    return roleNames.some((roleName) => roleSet.has(roleName.toLowerCase()));
+    const set = this._roleSet();
+    return roleNames.some((r) => set.has(r.toLowerCase()));
   }
 
   logout(): void {
@@ -121,10 +125,6 @@ export class AuthService {
       .post<void>('/api/auth/logout', {})
       .pipe(catchError(() => EMPTY))
       .subscribe();
-  }
-
-  private currentRoles(): string[] {
-    return this._user()?.roles ?? [];
   }
 
   private acceptAuth(raw: Record<string, unknown>): AuthResponse {
