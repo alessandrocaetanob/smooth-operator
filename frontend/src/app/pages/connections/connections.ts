@@ -138,22 +138,35 @@ export class Connections implements OnInit {
     return Array.from(tagSet).sort((a, b) => a.localeCompare(b));
   });
 
+  /** Pre-compute flattened, lowercase search index strings to avoid repeated O(N) array iteration and string manipulation during keystroke filtering */
+  readonly searchIndexMap = computed(() => {
+    const map = new Map<string, string>();
+    this.connections().forEach((c) => {
+      const parts = [
+        c.name,
+        c.protocol,
+        c.host?.address ?? '',
+        c.host?.name ?? '',
+        ...(c.tags ?? []),
+      ];
+      map.set(c.id, parts.join(' ').toLowerCase());
+    });
+    return map;
+  });
+
   /** Filtered connection list based on search query and tag filter */
   readonly filteredConnections = computed(() => {
     const q = this.searchQuery().toLowerCase().trim();
     const tagFilter = this.activeTagFilter();
     const conns = this.connections();
+    const indexMap = this.searchIndexMap();
 
     return conns.filter((c) => {
       if (tagFilter && !c.tags?.includes(tagFilter)) return false;
       if (!q) return true;
-      return (
-        c.name.toLowerCase().includes(q) ||
-        c.protocol.toLowerCase().includes(q) ||
-        (c.host?.address?.toLowerCase().includes(q) ?? false) ||
-        (c.host?.name?.toLowerCase().includes(q) ?? false) ||
-        c.tags?.some((t) => t.toLowerCase().includes(q))
-      );
+
+      const indexStr = indexMap.get(c.id);
+      return indexStr ? indexStr.includes(q) : false;
     });
   });
 

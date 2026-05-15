@@ -55,3 +55,6 @@
 ## 2026-05-15 - No clear performance bottlenecks identified
 **Learning:** After reviewing the codebase, most O(N) lookups inside Angular change detection loops and Entity Framework N+1/Clear() issues have already been mitigated in previous optimizations.
 **Action:** Wait for the codebase to grow or new features to be added before attempting further performance optimizations to avoid premature micro-optimizations that don't yield measurable benefits.
+## 2026-05-15 - Optimize Keystroke Filtering with Pre-computed Strings
+**Learning:** Performing multiple string `.toLowerCase()` operations and array property concatenations (like joining tags) on every object during a high-frequency event like a keystroke search filter creates a CPU bottleneck.
+**Action:** Use an Angular `computed` signal to build a `Map<string, string>` containing a flattened, lowercased search index for each item whenever the underlying list changes. Then, the search filter function can perform an `O(1)` Map lookup to retrieve the pre-computed string and execute a single `.includes()` check.

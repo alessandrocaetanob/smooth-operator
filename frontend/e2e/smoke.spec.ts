@@ -1,14 +1,13 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Smoke Tests', () => {
-
   test('User Login Page Loads', async ({ page }) => {
     await page.goto('/login');
     // Verify that the login form or a known element is present
     await expect(page).toHaveTitle(/Smooth Operator/i);
     // Smoke check: ensure the page didn't crash
     const loginButton = page.locator('button', { hasText: /log\s?in|sign\s?in/i });
-    if (await loginButton.count() > 0) {
+    if ((await loginButton.count()) > 0) {
       await expect(loginButton.first()).toBeVisible();
     }
   });
@@ -34,5 +33,4 @@ test.describe('Smoke Tests', () => {
     const response = await page.goto('/credentials');
     expect(response?.status()).toBeLessThan(400);
   });
-
 });
