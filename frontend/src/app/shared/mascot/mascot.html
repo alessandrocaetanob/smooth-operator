@@ -326,16 +326,24 @@
     <!-- SSO state: two dots orbit the face, representing handshake with identity provider -->
     <g class="sso-orbit" [style.opacity]="effectiveState === 'sso' ? '1' : '0'">
       <!-- Faint dashed orbit ring -->
-      <circle cx="100" cy="100" r="68" fill="none"
-              stroke="var(--mascot-eye)" stroke-width="1" stroke-dasharray="6 5" opacity="0.22"
-              class="orbit-ring"/>
+      <circle
+        cx="100"
+        cy="100"
+        r="68"
+        fill="none"
+        stroke="var(--mascot-eye)"
+        stroke-width="1"
+        stroke-dasharray="6 5"
+        opacity="0.22"
+        class="orbit-ring"
+      />
       <!-- Leading dot — rotates clockwise -->
       <g class="orbit-arm od-lead">
-        <circle cx="168" cy="100" r="5" fill="var(--mascot-eye)" class="orbit-dot"/>
+        <circle cx="168" cy="100" r="5" fill="var(--mascot-eye)" class="orbit-dot" />
       </g>
       <!-- Trailing dot — same arm, 180° out of phase -->
       <g class="orbit-arm od-trail">
-        <circle cx="168" cy="100" r="4" fill="var(--mascot-antenna)" class="orbit-dot"/>
+        <circle cx="168" cy="100" r="4" fill="var(--mascot-antenna)" class="orbit-dot" />
       </g>
     </g>
 

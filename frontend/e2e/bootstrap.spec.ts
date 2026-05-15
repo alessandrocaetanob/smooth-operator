@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 /**
  * Smooth Operator: "First Run" Bootstrap E2E Flow
- * 
+ *
  * This test simulates a fresh deployment:
  * 1. ROOT Account Creation (First Access)
  * 2. Login with the new account
@@ -21,20 +21,24 @@ test.describe('First Run Bootstrap Flow', () => {
       await page.screenshot({ path: screenshotPath, fullPage: true });
       console.log(`Test failed. Screenshot saved to ${screenshotPath}`);
       console.log('Final URL:', page.url());
-      
+
       // Try to find error messages on the page
-      const errorMsg = await page.locator('.bg-error-container, .text-error').first().innerText().catch(() => null);
+      const errorMsg = await page
+        .locator('.bg-error-container, .text-error')
+        .first()
+        .innerText()
+        .catch(() => null);
       if (errorMsg) console.log('Error message found on page:', errorMsg);
     }
   });
 
   test('Complete Bootstrap Flow', async ({ page }) => {
     console.log('Starting Bootstrap Flow test...');
-    
+
     // 1. Landing: Go to root
     await page.goto('/', { waitUntil: 'networkidle' });
     console.log('Landed on:', page.url());
-    
+
     // Check if we are redirected to setup or login
     if (page.url().includes('/first-access')) {
       console.log('Setup mode detected');
@@ -49,9 +53,12 @@ test.describe('First Run Bootstrap Flow', () => {
       await page.fill('#email', 'admin@example.com');
       await page.fill('#password', 'Password123!!');
       await page.click('button[type="submit"]');
-      
+
       // If login fails (invalid credentials error), try the root account we use for tests
-      const errorVisible = await page.locator('.bg-error-container, .text-error').isVisible().catch(() => false);
+      const errorVisible = await page
+        .locator('.bg-error-container, .text-error')
+        .isVisible()
+        .catch(() => false);
       if (errorVisible) {
         console.log('Default login failed. Trying test root account...');
         await page.fill('#email', adminEmail);
@@ -64,12 +71,12 @@ test.describe('First Run Bootstrap Flow', () => {
     console.log('Waiting for post-auth redirect...');
     await expect(page).toHaveURL(/\/vault|administration|settings/, { timeout: 20000 });
     console.log('Successfully reached dashboard:', page.url());
-    
+
     // 3. Create a Vault
     await page.goto('/settings/vaults');
     // The input has name="vaultName" and placeholder="Vault name"
     await page.waitForSelector('input[name="vaultName"]', { state: 'visible' });
-    
+
     const vaultName = `Vault ${Date.now()}`;
     await page.fill('input[name="vaultName"]', vaultName);
     await page.click('button:has-text("Create vault")');
@@ -88,7 +95,7 @@ test.describe('First Run Bootstrap Flow', () => {
     await page.fill('#connectionName', connectionName);
     await page.selectOption('#connectionProtocol', 'ssh');
     await page.fill('#connectionNewHostAddress', '10.0.0.50');
-    
+
     // Select the vault we just created
     await page.selectOption('#connectionVaultGroup', { label: vaultName });
 
