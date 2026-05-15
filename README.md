@@ -6,6 +6,19 @@ End users never see actual credentials. Admins control exactly who can access wh
 
 > Full documentation → [http://localhost:3000](http://localhost:3000) (start the docs container with `docker-compose up docs`)
 
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=alessandrocaetanob_smooth-operator&metric=alert_status&token=09830f0b5cf4a5c457100e56455064855fc33559)](https://sonarcloud.io/summary/new_code?id=alessandrocaetanob_smooth-operator)
+[![codecov](https://codecov.io/gh/alessandrocaetanob/smooth-operator/graph/badge.svg?token=6WSJBQ1HU6)](https://codecov.io/gh/alessandrocaetanob/smooth-operator)
+
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=alessandrocaetanob_smooth-operator&metric=security_rating&token=09830f0b5cf4a5c457100e56455064855fc33559)](https://sonarcloud.io/summary/new_code?id=alessandrocaetanob_smooth-operator)
+[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=alessandrocaetanob_smooth-operator&metric=reliability_rating&token=09830f0b5cf4a5c457100e56455064855fc33559)](https://sonarcloud.io/summary/new_code?id=alessandrocaetanob_smooth-operator)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=alessandrocaetanob_smooth-operator&metric=sqale_rating&token=09830f0b5cf4a5c457100e56455064855fc33559)](https://sonarcloud.io/summary/new_code?id=alessandrocaetanob_smooth-operator)
+
+[![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=alessandrocaetanob_smooth-operator&metric=vulnerabilities&token=09830f0b5cf4a5c457100e56455064855fc33559)](https://sonarcloud.io/summary/new_code?id=alessandrocaetanob_smooth-operator)
+[![Bugs](https://sonarcloud.io/api/project_badges/measure?project=alessandrocaetanob_smooth-operator&metric=bugs&token=09830f0b5cf4a5c457100e56455064855fc33559)](https://sonarcloud.io/summary/new_code?id=alessandrocaetanob_smooth-operator)
+[![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=alessandrocaetanob_smooth-operator&metric=code_smells&token=09830f0b5cf4a5c457100e56455064855fc33559)](https://sonarcloud.io/summary/new_code?id=alessandrocaetanob_smooth-operator)
+[![Technical Debt](https://sonarcloud.io/api/project_badges/measure?project=alessandrocaetanob_smooth-operator&metric=sqale_index&token=09830f0b5cf4a5c457100e56455064855fc33559)](https://sonarcloud.io/summary/new_code?id=alessandrocaetanob_smooth-operator)
+[![Duplicated Lines (%)](https://sonarcloud.io/api/project_badges/measure?project=alessandrocaetanob_smooth-operator&metric=duplicated_lines_density&token=09830f0b5cf4a5c457100e56455064855fc33559)](https://sonarcloud.io/summary/new_code?id=alessandrocaetanob_smooth-operator)
+
 ---
 
 ## Architecture
@@ -239,22 +252,43 @@ erDiagram
 
 ## Tech Stack
 
-| Layer | Technology | Version |
-|-------|-----------|---------|
-| Frontend framework | Angular | 21 |
-| Frontend styling | Tailwind CSS | 4 |
-| Remote protocol rendering | guacamole-common-js | 1.6 |
-| Backend framework | ASP.NET Core | .NET 10 |
-| ORM | Entity Framework Core + Npgsql | 10 |
-| Authentication | JWT HS256 + OIDC + SAML 2.0 | — |
-| Database | PostgreSQL | 15 |
-| Cache / rate limiter | Redis | 7 |
-| Connection engine | Apache guacd | 1.6 |
-| Observability | Grafana, Prometheus, Loki, Tempo | — |
-| Email | MailKit | — |
-| API docs | Swagger / OpenAPI | — |
-| Docs site | Docusaurus | 3 |
-| CI/CD | GitHub Actions | — |
+**Frontend**
+![Angular](https://img.shields.io/badge/Angular_21-DD0031?style=flat-square&logo=angular&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS_4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)
+![nginx](https://img.shields.io/badge/nginx-009639?style=flat-square&logo=nginx&logoColor=white)
+
+**Backend**
+![.NET 10](https://img.shields.io/badge/.NET_10-512BD4?style=flat-square&logo=dotnet&logoColor=white)
+![C#](https://img.shields.io/badge/C%23-512BD4?style=flat-square&logo=csharp&logoColor=white)
+![EF Core](https://img.shields.io/badge/EF_Core_10-512BD4?style=flat-square&logo=dotnet&logoColor=white)
+![MediatR](https://img.shields.io/badge/MediatR-512BD4?style=flat-square&logo=dotnet&logoColor=white)
+![Swagger](https://img.shields.io/badge/Swagger-85EA2D?style=flat-square&logo=swagger&logoColor=black)
+
+**Data & Cache**
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL_15-4169E1?style=flat-square&logo=postgresql&logoColor=white)
+![Redis](https://img.shields.io/badge/Redis_7-FF4438?style=flat-square&logo=redis&logoColor=white)
+
+**Remote Access**
+![Apache Guacamole](https://img.shields.io/badge/Apache_Guacamole_1.6-0B1A2C?style=flat-square&logo=apache&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white)
+
+**Observability**
+![Grafana](https://img.shields.io/badge/Grafana-F46800?style=flat-square&logo=grafana&logoColor=white)
+![Prometheus](https://img.shields.io/badge/Prometheus-E6522C?style=flat-square&logo=prometheus&logoColor=white)
+![Loki](https://img.shields.io/badge/Loki-F46800?style=flat-square&logo=grafana&logoColor=white)
+![Tempo](https://img.shields.io/badge/Tempo-F46800?style=flat-square&logo=grafana&logoColor=white)
+![OpenTelemetry](https://img.shields.io/badge/OpenTelemetry-425CC7?style=flat-square&logo=opentelemetry&logoColor=white)
+
+**Testing & CI/CD**
+![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-2088FF?style=flat-square&logo=githubactions&logoColor=white)
+![Vitest](https://img.shields.io/badge/Vitest-6E9F18?style=flat-square&logo=vitest&logoColor=white)
+![Playwright](https://img.shields.io/badge/Playwright-2EAD33?style=flat-square&logo=playwright&logoColor=white)
+![xUnit](https://img.shields.io/badge/xUnit-512BD4?style=flat-square&logo=dotnet&logoColor=white)
+![CodeQL](https://img.shields.io/badge/CodeQL-2088FF?style=flat-square&logo=github&logoColor=white)
+
+**Docs**
+![Docusaurus](https://img.shields.io/badge/Docusaurus_3-3ECC5F?style=flat-square&logo=docusaurus&logoColor=white)
 
 ---
 
