@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using SmoothOperator.Infrastructure.Services;
 using SmoothOperator.Application.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -67,6 +68,7 @@ namespace SmoothOperator.Api.Controllers
         // single-use ticket query parameter and validated against Redis.
         [HttpGet("connect/{connectionId}")]
         [AllowAnonymous]
+        [EnableRateLimiting("auth")]
         public async Task Get(Guid connectionId, [FromQuery] string? ticket)
         {
             if (!HttpContext.WebSockets.IsWebSocketRequest)

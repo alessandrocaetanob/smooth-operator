@@ -252,3 +252,8 @@ Opened PR #50 to master: all 151 tests pass (142 integration + 9 architecture). 
 **Vulnerability:** The CORS policy fallback in Development mode used `AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()`, allowing any site to make requests to the API if explicit origins weren't set.
 **Learning:** Overly permissive CORS fallbacks, even in development, can expose APIs to cross-origin attacks if the application is run locally by a developer who visits a malicious site, or if a dev environment is inadvertently exposed.
 **Prevention:** Always enforce explicit CORS origin configuration (e.g., throwing an exception if not configured) and never use `AllowAnyOrigin` with `AllowCredentials` or as a general fallback for an authenticated API.
+
+## 2025-07-30 - Missing Rate Limiting on WebSocket Upgrade Endpoint
+**Vulnerability:** The `[HttpGet("connect/{connectionId}")]` endpoint in `GuacamoleController` lacked rate limiting, allowing potential resource exhaustion (Denial of Service - DoS) via repeated WebSocket upgrade attempts.
+**Learning:** Even endpoints protected by single-use tickets that require `[AllowAnonymous]` must be rate-limited to prevent automated brute-force or DoS attacks against the ticket validation mechanism or WebSocket connection limits.
+**Prevention:** Apply an appropriate rate limiting policy (e.g., `[EnableRateLimiting("auth")]`) to all `[AllowAnonymous]` endpoints, including WebSocket upgrade endpoints that use out-of-band authentication.
