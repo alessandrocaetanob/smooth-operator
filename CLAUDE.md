@@ -39,9 +39,9 @@ cd frontend
 npm install
 npm start          # dev server → http://localhost:4200
 npm run build      # production build
-npm test           # Vitest watch mode
-npm test -- --run  # single run (CI)
-npm run lint       # ESLint via angular-eslint
+npm test                    # Vitest watch mode
+npx ng test --watch=false   # single run (CI) — do NOT use `npm test -- --run`, ng test ignores --run
+npm run lint                # ESLint via angular-eslint
 npx prettier --write .  # format; MUST run before committing any TS/HTML/CSS/JSON change
 ```
 
