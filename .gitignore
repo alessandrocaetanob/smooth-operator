@@ -84,6 +84,9 @@ frontend/npm_output.log
 .contextstream/
 .claude/
 
+# Local review/planning guides
+JULES.md
+
 # Editor / IDE local config (may contain secrets)
 .cursor/
 .vscode/settings.json
