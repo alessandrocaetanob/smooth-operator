@@ -2,9 +2,9 @@ version: 2.1
 
 orbs:
   node: circleci/node@6.3.0
-  codecov: codecov/codecov@5.3.0
-  snyk: snyk/snyk@2.2.0
-  sonarqube: sonarsource/sonarqube@2.0.0
+  codecov: codecov/codecov@5.4.3
+  snyk: snyk/snyk@2.3.3
+  sonarcloud: sonarsource/sonarcloud@4.0.0
 
 executors:
   dotnet:
@@ -132,14 +132,14 @@ jobs:
           name: Snyk scan backend
           command: snyk test --file=smooth-operator.sln --severity-threshold=high
 
-  sonarqube-scan:
+  sonarcloud-scan:
     docker:
       - image: cimg/openjdk:21.0
     steps:
       - checkout
       - attach_workspace:
           at: .
-      - sonarqube/scan:
+      - sonarcloud/scan:
           sonar_token_variable_name: SONAR_TOKEN
 
 workflows:
@@ -149,7 +149,7 @@ workflows:
       - frontend-ci
       - snyk-frontend
       - snyk-backend
-      - sonarqube-scan:
+      - sonarcloud-scan:
           requires:
             - backend-ci
             - frontend-ci
