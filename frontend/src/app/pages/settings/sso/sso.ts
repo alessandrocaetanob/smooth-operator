@@ -133,6 +133,7 @@ export class SsoSettings implements OnInit {
           next: (p) => {
             this.busy.set(false);
             this.applyToForm(p);
+            this.auth.loadSetupStatus().subscribe();
           },
           error: () => this.busy.set(false),
         });
