@@ -396,10 +396,6 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  handleDisplayKeydown(_: KeyboardEvent): void {
-    // Keyboard events are handled by Guacamole's document-level listener in GuacamoleService.
-  }
-
   /** Minimize session: detach display, keep WS alive, go to vault. */
   minimize(): void {
     const id = this.connectionId();
