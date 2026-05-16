@@ -12,3 +12,7 @@
 ## 2024-05-12 - Missing ARIA Labels on Icon-Only Buttons
 **Learning:** Icon-only buttons (using Material Symbols) throughout the data tables (Connections, Hosts, Credentials) were relying solely on the `title` attribute for accessibility. While `title` provides a tooltip on hover, it is often insufficient for screen readers or keyboard navigation without a clear `aria-label`.
 **Action:** Ensure that all icon-only interactive elements explicitly include an `aria-label` attribute in addition to any tooltips to provide full accessibility for screen reader users.
+
+## 2024-05-16 - Icon-only Button Accessibility
+**Learning:** Icon-only buttons using `title` attributes are insufficient for screen readers. The `title` attribute is often read as a tooltip on hover, but `aria-label` provides explicit, reliable accessible names for these controls.
+**Action:** Always ensure that icon-only interactive elements (like copy, edit, or delete buttons) include an explicit `aria-label` matching or expanding upon their visual intent.
