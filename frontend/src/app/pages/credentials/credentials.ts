@@ -1,4 +1,11 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  inject,
+  signal,
+  computed,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   Credential,
@@ -45,6 +52,7 @@ const EMPTY_FORM: FormState = {
 @Component({
   selector: 'app-credentials',
   imports: [FormsModule, Drawer, Mascot],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './credentials.html',
   styleUrl: './credentials.css',
 })

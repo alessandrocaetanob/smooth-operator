@@ -87,6 +87,19 @@ jobs:
           working_directory: frontend
           command: npm run build
       - run:
+          name: Upload bundle analysis to Codecov
+          working_directory: frontend
+          # Informational only — never fail the build if the token is absent
+          # (e.g. forked-PR runs) or the analyzer service is unreachable.
+          command: |
+            if [ -n "$CODECOV_TOKEN" ]; then
+              npx --yes @codecov/bundle-analyzer ./dist/frontend/browser \
+                --bundle-name=smooth-operator-frontend \
+                --upload-token="$CODECOV_TOKEN" || echo "Bundle analysis upload failed (non-fatal)."
+            else
+              echo "CODECOV_TOKEN not set — skipping bundle analysis upload."
+            fi
+      - run:
           name: Run tests with coverage
           working_directory: frontend
           command: npm test -- --coverage --watch=false
@@ -164,7 +177,8 @@ jobs:
               /d:sonar.javascript.lcov.reportPaths="frontend/coverage/frontend/lcov.info" \
               /d:sonar.typescript.lcov.reportPaths="frontend/coverage/frontend/lcov.info" \
               /d:sonar.typescript.tsconfigPath="frontend/tsconfig.app.json" \
-              /d:sonar.exclusions="**/node_modules/**,**/dist/**,**/bin/**,**/obj/**,**/*.spec.ts,**/coverage/**,**/.angular/**,**/environments/**"
+              /d:sonar.exclusions="**/node_modules/**,**/dist/**,**/bin/**,**/obj/**,**/*.spec.ts,**/coverage/**,**/.angular/**,**/environments/**,load-tests/**,backend/benchmarks/**" \
+              /d:sonar.coverage.exclusions="**/Migrations/**,backend/benchmarks/**,load-tests/**"
       - run:
           name: Build solution
           command: dotnet build smooth-operator.sln --configuration Release

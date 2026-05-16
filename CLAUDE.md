@@ -30,6 +30,19 @@ dotnet format smooth-operator.sln --verify-no-changes
 dotnet ef migrations add <MigrationName> \
   --project backend/src/SmoothOperator.Infrastructure \
   --startup-project backend/src/SmoothOperator.Api
+
+# Run micro-benchmarks (project is intentionally NOT in the .sln)
+dotnet run -c Release --project backend/benchmarks/SmoothOperator.Benchmarks
+```
+
+### Performance tooling
+
+```bash
+# Frontend bundle analysis — production build + source-map-explorer report
+cd frontend && npm run analyze
+
+# k6 smoke load test (needs a running stack + k6 installed)
+k6 run load-tests/smoke.js
 ```
 
 ### Frontend (Angular 21)
@@ -76,7 +89,7 @@ Dependency rule: `Api → Application → Domain`; `Infrastructure → Applicati
 MediatR pipeline behaviors (applied to every command/query):
 1. `ValidationBehavior<,>` — runs FluentValidation before the handler.
 2. `LoggingBehavior<,>` — structured request/response logging.
-3. `MetricsBehavior<,>` — Prometheus counter per request type.
+3. `MetricsBehavior<,>` — Prometheus duration histogram (`smooth_operator_mediatr_request_duration_seconds`) labelled by request type + success/failure outcome.
 
 Migrations are applied automatically on startup (`ApplyPendingMigrationsAsync` in `Program.cs`). Do not call `dotnet ef database update` manually in production.
 
@@ -93,7 +106,7 @@ Migrations are applied automatically on startup (`ApplyPendingMigrationsAsync` i
 ### Key infrastructure wiring
 
 - **PostgreSQL** — EF Core, `AppDbContext`, aliased as `IAppDbContext` in Application.
-- **Redis** — registered as singleton `IConnectionMultiplexer`; used for rate limiting and session state.
+- **Redis** — registered as singleton `IConnectionMultiplexer`; used for rate limiting and session state. Optionally backs the output cache when `Cache:UseRedis=true` (default: in-memory).
 - **Data Protection keys** — persisted to `/data/protection-keys` volume (configurable via `DataProtection__KeysPath`); required to survive container restarts.
 - **Docker secrets** — mounted at `/run/secrets/<KEY_NAME>`; use `__` as section separator (e.g., `Jwt__Key` maps to `Jwt:Key` config key).
 
@@ -115,3 +128,10 @@ Migrations are applied automatically on startup (`ApplyPendingMigrationsAsync` i
 - **SSO output-cache eviction** — `SsoSettingsController` caches `GET /api/settings/sso` under the tag `"sso-settings"` (30 s). Every write endpoint (Toggle, UpsertOidc, UpsertSaml, Delete) must call `await cacheStore.EvictByTagAsync("sso-settings", cancellationToken)` before returning. Forgetting this causes the settings page to blink and show stale state for up to 30 seconds.
 - **Auth rate-limit policy scope** — the `"auth"` rate-limit policy (5 req / 60 s per IP) is intentionally **not** applied to `GET /api/auth/setup-status` and `GET /api/auth/providers`. Those are public read-only endpoints called by the Angular app initializer on every full page load. Applying the auth policy to them exhausts the budget before `POST /api/auth/login`, producing a 429 with an empty body and the frontend fallback "Sign-in failed." Only apply `[EnableRateLimiting("auth")]` to credential operations (login, setup, forgot-password).
 - **SSO settings → login-page button sync** — after any SSO mutation (toggle, save, remove) the frontend must call `auth.loadSetupStatus()` to refresh `_setup.providers.sso`, which drives the SSO button on the login page. `toggle()` and `remove()` in `sso.ts` already do this; `save()` must do it too. Omitting the call leaves the login-page button stale until the next hard refresh.
+- **Backend Docker image is Alpine/musl** — the runtime stage is `aspnet:10.0-alpine`, so `dotnet publish`/`restore` use `-r linux-musl-x64` (the ReadyToRun native code must match the runtime libc) and the image installs `icu-libs` + `tzdata`. Do not change the RID to `linux-x64` without also switching the runtime base back to Debian.
+- **nginx container healthchecks must probe `127.0.0.1`, not `localhost`** — `localhost` can resolve to IPv6 `::1`, which nginx's IPv4 `listen 8080` does not bind, so the healthcheck fails and the container is marked unhealthy.
+- **`observability/redis.conf` allows no trailing comments** — Redis treats text after a directive value as extra arguments (`FATAL CONFIG FILE ERROR ... wrong number of arguments`). Every comment must be on its own line.
+- **Postgres tuning lives in `docker-compose.yml` as `-c` flags**, not a mounted `config_file` — an external `config_file` breaks `hba_file`/`ident_file` path resolution in the official image. `shared_preload_libraries=pg_stat_statements` is set there.
+- **Frontend nginx has two config files** — `frontend/nginx-main.conf` is the main context (loads the compiled `ngx_brotli` modules + worker tuning; the `/tmp` temp paths are mandatory under `read_only: true`), and `frontend/nginx.conf` is the server block. The brotli module is compiled from source in a dedicated Dockerfile build stage.
+- **Trigram audit-log search** — the `AddTrigramSearchIndexes` migration adds `pg_trgm` expression GIN indexes on `lower(col)`. Keep `GetAuditLogsQuery` text filters as `EF.Functions.Like(col.ToLower(), pattern, "\\")`: this emits `LOWER(col) LIKE …` (uses the index on Postgres) and stays translatable on the SQLite test provider — `EF.Functions.ILike` would break the SQLite integration tests.
+- **`SmoothOperator.Benchmarks` is intentionally excluded from `smooth-operator.sln`** so `dotnet test`/CI don't build it. Run it manually with `dotnet run -c Release`.

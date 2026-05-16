@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
@@ -25,6 +25,7 @@ interface ConnectionMatch {
   selector: 'app-search-results',
   standalone: true,
   imports: [Mascot],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './search-results.html',
   styleUrl: './search-results.css',
 })

@@ -1,4 +1,11 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  inject,
+  signal,
+  computed,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgClass } from '@angular/common';
 import { forkJoin, Observable, of } from 'rxjs';
@@ -82,6 +89,7 @@ const TAG_PALETTES = [
 @Component({
   selector: 'app-connections',
   imports: [FormsModule, NgClass, Mascot, Drawer, Spinner],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './connections.html',
   styleUrl: './connections.css',
 })

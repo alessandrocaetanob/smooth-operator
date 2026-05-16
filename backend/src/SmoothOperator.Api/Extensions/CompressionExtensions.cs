@@ -22,10 +22,23 @@ public static class CompressionExtensions
         return services;
     }
 
-    public static IServiceCollection AddApplicationOutputCache(this IServiceCollection services)
+    public static IServiceCollection AddApplicationOutputCache(
+        this IServiceCollection services,
+        IConfiguration configuration)
     {
         services.AddOutputCache(opts =>
             opts.AddPolicy("ShortCache", policy => policy.Expire(TimeSpan.FromSeconds(30))));
+
+        // Single-instance deployments use the default in-memory store. Set
+        // Cache:UseRedis=true when running multiple replicas so cached responses
+        // and tag eviction stay consistent across instances; this reuses the
+        // same Redis instance as the rest of the app.
+        if (configuration.GetValue("Cache:UseRedis", false))
+        {
+            var redis = configuration.GetConnectionString("Redis") ?? "localhost:6379";
+            services.AddStackExchangeRedisOutputCache(options => options.Configuration = redis);
+        }
+
         return services;
     }
 }

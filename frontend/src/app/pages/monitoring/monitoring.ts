@@ -1,4 +1,12 @@
-import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  OnDestroy,
+  inject,
+  signal,
+  computed,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { forkJoin, Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
@@ -22,6 +30,7 @@ const INTERVAL_MS: Record<string, number> = {
   selector: 'app-monitoring',
   standalone: true,
   imports: [CommonModule, MonitoringChartsComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './monitoring.html',
   styleUrl: './monitoring.css',
 })

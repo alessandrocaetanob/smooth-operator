@@ -1,35 +1,42 @@
-# Stage 1: Restore — cached unless .csproj files change
+# syntax=docker/dockerfile:1
+
+# Stage 1: Restore — cached unless .csproj files change.
+# The BuildKit cache mount keeps the NuGet package cache warm across builds;
+# the same cache is re-mounted in the build/publish stages so --no-restore works.
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS restore
 WORKDIR /repo
 COPY ["src/SmoothOperator.Domain/SmoothOperator.Domain.csproj", "src/SmoothOperator.Domain/"]
 COPY ["src/SmoothOperator.Application/SmoothOperator.Application.csproj", "src/SmoothOperator.Application/"]
 COPY ["src/SmoothOperator.Infrastructure/SmoothOperator.Infrastructure.csproj", "src/SmoothOperator.Infrastructure/"]
 COPY ["src/SmoothOperator.Api/SmoothOperator.Api.csproj", "src/SmoothOperator.Api/"]
-RUN dotnet restore "src/SmoothOperator.Api/SmoothOperator.Api.csproj" \
-    -r linux-x64 /p:PublishReadyToRun=true
+RUN --mount=type=cache,target=/root/.nuget/packages \
+    dotnet restore "src/SmoothOperator.Api/SmoothOperator.Api.csproj" \
+    -r linux-musl-x64 /p:PublishReadyToRun=true
 
 # Stage 2: Build
 FROM restore AS build
 COPY . .
-RUN dotnet build "src/SmoothOperator.Api/SmoothOperator.Api.csproj" -c Release --no-restore -o /app/build
+RUN --mount=type=cache,target=/root/.nuget/packages \
+    dotnet build "src/SmoothOperator.Api/SmoothOperator.Api.csproj" -c Release --no-restore -o /app/build
 
-# Stage 3: Publish
+# Stage 3: Publish — ReadyToRun compiled for musl (linux-musl-x64) to match the
+# Alpine runtime image, so the R2R native code is actually usable.
 FROM build AS publish
-RUN dotnet publish "src/SmoothOperator.Api/SmoothOperator.Api.csproj" \
-    -c Release --no-restore -r linux-x64 --no-self-contained \
+RUN --mount=type=cache,target=/root/.nuget/packages \
+    dotnet publish "src/SmoothOperator.Api/SmoothOperator.Api.csproj" \
+    -c Release --no-restore -r linux-musl-x64 --no-self-contained \
     -o /app/publish \
     /p:UseAppHost=false /p:PublishReadyToRun=true
 
-# Stage 4: Runtime image — standard Debian image with curl available for health probe
-FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
+# Stage 4: Runtime — Alpine image (~half the size of the Debian variant).
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine AS final
 WORKDIR /app
 EXPOSE 8080
 
-# Install curl for the HEALTHCHECK probe (minimal footprint)
-# hadolint ignore=DL3008
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends curl \
-    && rm -rf /var/lib/apt/lists/*
+# icu-libs: full globalization (SSO, dates) instead of invariant mode.
+# tzdata: timezone database for correct timestamp handling.
+# busybox already provides wget for the HEALTHCHECK probe — no curl needed.
+RUN apk add --no-cache icu-libs tzdata
 
 COPY --from=publish /app/publish .
 
@@ -41,6 +48,6 @@ RUN mkdir -p /data/protection-keys && chown "$APP_UID:$APP_UID" /data/protection
 USER $APP_UID
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
-    CMD curl -fsS http://localhost:8080/health || exit 1
+    CMD wget -q --spider http://localhost:8080/health || exit 1
 
 ENTRYPOINT ["dotnet", "SmoothOperator.Api.dll"]

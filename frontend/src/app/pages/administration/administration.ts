@@ -1,4 +1,11 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import { AppRole, AppUser, InviteResult, UsersService } from '../../services/users.service';
@@ -10,6 +17,7 @@ import { ToastService } from '../../shared/toast/toast.service';
 @Component({
   selector: 'app-administration',
   imports: [FormsModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './administration.html',
   styleUrl: './administration.css',
 })

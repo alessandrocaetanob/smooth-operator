@@ -1,4 +1,11 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -13,6 +20,7 @@ import { listStagger } from '../../shared/animations';
   selector: 'app-vault',
   standalone: true,
   imports: [RouterLink, CommonModule, FormsModule, Mascot],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './vault.html',
   styleUrl: './vault.css',
   animations: [listStagger],
