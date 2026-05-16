@@ -9,7 +9,7 @@
       <DataCollector friendlyName="XPlat Code Coverage">
         <Configuration>
           <!-- Output directory relative to the test project (overridden in CI). -->
-          <Format>cobertura</Format>
+          <Format>cobertura,opencover</Format>
           <!-- Exclude auto-generated migration code and test infrastructure. -->
           <Exclude>
             [SmoothOperator.Infrastructure]SmoothOperator.Infrastructure.Migrations.*,

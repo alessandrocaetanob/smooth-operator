@@ -1,0 +1,185 @@
+version: 2.1
+
+orbs:
+  node: circleci/node@7.2.1
+  codecov: codecov/codecov@5.4.3
+  snyk: snyk/snyk@2.3.0
+
+executors:
+  dotnet:
+    docker:
+      - image: mcr.microsoft.com/dotnet/sdk:10.0
+    resource_class: medium
+  node-lts:
+    docker:
+      - image: cimg/node:22.12
+    resource_class: medium
+
+jobs:
+  backend-ci:
+    executor: dotnet
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - dotnet-nuget-v1-{{ checksum "smooth-operator.sln" }}
+            - dotnet-nuget-v1-
+      - run:
+          name: Restore dependencies
+          command: dotnet restore smooth-operator.sln
+      - save_cache:
+          key: dotnet-nuget-v1-{{ checksum "smooth-operator.sln" }}
+          paths:
+            - /root/.nuget/packages
+      - run:
+          name: Check formatting
+          command: dotnet format smooth-operator.sln --verify-no-changes --verbosity diagnostic
+      - run:
+          name: Build
+          command: |
+            dotnet build smooth-operator.sln \
+              --configuration Release \
+              --no-restore \
+              /p:TreatWarningsAsErrors=false \
+              /p:EnforceCodeStyleInBuild=true \
+              /p:AnalysisLevel=latest
+      - run:
+          name: Run tests with coverage
+          command: |
+            dotnet test smooth-operator.sln \
+              --configuration Release \
+              --no-build \
+              --verbosity normal \
+              --settings coverlet.runsettings \
+              --collect:"XPlat Code Coverage" \
+              --results-directory ./TestResults
+      - run:
+          name: Install gpg for Codecov CLI validation
+          command: apt-get update -qq && apt-get install -y --no-install-recommends gnupg
+      - codecov/upload:
+          files: ./TestResults/**/coverage.cobertura.xml
+          flags: backend
+      - persist_to_workspace:
+          root: .
+          paths:
+            - TestResults
+      - store_artifacts:
+          path: ./TestResults
+          destination: backend-coverage
+
+  frontend-ci:
+    executor: node-lts
+    steps:
+      - checkout
+      - node/install-packages:
+          pkg-manager: npm
+          app-dir: frontend
+      - run:
+          name: Check formatting
+          working_directory: frontend
+          command: npx --ignore-scripts prettier@3.8.3 --check "src/**/*.{ts,html,css,scss,json}"
+      - run:
+          name: Lint
+          working_directory: frontend
+          command: npm run lint
+      - run:
+          name: Build
+          working_directory: frontend
+          command: npm run build
+      - run:
+          name: Run tests with coverage
+          working_directory: frontend
+          command: npm test -- --coverage --watch=false
+          environment:
+            CI: "true"
+      - codecov/upload:
+          files: frontend/coverage/frontend/clover.xml
+          flags: frontend
+      - persist_to_workspace:
+          root: .
+          paths:
+            - frontend/coverage
+      - store_artifacts:
+          path: frontend/coverage
+          destination: frontend-coverage
+
+  snyk-frontend:
+    executor: node-lts
+    steps:
+      - checkout
+      - node/install-packages:
+          pkg-manager: npm
+          app-dir: frontend
+      - snyk/scan:
+          project: smooth-operator-frontend
+          severity-threshold: high
+          monitor-on-build: true
+          target-file: frontend/package.json
+
+  snyk-backend:
+    executor: dotnet
+    steps:
+      - checkout
+      - run:
+          name: Restore dependencies
+          command: dotnet restore smooth-operator.sln
+      - run:
+          name: Install Snyk CLI
+          command: |
+            curl -sSfL https://static.snyk.io/cli/latest/snyk-linux -o /usr/local/bin/snyk
+            chmod +x /usr/local/bin/snyk
+      - run:
+          name: Snyk scan backend
+          command: snyk test --file=smooth-operator.sln --severity-threshold=high
+
+  sonarcloud-scan:
+    executor: dotnet
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - restore_cache:
+          keys:
+            - dotnet-nuget-v1-{{ checksum "smooth-operator.sln" }}
+            - dotnet-nuget-v1-
+      - run:
+          name: Install Java runtime (required by SonarScanner for .NET)
+          command: |
+            apt-get update -qq
+            apt-get install -y --no-install-recommends openjdk-17-jre-headless
+      - run:
+          name: Install SonarScanner for .NET
+          command: |
+            dotnet tool install --global dotnet-sonarscanner
+            echo 'export PATH="$PATH:/root/.dotnet/tools"' >> "$BASH_ENV"
+      - run:
+          name: Begin SonarCloud analysis
+          command: |
+            dotnet sonarscanner begin \
+              /k:"alessandrocaetanob_smooth-operator" \
+              /o:"alessandrocaetanob" \
+              /d:sonar.token="$SONAR_TOKEN" \
+              /d:sonar.host.url="$SONAR_HOST_URL" \
+              /d:sonar.cs.opencover.reportsPaths="TestResults/**/coverage.opencover.xml" \
+              /d:sonar.javascript.lcov.reportPaths="frontend/coverage/frontend/lcov.info" \
+              /d:sonar.typescript.lcov.reportPaths="frontend/coverage/frontend/lcov.info" \
+              /d:sonar.typescript.tsconfigPath="frontend/tsconfig.app.json" \
+              /d:sonar.exclusions="**/node_modules/**,**/dist/**,**/bin/**,**/obj/**,**/*.spec.ts,**/coverage/**,**/.angular/**,**/environments/**"
+      - run:
+          name: Build solution
+          command: dotnet build smooth-operator.sln --configuration Release
+      - run:
+          name: End SonarCloud analysis
+          command: dotnet sonarscanner end /d:sonar.token="$SONAR_TOKEN"
+
+workflows:
+  ci:
+    jobs:
+      - backend-ci
+      - frontend-ci
+      - snyk-frontend
+      - snyk-backend
+      - sonarcloud-scan:
+          requires:
+            - backend-ci
+            - frontend-ci
