@@ -21,7 +21,7 @@ COPY . .
 RUN npm run build --configuration=production
 
 # Stage 2: Serve the application with nginx-unprivileged (runs as non-root on port 8080)
-FROM nginxinc/nginx-unprivileged:1.27-alpine AS final
+FROM nginxinc/nginx-unprivileged:1.30.1-alpine AS final
 
 # Switch to root temporarily for file setup
 USER root
