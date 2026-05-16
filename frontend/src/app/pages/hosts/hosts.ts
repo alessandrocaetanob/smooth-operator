@@ -40,7 +40,7 @@ export class Hosts implements OnInit {
   readonly busy = signal(false);
   readonly searchQuery = signal('');
 
-  readonly searchableHosts = computed(() => {
+  private readonly searchableHosts = computed(() => {
     return this.hosts().map((h) => ({
       item: h,
       _searchIndex: [h.name ?? '', h.address ?? ''].join(' ').toLowerCase(),

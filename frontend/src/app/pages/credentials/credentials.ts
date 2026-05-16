@@ -72,7 +72,7 @@ export class Credentials implements OnInit {
   readonly availableSecrets = signal<string[]>([]);
   readonly copiedKeyIds = signal(new Set<string>());
 
-  readonly searchableCredentials = computed(() => {
+  private readonly searchableCredentials = computed(() => {
     return this.credentials().map((c) => ({
       item: c,
       _searchIndex: [c.name ?? '', c.username ?? '', c.credentialType ?? '']

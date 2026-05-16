@@ -44,14 +44,14 @@ export class SearchResults {
   private readonly _vaults = signal<Vault[]>([]);
   private readonly _connections = signal<Connection[]>([]);
 
-  readonly searchableVaults = computed(() => {
+  private readonly searchableVaults = computed(() => {
     return this._vaults().map((v) => ({
       item: v,
       _searchIndex: (v.name ?? '').toLowerCase(),
     }));
   });
 
-  readonly searchableConnections = computed(() => {
+  private readonly searchableConnections = computed(() => {
     return this._connections().map((c) => ({
       item: c,
       _searchIndex: [c.name ?? '', c.host?.name ?? '', c.host?.address ?? '', c.protocol ?? '']

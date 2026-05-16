@@ -28,7 +28,7 @@ export class Administration implements OnInit {
 
   readonly searchQuery = signal('');
 
-  readonly searchableUsers = computed(() => {
+  private readonly searchableUsers = computed(() => {
     return this.users().map((u) => ({
       item: u,
       _searchIndex: [u.name ?? '', u.email ?? '', this.primaryRole(u) ?? '']
