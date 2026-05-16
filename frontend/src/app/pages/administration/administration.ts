@@ -27,16 +27,22 @@ export class Administration implements OnInit {
   readonly errorMessage = signal<string | null>(null);
 
   readonly searchQuery = signal('');
+
+  readonly searchableUsers = computed(() => {
+    return this.users().map((u) => ({
+      item: u,
+      _searchIndex: [u.name ?? '', u.email ?? '', this.primaryRole(u) ?? '']
+        .join(' ')
+        .toLowerCase(),
+    }));
+  });
+
   readonly filteredUsers = computed(() => {
     const q = this.searchQuery().trim().toLowerCase();
-    const all = this.users();
-    if (!q) return all;
-    return all.filter(
-      (u) =>
-        u.name.toLowerCase().includes(q) ||
-        u.email.toLowerCase().includes(q) ||
-        this.primaryRole(u).toLowerCase().includes(q),
-    );
+    if (!q) return this.users();
+    return this.searchableUsers()
+      .filter((u) => u._searchIndex.includes(q))
+      .map(({ item }) => item);
   });
 
   readonly roles = signal<AppRole[]>([]);
