@@ -54,10 +54,12 @@ jobs:
               --settings coverlet.runsettings \
               --collect:"XPlat Code Coverage" \
               --results-directory ./TestResults
+      - run:
+          name: Install gpg for Codecov CLI validation
+          command: apt-get update -qq && apt-get install -y --no-install-recommends gnupg
       - codecov/upload:
           files: ./TestResults/**/coverage.cobertura.xml
           flags: backend
-          skip_validation: true
       - persist_to_workspace:
           root: .
           paths:
