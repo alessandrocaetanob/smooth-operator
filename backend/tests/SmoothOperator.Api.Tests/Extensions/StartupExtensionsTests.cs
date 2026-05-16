@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Configuration;
@@ -10,6 +11,8 @@ using Moq;
 using SmoothOperator.Api.Extensions;
 using SmoothOperator.Infrastructure.Data;
 using SmoothOperator.Infrastructure.Services;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using Xunit;
 
 namespace SmoothOperator.Api.Tests.Extensions;
@@ -97,5 +100,107 @@ public class StartupExtensionsTests
             services.AddApplicationCors(configuration, environment.Object));
 
         Assert.Contains("CORS is not configured", ex.Message);
+    }
+
+    [Fact]
+    public void AddApplicationDataProtection_DefaultPath_RegistersDataProtection()
+    {
+        var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(tempDir);
+        try
+        {
+            var services = new ServiceCollection();
+            var config = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string?> { ["DataProtection:KeysPath"] = tempDir })
+                .Build();
+
+            services.AddApplicationDataProtection(config);
+
+            using var provider = services.BuildServiceProvider();
+            Assert.NotNull(provider.GetService<IDataProtectionProvider>());
+        }
+        finally
+        {
+            Directory.Delete(tempDir, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void AddApplicationDataProtection_WithNonExistentCertPath_SkipsCertProtection()
+    {
+        var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(tempDir);
+        try
+        {
+            var services = new ServiceCollection();
+            var config = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["DataProtection:KeysPath"] = tempDir,
+                    ["DataProtection:CertPath"] = Path.Combine(tempDir, "does-not-exist.pfx")
+                })
+                .Build();
+
+            // File.Exists guard should prevent cert loading — no exception expected.
+            services.AddApplicationDataProtection(config);
+
+            using var provider = services.BuildServiceProvider();
+            Assert.NotNull(provider.GetService<IDataProtectionProvider>());
+        }
+        finally
+        {
+            Directory.Delete(tempDir, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void AddApplicationDataProtection_WithValidCertPath_RegistersCertProtection()
+    {
+        var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(tempDir);
+        var certPath = Path.Combine(tempDir, "dp-test.pfx");
+        try
+        {
+            using var rsa = RSA.Create(2048);
+            var req = new CertificateRequest("CN=smooth-operator-test", rsa,
+                HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+            using var cert = req.CreateSelfSigned(DateTimeOffset.Now.AddDays(-1), DateTimeOffset.Now.AddYears(1));
+            File.WriteAllBytes(certPath, cert.Export(X509ContentType.Pfx));
+
+            var services = new ServiceCollection();
+            var config = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["DataProtection:KeysPath"] = tempDir,
+                    ["DataProtection:CertPath"] = certPath
+                })
+                .Build();
+
+            services.AddApplicationDataProtection(config);
+
+            using var provider = services.BuildServiceProvider();
+            Assert.NotNull(provider.GetService<IDataProtectionProvider>());
+        }
+        finally
+        {
+            Directory.Delete(tempDir, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task ApplyPendingMigrationsAsync_RelationalDb_ThrowsAfterMaxRetries()
+    {
+        // SQLite is relational (IsRelational() == true), but cannot run the
+        // PostgreSQL-specific migrations — MigrateAsync() throws on every attempt,
+        // exercising the retry catch block and the final rethrow.
+        var dbPath = $"DataSource=file:retry-test-{Guid.NewGuid():N}?mode=memory&cache=shared";
+        var builder = WebApplication.CreateBuilder(new WebApplicationOptions { EnvironmentName = "Testing" });
+        builder.Services.AddLogging();
+        builder.Services.AddDbContext<AppDbContext>(opts => opts.UseSqlite(dbPath));
+
+        await using var app = builder.Build();
+
+        await Assert.ThrowsAnyAsync<Exception>(
+            () => app.ApplyPendingMigrationsAsync(retryDelay: _ => TimeSpan.Zero));
     }
 }

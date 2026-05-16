@@ -26,9 +26,12 @@ services:
     volumes:
       - dp_keys:/data/protection-keys
     depends_on:
-      - postgres
-      - redis
-      - guacd
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      guacd:
+        condition: service_started
     restart: unless-stopped
     cap_drop: [ALL]
     read_only: true
@@ -44,10 +47,16 @@ services:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=smoothoperator
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql
     restart: unless-stopped
     networks:
       - smooth-operator-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d smoothoperator"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   redis:
     image: redis:7-alpine
