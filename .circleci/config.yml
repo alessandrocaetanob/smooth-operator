@@ -177,7 +177,8 @@ jobs:
               /d:sonar.javascript.lcov.reportPaths="frontend/coverage/frontend/lcov.info" \
               /d:sonar.typescript.lcov.reportPaths="frontend/coverage/frontend/lcov.info" \
               /d:sonar.typescript.tsconfigPath="frontend/tsconfig.app.json" \
-              /d:sonar.exclusions="**/node_modules/**,**/dist/**,**/bin/**,**/obj/**,**/*.spec.ts,**/coverage/**,**/.angular/**,**/environments/**"
+              /d:sonar.exclusions="**/node_modules/**,**/dist/**,**/bin/**,**/obj/**,**/*.spec.ts,**/coverage/**,**/.angular/**,**/environments/**,load-tests/**,backend/benchmarks/**" \
+              /d:sonar.coverage.exclusions="**/Migrations/**,backend/benchmarks/**,load-tests/**"
       - run:
           name: Build solution
           command: dotnet build smooth-operator.sln --configuration Release

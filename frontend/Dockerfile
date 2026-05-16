@@ -44,7 +44,8 @@ ARG NGINX_VERSION
 USER root
 RUN apk add --no-cache build-base cmake git pcre2-dev zlib-dev openssl-dev linux-headers curl
 WORKDIR /build
-RUN curl -fsSL "https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz" | tar xz \
+# --proto "=https" ensures any redirect stays on HTTPS (no clear-text downgrade).
+RUN curl --proto "=https" --tlsv1.2 -fsSL "https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz" | tar xz \
     && git clone --depth 1 --recurse-submodules https://github.com/google/ngx_brotli.git
 # Build the bundled brotli static libraries that ngx_brotli links against;
 # linking them statically keeps the runtime image free of libbrotli.

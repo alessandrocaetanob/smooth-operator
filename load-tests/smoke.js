@@ -16,7 +16,8 @@ import { check, sleep } from 'k6';
 
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:5000';
 const EMAIL = __ENV.SO_EMAIL || 'admin@example.com';
-const PASSWORD = __ENV.SO_PASSWORD || 'ChangeMe123!';
+// Password must be supplied via the SO_PASSWORD env var — no default credential.
+const PASSWORD = __ENV.SO_PASSWORD || '';
 
 export const options = {
   scenarios: {

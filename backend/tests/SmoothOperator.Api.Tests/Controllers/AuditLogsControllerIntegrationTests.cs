@@ -72,4 +72,39 @@ public class AuditLogsControllerIntegrationTests
         Assert.Contains("TestResource", csv);
         Assert.Contains("{ \"\"k\"\": \"\"v\"\" }", csv); // escaped quotes in CSV
     }
+
+    [Fact]
+    public async Task GetLogs_FilterByUser_MatchesEmailOrNameCaseInsensitively()
+    {
+        var aliceId = Guid.NewGuid();
+        var bobId = Guid.NewGuid();
+        await using var factory = new TestWebApplicationFactory(db =>
+        {
+            var alice = new User { Id = aliceId, Email = "alice@corp.test", Name = "Alice Auditor", IsActive = true, CreatedAt = DateTime.UtcNow };
+            AttachRoles(db, alice, AppRoles.Admin);
+            db.Users.Add(alice);
+            db.Users.Add(new User { Id = bobId, Email = "bob@corp.test", Name = "Bob Builder", IsActive = true, CreatedAt = DateTime.UtcNow });
+
+            db.AuditLogs.Add(new AuditLog { Id = Guid.NewGuid(), Timestamp = DateTime.UtcNow, UserId = aliceId, Action = "alpha.event", ResourceType = "R", Outcome = "success" });
+            db.AuditLogs.Add(new AuditLog { Id = Guid.NewGuid(), Timestamp = DateTime.UtcNow, UserId = bobId, Action = "beta.event", ResourceType = "R", Outcome = "success" });
+        });
+
+        var client = AsUser(factory, aliceId, AppRoles.Admin);
+
+        // Match a substring of the display name, in a different case.
+        var byName = await client.GetAsync("/api/audit-logs?user=ALICE");
+        Assert.Equal(HttpStatusCode.OK, byName.StatusCode);
+        var named = await byName.Content.ReadFromJsonAsync<PagedResult<AuditLogDto>>();
+        Assert.NotNull(named);
+        Assert.Single(named.Items);
+        Assert.Equal("alpha.event", named.Items.First().Action);
+
+        // Match a substring of the email address.
+        var byEmail = await client.GetAsync("/api/audit-logs?user=bob@corp");
+        Assert.Equal(HttpStatusCode.OK, byEmail.StatusCode);
+        var emailed = await byEmail.Content.ReadFromJsonAsync<PagedResult<AuditLogDto>>();
+        Assert.NotNull(emailed);
+        Assert.Single(emailed.Items);
+        Assert.Equal("beta.event", emailed.Items.First().Action);
+    }
 }
