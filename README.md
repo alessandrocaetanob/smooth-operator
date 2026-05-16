@@ -4,7 +4,7 @@ Smooth Operator is a cloud-native, clientless remote access vault. It gives team
 
 End users never see actual credentials. Admins control exactly who can access what, through granular role-based permissions and vault assignments.
 
-> Full documentation → [http://localhost:3000](http://localhost:3000) (start the docs container with `docker-compose up docs`)
+> Full documentation → [http://localhost:3000](http://localhost:3000) (start the docs container with `docker compose up docs`)
 
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=alessandrocaetanob_smooth-operator&metric=alert_status&token=09830f0b5cf4a5c457100e56455064855fc33559)](https://sonarcloud.io/summary/new_code?id=alessandrocaetanob_smooth-operator)
 [![codecov](https://codecov.io/gh/alessandrocaetanob/smooth-operator/graph/badge.svg?token=6WSJBQ1HU6)](https://codecov.io/gh/alessandrocaetanob/smooth-operator)
@@ -45,7 +45,7 @@ graph TD
     subgraph Docker Stack
         Frontend["Angular 21\nnginx · :4200"]
         Backend[".NET 10 API\n:5000"]
-        DB[("PostgreSQL 15\n:5432")]
+        DB[("PostgreSQL 18\n:5432")]
         Cache[("Redis 7\n:6379")]
         Guacd["guacd 1.6\nApache Guacamole\n:4822"]
         Docs["Docusaurus\nDocs Site · :3000"]
@@ -73,7 +73,7 @@ graph TD
 |-----------|-----------|------|
 | **Frontend** | Angular 21, Tailwind CSS 4, guacamole-common-js | SPA served via nginx; lazy-loaded feature modules, NgRx Signal Stores, runtime config |
 | **Backend** | .NET 10, ASP.NET Core, EF Core 10 | Clean Architecture (Domain/Application/Infrastructure/Api); CQRS via MediatR; REST API + WebSocket tunnel |
-| **Database** | PostgreSQL 15 | Users, vaults, connections, credentials, groups, audit logs |
+| **Database** | PostgreSQL 18.4 | Users, vaults, connections, credentials, groups, audit logs |
 | **Cache** | Redis 7 | Rate limiting, session state |
 | **Connection Engine** | Apache guacd 1.6 | Translates RDP/SSH/VNC to Guacamole protocol over WebSocket |
 | **Observability** | Prometheus, Loki, Tempo | Metrics, centralized logging, and distributed tracing |
@@ -267,7 +267,7 @@ erDiagram
 ![Swagger](https://img.shields.io/badge/Swagger-85EA2D?style=flat-square&logo=swagger&logoColor=black)
 
 **Data & Cache**
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL_15-4169E1?style=flat-square&logo=postgresql&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL_18-4169E1?style=flat-square&logo=postgresql&logoColor=white)
 ![Redis](https://img.shields.io/badge/Redis_7-FF4438?style=flat-square&logo=redis&logoColor=white)
 
 **Authentication**
@@ -310,7 +310,7 @@ erDiagram
 ```bash
 git clone https://github.com/alessandrocaetanob/smooth-operator.git
 cd smooth-operator
-docker-compose up --build
+docker compose up --build
 ```
 
 | Service | URL |
@@ -430,6 +430,53 @@ See `.env.example` for a full template with generation hints.
 
 > **Security:** The default `Encryption__Key` and `Jwt__Key` in `docker-compose.yml` are placeholders for **development only**. Always supply strong random secrets in non-local environments — via Docker secrets, a secrets manager, or a `.env` file that is **never committed**.
 
+---
+
+## Data Protection Key Encryption
+
+ASP.NET Core's Data Protection system encrypts session cookies and antiforgery tokens. By default the key ring is stored as plaintext XML in the `dp_keys` Docker volume. For production deployments you should encrypt the key ring at rest using one of the options below.
+
+### Option A — Azure Key Vault (Azure deployments)
+
+1. Create or reuse an Azure Key Vault and add a **Key** (RSA 2048 or RSA-HSM 3072).
+2. Grant your backend's managed identity (or service principal) the `Key Wrap` and `Key Unwrap` permissions on that key.
+3. Pass the full key identifier URI to the backend:
+
+```
+DataProtection__AzureKeyVaultKeyId=https://my-vault.vault.azure.net/keys/dp-key
+```
+
+Authentication uses `DefaultAzureCredential` — it auto-detects managed identity in Azure, or falls back to `AZURE_CLIENT_ID` / `AZURE_CLIENT_SECRET` / `AZURE_TENANT_ID` environment variables for service-principal auth in other environments.
+
+### Option B — Self-signed company certificate (self-hosted deployments)
+
+**Step 1 — Generate the certificate (one-time):**
+
+```bash
+openssl req -x509 -newkey rsa:4096 -keyout dp.key -out dp.crt -days 3650 -nodes \
+  -subj "/CN=smooth-operator-dp/O=Your Company"
+openssl pkcs12 -export -out dp.pfx -inkey dp.key -in dp.crt -passout pass:
+```
+
+Store `dp.pfx` in a secure location (secrets manager or password vault). **Never commit it to the repository.**
+
+**Step 2 — Mount it as a Docker secret in `docker-compose.override.yml`:**
+
+```yaml
+secrets:
+  dp_cert:
+    file: ./secrets/dp.pfx
+
+services:
+  backend:
+    secrets:
+      - dp_cert
+    environment:
+      - DataProtection__CertPath=/run/secrets/dp_cert
+      # Omit DataProtection__CertPassword if the PFX has no password (passout pass: above)
+```
+
+**Key rotation:** when you issue a new certificate, keep the old one in the volume until all existing sessions have expired (ASP.NET Core's default key lifetime is 90 days). The runtime needs the old certificate to decrypt existing keys even after you switch to the new one for writing.
 
 ---
 
@@ -502,7 +549,7 @@ Full user guides, admin reference, integration guides, and API documentation are
 
 ```bash
 # Start only the docs container
-docker-compose up docs
+docker compose up docs
 # → http://localhost:3000
 ```
 

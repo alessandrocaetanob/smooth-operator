@@ -33,6 +33,10 @@ RUN apt-get update \
 
 COPY --from=publish /app/publish .
 
+# Create the data-protection keys directory owned by the app user so the
+# named volume (dp_keys) inherits correct ownership on first mount.
+RUN mkdir -p /data/protection-keys && chown "$APP_UID:$APP_UID" /data/protection-keys
+
 # Run as the pre-created non-root user from the .NET base image (uid 1654)
 USER $APP_UID
 

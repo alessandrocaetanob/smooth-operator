@@ -4,9 +4,11 @@ using SmoothOperator.Infrastructure.Data;
 using SmoothOperator.Infrastructure.Services;
 using SmoothOperator.Infrastructure.Services.SecretProviders;
 using SmoothOperator.Infrastructure.Services.Sso;
+using Azure.Identity;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using StackExchange.Redis;
+using System.Security.Cryptography.X509Certificates;
 
 namespace SmoothOperator.Api.Extensions;
 
@@ -20,7 +22,14 @@ public static class ApplicationServicesExtensions
         services.AddSwaggerGen();
 
         services.AddDbContextPool<AppDbContext>(options =>
-            options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
+            options.UseNpgsql(
+                configuration.GetConnectionString("DefaultConnection"),
+                npgsql => npgsql
+                    .EnableRetryOnFailure(
+                        maxRetryCount: 5,
+                        maxRetryDelay: TimeSpan.FromSeconds(10),
+                        errorCodesToAdd: null)
+                    .UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)));
 
         // Redis — registered as singleton IConnectionMultiplexer so GuacamoleProxyService
         // and other consumers share one multiplexed connection rather than each opening one.
@@ -63,9 +72,32 @@ public static class ApplicationServicesExtensions
         IConfiguration configuration)
     {
         var dpKeysPath = configuration["DataProtection:KeysPath"] ?? "/data/protection-keys";
-        services.AddDataProtection()
+        var builder = services.AddDataProtection()
             .PersistKeysToFileSystem(new DirectoryInfo(dpKeysPath))
             .SetApplicationName("smooth-operator");
+
+        var azureKeyId = configuration["DataProtection:AzureKeyVaultKeyId"];
+        var certPath = configuration["DataProtection:CertPath"];
+
+        if (!string.IsNullOrEmpty(azureKeyId))
+        {
+            // Azure Key Vault wraps the key ring with an Azure-managed key.
+            // Set DataProtection__AzureKeyVaultKeyId to the full key identifier URI
+            // (e.g. https://my-vault.vault.azure.net/keys/dp-key).
+            // Authentication uses DefaultAzureCredential — works with managed identity,
+            // environment variables, or the Azure CLI in dev.
+            builder.ProtectKeysWithAzureKeyVault(new Uri(azureKeyId), new DefaultAzureCredential());
+        }
+        else if (!string.IsNullOrEmpty(certPath) && File.Exists(certPath))
+        {
+            // Self-hosted: mount a PFX as a Docker secret and set DataProtection__CertPath
+            // to the secret path (e.g. /run/secrets/dp_cert.pfx). Optionally set
+            // DataProtection__CertPassword if the PFX is password-protected.
+            var password = configuration["DataProtection:CertPassword"];
+            var cert = X509CertificateLoader.LoadPkcs12FromFile(certPath, password, X509KeyStorageFlags.EphemeralKeySet);
+            builder.ProtectKeysWithCertificate(cert);
+        }
+
         return services;
     }
 
