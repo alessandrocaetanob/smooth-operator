@@ -44,36 +44,46 @@ export class SearchResults {
   private readonly _vaults = signal<Vault[]>([]);
   private readonly _connections = signal<Connection[]>([]);
 
+  private readonly searchableVaults = computed(() => {
+    return this._vaults().map((v) => ({
+      item: v,
+      _searchIndex: (v.name ?? '').toLowerCase(),
+    }));
+  });
+
+  private readonly searchableConnections = computed(() => {
+    return this._connections().map((c) => ({
+      item: c,
+      _searchIndex: [c.name ?? '', c.host?.name ?? '', c.host?.address ?? '', c.protocol ?? '']
+        .join(' ')
+        .toLowerCase(),
+    }));
+  });
+
   readonly vaultMatches = computed<VaultMatch[]>(() => {
     const q = this.query().toLowerCase();
     if (!q) return [];
-    return this._vaults()
-      .filter((v) => v.name?.toLowerCase().includes(q))
-      .map((v) => ({
+    return this.searchableVaults()
+      .filter((v) => v._searchIndex.includes(q))
+      .map(({ item }) => ({
         kind: 'vault' as const,
-        id: v.id,
-        name: v.name,
-        subtitle: this.vaultSubtitle(v),
+        id: item.id,
+        name: item.name,
+        subtitle: this.vaultSubtitle(item),
       }));
   });
 
   readonly connectionMatches = computed<ConnectionMatch[]>(() => {
     const q = this.query().toLowerCase();
     if (!q) return [];
-    return this._connections()
-      .filter(
-        (c) =>
-          c.name?.toLowerCase().includes(q) ||
-          c.host?.name?.toLowerCase().includes(q) ||
-          c.host?.address?.toLowerCase().includes(q) ||
-          c.protocol?.toLowerCase().includes(q),
-      )
-      .map((c) => ({
+    return this.searchableConnections()
+      .filter((c) => c._searchIndex.includes(q))
+      .map(({ item }) => ({
         kind: 'connection' as const,
-        id: c.id,
-        name: c.name,
-        protocol: (c.protocol ?? '').toUpperCase(),
-        subtitle: this.connectionSubtitle(c),
+        id: item.id,
+        name: item.name,
+        protocol: (item.protocol ?? '').toUpperCase(),
+        subtitle: this.connectionSubtitle(item),
       }));
   });
 

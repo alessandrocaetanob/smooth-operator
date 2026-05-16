@@ -72,15 +72,21 @@ export class Credentials implements OnInit {
   readonly availableSecrets = signal<string[]>([]);
   readonly copiedKeyIds = signal(new Set<string>());
 
+  private readonly searchableCredentials = computed(() => {
+    return this.credentials().map((c) => ({
+      item: c,
+      _searchIndex: [c.name ?? '', c.username ?? '', c.credentialType ?? '']
+        .join(' ')
+        .toLowerCase(),
+    }));
+  });
+
   readonly filteredCredentials = computed(() => {
     const q = this.searchQuery().toLowerCase().trim();
     if (!q) return this.credentials();
-    return this.credentials().filter(
-      (c) =>
-        c.name.toLowerCase().includes(q) ||
-        c.username.toLowerCase().includes(q) ||
-        c.credentialType.toLowerCase().includes(q),
-    );
+    return this.searchableCredentials()
+      .filter((c) => c._searchIndex.includes(q))
+      .map(({ item }) => item);
   });
 
   readonly isFiltered = computed(() => this.searchQuery().trim().length > 0);

@@ -40,12 +40,19 @@ export class Hosts implements OnInit {
   readonly busy = signal(false);
   readonly searchQuery = signal('');
 
+  private readonly searchableHosts = computed(() => {
+    return this.hosts().map((h) => ({
+      item: h,
+      _searchIndex: [h.name ?? '', h.address ?? ''].join(' ').toLowerCase(),
+    }));
+  });
+
   readonly filteredHosts = computed(() => {
     const q = this.searchQuery().toLowerCase().trim();
     if (!q) return this.hosts();
-    return this.hosts().filter(
-      (h) => h.name.toLowerCase().includes(q) || h.address.toLowerCase().includes(q),
-    );
+    return this.searchableHosts()
+      .filter((h) => h._searchIndex.includes(q))
+      .map(({ item }) => item);
   });
 
   readonly isFiltered = computed(() => this.searchQuery().trim().length > 0);
