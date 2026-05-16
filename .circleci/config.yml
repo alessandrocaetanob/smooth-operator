@@ -4,7 +4,6 @@ orbs:
   node: circleci/node@7.2.1
   codecov: codecov/codecov@5.4.3
   snyk: snyk/snyk@2.3.0
-  sonarcloud: sonarsource/sonarcloud@4.0.0
 
 executors:
   dotnet:
@@ -96,7 +95,6 @@ jobs:
       - codecov/upload:
           files: frontend/coverage/frontend/clover.xml
           flags: frontend
-          skip_validation: true
       - persist_to_workspace:
           root: .
           paths:
@@ -135,14 +133,44 @@ jobs:
           command: snyk test --file=smooth-operator.sln --severity-threshold=high
 
   sonarcloud-scan:
-    docker:
-      - image: cimg/openjdk:21.0
+    executor: dotnet
     steps:
       - checkout
       - attach_workspace:
           at: .
-      - sonarcloud/scan:
-          sonar_token_variable_name: SONAR_TOKEN
+      - restore_cache:
+          keys:
+            - dotnet-nuget-v1-{{ checksum "smooth-operator.sln" }}
+            - dotnet-nuget-v1-
+      - run:
+          name: Install Java runtime (required by SonarScanner for .NET)
+          command: |
+            apt-get update -qq
+            apt-get install -y --no-install-recommends openjdk-17-jre-headless
+      - run:
+          name: Install SonarScanner for .NET
+          command: |
+            dotnet tool install --global dotnet-sonarscanner
+            echo 'export PATH="$PATH:/root/.dotnet/tools"' >> "$BASH_ENV"
+      - run:
+          name: Begin SonarCloud analysis
+          command: |
+            dotnet sonarscanner begin \
+              /k:"alessandrocaetanob_smooth-operator" \
+              /o:"alessandrocaetanob" \
+              /d:sonar.token="$SONAR_TOKEN" \
+              /d:sonar.host.url="$SONAR_HOST_URL" \
+              /d:sonar.cs.opencover.reportsPaths="TestResults/**/coverage.opencover.xml" \
+              /d:sonar.javascript.lcov.reportPaths="frontend/coverage/frontend/lcov.info" \
+              /d:sonar.typescript.lcov.reportPaths="frontend/coverage/frontend/lcov.info" \
+              /d:sonar.typescript.tsconfigPath="frontend/tsconfig.app.json" \
+              /d:sonar.exclusions="**/node_modules/**,**/dist/**,**/bin/**,**/obj/**,**/*.spec.ts,**/coverage/**,**/.angular/**,**/environments/**"
+      - run:
+          name: Build solution
+          command: dotnet build smooth-operator.sln --configuration Release
+      - run:
+          name: End SonarCloud analysis
+          command: dotnet sonarscanner end /d:sonar.token="$SONAR_TOKEN"
 
 workflows:
   ci:
