@@ -6,7 +6,9 @@ namespace SmoothOperator.Api.Extensions
 {
     internal static class MigrationExtensions
     {
-        internal static async Task ApplyPendingMigrationsAsync(this WebApplication app)
+        internal static async Task ApplyPendingMigrationsAsync(
+            this WebApplication app,
+            Func<int, TimeSpan>? retryDelay = null)
         {
             using var scope = app.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -42,7 +44,7 @@ namespace SmoothOperator.Api.Extensions
                 }
                 catch (Exception ex) when (attempt < maxRetries)
                 {
-                    var delay = TimeSpan.FromSeconds(Math.Pow(2, attempt));
+                    var delay = retryDelay?.Invoke(attempt) ?? TimeSpan.FromSeconds(Math.Pow(2, attempt));
                     logger.LogWarning(ex,
                         "Migration attempt {Attempt}/{MaxRetries} failed. Retrying in {Delay}s...",
                         attempt, maxRetries, delay.TotalSeconds);

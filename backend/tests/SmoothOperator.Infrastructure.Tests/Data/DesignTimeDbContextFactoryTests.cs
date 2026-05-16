@@ -20,6 +20,8 @@ namespace SmoothOperator.Infrastructure.Tests.Data
             connectionString.Should().Contain("Database=smoothoperator");
             connectionString.Should().Contain("Username=postgres");
             connectionString.Should().Contain("Password=postgres");
+            connectionString.Should().Contain("MaxPoolSize=100");
+            connectionString.Should().NotContain("Multiplexing");
         }
     }
 }
