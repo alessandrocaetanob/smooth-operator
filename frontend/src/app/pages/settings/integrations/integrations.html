@@ -81,7 +81,12 @@
                 <p class="text-xs text-on-surface-variant">{{ ep.label }}</p>
                 <p class="font-mono text-sm text-on-surface mt-0.5">{{ ep.value }}</p>
               </div>
-              <button (click)="copy(ep.value, ep.label)" class="icon-btn shrink-0" title="Copy">
+              <button
+                (click)="copy(ep.value, ep.label)"
+                class="icon-btn shrink-0"
+                title="Copy"
+                aria-label="Copy"
+              >
                 <span class="material-symbols-outlined text-base">
                   {{ copiedKey() === ep.label ? 'check' : 'content_copy' }}
                 </span>
@@ -118,6 +123,7 @@
             (click)="copy(prometheusConfig.code, 'prom-config')"
             class="icon-btn ml-auto"
             title="Copy"
+            aria-label="Copy"
           >
             <span class="material-symbols-outlined text-base">
               {{ copiedKey() === 'prom-config' ? 'check' : 'content_copy' }}
@@ -156,7 +162,12 @@
                 <p class="text-xs text-on-surface-variant">{{ ep.label }}</p>
                 <p class="font-mono text-sm text-on-surface mt-0.5">{{ ep.value }}</p>
               </div>
-              <button (click)="copy(ep.value, ep.label)" class="icon-btn shrink-0" title="Copy">
+              <button
+                (click)="copy(ep.value, ep.label)"
+                class="icon-btn shrink-0"
+                title="Copy"
+                aria-label="Copy"
+              >
                 <span class="material-symbols-outlined text-base">
                   {{ copiedKey() === ep.label ? 'check' : 'content_copy' }}
                 </span>
@@ -175,6 +186,7 @@
             (click)="copy(otlpConfig.code, 'otlp-config')"
             class="icon-btn ml-auto"
             title="Copy"
+            aria-label="Copy"
           >
             <span class="material-symbols-outlined text-base">
               {{ copiedKey() === 'otlp-config' ? 'check' : 'content_copy' }}
@@ -229,7 +241,12 @@
                 <p class="text-xs text-on-surface-variant">{{ ep.label }}</p>
                 <p class="font-mono text-sm text-on-surface mt-0.5">{{ ep.value }}</p>
               </div>
-              <button (click)="copy(ep.value, ep.label)" class="icon-btn shrink-0" title="Copy">
+              <button
+                (click)="copy(ep.value, ep.label)"
+                class="icon-btn shrink-0"
+                title="Copy"
+                aria-label="Copy"
+              >
                 <span class="material-symbols-outlined text-base">
                   {{ copiedKey() === ep.label ? 'check' : 'content_copy' }}
                 </span>
@@ -269,7 +286,12 @@
               <div>
                 <div class="flex items-center justify-between mb-1.5">
                   <p class="text-xs font-medium text-on-surface-variant">{{ q.label }}</p>
-                  <button (click)="copy(q.code, q.label)" class="icon-btn" title="Copy">
+                  <button
+                    (click)="copy(q.code, q.label)"
+                    class="icon-btn"
+                    title="Copy"
+                    aria-label="Copy"
+                  >
                     <span class="material-symbols-outlined text-base">
                       {{ copiedKey() === q.label ? 'check' : 'content_copy' }}
                     </span>
