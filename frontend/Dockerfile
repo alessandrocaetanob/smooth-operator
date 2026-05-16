@@ -15,11 +15,10 @@ COPY package*.json ./
 # Upgrade npm to match the version declared in packageManager field
 RUN npm install -g npm@11.11.0 --ignore-scripts
 
-# Use npm install instead of npm ci: @tailwindcss/postcss bundles @tailwindcss/oxide-wasm32-wasi
-# whose bundled WASM dependencies resolve differently on Linux vs Windows, causing lock file
-# sync failures with npm ci. npm install resolves platform-appropriate packages correctly.
-# The BuildKit cache mount keeps the npm cache warm across builds.
-RUN --mount=type=cache,target=/root/.npm npm install --ignore-scripts
+# npm ci for a deterministic, lockfile-locked install (the lock file records the
+# platform-specific @tailwindcss/oxide binaries for all platforms, so Linux resolves
+# correctly). The BuildKit cache mount keeps the npm cache warm across builds.
+RUN --mount=type=cache,target=/root/.npm npm ci --ignore-scripts
 
 # Copy the rest of the application
 COPY . .
