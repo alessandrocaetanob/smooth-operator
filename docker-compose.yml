@@ -14,6 +14,11 @@ services:
       - /tmp
     networks:
       - smooth-operator-net
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 128M
 
   backend:
     build:
@@ -29,7 +34,7 @@ services:
       postgres:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
       guacd:
         condition: service_started
     restart: unless-stopped
@@ -39,6 +44,13 @@ services:
       - /tmp
     networks:
       - smooth-operator-net
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 1024M
+        reservations:
+          memory: 256M
 
   postgres:
     image: postgres:18.4-alpine
@@ -46,6 +58,35 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=smoothoperator
+    # Performance tuning passed as -c flags rather than a mounted config_file:
+    # an external config_file would break hba_file/ident_file path resolution
+    # in the official image. Sized for the 1 GiB memory limit below.
+    command:
+      - "postgres"
+      - "-c"
+      - "shared_buffers=256MB"
+      - "-c"
+      - "effective_cache_size=768MB"
+      - "-c"
+      - "work_mem=8MB"
+      - "-c"
+      - "maintenance_work_mem=64MB"
+      - "-c"
+      - "max_connections=120"
+      - "-c"
+      - "random_page_cost=1.1"
+      - "-c"
+      - "effective_io_concurrency=200"
+      - "-c"
+      - "wal_compression=on"
+      - "-c"
+      - "checkpoint_completion_target=0.9"
+      - "-c"
+      - "shared_preload_libraries=pg_stat_statements"
+      - "-c"
+      - "pg_stat_statements.track=top"
+      - "-c"
+      - "track_io_timing=on"
     volumes:
       - postgres_data:/var/lib/postgresql
     restart: unless-stopped
@@ -57,30 +98,62 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 1024M
+        reservations:
+          memory: 256M
 
   redis:
     image: redis:7-alpine
+    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
     volumes:
       - redis_data:/data
+      - ./observability/redis.conf:/usr/local/etc/redis/redis.conf:ro
     restart: unless-stopped
     networks:
       - smooth-operator-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 256M
+        reservations:
+          memory: 64M
 
   guacd:
     image: guacamole/guacd:1.6.0
     restart: unless-stopped
     networks:
       - smooth-operator-net
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 256M
 
   docs:
     build:
       context: ./docs
       dockerfile: Dockerfile
     ports:
-      - "3000:80"
+      - "3000:8080"
     restart: unless-stopped
     networks:
       - smooth-operator-net
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 64M
 
   # ── Observability stack ──────────────────────────────────────────────────────
   # Start with: docker compose --profile observability up -d
@@ -96,6 +169,11 @@ services:
     restart: unless-stopped
     networks:
       - smooth-operator-net
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
 
   prometheus:
     image: prom/prometheus:v3.4.0
@@ -115,6 +193,11 @@ services:
     restart: unless-stopped
     networks:
       - smooth-operator-net
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
 
   tempo:
     image: grafana/tempo:2.8.0
@@ -126,6 +209,11 @@ services:
     restart: unless-stopped
     networks:
       - smooth-operator-net
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
 
   # ── Code Quality ─────────────────────────────────────────────────────────────
   # Start with: docker compose --profile code-quality up -d
@@ -143,6 +231,11 @@ services:
     restart: unless-stopped
     networks:
       - smooth-operator-net
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2048M
 
 volumes:
   postgres_data:

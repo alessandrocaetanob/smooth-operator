@@ -1,4 +1,11 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  inject,
+  signal,
+  computed,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HostsService, AppHost, CreateHostPayload } from '../../services/hosts.service';
 import { AuthService } from '../../services/auth.service';
@@ -22,6 +29,7 @@ const EMPTY_FORM: FormState = {
 @Component({
   selector: 'app-hosts',
   imports: [FormsModule, Drawer, Mascot],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './hosts.html',
   styleUrl: './hosts.css',
 })

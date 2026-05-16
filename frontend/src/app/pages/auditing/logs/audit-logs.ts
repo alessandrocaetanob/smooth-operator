@@ -1,5 +1,14 @@
 import { DatePipe, SlicePipe } from '@angular/common';
-import { Component, ElementRef, OnInit, ViewChild, effect, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  OnInit,
+  ViewChild,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   AuditLogEntry,
@@ -10,6 +19,7 @@ import {
 @Component({
   selector: 'app-audit-logs',
   imports: [FormsModule, DatePipe, SlicePipe],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './audit-logs.html',
   styleUrl: './audit-logs.css',
 })

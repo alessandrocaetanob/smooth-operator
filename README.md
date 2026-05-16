@@ -388,6 +388,7 @@ See `.env.example` for a full template with generation hints.
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `ASPNETCORE_ENVIRONMENT` | `Production` | `Development` enables Swagger UI and detailed errors |
+| `Cache__UseRedis` | `false` | Back the ASP.NET output cache with Redis instead of in-memory — recommended when running multiple backend replicas |
 | `Jwt__Issuer` | `smooth-operator` | JWT issuer claim |
 | `Jwt__Audience` | `smooth-operator-api` | JWT audience claim |
 | `Jwt__AccessTokenExpirationMinutes` | `60` | Access token lifetime |
@@ -540,6 +541,32 @@ npm test -- --run     # single-run (CI)
 4. **Output cache invalidation** — write endpoints evict related cache tags (`EvictByTagAsync`) so subsequent GETs in tests receive fresh data.
 
 Workflow details: [.github/workflows/README.md](.github/workflows/README.md)
+
+---
+
+## Performance
+
+Performance work spans the frontend bundle, the API, and the container infrastructure.
+
+### Frontend
+- **esbuild application builder** with fully lazy-loaded feature routes and `OnPush` change detection on list-heavy pages.
+- **Precompressed static assets** — JS/CSS/HTML are compressed to `.br` and `.gz` at build time and served via nginx `brotli_static` / `gzip_static` (no per-request compression). The `ngx_brotli` module is compiled in a dedicated Docker build stage.
+- **Bundle analysis** — `npm run analyze` renders a local source-map treemap; CI uploads bundle stats to CodeCov for per-PR size tracking.
+
+### Backend
+- **EF Core `DbContextPool`** + Npgsql connection pooling; `AsNoTracking` reads and `SplitQuery`.
+- **Response compression** (Brotli + Gzip) and an **output cache** (`ShortCache` policy) — in-memory by default, Redis-backed via `Cache__UseRedis`.
+- **Trigram search** — `pg_trgm` expression GIN indexes make case-insensitive audit-log/user substring filters index-backed instead of sequential scans.
+- **MediatR metrics** — every command/query records a Prometheus duration histogram (`smooth_operator_mediatr_request_duration_seconds`).
+
+### Infrastructure
+- **Tuned PostgreSQL** (`shared_buffers`, planner costs, `wal_compression`, `pg_stat_statements`) and **Redis** (`maxmemory` + `allkeys-lru`, persistence off) via `docker-compose.yml`.
+- **Docker** — multi-stage builds with BuildKit cache mounts, Alpine runtime images, and per-service resource limits.
+- **nginx** — HTTP/2, an upstream keepalive pool for the API proxy, and tuned worker settings.
+
+### Measurement tooling
+- **k6 load test** — `k6 run load-tests/smoke.js` exercises the auth + connections hot paths (see [load-tests/README.md](load-tests/README.md)).
+- **BenchmarkDotNet** — micro-benchmarks under `backend/benchmarks/SmoothOperator.Benchmarks` (run with `dotnet run -c Release`).
 
 ---
 

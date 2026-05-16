@@ -23,7 +23,7 @@ builder.Services.AddApplicationDataProtection(builder.Configuration);
 builder.Services.AddApplicationCors(builder.Configuration, builder.Environment);
 builder.Services.AddControllers();
 builder.Services.AddApplicationResponseCompression();
-builder.Services.AddApplicationOutputCache();
+builder.Services.AddApplicationOutputCache(builder.Configuration);
 builder.Services.AddApplicationLayer();
 builder.AddSmoothOperatorOpenTelemetry();
 
