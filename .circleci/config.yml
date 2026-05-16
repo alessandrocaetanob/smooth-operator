@@ -55,7 +55,7 @@ jobs:
               --collect:"XPlat Code Coverage" \
               --results-directory ./TestResults
       - codecov/upload:
-          file: ./TestResults/**/coverage.cobertura.xml
+          files:./TestResults/**/coverage.cobertura.xml
           flags: backend
       - persist_to_workspace:
           root: .
@@ -93,7 +93,7 @@ jobs:
           environment:
             CI: "true"
       - codecov/upload:
-          file: frontend/coverage/frontend/clover.xml
+          files:frontend/coverage/frontend/clover.xml
           flags: frontend
       - persist_to_workspace:
           root: .
