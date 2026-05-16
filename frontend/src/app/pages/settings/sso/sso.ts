@@ -1,4 +1,5 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { switchMap } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { JsonPipe } from '@angular/common';
 import {
@@ -126,23 +127,24 @@ export class SsoSettings implements OnInit {
         ? this.svc.upsertOidc(this.buildOidc())
         : this.svc.upsertSaml(this.buildSaml());
 
-    obs.subscribe({
-      next: () => {
-        this.message.set('SSO configuration saved.');
-        this.svc.load().subscribe({
-          next: (p) => {
-            this.busy.set(false);
-            this.applyToForm(p);
-            this.auth.loadSetupStatus().subscribe();
-          },
-          error: () => this.busy.set(false),
-        });
-      },
-      error: (err) => {
-        this.busy.set(false);
-        this.error.set(this.toMessage(err) || 'Failed to save SSO settings.');
-      },
-    });
+    obs
+      .pipe(
+        switchMap(() => {
+          this.message.set('SSO configuration saved.');
+          return this.svc.load();
+        }),
+        switchMap((p) => {
+          this.applyToForm(p);
+          return this.auth.loadSetupStatus();
+        }),
+      )
+      .subscribe({
+        next: () => this.busy.set(false),
+        error: (err) => {
+          this.busy.set(false);
+          this.error.set(this.toMessage(err) || 'Failed to save SSO settings.');
+        },
+      });
   }
 
   private buildOidc(): UpsertOidcRequest {

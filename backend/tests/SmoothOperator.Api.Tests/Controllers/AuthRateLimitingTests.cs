@@ -113,36 +113,40 @@ public class AuthRateLimitingTests
         Assert.Equal(HttpStatusCode.TooManyRequests, throttled.StatusCode);
     }
 
+    /// <summary>
+    /// setup-status is intentionally exempt from the "auth" rate-limit policy
+    /// because the Angular app initializer calls it on every page load.
+    /// Applying the policy here would exhaust the budget before POST /api/auth/login.
+    /// </summary>
     [Fact]
-    public async Task SetupStatus_Returns429_AfterFiveRequestsInWindow()
+    public async Task SetupStatus_IsNotRateLimited_AndRespondsAfterManyRequests()
     {
         await using var factory = new TestWebApplicationFactory();
         var client = factory.CreateClient();
 
-        for (var i = 0; i < 5; i++)
+        for (var i = 0; i < 8; i++)
         {
             var response = await client.GetAsync("/api/auth/setup-status");
             Assert.NotEqual(HttpStatusCode.TooManyRequests, response.StatusCode);
         }
-
-        var throttled = await client.GetAsync("/api/auth/setup-status");
-        Assert.Equal(HttpStatusCode.TooManyRequests, throttled.StatusCode);
     }
 
+    /// <summary>
+    /// providers is intentionally exempt from the "auth" rate-limit policy
+    /// for the same reason as setup-status: it is a public read-only endpoint
+    /// called by the Angular initializer on every full page load.
+    /// </summary>
     [Fact]
-    public async Task Providers_Returns429_AfterFiveRequestsInWindow()
+    public async Task Providers_IsNotRateLimited_AndRespondsAfterManyRequests()
     {
         await using var factory = new TestWebApplicationFactory();
         var client = factory.CreateClient();
 
-        for (var i = 0; i < 5; i++)
+        for (var i = 0; i < 8; i++)
         {
             var response = await client.GetAsync("/api/auth/providers");
             Assert.NotEqual(HttpStatusCode.TooManyRequests, response.StatusCode);
         }
-
-        var throttled = await client.GetAsync("/api/auth/providers");
-        Assert.Equal(HttpStatusCode.TooManyRequests, throttled.StatusCode);
     }
 
     [Fact]

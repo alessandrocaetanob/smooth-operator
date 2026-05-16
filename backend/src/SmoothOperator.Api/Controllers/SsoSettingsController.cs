@@ -16,8 +16,13 @@ namespace SmoothOperator.Api.Controllers
     public class SsoSettingsController : ControllerBase
     {
         private readonly IMediator _mediator;
+        private readonly IOutputCacheStore _cacheStore;
 
-        public SsoSettingsController(IMediator mediator) => _mediator = mediator;
+        public SsoSettingsController(IMediator mediator, IOutputCacheStore cacheStore)
+        {
+            _mediator = mediator;
+            _cacheStore = cacheStore;
+        }
 
         [HttpGet]
         [OutputCache(PolicyName = "ShortCache", Tags = ["sso-settings"])]
@@ -30,15 +35,14 @@ namespace SmoothOperator.Api.Controllers
         [HttpPut("oidc")]
         public async Task<IActionResult> UpsertOidc(
             [FromBody] UpsertOidcRequest req,
-            [FromServices] IOutputCacheStore cacheStore,
             CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
             try
             {
-                await _mediator.Send(new UpsertOidcCommand(req));
-                await cacheStore.EvictByTagAsync("sso-settings", cancellationToken);
+                await _mediator.Send(new UpsertOidcCommand(req), cancellationToken);
+                await _cacheStore.EvictByTagAsync("sso-settings", cancellationToken);
                 return NoContent();
             }
             catch (BadRequestException ex)
@@ -50,15 +54,14 @@ namespace SmoothOperator.Api.Controllers
         [HttpPut("saml")]
         public async Task<IActionResult> UpsertSaml(
             [FromBody] UpsertSamlRequest req,
-            [FromServices] IOutputCacheStore cacheStore,
             CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
             try
             {
-                await _mediator.Send(new UpsertSamlCommand(req));
-                await cacheStore.EvictByTagAsync("sso-settings", cancellationToken);
+                await _mediator.Send(new UpsertSamlCommand(req), cancellationToken);
+                await _cacheStore.EvictByTagAsync("sso-settings", cancellationToken);
                 return NoContent();
             }
             catch (BadRequestException ex)
@@ -68,14 +71,12 @@ namespace SmoothOperator.Api.Controllers
         }
 
         [HttpDelete]
-        public async Task<IActionResult> Delete(
-            [FromServices] IOutputCacheStore cacheStore,
-            CancellationToken cancellationToken)
+        public async Task<IActionResult> Delete(CancellationToken cancellationToken)
         {
             try
             {
-                await _mediator.Send(new DeleteSsoCommand());
-                await cacheStore.EvictByTagAsync("sso-settings", cancellationToken);
+                await _mediator.Send(new DeleteSsoCommand(), cancellationToken);
+                await _cacheStore.EvictByTagAsync("sso-settings", cancellationToken);
                 return NoContent();
             }
             catch (NotFoundException)
@@ -87,13 +88,12 @@ namespace SmoothOperator.Api.Controllers
         [HttpPost("toggle")]
         public async Task<IActionResult> Toggle(
             [FromBody] SetSsoEnabledRequest req,
-            [FromServices] IOutputCacheStore cacheStore,
             CancellationToken cancellationToken)
         {
             try
             {
-                await _mediator.Send(new SetSsoEnabledCommand(req.Enabled));
-                await cacheStore.EvictByTagAsync("sso-settings", cancellationToken);
+                await _mediator.Send(new SetSsoEnabledCommand(req.Enabled), cancellationToken);
+                await _cacheStore.EvictByTagAsync("sso-settings", cancellationToken);
                 return NoContent();
             }
             catch (NotFoundException ex)
