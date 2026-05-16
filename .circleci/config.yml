@@ -57,12 +57,11 @@ jobs:
       - codecov/upload:
           files: ./TestResults/**/coverage.cobertura.xml
           flags: backend
+          skip_validation: true
       - persist_to_workspace:
           root: .
           paths:
             - TestResults
-      - store_test_results:
-          path: ./TestResults
       - store_artifacts:
           path: ./TestResults
           destination: backend-coverage
@@ -95,6 +94,7 @@ jobs:
       - codecov/upload:
           files: frontend/coverage/frontend/clover.xml
           flags: frontend
+          skip_validation: true
       - persist_to_workspace:
           root: .
           paths:
