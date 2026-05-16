@@ -15,6 +15,7 @@ namespace SmoothOperator.Api.Controllers
     [Authorize(Roles = AppRoles.OwnerOrAdmin)]
     public class SsoSettingsController : ControllerBase
     {
+        private const string CacheTag = "sso-settings";
         private readonly IMediator _mediator;
         private readonly IOutputCacheStore _cacheStore;
 
@@ -25,7 +26,7 @@ namespace SmoothOperator.Api.Controllers
         }
 
         [HttpGet]
-        [OutputCache(PolicyName = "ShortCache", Tags = ["sso-settings"])]
+        [OutputCache(PolicyName = "ShortCache", Tags = [CacheTag])]
         public async Task<ActionResult<SsoProviderDto>> Get()
         {
             var result = await _mediator.Send(new GetSsoSettingsQuery());
@@ -42,7 +43,7 @@ namespace SmoothOperator.Api.Controllers
             try
             {
                 await _mediator.Send(new UpsertOidcCommand(req), cancellationToken);
-                await _cacheStore.EvictByTagAsync("sso-settings", cancellationToken);
+                await _cacheStore.EvictByTagAsync(CacheTag, cancellationToken);
                 return NoContent();
             }
             catch (BadRequestException ex)
@@ -61,7 +62,7 @@ namespace SmoothOperator.Api.Controllers
             try
             {
                 await _mediator.Send(new UpsertSamlCommand(req), cancellationToken);
-                await _cacheStore.EvictByTagAsync("sso-settings", cancellationToken);
+                await _cacheStore.EvictByTagAsync(CacheTag, cancellationToken);
                 return NoContent();
             }
             catch (BadRequestException ex)
@@ -76,7 +77,7 @@ namespace SmoothOperator.Api.Controllers
             try
             {
                 await _mediator.Send(new DeleteSsoCommand(), cancellationToken);
-                await _cacheStore.EvictByTagAsync("sso-settings", cancellationToken);
+                await _cacheStore.EvictByTagAsync(CacheTag, cancellationToken);
                 return NoContent();
             }
             catch (NotFoundException)
@@ -93,7 +94,7 @@ namespace SmoothOperator.Api.Controllers
             try
             {
                 await _mediator.Send(new SetSsoEnabledCommand(req.Enabled), cancellationToken);
-                await _cacheStore.EvictByTagAsync("sso-settings", cancellationToken);
+                await _cacheStore.EvictByTagAsync(CacheTag, cancellationToken);
                 return NoContent();
             }
             catch (NotFoundException ex)
