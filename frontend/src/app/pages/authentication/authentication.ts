@@ -1,4 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { Mascot, MascotState } from '../../shared/mascot/mascot';
@@ -79,7 +80,11 @@ export class Authentication {
       },
       error: (err) => {
         this.submitting.set(false);
-        this.errorMessage.set(err?.error?.message ?? 'Sign-in failed.');
+        const msg =
+          err instanceof HttpErrorResponse && err.status === 429
+            ? 'Too many sign-in attempts. Please wait a moment and try again.'
+            : (err?.error?.message ?? 'Sign-in failed.');
+        this.errorMessage.set(msg);
       },
     });
   }
