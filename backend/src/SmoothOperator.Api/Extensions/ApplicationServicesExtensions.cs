@@ -19,7 +19,7 @@ public static class ApplicationServicesExtensions
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen();
 
-        services.AddDbContext<AppDbContext>(options =>
+        services.AddDbContextPool<AppDbContext>(options =>
             options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
 
         // Redis — registered as singleton IConnectionMultiplexer so GuacamoleProxyService

@@ -63,3 +63,12 @@
 ## 2026-05-16 - Safe Pre-computed Search Indexing
 **Learning:** Using the spread operator (`...u`) to attach a `_searchIndex` to an object inside a `computed` signal creates shallow copies. This breaks object identity references across Angular change detection, leading to potential bugs with UI states like row selection or tracking, and runs the risk of sending polluted models (containing the internal `_searchIndex` property) back to the backend.
 **Action:** When pre-computing search strings for object arrays, use wrapper objects instead of cloning the originals (e.g., `this.users().map(u => ({ item: u, _searchIndex: '...' }))`). During filtering, extract the reference (`wrapper.item`) to safely return the unmodified models while still benefiting from O(1) text search lookups.
+## 2026-05-16 - PostgreSQL 18.4 Upgrade and Extensions Review
+**Learning:** PostgreSQL 18.4 is the new standard. When reviewing PostgreSQL extensions for performance (like `pgvector` or Table Partitioning):
+- Vector search (`pgvector`) requires `Npgsql.EntityFrameworkCore.PostgreSQL.Vector`, but our domain models (e.g., `AuditLogs`) currently lack unstructured data that justifies similarity searches.
+- For large time-series data (like `AuditLogs`), table partitioning is natively supported in PostgreSQL but not declaratively supported in EF Core; using raw SQL or third-party extensions is required if partitioning becomes necessary.
+**Action:** Upgraded the default Docker image to `postgres:18.4-alpine` and documented these extension limitations for future evaluation.
+
+## 2026-05-16 - EF Core DbContext Pooling and Npgsql Multiplexing
+**Learning:** .NET and Npgsql provide scalable integrations to optimize database performance. Standard `.AddDbContext` creates a new instance per request, leading to memory overhead. Npgsql connections can also bottleneck under high concurrency.
+**Action:** Changed `.AddDbContext` to `.AddDbContextPool` to enable DbContext instance reuse. Updated connection strings to include `Multiplexing=true` (an experimental, high-performance feature in Npgsql that packs multiple queries onto a single physical connection) and increased `Max Pool Size=100`.

@@ -38,7 +38,7 @@ services:
       - smooth-operator-net
 
   postgres:
-    image: postgres:15-alpine
+    image: postgres:18.4-alpine
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
