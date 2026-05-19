@@ -61,6 +61,10 @@ RUN ./configure --with-compat --add-dynamic-module=/build/ngx_brotli \
 # Stage 3: Serve the application with nginx-unprivileged (runs as non-root on port 8080)
 FROM nginxinc/nginx-unprivileged:${NGINX_VERSION}-alpine AS final
 
+# Re-declare inside the stage: the global ARG is only in scope for FROM lines,
+# so the COPY paths below need this to resolve ${NGINX_VERSION}.
+ARG NGINX_VERSION
+
 # Switch to root temporarily for file setup
 USER root
 

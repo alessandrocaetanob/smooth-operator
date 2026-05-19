@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Security.Claims;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
@@ -47,7 +46,7 @@ namespace SmoothOperator.Application.Features.Connections.Queries
                 _ => 3389
             };
 
-            var settings = ParseConnectionSettings(connection.Settings);
+            var settings = ConnectionSettingsParser.Parse(connection.Settings);
             var port = int.TryParse(settings.GetValueOrDefault("port"), out var p) ? p : defaultPort;
 
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
@@ -64,30 +63,6 @@ namespace SmoothOperator.Application.Features.Connections.Queries
                 return true;
             }
             catch { return false; }
-        }
-
-        internal static Dictionary<string, string> ParseConnectionSettings(string? settingsJson)
-        {
-            var dict = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            if (string.IsNullOrWhiteSpace(settingsJson)) return dict;
-            try
-            {
-                using var doc = JsonDocument.Parse(settingsJson);
-                if (doc.RootElement.ValueKind != JsonValueKind.Object) return dict;
-                foreach (var prop in doc.RootElement.EnumerateObject())
-                {
-                    dict[prop.Name] = prop.Value.ValueKind switch
-                    {
-                        JsonValueKind.String => prop.Value.GetString() ?? string.Empty,
-                        JsonValueKind.Number => prop.Value.ToString(),
-                        JsonValueKind.True => "true",
-                        JsonValueKind.False => "false",
-                        _ => string.Empty
-                    };
-                }
-            }
-            catch { /* ignore malformed JSON */ }
-            return dict;
         }
     }
 }

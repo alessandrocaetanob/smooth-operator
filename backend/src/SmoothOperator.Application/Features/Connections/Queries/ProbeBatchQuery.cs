@@ -58,7 +58,7 @@ namespace SmoothOperator.Application.Features.Connections.Queries
                     _ => 3389
                 };
 
-                var settings = ProbeConnectionQueryHandler.ParseConnectionSettings(connection.Settings);
+                var settings = ConnectionSettingsParser.Parse(connection.Settings);
                 var port = int.TryParse(settings.GetValueOrDefault("port"), out var p) ? p : defaultPort;
 
                 await semaphore.WaitAsync(cancellationToken);

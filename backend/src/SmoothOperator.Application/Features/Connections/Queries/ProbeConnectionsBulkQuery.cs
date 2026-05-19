@@ -152,7 +152,7 @@ namespace SmoothOperator.Application.Features.Connections.Queries
 
         private static int ResolvePort(ConnectionProbeInfo conn)
         {
-            var settings = ProbeConnectionQueryHandler.ParseConnectionSettings(conn.Settings);
+            var settings = ConnectionSettingsParser.Parse(conn.Settings);
             var defaultPort = GetDefaultPort(conn.Protocol);
             return int.TryParse(settings.GetValueOrDefault("port"), out var p) ? p : defaultPort;
         }

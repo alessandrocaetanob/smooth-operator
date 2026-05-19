@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using SmoothOperator.Application.Interfaces;
-using SmoothOperator.Domain.Models;
 
 namespace SmoothOperator.Application.Features.AuditLogs.Queries
 {
@@ -27,7 +26,8 @@ namespace SmoothOperator.Application.Features.AuditLogs.Queries
 
         public async Task<byte[]> Handle(ExportAuditLogsCsvQuery request, CancellationToken cancellationToken)
         {
-            var rows = await BuildQuery(request.User, request.Action, request.ResourceType, request.From, request.To, request.Outcome)
+            var rows = await AuditLogQueryFilters
+                .ApplyFilters(_db, request.User, request.Action, request.ResourceType, request.From, request.To, request.Outcome)
                 .OrderByDescending(l => l.Timestamp)
                 .Take(10000)
                 .Select(l => new
@@ -64,38 +64,6 @@ namespace SmoothOperator.Application.Features.AuditLogs.Queries
             }
 
             return Encoding.UTF8.GetBytes(sb.ToString());
-        }
-
-        private IQueryable<AuditLog> BuildQuery(
-            string? user, string? action, string? resourceType,
-            DateTime? from, DateTime? to, string? outcome)
-        {
-            var q = _db.AuditLogs.AsNoTracking().Include(l => l.User).AsQueryable();
-            if (!string.IsNullOrWhiteSpace(user))
-            {
-                var pattern = AuditLogLikePattern.ToLikePattern(user.Trim().ToLower());
-                q = q.Where(l => l.User != null &&
-                    (EF.Functions.Like(l.User.Email.ToLower(), pattern, "\\")
-                        || EF.Functions.Like(l.User.Name.ToLower(), pattern, "\\")));
-            }
-            if (!string.IsNullOrWhiteSpace(action))
-            {
-                var pattern = AuditLogLikePattern.ToLikePattern(action.Trim().ToLower());
-                q = q.Where(l => EF.Functions.Like(l.Action.ToLower(), pattern, "\\"));
-            }
-            if (!string.IsNullOrWhiteSpace(resourceType))
-            {
-                var term = resourceType.Trim();
-                q = q.Where(l => l.ResourceType == term);
-            }
-            if (!string.IsNullOrWhiteSpace(outcome))
-            {
-                var outcomeLower = outcome.Trim().ToLower();
-                q = q.Where(l => l.Outcome == outcomeLower);
-            }
-            if (from.HasValue) q = q.Where(l => l.Timestamp >= from.Value);
-            if (to.HasValue) q = q.Where(l => l.Timestamp <= to.Value);
-            return q;
         }
 
         private static string Csv(string? input)

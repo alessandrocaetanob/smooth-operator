@@ -52,7 +52,7 @@ namespace SmoothOperator.Application.Features.Connections.Queries
             var protocol = (connection.Protocol ?? "rdp").ToLowerInvariant();
             var resolvedFormat = (request.Format ?? protocol).ToLowerInvariant();
 
-            var settings = ProbeConnectionQueryHandler.ParseConnectionSettings(connection.Settings);
+            var settings = ConnectionSettingsParser.Parse(connection.Settings);
             var defaultPort = protocol switch { "ssh" => 22, "vnc" => 5900, "telnet" => 23, _ => 3389 };
             var port = settings.TryGetValue("port", out var pStr) && int.TryParse(pStr, out var pNum) ? pNum : defaultPort;
 
