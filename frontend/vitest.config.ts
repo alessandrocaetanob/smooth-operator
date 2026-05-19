@@ -10,8 +10,8 @@ export default defineConfig({
     pool: 'forks',
     coverage: {
       provider: 'v8',
-      enabled: process.env.CI === 'true',
-      reporter: ['text', 'lcov', 'clover'],
+      enabled: true,
+      reporter: ['text', 'lcov', 'clover', 'json-summary'],
       exclude: [
         'src/main.ts',
         'src/environments/**',
@@ -19,14 +19,16 @@ export default defineConfig({
         '**/*.routes.ts',
         '**/*.config.ts',
         'src/app/app.config.ts',
+        '**/*.html',
+        '**/*.css',
+        '**/*.scss',
       ],
-      // Conservative floor — prevents regression; 70% target is Phase 8 CI gate.
-      thresholds: {
-        statements: 40,
-        branches: 46,
-        functions: 33,
-        lines: 42,
-      },
+      excludeAfterRemap: true,
+      // Thresholds are enforced post-run by scripts/filter-coverage.js after
+      // HTML templates and build artifacts are removed from the coverage map.
+      // (Angular's vitest plugin auto-instruments component templates and
+      // does not honor `exclude` for them, so we cannot enforce thresholds
+      // here against an accurate denominator.)
     },
   },
 });

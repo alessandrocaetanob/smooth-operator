@@ -99,9 +99,9 @@ jobs:
               echo "CODECOV_TOKEN not set — skipping bundle analysis upload."
             fi
       - run:
-          name: Run tests with coverage
+          name: Run tests with coverage (filtered, enforces 80% TS-only thresholds)
           working_directory: frontend
-          command: npm test -- --coverage --watch=false
+          command: npm run test:coverage
           environment:
             CI: "true"
       - codecov/upload:
