@@ -57,44 +57,25 @@ namespace SmoothOperator.Application.Features.UserGroups.Commands
 
         private async Task<bool> NameExistsAsync(string name, Guid? excludeId, CancellationToken ct)
         {
+            var lowerName = name.ToLower();
             var query = _context.UserGroups.AsNoTracking()
-                .Where(g => g.Name.ToLower() == name.ToLower());
+                .Where(g => g.Name.ToLower() == lowerName);
             if (excludeId.HasValue) query = query.Where(g => g.Id != excludeId.Value);
             return await query.AnyAsync(ct);
         }
 
-        internal static async Task<UserGroupDto?> BuildGroupDtoAsync(Guid id, CancellationToken ct, IAppDbContext context)
+        internal static async Task<UserGroupDto?> BuildGroupDtoAsync(Guid id, IAppDbContext context, CancellationToken ct)
         {
             return await context.UserGroups
                 .AsNoTracking()
                 .Include(g => g.Members)
                 .Include(g => g.Owner)
                 .Where(g => g.Id == id)
-                .Select(g => new UserGroupDto
-                {
-                    Id = g.Id,
-                    Name = g.Name,
-                    Description = g.Description,
-                    OwnerUserId = g.OwnerUserId,
-                    OwnerName = g.Owner != null ? g.Owner.Name : null,
-                    CreatedAt = g.CreatedAt,
-                    MemberCount = g.Members.Count,
-                    VaultCount = g.Vaults.Count,
-                    Members = g.Members
-                        .OrderBy(m => m.Name)
-                        .Select(m => new UserGroupMemberDto
-                        {
-                            Id = m.Id,
-                            Name = m.Name,
-                            Email = m.Email,
-                            IsActive = m.IsActive
-                        })
-                        .ToList()
-                })
+                .Select(UserGroupProjection.ToDto)
                 .FirstOrDefaultAsync(ct);
         }
 
         private Task<UserGroupDto?> BuildGroupDtoAsync(Guid id, CancellationToken ct)
-            => BuildGroupDtoAsync(id, ct, _context);
+            => BuildGroupDtoAsync(id, _context, ct);
     }
 }

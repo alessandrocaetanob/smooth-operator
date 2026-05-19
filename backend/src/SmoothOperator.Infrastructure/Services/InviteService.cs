@@ -86,8 +86,7 @@ namespace SmoothOperator.Infrastructure.Services
 
         public static string HashToken(string token)
         {
-            using var sha = SHA256.Create();
-            var hash = sha.ComputeHash(Encoding.UTF8.GetBytes(token));
+            var hash = SHA256.HashData(Encoding.UTF8.GetBytes(token));
             return Convert.ToHexString(hash);
         }
     }

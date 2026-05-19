@@ -21,12 +21,13 @@ namespace SmoothOperator.Application.Behaviors
             RequestHandlerDelegate<TResponse> next,
             CancellationToken cancellationToken)
         {
-            var requestName = typeof(TRequest).Name;
-            _logger.LogInformation("Handling {RequestName}", requestName);
+            if (_logger.IsEnabled(LogLevel.Information))
+                _logger.LogInformation("Handling {RequestName}", typeof(TRequest).Name);
 
             var response = await next(cancellationToken);
 
-            _logger.LogInformation("Handled {RequestName}", requestName);
+            if (_logger.IsEnabled(LogLevel.Information))
+                _logger.LogInformation("Handled {RequestName}", typeof(TRequest).Name);
 
             return response;
         }

@@ -9,6 +9,6 @@ namespace SmoothOperator.Domain.Models
         public string Name { get; set; } = string.Empty; // e.g., "connections.read", "hosts.write"
 
         // Navigation properties
-        public ICollection<Role> Roles { get; set; } = new List<Role>();
+        public ICollection<Role> Roles { get; set; } = [];
     }
 }

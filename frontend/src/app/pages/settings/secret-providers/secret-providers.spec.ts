@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import type { WritableSignal } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
@@ -127,6 +128,24 @@ describe('SecretProviders', () => {
 
     expect(svc.test).toHaveBeenCalledWith('sp1');
     expect(component.testBusy()).toBeNull();
+  });
+
+  it('renders per-provider action buttons labelled with the provider name', () => {
+    fixture.detectChanges();
+
+    // Populate the service-backed list so the @for provider rows render.
+    const listSignal = (svc as unknown as { _list: WritableSignal<SecretProvider[]> })._list;
+    listSignal.set([mockProvider]);
+    fixture.detectChanges();
+
+    const el: HTMLElement = fixture.nativeElement;
+    const testBtn = el.querySelector('button[aria-label="Test connection for My KV"]');
+    const editBtn = el.querySelector('button[aria-label="Edit provider My KV"]');
+    const deleteBtn = el.querySelector('button[aria-label="Delete provider My KV"]');
+
+    expect(testBtn?.getAttribute('title')).toBe('Test connection for My KV');
+    expect(editBtn?.getAttribute('title')).toBe('Edit provider My KV');
+    expect(deleteBtn?.getAttribute('title')).toBe('Delete provider My KV');
   });
 
   it('should set errorMessage when create fails', () => {

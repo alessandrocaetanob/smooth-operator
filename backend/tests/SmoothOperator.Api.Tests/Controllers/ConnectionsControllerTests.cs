@@ -73,6 +73,27 @@ public class ConnectionsControllerTests
     }
 
     [Fact]
+    public async Task ProbeConnectionsBulk_EmptyList_ReturnsEmptyDictionary()
+    {
+        var userId = Guid.NewGuid();
+
+        await using var factory = new TestWebApplicationFactory(db =>
+        {
+            var u = new User { Id = userId, Email = "u@x", Name = "u", IsActive = true, CreatedAt = DateTime.UtcNow };
+            AttachRoles(db, u, AppRoles.User);
+            db.Users.Add(u);
+        });
+
+        var client = AsUser(factory, userId, AppRoles.User);
+        var res = await client.PostAsJsonAsync("/api/connections/probe-bulk", new List<Guid>());
+
+        Assert.Equal(HttpStatusCode.OK, res.StatusCode);
+        var results = await res.Content.ReadFromJsonAsync<Dictionary<Guid, string>>();
+        Assert.NotNull(results);
+        Assert.Empty(results);
+    }
+
+    [Fact]
     public async Task ProbeConnectionsBulk_MissingId_ReturnsNotFound()
     {
         var userId = Guid.NewGuid();

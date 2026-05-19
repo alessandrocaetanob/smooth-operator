@@ -1,5 +1,6 @@
 using SmoothOperator.Application.Interfaces;
 using SmoothOperator.Application.Exceptions;
+using SmoothOperator.Application.Features.Connections;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -279,7 +280,7 @@ namespace SmoothOperator.Infrastructure.Services
             };
             var targetHost = connection.Host!.Address;
             var targetPort = int.TryParse(
-                ParseSettings(connection.Settings).GetValueOrDefault("port"),
+                ConnectionSettingsParser.Parse(connection.Settings).GetValueOrDefault("port"),
                 out var parsedPort) ? parsedPort : defaultPort;
             return (targetHost, targetPort);
         }
@@ -330,7 +331,7 @@ namespace SmoothOperator.Infrastructure.Services
                 {
                     host = connection.Host!.Name,
                     protocol = connection.Protocol,
-                    sessionId = sessionId
+                    sessionId
                 }),
                 IpAddress = ipAddress
             });
@@ -429,14 +430,15 @@ namespace SmoothOperator.Infrastructure.Services
                 paramNames,
                 serverVersion,
                 dbContext,
-                CancellationToken.None,
                 dbUser.Id,
                 ipAddress,
-                sessionSettingsOverrides));
+                sessionSettingsOverrides,
+                CancellationToken.None));
 
-            _logger.LogInformation(
-                "guacd handshake for {Protocol}: server={ServerVersion}, sending {ValueCount} connect values for {NameCount} arg names",
-                protocol, serverVersion, paramValues.Count, paramNames.Count);
+            if (_logger.IsEnabled(LogLevel.Information))
+                _logger.LogInformation(
+                    "guacd handshake for {Protocol}: server={ServerVersion}, sending {ValueCount} connect values for {NameCount} arg names",
+                    protocol, serverVersion, paramValues.Count, paramNames.Count);
 
             await SendHandshakeDefaultsAsync(networkStream, serverVersion);
 
@@ -602,10 +604,10 @@ namespace SmoothOperator.Infrastructure.Services
             IReadOnlyList<string> ParamNames,
             string ServerVersion,
             AppDbContext DbContext,
-            CancellationToken CancellationToken,
             Guid UserId,
             string IpAddress,
-            IDictionary<string, string>? SettingsOverrides);
+            IDictionary<string, string>? SettingsOverrides,
+            CancellationToken CancellationToken);
 
         private async Task<List<string>> ResolveConnectionParametersAsync(ConnectionParametersRequest req)
         {
@@ -631,7 +633,7 @@ namespace SmoothOperator.Infrastructure.Services
 
             // Optional per-connection settings JSON (e.g. {"domain":"corp","ignore-cert":"true",
             // "passphrase":"..."}). `passphrase` falls through to the override path below.
-            Dictionary<string, string> overrides = ParseSettings(req.Connection.Settings);
+            Dictionary<string, string> overrides = ConnectionSettingsParser.Parse(req.Connection.Settings);
             if (req.SettingsOverrides != null)
             {
                 foreach (var pair in req.SettingsOverrides.Where(p => !string.IsNullOrWhiteSpace(p.Key) && !string.IsNullOrWhiteSpace(p.Value)))
@@ -680,34 +682,6 @@ namespace SmoothOperator.Infrastructure.Services
             };
         }
 
-        private static Dictionary<string, string> ParseSettings(string? settingsJson)
-        {
-            var dict = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            if (string.IsNullOrWhiteSpace(settingsJson)) return dict;
-            try
-            {
-                using var doc = JsonDocument.Parse(settingsJson);
-                if (doc.RootElement.ValueKind != JsonValueKind.Object) return dict;
-                foreach (var prop in doc.RootElement.EnumerateObject())
-                {
-                    dict[prop.Name] = prop.Value.ValueKind switch
-                    {
-                        JsonValueKind.String => prop.Value.GetString() ?? string.Empty,
-                        JsonValueKind.Number => prop.Value.ToString(),
-                        JsonValueKind.True => "true",
-                        JsonValueKind.False => "false",
-                        JsonValueKind.Null => string.Empty,
-                        _ => prop.Value.ToString()
-                    };
-                }
-            }
-            catch
-            {
-                // Silently ignore malformed Settings — it's user-controlled JSON.
-            }
-            return dict;
-        }
-
         // ---- Instruction framing & I/O ----------------------------------------------
 
         private static string BuildGuacInstruction(params string[] args)
@@ -729,7 +703,7 @@ namespace SmoothOperator.Infrastructure.Services
         private static async Task SendGuacMessage(NetworkStream stream, string message)
         {
             byte[] data = Encoding.UTF8.GetBytes(message);
-            await stream.WriteAsync(data, 0, data.Length);
+            await stream.WriteAsync(data.AsMemory());
             await stream.FlushAsync();
         }
 
@@ -802,7 +776,7 @@ namespace SmoothOperator.Infrastructure.Services
                     {
                         // Malformed; drain the buffer to recover.
                         consumedChars = _pending.Length;
-                        return new List<string>();
+                        return [];
                     }
 
                     int valStart = dot + 1;
@@ -913,12 +887,12 @@ namespace SmoothOperator.Infrastructure.Services
                 {
                     result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
                     if (result.MessageType == WebSocketMessageType.Close) return;
-                    await ms.WriteAsync(buffer, 0, result.Count);
+                    await ms.WriteAsync(buffer.AsMemory(0, result.Count));
                 } while (!result.EndOfMessage);
 
                 var payload = ms.ToArray();
                 if (payload.Length == 0) continue;
-                await guacdStream.WriteAsync(payload, 0, payload.Length);
+                await guacdStream.WriteAsync(payload.AsMemory());
                 await guacdStream.FlushAsync();
             }
         }

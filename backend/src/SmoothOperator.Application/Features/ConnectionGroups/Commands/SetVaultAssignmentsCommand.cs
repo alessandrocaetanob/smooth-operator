@@ -37,8 +37,8 @@ namespace SmoothOperator.Application.Features.ConnectionGroups.Commands
             if (vault == null)
                 throw new NotFoundException("Vault not found.");
 
-            var requestedUserIds = (request.Dto.UserIds ?? new List<Guid>()).Distinct().ToList();
-            var requestedGroupIds = (request.Dto.GroupIds ?? new List<Guid>()).Distinct().ToList();
+            var requestedUserIds = (request.Dto.UserIds ?? []).Distinct().ToList();
+            var requestedGroupIds = (request.Dto.GroupIds ?? []).Distinct().ToList();
 
             var users = await _context.Users
                 .Where(u => requestedUserIds.Contains(u.Id))

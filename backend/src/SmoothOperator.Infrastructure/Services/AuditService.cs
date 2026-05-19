@@ -55,9 +55,10 @@ namespace SmoothOperator.Infrastructure.Services
 
             _metrics.RecordAuditEvent(action);
 
-            _logger.LogInformation(
-                "Audit {Action} on {ResourceType}/{ResourceId} outcome={Outcome} userId={UserId} ip={IpAddress} correlationId={CorrelationId}",
-                action, resourceType, resourceId, outcome, userId, entry.IpAddress, entry.CorrelationId);
+            if (_logger.IsEnabled(LogLevel.Information))
+                _logger.LogInformation(
+                    "Audit {Action} on {ResourceType}/{ResourceId} outcome={Outcome} userId={UserId} ip={IpAddress} correlationId={CorrelationId}",
+                    action, resourceType, resourceId, outcome, userId, entry.IpAddress, entry.CorrelationId);
         }
     }
 }

@@ -41,15 +41,16 @@ RUN apk add --no-cache brotli gzip \
 FROM nginxinc/nginx-unprivileged:${NGINX_VERSION}-alpine AS brotli-build
 ARG NGINX_VERSION
 USER root
-RUN apk add --no-cache build-base cmake git pcre2-dev zlib-dev openssl-dev linux-headers curl
+RUN apk add --no-cache build-base cmake curl git linux-headers openssl-dev pcre2-dev zlib-dev
 WORKDIR /build
 # --proto "=https" ensures any redirect stays on HTTPS (no clear-text downgrade).
 RUN curl --proto "=https" --tlsv1.2 -fsSL "https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz" | tar xz \
     && git clone --depth 1 --recurse-submodules https://github.com/google/ngx_brotli.git
 # Build the bundled brotli static libraries that ngx_brotli links against;
 # linking them statically keeps the runtime image free of libbrotli.
-RUN cd ngx_brotli/deps/brotli && mkdir out && cd out \
-    && cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DCMAKE_C_FLAGS="-fPIC" .. \
+RUN mkdir -p /build/ngx_brotli/deps/brotli/out
+WORKDIR /build/ngx_brotli/deps/brotli/out
+RUN cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DCMAKE_C_FLAGS="-fPIC" .. \
     && cmake --build . --config Release
 WORKDIR /build/nginx-${NGINX_VERSION}
 # --with-compat lets the resulting dynamic module load into the pre-built
@@ -59,6 +60,10 @@ RUN ./configure --with-compat --add-dynamic-module=/build/ngx_brotli \
 
 # Stage 3: Serve the application with nginx-unprivileged (runs as non-root on port 8080)
 FROM nginxinc/nginx-unprivileged:${NGINX_VERSION}-alpine AS final
+
+# Re-declare inside the stage: the global ARG is only in scope for FROM lines,
+# so the COPY paths below need this to resolve ${NGINX_VERSION}.
+ARG NGINX_VERSION
 
 # Switch to root temporarily for file setup
 USER root

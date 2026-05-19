@@ -8,6 +8,8 @@ namespace SmoothOperator.Infrastructure.Services.SecretProviders
 {
     public sealed class SecretProviderFactory : ISecretProviderFactory
     {
+        private static readonly JsonSerializerOptions _jsonOptions = new() { PropertyNameCaseInsensitive = true };
+
         private readonly IEncryptionService _encryption;
 
         public SecretProviderFactory(IEncryptionService encryption)
@@ -31,8 +33,7 @@ namespace SmoothOperator.Infrastructure.Services.SecretProviders
 
         private static AzureKeyVaultSecretProvider CreateAzureKeyVault(string configJson)
         {
-            var config = JsonSerializer.Deserialize<AzureKeyVaultConfig>(configJson,
-                new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
+            var config = JsonSerializer.Deserialize<AzureKeyVaultConfig>(configJson, _jsonOptions)
                 ?? throw new InvalidOperationException("Failed to deserialize Azure Key Vault configuration.");
 
             return new AzureKeyVaultSecretProvider(config);

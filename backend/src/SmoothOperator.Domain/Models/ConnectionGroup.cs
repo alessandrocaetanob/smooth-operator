@@ -11,9 +11,9 @@ namespace SmoothOperator.Domain.Models
 
         // Navigation properties
         public ConnectionGroup? ParentGroup { get; set; }
-        public ICollection<ConnectionGroup> SubGroups { get; set; } = new List<ConnectionGroup>();
-        public ICollection<Connection> Connections { get; set; } = new List<Connection>();
-        public ICollection<User> Users { get; set; } = new List<User>();
-        public ICollection<UserGroup> Groups { get; set; } = new List<UserGroup>();
+        public ICollection<ConnectionGroup> SubGroups { get; set; } = [];
+        public ICollection<Connection> Connections { get; set; } = [];
+        public ICollection<User> Users { get; set; } = [];
+        public ICollection<UserGroup> Groups { get; set; } = [];
     }
 }

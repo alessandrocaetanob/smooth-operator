@@ -20,10 +20,10 @@ namespace SmoothOperator.Domain.Models
         public ConnectionGroup? ConnectionGroup { get; set; }
 
         // M2M for direct assignments
-        public ICollection<User> Users { get; set; } = new List<User>();
+        public ICollection<User> Users { get; set; } = [];
 
         // Tags for filtering/categorising connections
-        public ICollection<ConnectionTag> Tags { get; set; } = new List<ConnectionTag>();
+        public ICollection<ConnectionTag> Tags { get; set; } = [];
 
         // JSON string to store arbitrary protocol-specific settings (like domain, security mode, ignore-cert, etc.)
         public string Settings { get; set; } = "{}";

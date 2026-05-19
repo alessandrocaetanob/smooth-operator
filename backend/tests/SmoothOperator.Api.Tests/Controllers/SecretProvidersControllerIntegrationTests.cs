@@ -313,7 +313,7 @@ public class SecretProvidersControllerIntegrationTests
         var adminId = Guid.NewGuid();
         var mockProvider = new Mock<ISecretProvider>();
         mockProvider.Setup(p => p.ListSecretNamesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string> { "db-password", "smtp-key" });
+            .ReturnsAsync(["db-password", "smtp-key"]);
         var mockFactory = new Mock<ISecretProviderFactory>();
         mockFactory.Setup(f => f.Create(It.IsAny<SecretProvider>()))
             .Returns(mockProvider.Object);

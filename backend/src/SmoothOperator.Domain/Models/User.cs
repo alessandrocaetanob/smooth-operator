@@ -22,9 +22,9 @@ namespace SmoothOperator.Domain.Models
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         // Navigation properties
-        public ICollection<Role> Roles { get; set; } = new List<Role>();
-        public ICollection<Connection> Connections { get; set; } = new List<Connection>();
-        public ICollection<ConnectionGroup> ConnectionGroups { get; set; } = new List<ConnectionGroup>();
-        public ICollection<UserGroup> Groups { get; set; } = new List<UserGroup>();
+        public ICollection<Role> Roles { get; set; } = [];
+        public ICollection<Connection> Connections { get; set; } = [];
+        public ICollection<ConnectionGroup> ConnectionGroups { get; set; } = [];
+        public ICollection<UserGroup> Groups { get; set; } = [];
     }
 }

@@ -38,7 +38,7 @@ namespace SmoothOperator.Application.Features.Users.Commands
             if (user == null)
                 throw new NotFoundException("User not found.");
 
-            var requestedIds = (request.Dto.VaultIds ?? new List<Guid>())
+            var requestedIds = (request.Dto.VaultIds ?? [])
                 .Where(v => v != Guid.Empty)
                 .Distinct()
                 .ToList();

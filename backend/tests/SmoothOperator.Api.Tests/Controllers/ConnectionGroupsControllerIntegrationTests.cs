@@ -65,7 +65,7 @@ public class ConnectionGroupsControllerIntegrationTests
         Assert.Equal(HttpStatusCode.NoContent, updateRes.StatusCode);
 
         // 3. Set Assignments
-        var assignReq = new VaultAssignmentsDto { UserIds = new List<Guid> { user1Id }, GroupIds = new List<Guid> { userGroupId } };
+        var assignReq = new VaultAssignmentsDto { UserIds = [user1Id], GroupIds = [userGroupId] };
         var assignRes = await client.PutAsJsonAsync($"/api/vaults/{vaultId}/assignments", assignReq);
         Assert.Equal(HttpStatusCode.NoContent, assignRes.StatusCode);
 

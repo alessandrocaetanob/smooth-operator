@@ -16,6 +16,7 @@ using System.Text.Json;
 using System.Net;
 using System.Net.Sockets;
 using SmoothOperator.Application.Exceptions;
+using SmoothOperator.Application.Features.Connections;
 
 namespace SmoothOperator.Api.Tests.Services;
 
@@ -462,6 +463,10 @@ public class GuacamoleProxyServiceInternalTests
     private readonly GuacamoleProxyService _service;
     private readonly AppDbContext _dbContext;
 
+    private static readonly string[] _testOkTokens = ["test", "ok"];
+    private static readonly string[] _helloTokens = ["hello"];
+    private static readonly string[] _testTokens = ["test"];
+
     public GuacamoleProxyServiceInternalTests()
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()
@@ -515,10 +520,10 @@ public class GuacamoleProxyServiceInternalTests
             paramNames,
             serverVersion,
             _dbContext,
-            CancellationToken.None,
             Guid.NewGuid(),
             "127.0.0.1",
-            settingsOverrides
+            settingsOverrides,
+            CancellationToken.None
         });
 
         return (Task<List<string>>)method!.Invoke(_service, new object[] { request! })!;
@@ -548,7 +553,7 @@ public class GuacamoleProxyServiceInternalTests
         // Act
         var result = await InvokeResolveConnectionParametersAsync(
             connection,
-            new List<string> { "username", "password" },
+            ["username", "password"],
             "VERSION_1_5_0");
 
         // Assert
@@ -562,30 +567,47 @@ public class GuacamoleProxyServiceInternalTests
     [Fact]
     public void ParseSettings_HandlesValidJson()
     {
-        // Arrange
-        var json = "{\"port\":\"22\",\"ignore-cert\":true,\"null-val\":null}";
+        // Arrange — one value of every JSON scalar kind the parser handles.
+        var json = "{\"port\":\"22\",\"width\":1920,\"ignore-cert\":true,\"read-only\":false,\"null-val\":null}";
 
         // Act
-        var method = typeof(GuacamoleProxyService).GetMethod("ParseSettings", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-        var result = (Dictionary<string, string>)method!.Invoke(null, new object[] { json })!;
+        var result = ConnectionSettingsParser.Parse(json);
 
         // Assert
         Assert.Equal("22", result["port"]);
+        Assert.Equal("1920", result["width"]);
         Assert.Equal("true", result["ignore-cert"]);
+        Assert.Equal("false", result["read-only"]);
         Assert.Equal(string.Empty, result["null-val"]);
     }
 
     [Fact]
-    public void ParseSettings_HandlesMalformedJson_ReturnsEmpty()
+    public void ParseSettings_KeysAreCaseInsensitive()
     {
-        // Arrange
-        var json = "invalid-json";
+        var result = ConnectionSettingsParser.Parse("{\"Port\":\"3389\"}");
 
-        // Act
-        var method = typeof(GuacamoleProxyService).GetMethod("ParseSettings", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-        var result = (Dictionary<string, string>)method!.Invoke(null, new object[] { json })!;
+        Assert.Equal("3389", result["port"]);
+        Assert.Equal("3389", result["PORT"]);
+    }
 
-        // Assert
+    [Fact]
+    public void ParseSettings_NestedValue_FallsBackToRawJson()
+    {
+        // Non-scalar values hit the switch's default arm.
+        var result = ConnectionSettingsParser.Parse("{\"tags\":[1,2]}");
+
+        Assert.Equal("[1,2]", result["tags"]);
+    }
+
+    [Theory]
+    [InlineData("invalid-json")]
+    [InlineData("[1,2,3]")] // valid JSON, but the root is not an object
+    [InlineData("")]
+    [InlineData(null)]
+    public void ParseSettings_NonObjectOrMalformedInput_ReturnsEmpty(string? json)
+    {
+        var result = ConnectionSettingsParser.Parse(json);
+
         Assert.Empty(result);
     }
 
@@ -610,7 +632,7 @@ public class GuacamoleProxyServiceInternalTests
         _secretProviderFactoryMock.Setup(f => f.Create(provider)).Returns(secretProviderMock.Object);
 
         // Act & Assert
-        var task = InvokeResolveConnectionParametersAsync(connection, new List<string> { "password" }, "VERSION_1_5_0");
+        var task = InvokeResolveConnectionParametersAsync(connection, ["password"], "VERSION_1_5_0");
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => task);
 
@@ -702,7 +724,7 @@ public class GuacamoleProxyServiceInternalTests
         _encryptionServiceMock.Setup(e => e.Decrypt("encrypted-key")).Returns("pem-key-content");
 
         // Act
-        var result = await InvokeResolveConnectionParametersAsync(connection, new List<string> { "password", "private-key" }, "VERSION_1_5_0");
+        var result = await InvokeResolveConnectionParametersAsync(connection, ["password", "private-key"], "VERSION_1_5_0");
 
         // Assert
         Assert.Equal(string.Empty, result[0]); // password should be empty for key auth
@@ -716,7 +738,7 @@ public class GuacamoleProxyServiceInternalTests
         var connection = new Connection { Protocol = "rdp" };
 
         // Act
-        var result = await InvokeResolveConnectionParametersAsync(connection, new List<string> { "VERSION_1_5_0", "hostname" }, "VERSION_1_5_0");
+        var result = await InvokeResolveConnectionParametersAsync(connection, ["VERSION_1_5_0", "hostname"], "VERSION_1_5_0");
 
         // Assert
         Assert.Equal("VERSION_1_5_0", result[0]);
@@ -739,8 +761,8 @@ public class GuacamoleProxyServiceInternalTests
         var result2 = await task2;
 
         // Assert
-        Assert.Equal(new[] { "test", "ok" }, result1);
-        Assert.Equal(new[] { "hello" }, result2);
+        Assert.Equal(_testOkTokens, result1);
+        Assert.Equal(_helloTokens, result2);
     }
 
     [Fact]
@@ -786,7 +808,7 @@ public class GuacamoleProxyServiceInternalTests
         var result2 = await (Task<List<string>>?)readAsync?.Invoke(reader, new object[] { CancellationToken.None })!;
 
         // Assert
-        Assert.Equal(new[] { "test" }, result1);
-        Assert.Equal(new[] { "hello" }, result2);
+        Assert.Equal(_testTokens, result1);
+        Assert.Equal(_helloTokens, result2);
     }
 }

@@ -21,7 +21,7 @@ namespace SmoothOperator.Application.Features.Users.Commands
         private const string RoleOwner = "Owner";
         private static readonly string[] ValidRoles = { RoleOwner, "Admin", "TeamAdmin", "User" };
 
-        private static readonly IReadOnlyDictionary<string, string> RoleDescriptions =
+        private static readonly Dictionary<string, string> RoleDescriptions =
             new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
                 ["Owner"] = "Root access and bootstrap account owner.",

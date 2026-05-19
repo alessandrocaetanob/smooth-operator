@@ -6,7 +6,6 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using SmoothOperator.Application.DTOs;
 using SmoothOperator.Application.Interfaces;
-using SmoothOperator.Domain.Models;
 
 namespace SmoothOperator.Application.Features.AuditLogs.Queries
 {
@@ -31,7 +30,8 @@ namespace SmoothOperator.Application.Features.AuditLogs.Queries
             var page = Math.Max(1, request.Page);
             var pageSize = Math.Clamp(request.PageSize, 1, 200);
 
-            var q = BuildQuery(request.User, request.Action, request.ResourceType, request.From, request.To, request.Outcome);
+            var q = AuditLogQueryFilters.ApplyFilters(
+                _db, request.User, request.Action, request.ResourceType, request.From, request.To, request.Outcome);
 
             var total = await q.CountAsync(cancellationToken);
             var rows = await q
@@ -63,48 +63,6 @@ namespace SmoothOperator.Application.Features.AuditLogs.Queries
                 PageSize = pageSize,
                 TotalItems = total
             };
-        }
-
-        private IQueryable<AuditLog> BuildQuery(
-            string? user, string? action, string? resourceType,
-            DateTime? from, DateTime? to, string? outcome)
-        {
-            var q = _db.AuditLogs.AsNoTracking().Include(l => l.User).AsQueryable();
-            if (!string.IsNullOrWhiteSpace(user))
-            {
-                // LOWER(col) LIKE '%term%' is backed by the expression GIN trigram
-                // indexes added in the AddTrigramSearchIndexes migration.
-                var pattern = ToLikePattern(user.Trim().ToLower());
-                q = q.Where(l => l.User != null &&
-                    (EF.Functions.Like(l.User.Email.ToLower(), pattern, "\\")
-                        || EF.Functions.Like(l.User.Name.ToLower(), pattern, "\\")));
-            }
-            if (!string.IsNullOrWhiteSpace(action))
-            {
-                var pattern = ToLikePattern(action.Trim().ToLower());
-                q = q.Where(l => EF.Functions.Like(l.Action.ToLower(), pattern, "\\"));
-            }
-            if (!string.IsNullOrWhiteSpace(resourceType))
-            {
-                var term = resourceType.Trim();
-                q = q.Where(l => l.ResourceType == term);
-            }
-            if (!string.IsNullOrWhiteSpace(outcome))
-                q = q.Where(l => l.Outcome == outcome.Trim().ToLower());
-            if (from.HasValue) q = q.Where(l => l.Timestamp >= from.Value);
-            if (to.HasValue) q = q.Where(l => l.Timestamp <= to.Value);
-            return q;
-        }
-
-        // Escapes LIKE metacharacters so the caller's term is matched literally,
-        // then wraps it for case-insensitive substring matching.
-        private static string ToLikePattern(string term)
-        {
-            var escaped = term
-                .Replace("\\", "\\\\")
-                .Replace("%", "\\%")
-                .Replace("_", "\\_");
-            return $"%{escaped}%";
         }
     }
 }

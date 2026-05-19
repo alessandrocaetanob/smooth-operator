@@ -6,7 +6,7 @@ namespace SmoothOperator.Application.Tests.Options;
 
 public sealed class GuacdOptionsValidationTests
 {
-    private static IList<ValidationResult> Validate(GuacdOptions opts)
+    private static List<ValidationResult> Validate(GuacdOptions opts)
     {
         var ctx = new ValidationContext(opts);
         var results = new List<ValidationResult>();

@@ -19,7 +19,7 @@ public class AuthCookieExtensionsTests
 
         context.Response.SetAuthCookie(SampleToken);
 
-        var setCookie = context.Response.Headers["Set-Cookie"].ToString();
+        var setCookie = context.Response.Headers.SetCookie.ToString();
         Assert.Contains(AuthCookieExtensions.CookieName, setCookie);
         Assert.Contains("secure", setCookie, System.StringComparison.OrdinalIgnoreCase);
         Assert.Contains("httponly", setCookie, System.StringComparison.OrdinalIgnoreCase);
@@ -35,7 +35,7 @@ public class AuthCookieExtensionsTests
 
         context.Response.SetAuthCookie(SampleToken);
 
-        var setCookie = context.Response.Headers["Set-Cookie"].ToString();
+        var setCookie = context.Response.Headers.SetCookie.ToString();
         Assert.Contains(AuthCookieExtensions.CookieName, setCookie);
         Assert.DoesNotContain("secure", setCookie, System.StringComparison.OrdinalIgnoreCase);
         Assert.Contains("httponly", setCookie, System.StringComparison.OrdinalIgnoreCase);
@@ -50,7 +50,7 @@ public class AuthCookieExtensionsTests
 
         context.Response.ClearAuthCookie();
 
-        var setCookie = context.Response.Headers["Set-Cookie"].ToString();
+        var setCookie = context.Response.Headers.SetCookie.ToString();
         Assert.Contains(AuthCookieExtensions.CookieName, setCookie);
         Assert.Contains("secure", setCookie, System.StringComparison.OrdinalIgnoreCase);
         // Cookie deletion sets expiry in the past
@@ -66,7 +66,7 @@ public class AuthCookieExtensionsTests
 
         context.Response.ClearAuthCookie();
 
-        var setCookie = context.Response.Headers["Set-Cookie"].ToString();
+        var setCookie = context.Response.Headers.SetCookie.ToString();
         Assert.Contains(AuthCookieExtensions.CookieName, setCookie);
         Assert.DoesNotContain("secure", setCookie, System.StringComparison.OrdinalIgnoreCase);
     }
@@ -81,7 +81,7 @@ public class AuthCookieExtensionsTests
         // No exception even though token has no payload
         context.Response.SetAuthCookie("not-a-jwt");
 
-        var setCookie = context.Response.Headers["Set-Cookie"].ToString();
+        var setCookie = context.Response.Headers.SetCookie.ToString();
         Assert.Contains(AuthCookieExtensions.CookieName, setCookie);
     }
 }

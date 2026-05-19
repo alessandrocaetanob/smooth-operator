@@ -11,7 +11,7 @@ namespace SmoothOperator.Infrastructure.Services
 {
     public static class RoleSeeder
     {
-        private static readonly IReadOnlyDictionary<string, string> RoleDescriptions =
+        private static readonly Dictionary<string, string> RoleDescriptions =
             new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
                 [AppRoles.Owner] = "Root access. First account created during setup.",
@@ -38,7 +38,8 @@ namespace SmoothOperator.Infrastructure.Services
                     Name = roleName,
                     Description = RoleDescriptions[roleName]
                 });
-                logger.LogInformation("Created default role {RoleName}", roleName);
+                if (logger.IsEnabled(LogLevel.Information))
+                    logger.LogInformation("Created default role {RoleName}", roleName);
             }
 
             await context.SaveChangesAsync();
@@ -59,7 +60,7 @@ namespace SmoothOperator.Infrastructure.Services
                 user.Roles.Add(defaultUserRole);
             }
 
-            if (usersWithoutRoles.Count > 0)
+            if (usersWithoutRoles.Count > 0 && logger.IsEnabled(LogLevel.Information))
             {
                 logger.LogInformation("Assigned default {RoleName} role to {Count} user(s)",
                     AppRoles.User, usersWithoutRoles.Count);

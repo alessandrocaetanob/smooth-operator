@@ -7,6 +7,8 @@ namespace SmoothOperator.Infrastructure.Migrations
     /// <inheritdoc />
     public partial class AddAuditLogCompositeIndex : Migration
     {
+        private static readonly string[] _compositeIndexColumns = ["UserId", "Action", "ResourceId", "Timestamp"];
+
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -17,7 +19,7 @@ namespace SmoothOperator.Infrastructure.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_AuditLogs_UserId_Action_ResourceId_Timestamp",
                 table: "AuditLogs",
-                columns: new[] { "UserId", "Action", "ResourceId", "Timestamp" });
+                columns: _compositeIndexColumns);
         }
 
         /// <inheritdoc />

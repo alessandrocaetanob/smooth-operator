@@ -34,7 +34,7 @@ namespace SmoothOperator.Application.Features.Connections.Queries
 
             var ids = request.RequestedIds;
             if (ids.Count == 0)
-                return new Dictionary<Guid, string>();
+                return [];
 
             var existingConnections = await LoadExistingConnectionsAsync(ids, cancellationToken);
             var existingSet = existingConnections.Select(c => c.Id).ToHashSet();
@@ -152,7 +152,7 @@ namespace SmoothOperator.Application.Features.Connections.Queries
 
         private static int ResolvePort(ConnectionProbeInfo conn)
         {
-            var settings = ProbeConnectionQueryHandler.ParseConnectionSettings(conn.Settings);
+            var settings = ConnectionSettingsParser.Parse(conn.Settings);
             var defaultPort = GetDefaultPort(conn.Protocol);
             return int.TryParse(settings.GetValueOrDefault("port"), out var p) ? p : defaultPort;
         }

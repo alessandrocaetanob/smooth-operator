@@ -107,4 +107,35 @@ public class AuditLogsControllerIntegrationTests
         Assert.Single(emailed.Items);
         Assert.Equal("beta.event", emailed.Items.First().Action);
     }
+
+    [Fact]
+    public async Task GetLogs_FilterByDateRange_ReturnsOnlyLogsInsideWindow()
+    {
+        var adminId = Guid.NewGuid();
+        var now = DateTime.UtcNow;
+        await using var factory = new TestWebApplicationFactory(db =>
+        {
+            var admin = new User { Id = adminId, Email = "auditor@a", Name = "auditor", IsActive = true, CreatedAt = now };
+            AttachRoles(db, admin, AppRoles.Admin);
+            db.Users.Add(admin);
+
+            db.AuditLogs.Add(new AuditLog { Id = Guid.NewGuid(), Timestamp = now.AddDays(-2), UserId = adminId, Action = "old.event", ResourceType = "R", Outcome = "success" });
+            db.AuditLogs.Add(new AuditLog { Id = Guid.NewGuid(), Timestamp = now.AddDays(-1), UserId = adminId, Action = "mid.event", ResourceType = "R", Outcome = "success" });
+            db.AuditLogs.Add(new AuditLog { Id = Guid.NewGuid(), Timestamp = now, UserId = adminId, Action = "recent.event", ResourceType = "R", Outcome = "success" });
+        });
+
+        var client = AsUser(factory, adminId, AppRoles.Admin);
+
+        // A window centred on the mid log excludes both the old and recent logs,
+        // exercising both the `from` and `to` filter branches.
+        var from = Uri.EscapeDataString(now.AddDays(-1).AddHours(-12).ToString("o"));
+        var to = Uri.EscapeDataString(now.AddDays(-1).AddHours(12).ToString("o"));
+
+        var res = await client.GetAsync($"/api/audit-logs?from={from}&to={to}");
+        Assert.Equal(HttpStatusCode.OK, res.StatusCode);
+        var paged = await res.Content.ReadFromJsonAsync<PagedResult<AuditLogDto>>();
+        Assert.NotNull(paged);
+        Assert.Single(paged.Items);
+        Assert.Equal("mid.event", paged.Items.First().Action);
+    }
 }

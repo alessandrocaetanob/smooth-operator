@@ -75,7 +75,7 @@ namespace SmoothOperator.Application.Features.ConnectionGroups.Queries
                     IsActive = isActive,
                     Roles = roles,
                     DirectAssignment = directIds.Contains(uid),
-                    ViaGroupIds = viaGroups?.Select(v => v.GroupId).Distinct().ToList() ?? new List<Guid>()
+                    ViaGroupIds = viaGroups?.Select(v => v.GroupId).Distinct().ToList() ?? []
                 });
             }
 

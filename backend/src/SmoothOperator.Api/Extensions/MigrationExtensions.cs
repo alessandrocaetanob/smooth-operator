@@ -1,6 +1,7 @@
 using SmoothOperator.Infrastructure.Data;
 using SmoothOperator.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace SmoothOperator.Api.Extensions
 {
@@ -24,8 +25,9 @@ namespace SmoothOperator.Api.Extensions
                         var pending = (await db.Database.GetPendingMigrationsAsync()).ToList();
                         if (pending.Count > 0)
                         {
-                            logger.LogInformation("Applying {Count} pending migration(s): {Migrations}",
-                                pending.Count, string.Join(", ", pending));
+                            if (logger.IsEnabled(LogLevel.Information))
+                                logger.LogInformation("Applying {Count} pending migration(s): {Migrations}",
+                                    pending.Count, string.Join(", ", pending));
                             await db.Database.MigrateAsync();
                             logger.LogInformation("Migrations applied successfully.");
                         }
