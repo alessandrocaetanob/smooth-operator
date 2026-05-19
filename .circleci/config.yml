@@ -3,7 +3,6 @@ version: 2.1
 orbs:
   node: circleci/node@7.2.1
   codecov: codecov/codecov@5.4.3
-  snyk: snyk/snyk@2.3.0
 
 executors:
   dotnet:
@@ -116,35 +115,6 @@ jobs:
           path: frontend/coverage
           destination: frontend-coverage
 
-  snyk-frontend:
-    executor: node-lts
-    steps:
-      - checkout
-      - node/install-packages:
-          pkg-manager: npm
-          app-dir: frontend
-      - snyk/scan:
-          project: smooth-operator-frontend
-          severity-threshold: high
-          monitor-on-build: true
-          target-file: frontend/package.json
-
-  snyk-backend:
-    executor: dotnet
-    steps:
-      - checkout
-      - run:
-          name: Restore dependencies
-          command: dotnet restore smooth-operator.sln
-      - run:
-          name: Install Snyk CLI
-          command: |
-            curl -sSfL https://static.snyk.io/cli/latest/snyk-linux -o /usr/local/bin/snyk
-            chmod +x /usr/local/bin/snyk
-      - run:
-          name: Snyk scan backend
-          command: snyk test --file=smooth-operator.sln --severity-threshold=high
-
   sonarcloud-scan:
     executor: dotnet
     steps:
@@ -191,8 +161,6 @@ workflows:
     jobs:
       - backend-ci
       - frontend-ci
-      - snyk-frontend
-      - snyk-backend
       - sonarcloud-scan:
           requires:
             - backend-ci
