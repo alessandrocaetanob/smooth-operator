@@ -48,7 +48,7 @@ namespace SmoothOperator.Application.Features.Metrics.Queries
             {
                 var bucketIndex = (int)((ts - since).TotalMinutes / bucketMinutes);
                 if (!buckets.TryGetValue(bucketIndex, out var d))
-                    buckets[bucketIndex] = d = new Dictionary<string, long>();
+                    buckets[bucketIndex] = d = [];
 
                 if (!d.TryAdd(label, 1))
                     d[label]++;
@@ -58,7 +58,7 @@ namespace SmoothOperator.Application.Features.Metrics.Queries
             for (var i = 0; i < totalBuckets; i++)
             {
                 if (!buckets.ContainsKey(i))
-                    buckets[i] = new Dictionary<string, long>();
+                    buckets[i] = [];
             }
 
             return buckets.Select(kv => new TimeseriesBucketDto

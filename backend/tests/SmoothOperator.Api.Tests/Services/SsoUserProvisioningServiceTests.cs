@@ -24,7 +24,7 @@ public class SsoUserProvisioningServiceTests
     private sealed class FakeTokenService : ITokenService
     {
         public TimeSpan TokenLifetime => TimeSpan.FromMinutes(5);
-        public List<User> Issued { get; } = new();
+        public List<User> Issued { get; } = [];
         public string CreateToken(User user)
         {
             Issued.Add(user);
@@ -34,7 +34,7 @@ public class SsoUserProvisioningServiceTests
 
     private sealed class FakeAuditService : IAuditService
     {
-        public List<(string Action, string ResourceType, string? ResourceId, object? Details, string Outcome)> Events { get; } = new();
+        public List<(string Action, string ResourceType, string? ResourceId, object? Details, string Outcome)> Events { get; } = [];
         public Task WriteAsync(string action, string resourceType, string? resourceId = null, object? details = null, string outcome = "success")
         {
             Events.Add((action, resourceType, resourceId, details, outcome));

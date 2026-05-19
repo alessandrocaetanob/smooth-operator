@@ -20,12 +20,12 @@ namespace SmoothOperator.Api.Middleware
         {
             var headers = ctx.Response.Headers;
 
-            headers["X-Content-Type-Options"] = "nosniff";
-            headers["X-Frame-Options"] = "DENY";
+            headers.XContentTypeOptions = "nosniff";
+            headers.XFrameOptions = "DENY";
             headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
             headers["Permissions-Policy"] = "geolocation=(), camera=(), microphone=(), usb=()";
             // Allow WebSocket connections (ws:/wss:) required by Guacamole.
-            headers["Content-Security-Policy"] =
+            headers.ContentSecurityPolicy =
                 "default-src 'self'; " +
                 "script-src 'self'; " +
                 (_env.IsDevelopment() ? "style-src 'self' 'unsafe-inline'; " : "style-src 'self'; ") +
@@ -35,7 +35,7 @@ namespace SmoothOperator.Api.Middleware
                 "frame-ancestors 'none'";
 
             if (!_env.IsDevelopment())
-                headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains";
+                headers.StrictTransportSecurity = "max-age=31536000; includeSubDomains";
 
             await _next(ctx);
         }

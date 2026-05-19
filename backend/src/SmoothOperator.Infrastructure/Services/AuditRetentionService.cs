@@ -84,9 +84,10 @@ namespace SmoothOperator.Infrastructure.Services
 
             if (deleted > 0)
             {
-                _logger.LogInformation(
-                    "Audit retention purged {Count} entries older than {Cutoff:o} (retention={Days}d)",
-                    deleted, cutoff, retentionDays);
+                if (_logger.IsEnabled(LogLevel.Information))
+                    _logger.LogInformation(
+                        "Audit retention purged {Count} entries older than {Cutoff:o} (retention={Days}d)",
+                        deleted, cutoff, retentionDays);
 
                 db.AuditLogs.Add(new AuditLog
                 {
@@ -118,7 +119,7 @@ namespace SmoothOperator.Infrastructure.Services
                 .Where(s => s.ExpiresAt < now)
                 .ExecuteDeleteAsync(ct);
 
-            if (deleted > 0)
+            if (deleted > 0 && _logger.IsEnabled(LogLevel.Information))
             {
                 _logger.LogInformation(
                     "SSO auth-state sweep removed {Count} expired rows older than {Now:o}",

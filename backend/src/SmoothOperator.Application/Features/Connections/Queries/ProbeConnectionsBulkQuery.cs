@@ -34,7 +34,7 @@ namespace SmoothOperator.Application.Features.Connections.Queries
 
             var ids = request.RequestedIds;
             if (ids.Count == 0)
-                return new Dictionary<Guid, string>();
+                return [];
 
             var existingConnections = await LoadExistingConnectionsAsync(ids, cancellationToken);
             var existingSet = existingConnections.Select(c => c.Id).ToHashSet();

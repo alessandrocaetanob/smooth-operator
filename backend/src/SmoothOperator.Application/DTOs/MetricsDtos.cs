@@ -19,7 +19,7 @@ namespace SmoothOperator.Application.DTOs
     public class TimeseriesBucketDto
     {
         public DateTime Timestamp { get; set; }
-        public Dictionary<string, long> Values { get; set; } = new();
+        public Dictionary<string, long> Values { get; set; } = [];
     }
 
     public class TopEventDto

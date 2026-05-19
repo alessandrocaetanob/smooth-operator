@@ -34,7 +34,7 @@ namespace SmoothOperator.Api.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            var result = await _mediator.Send(new UpdateSystemSettingsCommand(request));
+            var result = await _mediator.Send(new UpdateSystemSettingsCommand(request), cancellationToken);
             await cacheStore.EvictByTagAsync("system-settings", cancellationToken);
             return Ok(result);
         }

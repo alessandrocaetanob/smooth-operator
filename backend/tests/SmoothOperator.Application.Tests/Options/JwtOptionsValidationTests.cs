@@ -6,7 +6,7 @@ namespace SmoothOperator.Application.Tests.Options;
 
 public sealed class JwtOptionsValidationTests
 {
-    private static IList<ValidationResult> ValidateAnnotations(JwtOptions opts)
+    private static List<ValidationResult> ValidateAnnotations(JwtOptions opts)
     {
         var ctx = new ValidationContext(opts);
         var results = new List<ValidationResult>();

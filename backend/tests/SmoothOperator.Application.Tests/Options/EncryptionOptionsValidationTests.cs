@@ -6,7 +6,7 @@ namespace SmoothOperator.Application.Tests.Options;
 
 public sealed class EncryptionOptionsValidationTests
 {
-    private static IList<ValidationResult> Validate(EncryptionOptions opts)
+    private static List<ValidationResult> Validate(EncryptionOptions opts)
     {
         var ctx = new ValidationContext(opts);
         var results = new List<ValidationResult>();

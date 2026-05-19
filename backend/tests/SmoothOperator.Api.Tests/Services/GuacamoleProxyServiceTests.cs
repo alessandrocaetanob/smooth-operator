@@ -33,6 +33,10 @@ public class GuacamoleProxyServiceTests
     private readonly IOptions<GuacdOptions> _options = Options.Create(new GuacdOptions { Host = "localhost", Port = 4822 });
     private readonly GuacamoleProxyService _service;
 
+    private static readonly string[] _testOkTokens = ["test", "ok"];
+    private static readonly string[] _helloTokens = ["hello"];
+    private static readonly string[] _testTokens = ["test"];
+
     public GuacamoleProxyServiceTests()
     {
         _redisMock.Setup(r => r.GetDatabase(It.IsAny<int>(), It.IsAny<object>())).Returns(_dbMock.Object);
@@ -548,7 +552,7 @@ public class GuacamoleProxyServiceInternalTests
         // Act
         var result = await InvokeResolveConnectionParametersAsync(
             connection,
-            new List<string> { "username", "password" },
+            ["username", "password"],
             "VERSION_1_5_0");
 
         // Assert
@@ -610,7 +614,7 @@ public class GuacamoleProxyServiceInternalTests
         _secretProviderFactoryMock.Setup(f => f.Create(provider)).Returns(secretProviderMock.Object);
 
         // Act & Assert
-        var task = InvokeResolveConnectionParametersAsync(connection, new List<string> { "password" }, "VERSION_1_5_0");
+        var task = InvokeResolveConnectionParametersAsync(connection, ["password"], "VERSION_1_5_0");
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => task);
 
@@ -702,7 +706,7 @@ public class GuacamoleProxyServiceInternalTests
         _encryptionServiceMock.Setup(e => e.Decrypt("encrypted-key")).Returns("pem-key-content");
 
         // Act
-        var result = await InvokeResolveConnectionParametersAsync(connection, new List<string> { "password", "private-key" }, "VERSION_1_5_0");
+        var result = await InvokeResolveConnectionParametersAsync(connection, ["password", "private-key"], "VERSION_1_5_0");
 
         // Assert
         Assert.Equal(string.Empty, result[0]); // password should be empty for key auth
@@ -716,7 +720,7 @@ public class GuacamoleProxyServiceInternalTests
         var connection = new Connection { Protocol = "rdp" };
 
         // Act
-        var result = await InvokeResolveConnectionParametersAsync(connection, new List<string> { "VERSION_1_5_0", "hostname" }, "VERSION_1_5_0");
+        var result = await InvokeResolveConnectionParametersAsync(connection, ["VERSION_1_5_0", "hostname"], "VERSION_1_5_0");
 
         // Assert
         Assert.Equal("VERSION_1_5_0", result[0]);
@@ -739,8 +743,8 @@ public class GuacamoleProxyServiceInternalTests
         var result2 = await task2;
 
         // Assert
-        Assert.Equal(new[] { "test", "ok" }, result1);
-        Assert.Equal(new[] { "hello" }, result2);
+        Assert.Equal(_testOkTokens, result1);
+        Assert.Equal(_helloTokens, result2);
     }
 
     [Fact]
@@ -786,7 +790,7 @@ public class GuacamoleProxyServiceInternalTests
         var result2 = await (Task<List<string>>?)readAsync?.Invoke(reader, new object[] { CancellationToken.None })!;
 
         // Assert
-        Assert.Equal(new[] { "test" }, result1);
-        Assert.Equal(new[] { "hello" }, result2);
+        Assert.Equal(_testTokens, result1);
+        Assert.Equal(_helloTokens, result2);
     }
 }

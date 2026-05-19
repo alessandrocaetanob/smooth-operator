@@ -330,7 +330,7 @@ namespace SmoothOperator.Infrastructure.Services
                 {
                     host = connection.Host!.Name,
                     protocol = connection.Protocol,
-                    sessionId = sessionId
+                    sessionId
                 }),
                 IpAddress = ipAddress
             });
@@ -429,14 +429,15 @@ namespace SmoothOperator.Infrastructure.Services
                 paramNames,
                 serverVersion,
                 dbContext,
-                CancellationToken.None,
                 dbUser.Id,
                 ipAddress,
-                sessionSettingsOverrides));
+                sessionSettingsOverrides,
+                CancellationToken.None));
 
-            _logger.LogInformation(
-                "guacd handshake for {Protocol}: server={ServerVersion}, sending {ValueCount} connect values for {NameCount} arg names",
-                protocol, serverVersion, paramValues.Count, paramNames.Count);
+            if (_logger.IsEnabled(LogLevel.Information))
+                _logger.LogInformation(
+                    "guacd handshake for {Protocol}: server={ServerVersion}, sending {ValueCount} connect values for {NameCount} arg names",
+                    protocol, serverVersion, paramValues.Count, paramNames.Count);
 
             await SendHandshakeDefaultsAsync(networkStream, serverVersion);
 
@@ -602,10 +603,10 @@ namespace SmoothOperator.Infrastructure.Services
             IReadOnlyList<string> ParamNames,
             string ServerVersion,
             AppDbContext DbContext,
-            CancellationToken CancellationToken,
             Guid UserId,
             string IpAddress,
-            IDictionary<string, string>? SettingsOverrides);
+            IDictionary<string, string>? SettingsOverrides,
+            CancellationToken CancellationToken);
 
         private async Task<List<string>> ResolveConnectionParametersAsync(ConnectionParametersRequest req)
         {
@@ -729,7 +730,7 @@ namespace SmoothOperator.Infrastructure.Services
         private static async Task SendGuacMessage(NetworkStream stream, string message)
         {
             byte[] data = Encoding.UTF8.GetBytes(message);
-            await stream.WriteAsync(data, 0, data.Length);
+            await stream.WriteAsync(data.AsMemory());
             await stream.FlushAsync();
         }
 
@@ -802,7 +803,7 @@ namespace SmoothOperator.Infrastructure.Services
                     {
                         // Malformed; drain the buffer to recover.
                         consumedChars = _pending.Length;
-                        return new List<string>();
+                        return [];
                     }
 
                     int valStart = dot + 1;
@@ -913,12 +914,12 @@ namespace SmoothOperator.Infrastructure.Services
                 {
                     result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
                     if (result.MessageType == WebSocketMessageType.Close) return;
-                    await ms.WriteAsync(buffer, 0, result.Count);
+                    await ms.WriteAsync(buffer.AsMemory(0, result.Count));
                 } while (!result.EndOfMessage);
 
                 var payload = ms.ToArray();
                 if (payload.Length == 0) continue;
-                await guacdStream.WriteAsync(payload, 0, payload.Length);
+                await guacdStream.WriteAsync(payload.AsMemory());
                 await guacdStream.FlushAsync();
             }
         }

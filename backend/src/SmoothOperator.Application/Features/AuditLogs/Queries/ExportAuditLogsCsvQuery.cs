@@ -73,14 +73,15 @@ namespace SmoothOperator.Application.Features.AuditLogs.Queries
             var q = _db.AuditLogs.AsNoTracking().Include(l => l.User).AsQueryable();
             if (!string.IsNullOrWhiteSpace(user))
             {
-                var term = user.Trim().ToLower();
+                var pattern = ToLikePattern(user.Trim().ToLower());
                 q = q.Where(l => l.User != null &&
-                    (l.User.Email.ToLower().Contains(term) || l.User.Name.ToLower().Contains(term)));
+                    (EF.Functions.Like(l.User.Email.ToLower(), pattern, "\\")
+                        || EF.Functions.Like(l.User.Name.ToLower(), pattern, "\\")));
             }
             if (!string.IsNullOrWhiteSpace(action))
             {
-                var term = action.Trim().ToLower();
-                q = q.Where(l => l.Action.ToLower().Contains(term));
+                var pattern = ToLikePattern(action.Trim().ToLower());
+                q = q.Where(l => EF.Functions.Like(l.Action.ToLower(), pattern, "\\"));
             }
             if (!string.IsNullOrWhiteSpace(resourceType))
             {
@@ -88,10 +89,22 @@ namespace SmoothOperator.Application.Features.AuditLogs.Queries
                 q = q.Where(l => l.ResourceType == term);
             }
             if (!string.IsNullOrWhiteSpace(outcome))
-                q = q.Where(l => l.Outcome == outcome.Trim().ToLower());
+            {
+                var outcomeLower = outcome.Trim().ToLower();
+                q = q.Where(l => l.Outcome == outcomeLower);
+            }
             if (from.HasValue) q = q.Where(l => l.Timestamp >= from.Value);
             if (to.HasValue) q = q.Where(l => l.Timestamp <= to.Value);
             return q;
+        }
+
+        private static string ToLikePattern(string term)
+        {
+            var escaped = term
+                .Replace("\\", "\\\\")
+                .Replace("%", "\\%")
+                .Replace("_", "\\_");
+            return $"%{escaped}%";
         }
 
         private static string Csv(string? input)

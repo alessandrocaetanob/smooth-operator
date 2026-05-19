@@ -19,7 +19,7 @@ public class SsoProviderServiceTests
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
             .Options);
 
-    private static IEncryptionService NewEncryption() =>
+    private static EncryptionService NewEncryption() =>
         new EncryptionService(Options.Create(new EncryptionOptions { Key = TestKey }));
 
     [Fact]

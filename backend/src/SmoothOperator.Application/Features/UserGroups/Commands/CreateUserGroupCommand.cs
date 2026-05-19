@@ -57,13 +57,14 @@ namespace SmoothOperator.Application.Features.UserGroups.Commands
 
         private async Task<bool> NameExistsAsync(string name, Guid? excludeId, CancellationToken ct)
         {
+            var lowerName = name.ToLower();
             var query = _context.UserGroups.AsNoTracking()
-                .Where(g => g.Name.ToLower() == name.ToLower());
+                .Where(g => g.Name.ToLower() == lowerName);
             if (excludeId.HasValue) query = query.Where(g => g.Id != excludeId.Value);
             return await query.AnyAsync(ct);
         }
 
-        internal static async Task<UserGroupDto?> BuildGroupDtoAsync(Guid id, CancellationToken ct, IAppDbContext context)
+        internal static async Task<UserGroupDto?> BuildGroupDtoAsync(Guid id, IAppDbContext context, CancellationToken ct)
         {
             return await context.UserGroups
                 .AsNoTracking()
@@ -95,6 +96,6 @@ namespace SmoothOperator.Application.Features.UserGroups.Commands
         }
 
         private Task<UserGroupDto?> BuildGroupDtoAsync(Guid id, CancellationToken ct)
-            => BuildGroupDtoAsync(id, ct, _context);
+            => BuildGroupDtoAsync(id, _context, ct);
     }
 }

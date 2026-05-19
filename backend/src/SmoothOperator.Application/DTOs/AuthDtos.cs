@@ -50,7 +50,7 @@ namespace SmoothOperator.Application.DTOs
         /// <summary>"Oidc" | "Saml" when SsoLinked is true; null otherwise.</summary>
         public string? SsoProviderType { get; set; }
         public string? AvatarUrl { get; set; }
-        public List<string> Roles { get; set; } = new();
+        public List<string> Roles { get; set; } = [];
     }
 
     public class UpdateProfileRequest

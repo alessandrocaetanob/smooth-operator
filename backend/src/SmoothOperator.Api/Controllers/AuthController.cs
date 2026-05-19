@@ -32,13 +32,13 @@ namespace SmoothOperator.Api.Controllers
             var result = await _mediator.Send(new GetSetupStatusQuery());
             return Ok(new
             {
-                RequiresSetup = result.RequiresSetup,
+                result.RequiresSetup,
                 Providers = new
                 {
-                    Local = result.Providers.Local,
-                    Sso = result.Providers.Sso,
-                    SsoType = result.Providers.SsoType,
-                    SsoName = result.Providers.SsoName
+                    result.Providers.Local,
+                    result.Providers.Sso,
+                    result.Providers.SsoType,
+                    result.Providers.SsoName
                 }
             });
         }
@@ -48,7 +48,7 @@ namespace SmoothOperator.Api.Controllers
         public async Task<IActionResult> GetProviders()
         {
             var result = await _mediator.Send(new GetProvidersQuery());
-            return Ok(new { Local = result.Local, Sso = result.Sso, SsoType = result.SsoType, SsoName = result.SsoName });
+            return Ok(new { result.Local, result.Sso, result.SsoType, result.SsoName });
         }
 
         [HttpPost("setup")]
@@ -150,10 +150,10 @@ namespace SmoothOperator.Api.Controllers
 
                 return Ok(new
                 {
-                    Message = result.Message,
-                    InviteUrl = result.InviteUrl,
-                    EmailSent = result.EmailSent,
-                    EmailError = result.EmailError
+                    result.Message,
+                    result.InviteUrl,
+                    result.EmailSent,
+                    result.EmailError
                 });
             }
             catch (ConflictException ex)
@@ -183,7 +183,7 @@ namespace SmoothOperator.Api.Controllers
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
             var result = await _mediator.Send(new ForgotPasswordCommand(request.Email));
-            return Ok(new { Message = result.Message });
+            return Ok(new { result.Message });
         }
 
         [HttpPost("logout")]

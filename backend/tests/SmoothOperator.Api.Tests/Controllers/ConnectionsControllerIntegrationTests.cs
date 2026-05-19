@@ -56,7 +56,7 @@ public class ConnectionsControllerIntegrationTests
             ConnectionGroupId = vaultId,
             HostId = hostId,
             Settings = "{\"port\":\"22\"}",
-            Tags = new List<string> { "prod", "web" }
+            Tags = ["prod", "web"]
         };
 
         var createRes = await client.PostAsJsonAsync("/api/connections", createReq);
@@ -88,7 +88,7 @@ public class ConnectionsControllerIntegrationTests
             ConnectionGroupId = vaultId,
             HostId = hostId,
             Settings = "{\"port\":\"2222\"}",
-            Tags = new List<string> { "prod", "web2" }
+            Tags = ["prod", "web2"]
         };
         var updateRes = await client.PutAsJsonAsync($"/api/connections/{connId}", updateReq);
         Assert.Equal(HttpStatusCode.NoContent, updateRes.StatusCode);

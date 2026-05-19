@@ -10,6 +10,6 @@ namespace SmoothOperator.Domain.Models
         public string Address { get; set; } = string.Empty; // IP or Hostname
 
         // Navigation properties
-        public ICollection<Connection> Connections { get; set; } = new List<Connection>();
+        public ICollection<Connection> Connections { get; set; } = [];
     }
 }

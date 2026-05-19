@@ -61,8 +61,9 @@ namespace SmoothOperator.Application.Features.ConnectionGroups.Commands
 
         private async Task<bool> VaultNameExistsAsync(string name, Guid? excludeId, CancellationToken ct)
         {
+            var lowerName = name.ToLower();
             var query = _context.ConnectionGroups.AsNoTracking()
-                .Where(v => v.Name.ToLower() == name.ToLower());
+                .Where(v => v.Name.ToLower() == lowerName);
             if (excludeId.HasValue) query = query.Where(v => v.Id != excludeId.Value);
             return await query.AnyAsync(ct);
         }

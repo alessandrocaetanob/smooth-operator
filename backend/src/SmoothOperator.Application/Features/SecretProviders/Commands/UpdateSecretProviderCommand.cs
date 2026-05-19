@@ -16,6 +16,8 @@ namespace SmoothOperator.Application.Features.SecretProviders.Commands
 
     public sealed class UpdateSecretProviderCommandHandler : IRequestHandler<UpdateSecretProviderCommand, SecretProviderDto>
     {
+        private static readonly JsonSerializerOptions _jsonOptions = new() { PropertyNameCaseInsensitive = true };
+
         private readonly IAppDbContext _context;
         private readonly IEncryptionService _encryption;
         private readonly IAuditService _audit;
@@ -46,8 +48,7 @@ namespace SmoothOperator.Application.Features.SecretProviders.Commands
             {
                 // Decrypt existing config to merge with partial update
                 var existingJson = _encryption.Decrypt(provider.EncryptedConfigJson);
-                var existing = JsonSerializer.Deserialize<AzureKeyVaultConfig>(existingJson,
-                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
+                var existing = JsonSerializer.Deserialize<AzureKeyVaultConfig>(existingJson, _jsonOptions)
                     ?? new AzureKeyVaultConfig();
 
                 var updated = new AzureKeyVaultConfig

@@ -110,7 +110,7 @@ namespace SmoothOperator.Infrastructure.Services.Sso
                 throw new UnauthorizedAccessException("Expired SAML RelayState.");
 
             var nameId = response.NameId?.Value ?? throw new UnauthorizedAccessException("SAML assertion missing NameID.");
-            var claims = response.ClaimsIdentity?.Claims.ToList() ?? new System.Collections.Generic.List<System.Security.Claims.Claim>();
+            var claims = response.ClaimsIdentity?.Claims.ToList() ?? [];
 
             string? Find(string type) => claims.FirstOrDefault(c => string.Equals(c.Type, type, StringComparison.OrdinalIgnoreCase))?.Value;
 

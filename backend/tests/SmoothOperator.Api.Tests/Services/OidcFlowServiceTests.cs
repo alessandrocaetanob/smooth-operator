@@ -125,7 +125,7 @@ public class OidcFlowServiceTests
             .ReturnsAsync(new HttpResponseMessage
             {
                 StatusCode = HttpStatusCode.OK,
-                Content = new StringContent(JsonSerializer.Serialize(new { keys = new object[] { } }))
+                Content = new StringContent(JsonSerializer.Serialize(new { keys = Array.Empty<object>() }))
             });
 
         // 2. Token exchange call

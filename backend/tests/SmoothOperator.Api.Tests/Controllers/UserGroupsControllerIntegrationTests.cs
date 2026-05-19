@@ -106,7 +106,7 @@ public class UserGroupsControllerIntegrationTests
         var client = AsUser(factory, adminId, AppRoles.Admin);
 
         // Add user1 and user2
-        var setRes1 = await client.PutAsJsonAsync($"/api/groups/{groupId}/members", new SetUserGroupMembersRequest { UserIds = new List<Guid> { user1Id, user2Id } });
+        var setRes1 = await client.PutAsJsonAsync($"/api/groups/{groupId}/members", new SetUserGroupMembersRequest { UserIds = [user1Id, user2Id] });
         Assert.Equal(HttpStatusCode.NoContent, setRes1.StatusCode);
 
         var getRes1 = await client.GetAsync($"/api/groups/{groupId}");
@@ -115,7 +115,7 @@ public class UserGroupsControllerIntegrationTests
         Assert.Equal(2, group1.MemberCount);
 
         // Remove user1, keep user2
-        var setRes2 = await client.PutAsJsonAsync($"/api/groups/{groupId}/members", new SetUserGroupMembersRequest { UserIds = new List<Guid> { user2Id } });
+        var setRes2 = await client.PutAsJsonAsync($"/api/groups/{groupId}/members", new SetUserGroupMembersRequest { UserIds = [user2Id] });
         Assert.Equal(HttpStatusCode.NoContent, setRes2.StatusCode);
 
         var getRes2 = await client.GetAsync($"/api/groups/{groupId}");

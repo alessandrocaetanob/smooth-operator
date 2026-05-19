@@ -10,7 +10,7 @@ namespace SmoothOperator.Domain.Models
         public string? Description { get; set; }
 
         // Navigation properties
-        public ICollection<User> Users { get; set; } = new List<User>();
-        public ICollection<Permission> Permissions { get; set; } = new List<Permission>();
+        public ICollection<User> Users { get; set; } = [];
+        public ICollection<Permission> Permissions { get; set; } = [];
     }
 }

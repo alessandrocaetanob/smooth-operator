@@ -90,7 +90,10 @@ namespace SmoothOperator.Application.Features.AuditLogs.Queries
                 q = q.Where(l => l.ResourceType == term);
             }
             if (!string.IsNullOrWhiteSpace(outcome))
-                q = q.Where(l => l.Outcome == outcome.Trim().ToLower());
+            {
+                var outcomeLower = outcome.Trim().ToLower();
+                q = q.Where(l => l.Outcome == outcomeLower);
+            }
             if (from.HasValue) q = q.Where(l => l.Timestamp >= from.Value);
             if (to.HasValue) q = q.Where(l => l.Timestamp <= to.Value);
             return q;

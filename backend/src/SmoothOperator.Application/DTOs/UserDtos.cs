@@ -14,8 +14,8 @@ namespace SmoothOperator.Application.DTOs
         public string? SsoProviderType { get; set; }
         public bool HasPassword { get; set; }
         public DateTime CreatedAt { get; set; }
-        public List<string> Roles { get; set; } = new();
-        public List<Guid> VaultIds { get; set; } = new();
+        public List<string> Roles { get; set; } = [];
+        public List<Guid> VaultIds { get; set; } = [];
     }
 
     public class UpdateUserRequest
@@ -45,7 +45,7 @@ namespace SmoothOperator.Application.DTOs
 
     public class SetUserVaultAssignmentsRequest
     {
-        public List<Guid> VaultIds { get; set; } = new();
+        public List<Guid> VaultIds { get; set; } = [];
     }
 
     public class EffectiveVaultDto
@@ -59,15 +59,15 @@ namespace SmoothOperator.Application.DTOs
     {
         public Guid GroupId { get; set; }
         public string GroupName { get; set; } = string.Empty;
-        public List<EffectiveVaultDto> Vaults { get; set; } = new();
+        public List<EffectiveVaultDto> Vaults { get; set; } = [];
     }
 
     public class UserEffectiveVaultsDto
     {
         public Guid UserId { get; set; }
-        public List<EffectiveVaultDto> Direct { get; set; } = new();
-        public List<EffectiveGroupVaultsDto> ViaGroups { get; set; } = new();
-        public List<EffectiveVaultDto> Merged { get; set; } = new();
+        public List<EffectiveVaultDto> Direct { get; set; } = [];
+        public List<EffectiveGroupVaultsDto> ViaGroups { get; set; } = [];
+        public List<EffectiveVaultDto> Merged { get; set; } = [];
     }
 
     public class EffectiveUserSourceDto
@@ -76,15 +76,15 @@ namespace SmoothOperator.Application.DTOs
         public string Name { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public bool IsActive { get; set; }
-        public List<string> Roles { get; set; } = new();
+        public List<string> Roles { get; set; } = [];
         public bool DirectAssignment { get; set; }
-        public List<Guid> ViaGroupIds { get; set; } = new();
+        public List<Guid> ViaGroupIds { get; set; } = [];
     }
 
     public class VaultEffectiveUsersDto
     {
         public Guid VaultId { get; set; }
         public string VaultName { get; set; } = string.Empty;
-        public List<EffectiveUserSourceDto> Users { get; set; } = new();
+        public List<EffectiveUserSourceDto> Users { get; set; } = [];
     }
 }

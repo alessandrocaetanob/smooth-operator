@@ -15,6 +15,8 @@ namespace SmoothOperator.Application.Features.SecretProviders.Commands
 
     public sealed class CreateSecretProviderCommandHandler : IRequestHandler<CreateSecretProviderCommand, SecretProviderDto>
     {
+        private static readonly JsonSerializerOptions _jsonOptions = new() { PropertyNameCaseInsensitive = true };
+
         private readonly IAppDbContext _context;
         private readonly IEncryptionService _encryption;
         private readonly IAuditService _audit;
@@ -78,8 +80,7 @@ namespace SmoothOperator.Application.Features.SecretProviders.Commands
                 try
                 {
                     var json = encryption.Decrypt(p.EncryptedConfigJson);
-                    config = JsonSerializer.Deserialize<AzureKeyVaultConfig>(json,
-                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    config = JsonSerializer.Deserialize<AzureKeyVaultConfig>(json, _jsonOptions);
                 }
                 catch { /* return DTO without decrypted config fields on failure */ }
             }

@@ -21,7 +21,7 @@ namespace SmoothOperator.Application.DTOs
         public Guid? CredentialId { get; set; }
         public Guid? ConnectionGroupId { get; set; }
         public string Settings { get; set; } = "{}";
-        public List<string> Tags { get; set; } = new();
+        public List<string> Tags { get; set; } = [];
 
         // Navigation properties (optional for responses)
         public HostDto? Host { get; set; }
@@ -47,7 +47,7 @@ namespace SmoothOperator.Application.DTOs
         [RegularExpression(@"^\{.*\}$", ErrorMessage = "Settings must be a valid JSON object")]
         public string Settings { get; set; } = "{}";
 
-        public List<string> Tags { get; set; } = new();
+        public List<string> Tags { get; set; } = [];
     }
 
     public class HostDto
@@ -102,8 +102,8 @@ namespace SmoothOperator.Application.DTOs
 
     public class VaultAssignmentsDto
     {
-        public List<Guid> UserIds { get; set; } = new();
-        public List<Guid> GroupIds { get; set; } = new();
+        public List<Guid> UserIds { get; set; } = [];
+        public List<Guid> GroupIds { get; set; } = [];
     }
 
     public class CreateCredentialDto

@@ -14,7 +14,7 @@ namespace SmoothOperator.Application.DTOs
         public DateTime CreatedAt { get; set; }
         public int MemberCount { get; set; }
         public int VaultCount { get; set; }
-        public List<UserGroupMemberDto> Members { get; set; } = new();
+        public List<UserGroupMemberDto> Members { get; set; } = [];
     }
 
     public class UserGroupMemberDto
@@ -59,6 +59,6 @@ namespace SmoothOperator.Application.DTOs
     public class SetUserGroupMembersRequest
     {
         [Required(ErrorMessage = "UserIds list is required")]
-        public List<Guid> UserIds { get; set; } = new();
+        public List<Guid> UserIds { get; set; } = [];
     }
 }

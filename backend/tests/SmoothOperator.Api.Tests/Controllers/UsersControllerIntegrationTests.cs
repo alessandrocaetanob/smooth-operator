@@ -171,7 +171,7 @@ public class UsersControllerIntegrationTests
 
         var client = AsUser(factory, ownerId, AppRoles.Owner);
         var res = await client.PutAsJsonAsync($"/api/users/{targetId}/vaults",
-            new SetUserVaultAssignmentsRequest { VaultIds = new() { Guid.NewGuid() } });
+            new SetUserVaultAssignmentsRequest { VaultIds = [Guid.NewGuid()] });
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
     }
 
@@ -196,7 +196,7 @@ public class UsersControllerIntegrationTests
 
         var client = AsUser(factory, ownerId, AppRoles.Owner);
         var res = await client.PutAsJsonAsync($"/api/users/{targetId}/vaults",
-            new SetUserVaultAssignmentsRequest { VaultIds = new() { vaultAId, vaultBId } });
+            new SetUserVaultAssignmentsRequest { VaultIds = [vaultAId, vaultBId] });
         Assert.Equal(HttpStatusCode.NoContent, res.StatusCode);
 
         using var scope = factory.Services.CreateScope();

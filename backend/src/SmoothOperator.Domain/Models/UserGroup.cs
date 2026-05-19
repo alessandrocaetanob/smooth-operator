@@ -12,7 +12,7 @@ namespace SmoothOperator.Domain.Models
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public User? Owner { get; set; }
-        public ICollection<User> Members { get; set; } = new List<User>();
-        public ICollection<ConnectionGroup> Vaults { get; set; } = new List<ConnectionGroup>();
+        public ICollection<User> Members { get; set; } = [];
+        public ICollection<ConnectionGroup> Vaults { get; set; } = [];
     }
 }
