@@ -73,14 +73,14 @@ namespace SmoothOperator.Application.Features.AuditLogs.Queries
             var q = _db.AuditLogs.AsNoTracking().Include(l => l.User).AsQueryable();
             if (!string.IsNullOrWhiteSpace(user))
             {
-                var pattern = ToLikePattern(user.Trim().ToLower());
+                var pattern = AuditLogLikePattern.ToLikePattern(user.Trim().ToLower());
                 q = q.Where(l => l.User != null &&
                     (EF.Functions.Like(l.User.Email.ToLower(), pattern, "\\")
                         || EF.Functions.Like(l.User.Name.ToLower(), pattern, "\\")));
             }
             if (!string.IsNullOrWhiteSpace(action))
             {
-                var pattern = ToLikePattern(action.Trim().ToLower());
+                var pattern = AuditLogLikePattern.ToLikePattern(action.Trim().ToLower());
                 q = q.Where(l => EF.Functions.Like(l.Action.ToLower(), pattern, "\\"));
             }
             if (!string.IsNullOrWhiteSpace(resourceType))
@@ -96,15 +96,6 @@ namespace SmoothOperator.Application.Features.AuditLogs.Queries
             if (from.HasValue) q = q.Where(l => l.Timestamp >= from.Value);
             if (to.HasValue) q = q.Where(l => l.Timestamp <= to.Value);
             return q;
-        }
-
-        private static string ToLikePattern(string term)
-        {
-            var escaped = term
-                .Replace("\\", "\\\\")
-                .Replace("%", "\\%")
-                .Replace("_", "\\_");
-            return $"%{escaped}%";
         }
 
         private static string Csv(string? input)

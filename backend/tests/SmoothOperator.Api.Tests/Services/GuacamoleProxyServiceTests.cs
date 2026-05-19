@@ -33,10 +33,6 @@ public class GuacamoleProxyServiceTests
     private readonly IOptions<GuacdOptions> _options = Options.Create(new GuacdOptions { Host = "localhost", Port = 4822 });
     private readonly GuacamoleProxyService _service;
 
-    private static readonly string[] _testOkTokens = ["test", "ok"];
-    private static readonly string[] _helloTokens = ["hello"];
-    private static readonly string[] _testTokens = ["test"];
-
     public GuacamoleProxyServiceTests()
     {
         _redisMock.Setup(r => r.GetDatabase(It.IsAny<int>(), It.IsAny<object>())).Returns(_dbMock.Object);
@@ -466,6 +462,10 @@ public class GuacamoleProxyServiceInternalTests
     private readonly GuacamoleProxyService _service;
     private readonly AppDbContext _dbContext;
 
+    private static readonly string[] _testOkTokens = ["test", "ok"];
+    private static readonly string[] _helloTokens = ["hello"];
+    private static readonly string[] _testTokens = ["test"];
+
     public GuacamoleProxyServiceInternalTests()
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()
@@ -519,10 +519,10 @@ public class GuacamoleProxyServiceInternalTests
             paramNames,
             serverVersion,
             _dbContext,
-            CancellationToken.None,
             Guid.NewGuid(),
             "127.0.0.1",
-            settingsOverrides
+            settingsOverrides,
+            CancellationToken.None
         });
 
         return (Task<List<string>>)method!.Invoke(_service, new object[] { request! })!;
