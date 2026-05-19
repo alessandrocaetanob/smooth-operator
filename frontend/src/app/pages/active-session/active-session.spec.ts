@@ -300,24 +300,38 @@ describe('ActiveSession', () => {
 
     it('copyHostClipboardLocally writes to navigator.clipboard when available', () => {
       const wt = vi.fn(() => Promise.resolve());
+      const original = Object.getOwnPropertyDescriptor(navigator, 'clipboard');
       Object.defineProperty(navigator, 'clipboard', {
         configurable: true,
         value: { writeText: wt },
       });
-      session.hostClipboard.set('to-copy');
-      component.copyHostClipboardLocally();
-      expect(wt).toHaveBeenCalledWith('to-copy');
+      try {
+        session.hostClipboard.set('to-copy');
+        component.copyHostClipboardLocally();
+        expect(wt).toHaveBeenCalledWith('to-copy');
+      } finally {
+        if (original) Object.defineProperty(navigator, 'clipboard', original);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        else delete (navigator as any).clipboard;
+      }
     });
 
     it('copyHostClipboardLocally is no-op when empty', () => {
       const wt = vi.fn(() => Promise.resolve());
+      const original = Object.getOwnPropertyDescriptor(navigator, 'clipboard');
       Object.defineProperty(navigator, 'clipboard', {
         configurable: true,
         value: { writeText: wt },
       });
-      session.hostClipboard.set('');
-      component.copyHostClipboardLocally();
-      expect(wt).not.toHaveBeenCalled();
+      try {
+        session.hostClipboard.set('');
+        component.copyHostClipboardLocally();
+        expect(wt).not.toHaveBeenCalled();
+      } finally {
+        if (original) Object.defineProperty(navigator, 'clipboard', original);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        else delete (navigator as any).clipboard;
+      }
     });
 
     it('takeScreenshot triggers anchor click on dataURL', () => {

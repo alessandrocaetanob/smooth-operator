@@ -78,15 +78,13 @@ describe('SsoFinalize', () => {
   });
 
   it('shows error when auth.me fails', () => {
-    auth.me.mockReturnValueOnce(throwError(() => new Error('x')));
     const c = createWithFragment('');
-    // Re-bind the router/me used inside the new component
-    Object.assign(auth, { me: () => throwError(() => new Error('x')) });
-    // Use ActivatedRoute already in TestBed; reuse same instance via createComponent
+    // Wire the failure AFTER createWithFragment swapped in fresh mocks but
+    // BEFORE the component initializes — the component reads from `auth` by
+    // reference (useValue), so reassigning `me` here is observed at runtime.
+    auth.me = vi.fn(() => throwError(() => new Error('x')));
     c.ngOnInit();
-    // Either navigateByUrl was called or errorMessage was set — accept the error branch
-    if (!router.navigateByUrl.mock.calls.length) {
-      expect(c.errorMessage()).toContain('Authentication');
-    }
+    expect(router.navigateByUrl).not.toHaveBeenCalled();
+    expect(c.errorMessage()).toContain('Authentication');
   });
 });

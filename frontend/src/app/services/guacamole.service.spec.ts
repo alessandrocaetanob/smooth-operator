@@ -129,11 +129,7 @@ describe('GuacamoleSession', () => {
   });
 
   afterEach(() => {
-    try {
-      httpTesting.verify();
-    } catch {
-      // Swallow verification errors so they don't cascade to the next test.
-    }
+    httpTesting.verify();
   });
 
   it('initial state is idle', () => {
@@ -413,11 +409,7 @@ describe('GuacamoleSessionManagerService', () => {
   });
 
   afterEach(() => {
-    try {
-      httpTesting?.verify();
-    } catch {
-      /* swallow */
-    }
+    httpTesting.verify();
   });
 
   it('getOrCreate returns the same instance for repeated ids', () => {

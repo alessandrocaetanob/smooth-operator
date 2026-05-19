@@ -359,23 +359,34 @@ describe('Administration', () => {
   });
 
   describe('copyInviteUrl()', () => {
-    it('no-ops without inviteResult', () => {
-      const spy = vi.fn(() => Promise.resolve());
+    let originalClipboard: PropertyDescriptor | undefined;
+    let writeText: ReturnType<typeof vi.fn>;
+
+    beforeEach(() => {
+      originalClipboard = Object.getOwnPropertyDescriptor(navigator, 'clipboard');
+      writeText = vi.fn(() => Promise.resolve());
       Object.defineProperty(navigator, 'clipboard', {
         configurable: true,
-        value: { writeText: spy },
+        value: { writeText },
       });
+    });
+
+    afterEach(() => {
+      if (originalClipboard) {
+        Object.defineProperty(navigator, 'clipboard', originalClipboard);
+      } else {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        delete (navigator as any).clipboard;
+      }
+    });
+
+    it('no-ops without inviteResult', () => {
       component.copyInviteUrl();
-      expect(spy).not.toHaveBeenCalled();
+      expect(writeText).not.toHaveBeenCalled();
     });
 
     it('sets state to "copied" on success', async () => {
       vi.useFakeTimers();
-      const spy = vi.fn(() => Promise.resolve());
-      Object.defineProperty(navigator, 'clipboard', {
-        configurable: true,
-        value: { writeText: spy },
-      });
       component.inviteResult.set({
         message: 'ok',
         inviteUrl: 'https://example.com',
@@ -385,18 +396,14 @@ describe('Administration', () => {
       // Wait for the microtask in .then
       await Promise.resolve();
       await Promise.resolve();
-      expect(spy).toHaveBeenCalledWith('https://example.com');
+      expect(writeText).toHaveBeenCalledWith('https://example.com');
       expect(component.copyState()).toBe('copied');
       vi.advanceTimersByTime(2100);
       expect(component.copyState()).toBe('idle');
     });
 
     it('sets state to "failed" on rejection', async () => {
-      const spy = vi.fn(() => Promise.reject(new Error('x')));
-      Object.defineProperty(navigator, 'clipboard', {
-        configurable: true,
-        value: { writeText: spy },
-      });
+      writeText.mockReturnValueOnce(Promise.reject(new Error('x')));
       component.inviteResult.set({
         message: 'ok',
         inviteUrl: 'https://example.com',

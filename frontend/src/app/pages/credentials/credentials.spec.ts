@@ -230,12 +230,22 @@ describe('Credentials', () => {
 
   describe('copy helpers', () => {
     let writeText: ReturnType<typeof vi.fn>;
+    let originalClipboard: PropertyDescriptor | undefined;
     beforeEach(() => {
       writeText = vi.fn(() => Promise.resolve());
+      originalClipboard = Object.getOwnPropertyDescriptor(navigator, 'clipboard');
       Object.defineProperty(navigator, 'clipboard', {
         configurable: true,
         value: { writeText },
       });
+    });
+    afterEach(() => {
+      if (originalClipboard) {
+        Object.defineProperty(navigator, 'clipboard', originalClipboard);
+      } else {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        delete (navigator as any).clipboard;
+      }
     });
 
     it('copyPublicKey writes generated key and toasts', () => {

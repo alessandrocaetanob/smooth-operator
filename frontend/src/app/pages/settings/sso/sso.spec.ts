@@ -366,6 +366,21 @@ describe('SsoSettings', () => {
   });
 
   describe('copy helpers', () => {
+    let originalClipboard: PropertyDescriptor | undefined;
+
+    beforeEach(() => {
+      originalClipboard = Object.getOwnPropertyDescriptor(navigator, 'clipboard');
+    });
+
+    afterEach(() => {
+      if (originalClipboard) {
+        Object.defineProperty(navigator, 'clipboard', originalClipboard);
+      } else {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        delete (navigator as any).clipboard;
+      }
+    });
+
     function mockClipboard(success: boolean) {
       const writeText = vi.fn(() => (success ? Promise.resolve() : Promise.reject(new Error('x'))));
       Object.defineProperty(navigator, 'clipboard', {
