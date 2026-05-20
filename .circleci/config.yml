@@ -44,6 +44,7 @@ jobs:
               /p:AnalysisLevel=latest
       - run:
           name: Run tests with coverage
+          no_output_timeout: 20m
           command: |
             dotnet test smooth-operator.sln \
               --configuration Release \

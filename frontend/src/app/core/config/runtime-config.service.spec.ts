@@ -14,8 +14,9 @@ describe('RuntimeConfigService', () => {
     vi.restoreAllMocks();
   });
 
-  it('returns defaults before load()', () => {
-    expect(svc.config.helpUrl).toBe('http://localhost:3000');
+  it('returns empty defaults before load()', () => {
+    expect(svc.config.helpUrl).toBe('');
+    expect(svc.config.docsUrl).toBe('');
     expect(svc.config.featureFlags).toEqual({});
   });
 
@@ -30,22 +31,22 @@ describe('RuntimeConfigService', () => {
     } as Response);
     await svc.load();
     expect(svc.config.helpUrl).toBe('https://help.example.com');
-    expect(svc.config.docsUrl).toBe('http://localhost:3000');
+    expect(svc.config.docsUrl).toBe('');
     expect(svc.config.featureFlags).toEqual({ sso: true });
   });
 
-  it('falls back to defaults on non-OK response', async () => {
+  it('falls back to empty defaults on non-OK response', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
       ok: false,
       json: () => Promise.resolve({}),
     } as Response);
     await svc.load();
-    expect(svc.config.helpUrl).toBe('http://localhost:3000');
+    expect(svc.config.helpUrl).toBe('');
   });
 
-  it('falls back to defaults on network error', async () => {
+  it('falls back to empty defaults on network error', async () => {
     vi.spyOn(globalThis, 'fetch').mockRejectedValueOnce(new Error('offline'));
     await svc.load();
-    expect(svc.config.helpUrl).toBe('http://localhost:3000');
+    expect(svc.config.helpUrl).toBe('');
   });
 });

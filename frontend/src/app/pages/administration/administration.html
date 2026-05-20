@@ -263,7 +263,7 @@
 
   @if (vaultModalUser(); as user) {
     <div
-      class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+      class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 md:pl-[calc(1rem+var(--sidebar-width))]"
       tabindex="-1"
       (click)="closeVaultAssignments()"
       (keydown.enter)="closeVaultAssignments()"
@@ -276,6 +276,7 @@
         (click)="$event.stopPropagation()"
         (keydown.enter)="$event.stopPropagation()"
         aria-label="Vault assignments"
+        aria-modal="true"
       >
         <h3 class="text-sm font-semibold text-on-surface uppercase tracking-widest">
           Vault assignments

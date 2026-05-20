@@ -7,8 +7,8 @@ export interface RuntimeConfig {
 }
 
 const DEFAULTS: RuntimeConfig = {
-  helpUrl: 'http://localhost:3000',
-  docsUrl: 'http://localhost:3000',
+  helpUrl: '',
+  docsUrl: '',
   featureFlags: {},
 };
 

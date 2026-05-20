@@ -5,6 +5,7 @@ using SmoothOperator.Infrastructure.Data;
 using SmoothOperator.Domain.Models;
 using SmoothOperator.Application.Interfaces;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace SmoothOperator.Infrastructure.Services
@@ -33,7 +34,13 @@ namespace SmoothOperator.Infrastructure.Services
             Guid? userId = null;
             var idClaim = ctx?.User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (Guid.TryParse(idClaim, out var parsed))
-                userId = parsed;
+            {
+                // Verify the user still exists. A stale JWT (e.g. after a DB reset
+                // where the browser still holds a token from the prior data) would
+                // otherwise produce an FK violation on insert and crash the request.
+                var exists = await _context.Users.AnyAsync(u => u.Id == parsed);
+                if (exists) userId = parsed;
+            }
 
             var entry = new AuditLog
             {

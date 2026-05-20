@@ -115,9 +115,7 @@ function main() {
 
   const failures = Object.entries(measured).filter(([k, v]) => v < thresholds[k]);
   if (failures.length > 0) {
-    fail(
-      `\nFAIL: coverage below threshold on: ${failures.map(([k]) => k).join(', ')}.`,
-    );
+    fail(`\nFAIL: coverage below threshold on: ${failures.map(([k]) => k).join(', ')}.`);
   }
   console.log('\nAll thresholds met.\n');
 }

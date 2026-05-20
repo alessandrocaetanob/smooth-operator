@@ -142,6 +142,10 @@ export const routes: Routes = [
       },
       { path: 'administration', redirectTo: 'settings/users', pathMatch: 'full' },
       { path: 'audit-logs', redirectTo: 'auditing/logs', pathMatch: 'full' },
+      {
+        path: '**',
+        loadComponent: () => import('./pages/not-found/not-found').then((m) => m.NotFound),
+      },
     ],
   },
 ];

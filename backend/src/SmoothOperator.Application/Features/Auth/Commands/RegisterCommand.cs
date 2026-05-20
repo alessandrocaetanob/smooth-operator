@@ -54,7 +54,7 @@ namespace SmoothOperator.Application.Features.Auth.Commands
                 Id = Guid.NewGuid(),
                 Email = email,
                 Name = request.Name.Trim(),
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password, workFactor: 12),
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password, workFactor: 13),
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow
             };

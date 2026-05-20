@@ -86,6 +86,23 @@
   --mascot-eye: #0054d6;
   --mascot-hand: #1868e8;
   --mascot-antenna: #008259;
+
+  /* Sidebar geometry — keep in sync with .md\:pl-56 / .md\:pl-20 on <main>.
+     Used by fixed overlays so they don't slide under the sidebar. */
+  --sidebar-width: 14rem;
+}
+
+/* Toggled by Layout component when the sidebar is collapsed. */
+.sidebar-collapsed {
+  --sidebar-width: 5rem;
+}
+
+/* Mobile: sidebar is a drawer, so overlays can use the full viewport. */
+@media (max-width: 767px) {
+  :root,
+  .sidebar-collapsed {
+    --sidebar-width: 0px;
+  }
 }
 
 .dark {
@@ -634,7 +651,16 @@
 @layer components {
   /* ── Page shell ──────────────────────────────────────────────────────── */
   .page-shell {
-    @apply max-w-[1440px] mx-auto px-6 md:px-8 py-6 md:py-8;
+    @apply max-w-[1440px] mx-auto px-4 sm:px-6 md:px-8 py-5 sm:py-6 md:py-8;
+  }
+
+  /* Common page header — title block + actions. Wraps to two rows on narrow
+     viewports so action buttons don't overflow past the page-shell padding. */
+  .page-header {
+    @apply mb-6 flex flex-wrap items-start justify-between gap-3;
+  }
+  .page-header__actions {
+    @apply flex shrink-0 flex-wrap items-center gap-2;
   }
 
   .btn-primary {

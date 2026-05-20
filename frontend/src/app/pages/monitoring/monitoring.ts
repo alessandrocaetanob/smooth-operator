@@ -58,6 +58,7 @@ export class Monitoring implements OnInit, OnDestroy {
 
   readonly summary = signal<MetricsSummary | null>(null);
   readonly chartData = signal<MonitoringChartData | null>(null);
+  readonly errorMessage = signal<string | null>(null);
 
   readonly activeSessionsColor = computed(() => {
     const n = this.summary()?.activeSessions ?? 0;
@@ -117,6 +118,7 @@ export class Monitoring implements OnInit, OnDestroy {
     // don't race and leave `loading` flickering or apply stale responses.
     this.inflight?.unsubscribe();
     this.loading.set(true);
+    this.errorMessage.set(null);
     this.inflight = forkJoin({
       summary: this.metricsService.getSummary(),
       loginTs: this.metricsService.getLoginTimeseries(this.hours, this.bucketMinutes),
@@ -137,7 +139,12 @@ export class Monitoring implements OnInit, OnDestroy {
           this.chartData.set({ loginTs, connTs, topEvents, breakdown, eventTs, hours: this.hours });
           this.lastRefreshed.set(new Date());
         },
-        error: (err) => console.error('[Monitoring] HTTP error', err),
+        error: (err) => {
+          console.error('[Monitoring] HTTP error', err);
+          this.errorMessage.set(
+            'Unable to load monitoring metrics. Check your connection or try refreshing.',
+          );
+        },
       });
   }
 }

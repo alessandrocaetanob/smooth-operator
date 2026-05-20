@@ -24,8 +24,6 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    ports:
-      - "5000:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
     volumes:
@@ -45,6 +43,8 @@ services:
     networks:
       - smooth-operator-net
     deploy:
+      # mode: replicated
+      # replicas: 3
       resources:
         limits:
           cpus: "2.0"
