@@ -5,7 +5,9 @@
     <title>Smooth Operator</title>
     <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <!-- SVG favicon takes precedence in modern browsers; .ico is the fallback. -->
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="alternate icon" type="image/x-icon" href="favicon.ico" />
     <!-- Apply theme before first paint to prevent FOUC -->
     <script src="/theme-init.js"></script>
 

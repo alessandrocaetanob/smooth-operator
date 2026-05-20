@@ -125,6 +125,11 @@ export const routes: Routes = [
             loadComponent: () =>
               import('./pages/settings/retention/retention').then((m) => m.Retention),
           },
+          {
+            path: 'sessions',
+            loadComponent: () =>
+              import('./pages/settings/sessions/sessions').then((m) => m.Sessions),
+          },
 
           {
             path: 'integrations',

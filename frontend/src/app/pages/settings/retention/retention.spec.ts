@@ -17,8 +17,10 @@ describe('Retention', () => {
 
   beforeEach(async () => {
     svc = {
-      load: vi.fn(() => of({ auditLogRetentionDays: 30 })),
-      update: vi.fn(() => of({ auditLogRetentionDays: 90 })),
+      load: vi.fn(() =>
+        of({ auditLogRetentionDays: 30, idleTimeoutMinutes: 15, maxSessionMinutes: 480 }),
+      ),
+      update: vi.fn((payload) => of(payload)),
     };
     await TestBed.configureTestingModule({
       imports: [Retention],
@@ -75,41 +77,25 @@ describe('Retention', () => {
     expect(component.error()).toContain('integer');
   });
 
-  it('save sends all three settings fields and shows success message', () => {
+  it('save sends retention and preserves session-timeout pass-throughs', () => {
+    component.ngOnInit();
     component.retentionDays.set(90);
-    component.idleTimeoutMinutes.set(15);
-    component.maxSessionMinutes.set(480);
     component.save();
     expect(svc.update).toHaveBeenCalledWith({
       auditLogRetentionDays: 90,
       idleTimeoutMinutes: 15,
       maxSessionMinutes: 480,
     });
-    expect(component.message()).toBe('Settings saved.');
+    expect(component.message()).toContain('older than 90');
   });
 
-  it('save success with 0 retention persists value', () => {
+  it('save with 0 retention shows forever message', () => {
     svc.update.mockReturnValueOnce(
       of({ auditLogRetentionDays: 0, idleTimeoutMinutes: 0, maxSessionMinutes: 0 }),
     );
     component.retentionDays.set(0);
     component.save();
-    expect(component.retentionDays()).toBe(0);
-    expect(component.message()).toBe('Settings saved.');
-  });
-
-  it('save rejects idleTimeout above 10080', () => {
-    component.idleTimeoutMinutes.set(10081);
-    component.save();
-    expect(component.error()).toContain('Idle timeout');
-    expect(svc.update).not.toHaveBeenCalled();
-  });
-
-  it('save rejects negative maxSession', () => {
-    component.maxSessionMinutes.set(-1);
-    component.save();
-    expect(component.error()).toContain('Max session');
-    expect(svc.update).not.toHaveBeenCalled();
+    expect(component.message()).toContain('forever');
   });
 
   it('save no-ops when busy', () => {

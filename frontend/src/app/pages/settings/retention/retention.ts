@@ -17,8 +17,10 @@ export class Retention implements OnInit {
   readonly error = signal<string | null>(null);
 
   readonly retentionDays = signal(0);
-  readonly idleTimeoutMinutes = signal(0);
-  readonly maxSessionMinutes = signal(0);
+
+  /** Pass-through values so we don't clobber session-timeout settings when saving. */
+  private idleTimeoutMinutes = 0;
+  private maxSessionMinutes = 0;
 
   readonly presets = [
     { days: 0, label: 'Forever' },
@@ -43,8 +45,8 @@ export class Retention implements OnInit {
       next: (s) => {
         this.loading.set(false);
         this.retentionDays.set(s.auditLogRetentionDays);
-        this.idleTimeoutMinutes.set(s.idleTimeoutMinutes);
-        this.maxSessionMinutes.set(s.maxSessionMinutes);
+        this.idleTimeoutMinutes = s.idleTimeoutMinutes;
+        this.maxSessionMinutes = s.maxSessionMinutes;
       },
       error: (err) => {
         this.loading.set(false);
@@ -55,19 +57,9 @@ export class Retention implements OnInit {
 
   save(): void {
     if (this.busy()) return;
-    const retention = this.retentionDays();
-    const idle = this.idleTimeoutMinutes();
-    const max = this.maxSessionMinutes();
-    if (retention < 0 || retention > 3650 || !Number.isInteger(retention)) {
+    const value = this.retentionDays();
+    if (value < 0 || value > 3650 || !Number.isInteger(value)) {
       this.error.set('Retention must be an integer between 0 (forever) and 3650 days.');
-      return;
-    }
-    if (idle < 0 || idle > 10080 || !Number.isInteger(idle)) {
-      this.error.set('Idle timeout must be an integer between 0 (disabled) and 10080 minutes.');
-      return;
-    }
-    if (max < 0 || max > 10080 || !Number.isInteger(max)) {
-      this.error.set('Max session must be an integer between 0 (unlimited) and 10080 minutes.');
       return;
     }
     this.busy.set(true);
@@ -75,17 +67,19 @@ export class Retention implements OnInit {
     this.error.set(null);
     this.system
       .update({
-        auditLogRetentionDays: retention,
-        idleTimeoutMinutes: idle,
-        maxSessionMinutes: max,
+        auditLogRetentionDays: value,
+        idleTimeoutMinutes: this.idleTimeoutMinutes,
+        maxSessionMinutes: this.maxSessionMinutes,
       })
       .subscribe({
         next: (s) => {
           this.busy.set(false);
           this.retentionDays.set(s.auditLogRetentionDays);
-          this.idleTimeoutMinutes.set(s.idleTimeoutMinutes);
-          this.maxSessionMinutes.set(s.maxSessionMinutes);
-          this.message.set('Settings saved.');
+          this.message.set(
+            s.auditLogRetentionDays === 0
+              ? 'Retention disabled — audit logs will be kept forever.'
+              : `Audit logs older than ${s.auditLogRetentionDays} day(s) will be purged daily.`,
+          );
         },
         error: (err) => {
           this.busy.set(false);

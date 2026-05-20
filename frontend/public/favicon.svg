@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <title>Smooth Operator</title>
+  <!-- Shield silhouette in brand primary -->
+  <path d="M16 2 L28 6 V14 C28 22 22 28 16 30 C10 28 4 22 4 14 V6 Z"
+        fill="#0054d6" stroke="#1868e8" stroke-width="1" stroke-linejoin="round"/>
+  <!-- Key bow (head) -->
+  <circle cx="13" cy="14" r="3.6" fill="none" stroke="#dae1ff" stroke-width="2"/>
+  <!-- Key shaft + teeth -->
+  <path d="M15.6 15.6 L23 23 M21 21 L23 19 M19 19 L21 17"
+        fill="none" stroke="#dae1ff" stroke-width="2" stroke-linecap="round"/>
+</svg>
