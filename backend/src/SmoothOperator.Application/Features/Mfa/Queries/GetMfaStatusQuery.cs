@@ -20,16 +20,16 @@ namespace SmoothOperator.Application.Features.Mfa.Queries
 
         public async Task<MfaStatusResult> Handle(GetMfaStatusQuery request, CancellationToken cancellationToken)
         {
-            var credential = await _context.MfaCredentials
-                .Include(m => m.RecoveryCodes)
+            var status = await _context.MfaCredentials
                 .AsNoTracking()
-                .FirstOrDefaultAsync(m => m.UserId == request.UserId, cancellationToken);
+                .Where(m => m.UserId == request.UserId)
+                .Select(m => new { m.IsEnabled, Remaining = m.RecoveryCodes.Count(r => !r.IsUsed) })
+                .FirstOrDefaultAsync(cancellationToken);
 
-            if (credential is null or { IsEnabled: false })
+            if (status is null || !status.IsEnabled)
                 return new MfaStatusResult(false, 0);
 
-            var remaining = credential.RecoveryCodes.Count(r => !r.IsUsed);
-            return new MfaStatusResult(true, remaining);
+            return new MfaStatusResult(true, status.Remaining);
         }
     }
 }

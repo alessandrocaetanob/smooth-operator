@@ -45,7 +45,7 @@ namespace SmoothOperator.Application.Features.Mfa.Commands
             // Generate a random 20-byte TOTP secret
             var secretBytes = new byte[20];
             RandomNumberGenerator.Fill(secretBytes);
-            var secretBase32 = Base32Encode(secretBytes);
+            var secretBase32 = OtpNet.Base32Encoding.ToString(secretBytes);
 
             var credential = new MfaCredential
             {
@@ -63,26 +63,6 @@ namespace SmoothOperator.Application.Features.Mfa.Commands
             var uri = $"otpauth://totp/{issuer}:{account}?secret={secretBase32}&issuer={issuer}&algorithm=SHA1&digits=6&period=30";
 
             return new EnrollTotpResult(secretBase32, uri);
-        }
-
-        private static string Base32Encode(byte[] data)
-        {
-            const string alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
-            var result = new System.Text.StringBuilder();
-            int buffer = 0, bitsLeft = 0;
-            foreach (var b in data)
-            {
-                buffer = (buffer << 8) | b;
-                bitsLeft += 8;
-                while (bitsLeft >= 5)
-                {
-                    result.Append(alphabet[(buffer >> (bitsLeft - 5)) & 31]);
-                    bitsLeft -= 5;
-                }
-            }
-            if (bitsLeft > 0)
-                result.Append(alphabet[(buffer << (5 - bitsLeft)) & 31]);
-            return result.ToString();
         }
     }
 }

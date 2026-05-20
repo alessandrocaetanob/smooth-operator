@@ -54,8 +54,8 @@ namespace SmoothOperator.Application.Features.Mfa.Commands
                 .FirstOrDefaultAsync(m => m.UserId == userId && m.IsEnabled, cancellationToken)
                 ?? throw new UnauthorizedException(invalid);
 
-            // Distinguish TOTP code (6 digits) from recovery code (XXXX-XXXX format)
-            var isRecoveryCode = request.Code.Contains('-');
+            // Recovery codes are XXXX-XXXX (9 chars with hyphen); TOTP codes are exactly 6 digits.
+            var isRecoveryCode = request.Code.Length > 6 && request.Code.Contains('-');
             bool verified;
 
             if (isRecoveryCode)
@@ -87,7 +87,10 @@ namespace SmoothOperator.Application.Features.Mfa.Commands
                 throw new UnauthorizedException(invalid);
             }
 
-            await _context.SaveChangesAsync(cancellationToken);
+            // Only persist when a recovery code was consumed (TOTP verification mutates no state).
+            if (isRecoveryCode)
+                await _context.SaveChangesAsync(cancellationToken);
+
             _metrics.RecordLoginAttempt("success");
             await _audit.WriteAsync("user.login", "User", userId.ToString(), new { provider = "local", mfa = true });
 

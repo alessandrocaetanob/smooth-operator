@@ -66,7 +66,7 @@ namespace SmoothOperator.Api.Controllers
             }
         }
 
-        [HttpDelete]
+        [HttpPost("disable")]
         public async Task<IActionResult> Disable([FromBody] MfaDisableRequest request)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);

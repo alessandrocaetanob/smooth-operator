@@ -49,6 +49,6 @@ export class MfaService {
   }
 
   disable(password: string): Observable<void> {
-    return this.http.delete<void>('/api/mfa', { body: { password } });
+    return this.http.post<void>('/api/mfa/disable', { password });
   }
 }
