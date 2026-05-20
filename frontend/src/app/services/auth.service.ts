@@ -35,6 +35,11 @@ export interface AuthResponse {
   user: UserInfo;
 }
 
+export interface MfaChallenge {
+  mfaRequired: true;
+  challengeToken: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly http = inject(HttpClient);
@@ -93,9 +98,24 @@ export class AuthService {
       .pipe(map((res) => this.acceptAuth(res)));
   }
 
-  login(payload: { email: string; password: string }): Observable<AuthResponse> {
+  login(payload: { email: string; password: string }): Observable<AuthResponse | MfaChallenge> {
+    return this.http.post<Record<string, unknown>>('/api/auth/login', payload).pipe(
+      map((res) => {
+        const mfaRequired = (res['mfaRequired'] ?? res['MfaRequired']) as boolean | undefined;
+        if (mfaRequired) {
+          return {
+            mfaRequired: true as const,
+            challengeToken: (res['challengeToken'] ?? res['ChallengeToken'] ?? '') as string,
+          };
+        }
+        return this.acceptAuth(res);
+      }),
+    );
+  }
+
+  verifyMfa(challengeToken: string, code: string): Observable<AuthResponse> {
     return this.http
-      .post<Record<string, unknown>>('/api/auth/login', payload)
+      .post<Record<string, unknown>>('/api/auth/mfa/verify', { challengeToken, code })
       .pipe(map((res) => this.acceptAuth(res)));
   }
 

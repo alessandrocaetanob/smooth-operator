@@ -46,6 +46,7 @@ public static class ApplicationServicesExtensions
         services.AddScoped<IEmailService, EmailService>();
         services.AddScoped<IAccessControlService, AccessControlService>();
         services.AddSingleton<ITokenService, TokenService>();
+        services.AddSingleton<IMfaService, MfaService>();
         services.AddHostedService<AuditRetentionService>();
 
         // SSO services

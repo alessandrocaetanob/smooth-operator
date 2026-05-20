@@ -2,6 +2,8 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ProfileService } from '../../services/profile.service';
 import { AuthService } from '../../services/auth.service';
+import { MfaService, MfaStatus } from '../../services/mfa.service';
+import { toDataURL as qrToDataURL } from 'qrcode';
 
 const MAX_AVATAR_BYTES = 1_048_576; // 1 MB
 const TARGET_DIMENSION = 512;
@@ -16,6 +18,7 @@ const TARGET_DIMENSION = 512;
 export class Profile {
   private readonly profile = inject(ProfileService);
   private readonly auth = inject(AuthService);
+  private readonly mfaSvc = inject(MfaService);
 
   readonly user = this.auth.currentUser;
   readonly name = signal('');
@@ -26,6 +29,20 @@ export class Profile {
   readonly removing = signal(false);
   readonly error = signal<string | null>(null);
   readonly success = signal<string | null>(null);
+
+  // MFA state
+  readonly mfaStatus = signal<MfaStatus | null>(null);
+  readonly mfaEnrollStep = signal<'idle' | 'setup' | 'codes'>('idle');
+  readonly mfaQrDataUrl = signal<string | null>(null);
+  readonly mfaSecretBase32 = signal<string | null>(null);
+  readonly mfaRecoveryCodes = signal<string[]>([]);
+  readonly mfaConfirmCode = signal('');
+  readonly mfaEnrolling = signal(false);
+  readonly mfaConfirming = signal(false);
+  readonly mfaDisableStep = signal<'idle' | 'confirm'>('idle');
+  readonly mfaDisablePassword = signal('');
+  readonly mfaDisabling = signal(false);
+  readonly mfaError = signal<string | null>(null);
 
   readonly initials = computed(() => {
     const u = this.user();
@@ -44,6 +61,7 @@ export class Profile {
   constructor() {
     const u = this.user();
     if (u) this.name.set(u.name);
+    this.loadMfaStatus();
   }
 
   async onFileSelected(event: Event): Promise<void> {
@@ -125,6 +143,125 @@ export class Profile {
       error: () => {
         this.removing.set(false);
         this.error.set('Could not remove avatar.');
+      },
+    });
+  }
+
+  // ── MFA methods ──────────────────────────────────────────────────────────
+
+  loadMfaStatus(): void {
+    this.mfaSvc.getStatus().subscribe({
+      next: (status) => this.mfaStatus.set(status),
+      error: () => this.mfaStatus.set({ isEnabled: false, recoveryCodesRemaining: 0 }),
+    });
+  }
+
+  startMfaEnrollment(): void {
+    this.mfaError.set(null);
+    this.mfaEnrolling.set(true);
+    this.mfaSvc.enroll().subscribe({
+      next: async (result) => {
+        this.mfaSecretBase32.set(result.secretBase32);
+        try {
+          const dataUrl = await qrToDataURL(result.otpAuthUri, { width: 200, margin: 2 });
+          this.mfaQrDataUrl.set(dataUrl);
+        } catch {
+          this.mfaQrDataUrl.set(null);
+        }
+        this.mfaEnrolling.set(false);
+        this.mfaEnrollStep.set('setup');
+      },
+      error: (err) => {
+        this.mfaEnrolling.set(false);
+        this.mfaError.set(err?.error?.message ?? 'Could not start MFA enrollment.');
+      },
+    });
+  }
+
+  confirmMfaEnrollment(): void {
+    const code = this.mfaConfirmCode().trim();
+    if (!code) return;
+    this.mfaError.set(null);
+    this.mfaConfirming.set(true);
+    this.mfaSvc.confirm(code).subscribe({
+      next: (result) => {
+        this.mfaConfirming.set(false);
+        this.mfaRecoveryCodes.set(result.recoveryCodes);
+        this.mfaEnrollStep.set('codes');
+      },
+      error: (err) => {
+        this.mfaConfirming.set(false);
+        this.mfaError.set(err?.error?.message ?? 'Invalid code. Try again.');
+      },
+    });
+  }
+
+  downloadRecoveryCodes(): void {
+    const codes = this.mfaRecoveryCodes();
+    const date = new Date().toISOString().slice(0, 10);
+    const content = [
+      'Smooth Operator — MFA Recovery Codes',
+      `Generated: ${date}`,
+      '',
+      'Each code can be used once to sign in if you lose your authenticator.',
+      'Store this file somewhere safe and delete it after printing.',
+      '',
+      ...codes,
+      '',
+    ].join('\n');
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `smooth-operator-recovery-codes-${date}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  finishMfaEnrollment(): void {
+    this.mfaEnrollStep.set('idle');
+    this.mfaQrDataUrl.set(null);
+    this.mfaSecretBase32.set(null);
+    this.mfaRecoveryCodes.set([]);
+    this.mfaConfirmCode.set('');
+    this.loadMfaStatus();
+  }
+
+  cancelMfaEnrollment(): void {
+    this.mfaEnrollStep.set('idle');
+    this.mfaQrDataUrl.set(null);
+    this.mfaSecretBase32.set(null);
+    this.mfaConfirmCode.set('');
+    this.mfaError.set(null);
+  }
+
+  startMfaDisable(): void {
+    this.mfaDisablePassword.set('');
+    this.mfaError.set(null);
+    this.mfaDisableStep.set('confirm');
+  }
+
+  cancelMfaDisable(): void {
+    this.mfaDisableStep.set('idle');
+    this.mfaDisablePassword.set('');
+    this.mfaError.set(null);
+  }
+
+  confirmMfaDisable(): void {
+    const password = this.mfaDisablePassword().trim();
+    if (!password) return;
+    this.mfaError.set(null);
+    this.mfaDisabling.set(true);
+    this.mfaSvc.disable(password).subscribe({
+      next: () => {
+        this.mfaDisabling.set(false);
+        this.mfaDisableStep.set('idle');
+        this.mfaDisablePassword.set('');
+        this.loadMfaStatus();
+      },
+      error: (err) => {
+        this.mfaDisabling.set(false);
+        this.mfaError.set(err?.error?.message ?? 'Could not disable MFA.');
       },
     });
   }

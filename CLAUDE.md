@@ -38,7 +38,7 @@ dotnet run -c Release --project backend/benchmarks/SmoothOperator.Benchmarks
 ### Performance tooling
 
 ```bash
-# Frontend bundle analysis — production build + source-map-explorer report
+# Frontend bundle analysis — production build + webpack-bundle-analyzer report
 cd frontend && npm run analyze
 
 # k6 smoke load test (needs a running stack + k6 installed)

@@ -30,6 +30,8 @@ public class SsoUserProvisioningServiceTests
             Issued.Add(user);
             return $"token-for-{user.Id}";
         }
+        public string CreateMfaChallengeToken(Guid userId) => $"mfa-challenge-{userId}";
+        public Guid? ValidateMfaChallengeToken(string token) => null;
     }
 
     private sealed class FakeAuditService : IAuditService

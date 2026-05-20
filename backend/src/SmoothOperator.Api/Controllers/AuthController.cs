@@ -5,6 +5,7 @@ using SmoothOperator.Application.DTOs;
 using SmoothOperator.Application.Exceptions;
 using SmoothOperator.Application.Features.Auth.Commands;
 using SmoothOperator.Application.Features.Auth.Queries;
+using SmoothOperator.Application.Features.Mfa.Commands;
 using SmoothOperator.Infrastructure.Services;
 using SmoothOperator.Api.Extensions;
 using MediatR;
@@ -100,9 +101,10 @@ namespace SmoothOperator.Api.Controllers
             try
             {
                 var result = await _mediator.Send(new LoginCommand(request.Email, request.Password));
-                Response.SetAuthCookie(result.Token);
-                // Token intentionally omitted from response body — auth is delivered via httpOnly cookie.
-                return Ok(new { result.User, result.ExpiresAt });
+                if (result.MfaRequired)
+                    return Ok(new { mfaRequired = true, challengeToken = result.ChallengeToken });
+                Response.SetAuthCookie(result.Auth!.Token);
+                return Ok(new { result.Auth.User, result.Auth.ExpiresAt });
             }
             catch (UnauthorizedException ex)
             {
@@ -111,6 +113,24 @@ namespace SmoothOperator.Api.Controllers
             catch (ForbiddenException ex)
             {
                 return StatusCode(403, new { message = ex.Message });
+            }
+        }
+
+        [HttpPost("mfa/verify")]
+        [AllowAnonymous]
+        [EnableRateLimiting("auth")]
+        public async Task<IActionResult> VerifyMfa([FromBody] MfaVerifyRequest request)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            try
+            {
+                var auth = await _mediator.Send(new VerifyMfaCommand(request.ChallengeToken, request.Code));
+                Response.SetAuthCookie(auth.Token);
+                return Ok(new { auth.User, auth.ExpiresAt });
+            }
+            catch (UnauthorizedException ex)
+            {
+                return Unauthorized(new { message = ex.Message });
             }
         }
 

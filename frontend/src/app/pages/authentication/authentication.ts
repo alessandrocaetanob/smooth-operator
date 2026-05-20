@@ -29,6 +29,9 @@ export class Authentication {
   readonly typingLength = signal(0);
   readonly passwordVisible = signal(false);
 
+  readonly step = signal<'credentials' | 'mfa'>('credentials');
+  private readonly challengeToken = signal('');
+
   get helpUrl(): string {
     return this.runtimeConfig.config.helpUrl;
   }
@@ -36,6 +39,13 @@ export class Authentication {
   readonly form = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required]],
+  });
+
+  readonly mfaForm = this.fb.nonNullable.group({
+    code: [
+      '',
+      [Validators.required, Validators.pattern(/^(\d{6}|[A-Za-z0-9]{4}-[A-Za-z0-9]{4})$/)],
+    ],
   });
 
   readonly mascotState = computed<MascotState>(() => {
@@ -74,9 +84,14 @@ export class Authentication {
     this.errorMessage.set(null);
 
     this.auth.login(this.form.getRawValue()).subscribe({
-      next: () => {
+      next: (result) => {
         this.submitting.set(false);
-        this.router.navigateByUrl(this.auth.canAccessSettings() ? '/administration' : '/vault');
+        if (result && 'mfaRequired' in result && result.mfaRequired) {
+          this.challengeToken.set(result.challengeToken);
+          this.step.set('mfa');
+        } else {
+          this.router.navigateByUrl(this.auth.canAccessSettings() ? '/administration' : '/vault');
+        }
       },
       error: (err) => {
         this.submitting.set(false);
@@ -87,6 +102,38 @@ export class Authentication {
         this.errorMessage.set(msg);
       },
     });
+  }
+
+  submitMfaCode(): void {
+    if (this.submitting()) return;
+    if (this.mfaForm.invalid) {
+      this.mfaForm.markAllAsTouched();
+      return;
+    }
+    this.submitting.set(true);
+    this.errorMessage.set(null);
+
+    this.auth.verifyMfa(this.challengeToken(), this.mfaForm.getRawValue().code).subscribe({
+      next: () => {
+        this.submitting.set(false);
+        this.router.navigateByUrl(this.auth.canAccessSettings() ? '/administration' : '/vault');
+      },
+      error: (err) => {
+        this.submitting.set(false);
+        const msg =
+          err instanceof HttpErrorResponse && err.status === 429
+            ? 'Too many sign-in attempts. Please wait a moment and try again.'
+            : (err?.error?.message ?? 'Verification failed.');
+        this.errorMessage.set(msg);
+      },
+    });
+  }
+
+  backToCredentials(): void {
+    this.step.set('credentials');
+    this.challengeToken.set('');
+    this.errorMessage.set(null);
+    this.mfaForm.reset();
   }
 
   loginWithSso(): void {

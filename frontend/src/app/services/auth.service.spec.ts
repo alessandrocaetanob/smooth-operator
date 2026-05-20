@@ -171,7 +171,9 @@ describe('AuthService', () => {
   describe('login()', () => {
     it('should POST /api/auth/login and set currentUser from response', () => {
       let result: { user: { id: string } } | undefined;
-      service.login({ email: 'a@b.com', password: 'secret' }).subscribe((r) => (result = r));
+      service.login({ email: 'a@b.com', password: 'secret' }).subscribe((r) => {
+        if (!('mfaRequired' in r)) result = r as { user: { id: string } };
+      });
       httpTesting.expectOne('/api/auth/login').flush({
         token: 'ignored',
         expiresAt: '2099-01-01T00:00:00Z',

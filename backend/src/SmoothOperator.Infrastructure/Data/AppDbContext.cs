@@ -24,6 +24,8 @@ namespace SmoothOperator.Infrastructure.Data
         public DbSet<SsoProvider> SsoProviders { get; set; } = null!;
         public DbSet<SsoAuthState> SsoAuthStates { get; set; } = null!;
         public DbSet<SecretProvider> SecretProviders { get; set; } = null!;
+        public DbSet<MfaCredential> MfaCredentials { get; set; } = null!;
+        public DbSet<MfaRecoveryCode> MfaRecoveryCodes { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -117,6 +119,24 @@ namespace SmoothOperator.Infrastructure.Data
             // Group by: a.ResourceId, Select: max(a.Timestamp)
             modelBuilder.Entity<AuditLog>()
                 .HasIndex(a => new { a.UserId, a.Action, a.ResourceId, a.Timestamp });
+
+            // MfaCredential: one-to-one with User (cascade on user delete)
+            modelBuilder.Entity<MfaCredential>()
+                .HasOne(m => m.User)
+                .WithMany()
+                .HasForeignKey(m => m.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<MfaCredential>()
+                .HasIndex(m => m.UserId)
+                .IsUnique();
+
+            // MfaRecoveryCode: cascade on credential delete
+            modelBuilder.Entity<MfaRecoveryCode>()
+                .HasOne(r => r.MfaCredential)
+                .WithMany(m => m.RecoveryCodes)
+                .HasForeignKey(r => r.MfaCredentialId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

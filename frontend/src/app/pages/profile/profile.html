@@ -143,4 +143,214 @@
       </div>
     </div>
   </section>
+
+  <!-- Two-factor authentication -->
+  <section
+    class="glass-panel rounded-2xl border border-outline-variant/40 p-6 md:p-8 mt-6"
+    aria-labelledby="mfa-section-heading"
+  >
+    <div class="flex items-center justify-between mb-4">
+      <div class="flex items-center gap-3">
+        <span class="material-symbols-outlined text-2xl text-primary" aria-hidden="true"
+          >shield</span
+        >
+        <div>
+          <h2 id="mfa-section-heading" class="text-base font-semibold text-on-surface">
+            Two-factor authentication
+          </h2>
+          <p class="text-xs text-on-surface-variant mt-0.5">
+            Add a second verification step on every sign-in.
+          </p>
+        </div>
+      </div>
+      @if (mfaStatus()?.isEnabled) {
+        <span
+          class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-primary-container/30 border border-primary/30 text-primary"
+        >
+          <span class="material-symbols-outlined text-sm" aria-hidden="true">check_circle</span>
+          Enabled
+        </span>
+      }
+    </div>
+
+    @if (mfaError(); as e) {
+      <div
+        class="mb-4 rounded-lg border border-error/40 bg-error-container/30 text-on-error-container px-4 py-3 text-sm flex items-start gap-2"
+        role="alert"
+      >
+        <span class="material-symbols-outlined text-base" aria-hidden="true">error</span>
+        <span>{{ e }}</span>
+      </div>
+    }
+
+    @if (mfaStatus() === null) {
+      <p class="text-sm text-on-surface-variant">Loading…</p>
+    } @else if (!mfaStatus()!.isEnabled && mfaEnrollStep() === 'idle') {
+      <!-- Not enabled, idle -->
+      <p class="text-sm text-on-surface-variant mb-4">
+        Two-factor authentication is not enabled. Protect your account with an authenticator app.
+      </p>
+      <button
+        type="button"
+        class="btn-primary inline-flex items-center gap-2 px-4 py-2 rounded-md font-medium"
+        (click)="startMfaEnrollment()"
+        [disabled]="mfaEnrolling()"
+      >
+        <span class="material-symbols-outlined text-base" aria-hidden="true">add</span>
+        {{ mfaEnrolling() ? 'Setting up…' : 'Enable two-factor authentication' }}
+      </button>
+    } @else if (mfaEnrollStep() === 'setup') {
+      <!-- Enrollment: scan QR + confirm code -->
+      <p class="text-sm text-on-surface-variant mb-4">
+        Scan the QR code with your authenticator app (Google Authenticator, Authy, etc.), then enter
+        the 6-digit code to confirm.
+      </p>
+      <div class="flex flex-col items-center gap-4 mb-4">
+        @if (mfaQrDataUrl(); as qr) {
+          <img
+            [src]="qr"
+            alt="TOTP QR code"
+            class="rounded-lg border border-outline-variant/40 bg-white p-2"
+            width="200"
+            height="200"
+          />
+        }
+        @if (mfaSecretBase32(); as secret) {
+          <p class="text-xs text-on-surface-variant text-center">
+            Can't scan?
+            <span class="font-mono text-on-surface select-all break-all">{{ secret }}</span>
+          </p>
+        }
+      </div>
+      <div class="flex flex-col gap-3 max-w-xs">
+        <div>
+          <label
+            for="mfa-confirm-code"
+            class="block text-xs font-semibold uppercase tracking-wider text-on-surface-variant mb-1.5"
+            >Confirmation code</label
+          >
+          <input
+            id="mfa-confirm-code"
+            class="input-field w-full text-center tracking-widest"
+            type="text"
+            inputmode="numeric"
+            autocomplete="one-time-code"
+            placeholder="000000"
+            maxlength="6"
+            [ngModel]="mfaConfirmCode()"
+            (ngModelChange)="mfaConfirmCode.set($event)"
+          />
+        </div>
+        <div class="flex gap-2">
+          <button
+            type="button"
+            class="btn-primary inline-flex items-center gap-2 px-4 py-2 rounded-md font-medium"
+            (click)="confirmMfaEnrollment()"
+            [disabled]="mfaConfirming() || !mfaConfirmCode()"
+          >
+            {{ mfaConfirming() ? 'Verifying…' : 'Verify & activate' }}
+          </button>
+          <button
+            type="button"
+            class="px-4 py-2 rounded-md text-sm text-on-surface-variant hover:text-on-surface border border-outline-variant/50 hover:border-outline-variant transition-colors"
+            (click)="cancelMfaEnrollment()"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    } @else if (mfaEnrollStep() === 'codes') {
+      <!-- Recovery codes — shown once -->
+      <div
+        class="rounded-lg border border-primary/30 bg-primary-container/10 p-4 mb-4"
+        role="alert"
+      >
+        <p class="text-sm font-semibold text-on-surface mb-1">Save your recovery codes</p>
+        <p class="text-xs text-on-surface-variant">
+          These codes can be used to regain access if you lose your authenticator. Each code works
+          once. Store them somewhere safe — you won't see them again.
+        </p>
+      </div>
+      <div class="grid grid-cols-2 gap-2 mb-4 font-mono text-sm">
+        @for (code of mfaRecoveryCodes(); track code) {
+          <span
+            class="px-3 py-1.5 rounded bg-surface-container border border-outline-variant/40 text-on-surface select-all"
+            >{{ code }}</span
+          >
+        }
+      </div>
+      <div class="flex items-center gap-3">
+        <button
+          type="button"
+          class="btn-primary inline-flex items-center gap-2 px-4 py-2 rounded-md font-medium"
+          (click)="finishMfaEnrollment()"
+        >
+          <span class="material-symbols-outlined text-base" aria-hidden="true">check</span>
+          I've saved these codes
+        </button>
+        <button
+          type="button"
+          class="inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium border border-outline-variant/50 hover:border-primary/60 text-on-surface transition-colors"
+          (click)="downloadRecoveryCodes()"
+        >
+          <span class="material-symbols-outlined text-base" aria-hidden="true">download</span>
+          Download as .txt
+        </button>
+      </div>
+    } @else if (mfaStatus()!.isEnabled && mfaDisableStep() === 'idle') {
+      <!-- Enabled, idle -->
+      <p class="text-sm text-on-surface-variant mb-2">
+        Recovery codes remaining:
+        <strong class="text-on-surface">{{ mfaStatus()!.recoveryCodesRemaining }} / 10</strong>
+      </p>
+      <button
+        type="button"
+        class="inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium text-error border border-error/40 hover:bg-error-container/20 transition-colors"
+        (click)="startMfaDisable()"
+      >
+        <span class="material-symbols-outlined text-base" aria-hidden="true">no_encryption</span>
+        Disable two-factor authentication
+      </button>
+    } @else if (mfaDisableStep() === 'confirm') {
+      <!-- Disable confirmation -->
+      <div class="max-w-xs space-y-3">
+        <p class="text-sm text-on-surface-variant">
+          Enter your password to confirm disabling two-factor authentication.
+        </p>
+        <div>
+          <label
+            for="mfa-disable-password"
+            class="block text-xs font-semibold uppercase tracking-wider text-on-surface-variant mb-1.5"
+            >Password</label
+          >
+          <input
+            id="mfa-disable-password"
+            class="input-field w-full"
+            type="password"
+            autocomplete="current-password"
+            placeholder="Your current password"
+            [ngModel]="mfaDisablePassword()"
+            (ngModelChange)="mfaDisablePassword.set($event)"
+          />
+        </div>
+        <div class="flex gap-2">
+          <button
+            type="button"
+            class="inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium text-error border border-error/40 hover:bg-error-container/20 transition-colors disabled:opacity-50"
+            (click)="confirmMfaDisable()"
+            [disabled]="mfaDisabling() || !mfaDisablePassword()"
+          >
+            {{ mfaDisabling() ? 'Disabling…' : 'Confirm disable' }}
+          </button>
+          <button
+            type="button"
+            class="px-4 py-2 rounded-md text-sm text-on-surface-variant hover:text-on-surface border border-outline-variant/50 hover:border-outline-variant transition-colors"
+            (click)="cancelMfaDisable()"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    }
+  </section>
 </main>

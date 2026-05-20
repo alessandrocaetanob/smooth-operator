@@ -24,126 +24,204 @@
         Secure, clientless remote access for modern infrastructure.
       </p>
     </div>
-    <!-- Authentication Actions -->
-    <div class="w-full space-y-app-md mt-app-sm">
-      @if (sso(); as sso) {
-        <button
-          type="button"
-          (click)="loginWithSso()"
-          [disabled]="ssoLoading()"
-          class="w-full flex items-center justify-center space-x-app-sm bg-primary-container text-on-primary-container py-app-md px-app-lg rounded-lg font-body-md transition-all duration-200 btn-glow border border-transparent disabled:opacity-60 disabled:cursor-not-allowed"
-        >
-          @if (ssoLoading()) {
-            <app-spinner size="sm" color="white"></app-spinner>
-            <span>Connecting…</span>
-          } @else {
-            <span class="material-symbols-outlined text-body-lg">login</span>
-            <span>Sign in with {{ sso.name }}</span>
-          }
-        </button>
-        <div class="flex items-center w-full py-app-md">
-          <div class="flex-grow border-t border-white/10"></div>
-          <span class="px-app-md font-label-caps text-label-caps text-on-surface-variant"
-            >OR CONTINUE WITH EMAIL</span
-          >
-          <div class="flex-grow border-t border-white/10"></div>
-        </div>
-      }
 
-      <form
-        class="w-full flex flex-col gap-y-app-md text-left pb-app-sm"
-        [formGroup]="form"
-        (ngSubmit)="submit()"
-        novalidate
-      >
-        <div>
-          <label
-            class="block font-label-caps text-label-caps text-on-surface-variant mb-app-xs"
-            for="email"
-            >Email Address</label
+    @if (step() === 'credentials') {
+      <!-- Authentication Actions -->
+      <div class="w-full space-y-app-md mt-app-sm">
+        @if (sso(); as sso) {
+          <button
+            type="button"
+            (click)="loginWithSso()"
+            [disabled]="ssoLoading()"
+            class="w-full flex items-center justify-center space-x-app-sm bg-primary-container text-on-primary-container py-app-md px-app-lg rounded-lg font-body-md transition-all duration-200 btn-glow border border-transparent disabled:opacity-60 disabled:cursor-not-allowed"
           >
-          <input
-            class="w-full input-field px-app-md py-2.5 text-body-md"
-            id="email"
-            formControlName="email"
-            placeholder="admin@company.com"
-            type="email"
-            autocomplete="email"
-            (input)="onEmailInput($event)"
-          />
-          @if (form.controls.email.invalid && form.controls.email.touched) {
-            <p class="mt-1 text-xs text-error">
-              @if (form.controls.email.errors?.['required']) {
-                Email is required.
-              } @else {
-                Enter a valid email address.
-              }
-            </p>
-          }
-        </div>
-        <div>
-          <div class="flex justify-between items-center mb-app-xs">
-            <label
-              class="block font-label-caps text-label-caps text-on-surface-variant"
-              for="password"
-              >Password</label
+            @if (ssoLoading()) {
+              <app-spinner size="sm" color="white"></app-spinner>
+              <span>Connecting…</span>
+            } @else {
+              <span class="material-symbols-outlined text-body-lg">login</span>
+              <span>Sign in with {{ sso.name }}</span>
+            }
+          </button>
+          <div class="flex items-center w-full py-app-md">
+            <div class="flex-grow border-t border-white/10"></div>
+            <span class="px-app-md font-label-caps text-label-caps text-on-surface-variant"
+              >OR CONTINUE WITH EMAIL</span
             >
-            <a
-              class="font-label-caps text-label-caps text-primary hover:underline hover:text-primary/80"
-              routerLink="/forgot-password"
-              >Forgot?</a
-            >
-          </div>
-          <div class="relative flex items-center">
-            <input
-              class="w-full input-field px-app-md py-2.5 pr-10 text-body-md"
-              id="password"
-              formControlName="password"
-              placeholder="••••••••"
-              [type]="passwordVisible() ? 'text' : 'password'"
-              [attr.autocomplete]="passwordVisible() ? 'off' : 'current-password'"
-              (focus)="onPasswordFocus()"
-              (blur)="onPasswordBlur()"
-            />
-            <button
-              type="button"
-              class="absolute right-3 text-on-surface-variant hover:text-on-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-full p-1 flex items-center justify-center transition-colors"
-              (click)="togglePasswordVisibility()"
-              [attr.aria-label]="passwordVisible() ? 'Hide password' : 'Show password'"
-              [attr.aria-pressed]="passwordVisible()"
-            >
-              <span class="material-symbols-outlined text-[20px]" aria-hidden="true">
-                {{ passwordVisible() ? 'visibility' : 'visibility_off' }}
-              </span>
-            </button>
-          </div>
-          @if (form.controls.password.invalid && form.controls.password.touched) {
-            <p class="mt-1 text-xs text-error">Password is required.</p>
-          }
-        </div>
-
-        @if (errorMessage()) {
-          <div
-            class="bg-error-container/30 border border-error/40 text-on-error-container rounded-lg p-app-sm font-body-sm text-body-sm"
-          >
-            {{ errorMessage() }}
+            <div class="flex-grow border-t border-white/10"></div>
           </div>
         }
 
-        <button
-          class="btn-primary w-full justify-center py-2.5 mt-app-xs gap-2"
-          type="submit"
-          [disabled]="submitting() || form.invalid"
+        <form
+          class="w-full flex flex-col gap-y-app-md text-left pb-app-sm"
+          [formGroup]="form"
+          (ngSubmit)="submit()"
+          novalidate
         >
-          @if (submitting()) {
-            <app-spinner size="sm" color="white"></app-spinner>
-            Signing in…
-          } @else {
-            Sign In
+          <div>
+            <label
+              class="block font-label-caps text-label-caps text-on-surface-variant mb-app-xs"
+              for="email"
+              >Email Address</label
+            >
+            <input
+              class="w-full input-field px-app-md py-2.5 text-body-md"
+              id="email"
+              formControlName="email"
+              placeholder="admin@company.com"
+              type="email"
+              autocomplete="email"
+              (input)="onEmailInput($event)"
+            />
+            @if (form.controls.email.invalid && form.controls.email.touched) {
+              <p class="mt-1 text-xs text-error">
+                @if (form.controls.email.errors?.['required']) {
+                  Email is required.
+                } @else {
+                  Enter a valid email address.
+                }
+              </p>
+            }
+          </div>
+          <div>
+            <div class="flex justify-between items-center mb-app-xs">
+              <label
+                class="block font-label-caps text-label-caps text-on-surface-variant"
+                for="password"
+                >Password</label
+              >
+              <a
+                class="font-label-caps text-label-caps text-primary hover:underline hover:text-primary/80"
+                routerLink="/forgot-password"
+                >Forgot?</a
+              >
+            </div>
+            <div class="relative flex items-center">
+              <input
+                class="w-full input-field px-app-md py-2.5 pr-10 text-body-md"
+                id="password"
+                formControlName="password"
+                placeholder="••••••••"
+                [type]="passwordVisible() ? 'text' : 'password'"
+                [attr.autocomplete]="passwordVisible() ? 'off' : 'current-password'"
+                (focus)="onPasswordFocus()"
+                (blur)="onPasswordBlur()"
+              />
+              <button
+                type="button"
+                class="absolute right-3 text-on-surface-variant hover:text-on-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-full p-1 flex items-center justify-center transition-colors"
+                (click)="togglePasswordVisibility()"
+                [attr.aria-label]="passwordVisible() ? 'Hide password' : 'Show password'"
+                [attr.aria-pressed]="passwordVisible()"
+              >
+                <span class="material-symbols-outlined text-[20px]" aria-hidden="true">
+                  {{ passwordVisible() ? 'visibility' : 'visibility_off' }}
+                </span>
+              </button>
+            </div>
+            @if (form.controls.password.invalid && form.controls.password.touched) {
+              <p class="mt-1 text-xs text-error">Password is required.</p>
+            }
+          </div>
+
+          @if (errorMessage()) {
+            <div
+              class="bg-error-container/30 border border-error/40 text-on-error-container rounded-lg p-app-sm font-body-sm text-body-sm"
+            >
+              {{ errorMessage() }}
+            </div>
           }
-        </button>
-      </form>
-    </div>
+
+          <button
+            class="btn-primary w-full justify-center py-2.5 mt-app-xs gap-2"
+            type="submit"
+            [disabled]="submitting() || form.invalid"
+          >
+            @if (submitting()) {
+              <app-spinner size="sm" color="white"></app-spinner>
+              Signing in…
+            } @else {
+              Sign In
+            }
+          </button>
+        </form>
+      </div>
+    } @else {
+      <!-- MFA Challenge Step -->
+      <div class="w-full mt-app-sm">
+        <form
+          class="w-full flex flex-col gap-y-app-md text-left pb-app-sm"
+          [formGroup]="mfaForm"
+          (ngSubmit)="submitMfaCode()"
+          novalidate
+        >
+          <div class="text-center mb-app-sm">
+            <span
+              class="material-symbols-outlined text-4xl text-primary mb-2 block"
+              aria-hidden="true"
+              >lock</span
+            >
+            <h2 class="font-h2 text-h2 text-on-background">Two-factor authentication</h2>
+            <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">
+              Enter the 6-digit code from your authenticator app, or a recovery code.
+            </p>
+          </div>
+
+          <div>
+            <label
+              class="block font-label-caps text-label-caps text-on-surface-variant mb-app-xs"
+              for="mfa-code"
+              >Verification code</label
+            >
+            <input
+              class="w-full input-field px-app-md py-2.5 text-body-md text-center tracking-widest"
+              id="mfa-code"
+              formControlName="code"
+              placeholder="000000"
+              type="text"
+              inputmode="numeric"
+              autocomplete="one-time-code"
+              maxlength="9"
+            />
+            @if (mfaForm.controls.code.invalid && mfaForm.controls.code.touched) {
+              <p class="mt-1 text-xs text-error">
+                Enter a 6-digit code or XXXX-XXXX recovery code.
+              </p>
+            }
+          </div>
+
+          @if (errorMessage()) {
+            <div
+              class="bg-error-container/30 border border-error/40 text-on-error-container rounded-lg p-app-sm font-body-sm text-body-sm"
+            >
+              {{ errorMessage() }}
+            </div>
+          }
+
+          <button
+            class="btn-primary w-full justify-center py-2.5 mt-app-xs gap-2"
+            type="submit"
+            [disabled]="submitting() || mfaForm.invalid"
+          >
+            @if (submitting()) {
+              <app-spinner size="sm" color="white"></app-spinner>
+              Verifying…
+            } @else {
+              Verify
+            }
+          </button>
+
+          <button
+            type="button"
+            class="w-full text-center font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors"
+            (click)="backToCredentials()"
+          >
+            ← Back to sign in
+          </button>
+        </form>
+      </div>
+    }
+
     <!-- Footer Links -->
     <div
       class="mt-app-margin pt-app-md w-full flex justify-between items-center text-on-surface-variant border-t border-white/5"
