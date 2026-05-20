@@ -1,6 +1,8 @@
-using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Configuration;
@@ -9,8 +11,10 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Moq;
 using SmoothOperator.Api.Extensions;
+using SmoothOperator.Domain.Models;
 using SmoothOperator.Infrastructure.Data;
 using SmoothOperator.Infrastructure.Services;
+using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using Xunit;
@@ -202,5 +206,174 @@ public class StartupExtensionsTests
 
         await Assert.ThrowsAnyAsync<Exception>(
             () => app.ApplyPendingMigrationsAsync(retryDelay: _ => TimeSpan.Zero));
+    }
+
+    // ── AddJwtAuthentication event-handler tests ─────────────────────────────────
+
+    private static IConfiguration MinimalJwtConfig() =>
+        new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Jwt:Key"] = "test-only-signing-key-not-used-for-anything-real-please-32+chars"
+            })
+            .Build();
+
+    [Fact]
+    public async Task OnMessageReceived_SetsTokenFromCookie_WhenTokenIsEmpty()
+    {
+        var svc = new ServiceCollection();
+        svc.AddJwtAuthentication(MinimalJwtConfig());
+        svc.AddLogging();
+        await using var provider = svc.BuildServiceProvider();
+        var options = provider.GetRequiredService<IOptionsMonitor<JwtBearerOptions>>()
+            .Get(JwtBearerDefaults.AuthenticationScheme);
+
+        var httpContext = new DefaultHttpContext();
+        httpContext.Request.Headers["Cookie"] = $"{AuthCookieExtensions.CookieName}=my-test-token";
+        var scheme = new AuthenticationScheme(
+            JwtBearerDefaults.AuthenticationScheme, null, typeof(JwtBearerHandler));
+        var ctx = new MessageReceivedContext(httpContext, scheme, options);
+
+        await options.Events.OnMessageReceived(ctx);
+
+        Assert.Equal("my-test-token", ctx.Token);
+    }
+
+    [Fact]
+    public async Task OnMessageReceived_DoesNotOverrideToken_WhenAlreadySet()
+    {
+        var svc = new ServiceCollection();
+        svc.AddJwtAuthentication(MinimalJwtConfig());
+        svc.AddLogging();
+        await using var provider = svc.BuildServiceProvider();
+        var options = provider.GetRequiredService<IOptionsMonitor<JwtBearerOptions>>()
+            .Get(JwtBearerDefaults.AuthenticationScheme);
+
+        var httpContext = new DefaultHttpContext();
+        httpContext.Request.Headers["Cookie"] = $"{AuthCookieExtensions.CookieName}=cookie-token";
+        var scheme = new AuthenticationScheme(
+            JwtBearerDefaults.AuthenticationScheme, null, typeof(JwtBearerHandler));
+        var ctx = new MessageReceivedContext(httpContext, scheme, options) { Token = "bearer-token" };
+
+        await options.Events.OnMessageReceived(ctx);
+
+        Assert.Equal("bearer-token", ctx.Token);
+    }
+
+    [Fact]
+    public async Task OnTokenValidated_Fails_WhenSubjectIsNotAGuid()
+    {
+        var svc = new ServiceCollection();
+        svc.AddJwtAuthentication(MinimalJwtConfig());
+        svc.AddDbContext<AppDbContext>(o => o.UseInMemoryDatabase($"jwt-tv1-{Guid.NewGuid():N}"));
+        svc.AddLogging();
+        await using var provider = svc.BuildServiceProvider();
+        var options = provider.GetRequiredService<IOptionsMonitor<JwtBearerOptions>>()
+            .Get(JwtBearerDefaults.AuthenticationScheme);
+        using var scope = provider.CreateScope();
+
+        var httpContext = new DefaultHttpContext { RequestServices = scope.ServiceProvider };
+        var scheme = new AuthenticationScheme(
+            JwtBearerDefaults.AuthenticationScheme, null, typeof(JwtBearerHandler));
+        var ctx = new TokenValidatedContext(httpContext, scheme, options)
+        {
+            Principal = new ClaimsPrincipal(new ClaimsIdentity(
+                new[] { new Claim(ClaimTypes.NameIdentifier, "not-a-guid") }))
+        };
+
+        await options.Events.OnTokenValidated(ctx);
+
+        Assert.NotNull(ctx.Result?.Failure);
+        Assert.Contains("not a valid user identifier", ctx.Result.Failure.Message);
+    }
+
+    [Fact]
+    public async Task OnTokenValidated_Fails_WhenUserDoesNotExist()
+    {
+        var svc = new ServiceCollection();
+        svc.AddJwtAuthentication(MinimalJwtConfig());
+        svc.AddDbContext<AppDbContext>(o => o.UseInMemoryDatabase($"jwt-tv2-{Guid.NewGuid():N}"));
+        svc.AddLogging();
+        await using var provider = svc.BuildServiceProvider();
+        var options = provider.GetRequiredService<IOptionsMonitor<JwtBearerOptions>>()
+            .Get(JwtBearerDefaults.AuthenticationScheme);
+        using var scope = provider.CreateScope();
+
+        var httpContext = new DefaultHttpContext { RequestServices = scope.ServiceProvider };
+        var scheme = new AuthenticationScheme(
+            JwtBearerDefaults.AuthenticationScheme, null, typeof(JwtBearerHandler));
+        var ctx = new TokenValidatedContext(httpContext, scheme, options)
+        {
+            Principal = new ClaimsPrincipal(new ClaimsIdentity(
+                new[] { new Claim(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString()) }))
+        };
+
+        await options.Events.OnTokenValidated(ctx);
+
+        Assert.NotNull(ctx.Result?.Failure);
+        Assert.Contains("does not exist", ctx.Result.Failure.Message);
+    }
+
+    [Fact]
+    public async Task OnTokenValidated_Fails_WhenUserIsInactive()
+    {
+        var userId = Guid.NewGuid();
+        var svc = new ServiceCollection();
+        svc.AddJwtAuthentication(MinimalJwtConfig());
+        svc.AddDbContext<AppDbContext>(o => o.UseInMemoryDatabase($"jwt-tv3-{Guid.NewGuid():N}"));
+        svc.AddLogging();
+        await using var provider = svc.BuildServiceProvider();
+        // Seed and test within the same scope so the handler resolves the same
+        // AppDbContext instance that already has the user in the in-memory store.
+        using var scope = provider.CreateScope();
+        var seedDb = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        seedDb.Users.Add(new User { Id = userId, Email = "inactive@x", Name = "Inactive", IsActive = false });
+        await seedDb.SaveChangesAsync();
+
+        var options = provider.GetRequiredService<IOptionsMonitor<JwtBearerOptions>>()
+            .Get(JwtBearerDefaults.AuthenticationScheme);
+        var httpContext = new DefaultHttpContext { RequestServices = scope.ServiceProvider };
+        var scheme = new AuthenticationScheme(
+            JwtBearerDefaults.AuthenticationScheme, null, typeof(JwtBearerHandler));
+        var ctx = new TokenValidatedContext(httpContext, scheme, options)
+        {
+            Principal = new ClaimsPrincipal(new ClaimsIdentity(
+                new[] { new Claim(ClaimTypes.NameIdentifier, userId.ToString()) }))
+        };
+
+        await options.Events.OnTokenValidated(ctx);
+
+        Assert.NotNull(ctx.Result?.Failure);
+        Assert.Contains("deactivated", ctx.Result.Failure.Message);
+    }
+
+    [Fact]
+    public async Task OnTokenValidated_Succeeds_WhenUserIsActive()
+    {
+        var userId = Guid.NewGuid();
+        var svc = new ServiceCollection();
+        svc.AddJwtAuthentication(MinimalJwtConfig());
+        svc.AddDbContext<AppDbContext>(o => o.UseInMemoryDatabase($"jwt-tv4-{Guid.NewGuid():N}"));
+        svc.AddLogging();
+        await using var provider = svc.BuildServiceProvider();
+        using var scope = provider.CreateScope();
+        var seedDb = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        seedDb.Users.Add(new User { Id = userId, Email = "active@x", Name = "Active", IsActive = true });
+        await seedDb.SaveChangesAsync();
+
+        var options = provider.GetRequiredService<IOptionsMonitor<JwtBearerOptions>>()
+            .Get(JwtBearerDefaults.AuthenticationScheme);
+        var httpContext = new DefaultHttpContext { RequestServices = scope.ServiceProvider };
+        var scheme = new AuthenticationScheme(
+            JwtBearerDefaults.AuthenticationScheme, null, typeof(JwtBearerHandler));
+        var ctx = new TokenValidatedContext(httpContext, scheme, options)
+        {
+            Principal = new ClaimsPrincipal(new ClaimsIdentity(
+                new[] { new Claim(ClaimTypes.NameIdentifier, userId.ToString()) }))
+        };
+
+        await options.Events.OnTokenValidated(ctx);
+
+        Assert.Null(ctx.Result?.Failure);
     }
 }
