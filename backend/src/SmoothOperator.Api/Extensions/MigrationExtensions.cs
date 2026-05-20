@@ -25,7 +25,6 @@ namespace SmoothOperator.Api.Extensions
                 try
                 {
                     await RunMigrationsAsync(db, logger);
-                    await RoleSeeder.SeedDefaultsAsync(db, logger);
                     return;
                 }
                 catch (Exception ex) when (attempt < MaxRetries)
@@ -51,25 +50,33 @@ namespace SmoothOperator.Api.Extensions
             if (!db.Database.IsRelational())
             {
                 await db.Database.EnsureCreatedAsync();
+                await RoleSeeder.SeedDefaultsAsync(db, logger);
                 return;
             }
 
-            var usePostgresLock = IsPostgres(db);
-            if (usePostgresLock)
-            {
-                await db.Database.ExecuteSqlRawAsync("SELECT pg_advisory_lock({0});", MigrationLockId);
-            }
-
-            try
+            if (!IsPostgres(db))
             {
                 await ApplyPendingAsync(db, logger);
+                await RoleSeeder.SeedDefaultsAsync(db, logger);
+                return;
+            }
+
+            // Pin one connection for the entire lock → migrate → seed → unlock sequence.
+            // pg_advisory_lock is session-scoped; without pinning, EF's pool can return the
+            // connection between calls. Another replica then reuses that session and sees the
+            // lock as already held by itself, making it reentrant instead of exclusive.
+            // RoleSeeder runs inside the lock so replicas can't race to insert the same roles.
+            await db.Database.OpenConnectionAsync();
+            try
+            {
+                await db.Database.ExecuteSqlRawAsync("SELECT pg_advisory_lock({0});", MigrationLockId);
+                await ApplyPendingAsync(db, logger);
+                await RoleSeeder.SeedDefaultsAsync(db, logger);
+                await db.Database.ExecuteSqlRawAsync("SELECT pg_advisory_unlock({0});", MigrationLockId);
             }
             finally
             {
-                if (usePostgresLock)
-                {
-                    await db.Database.ExecuteSqlRawAsync("SELECT pg_advisory_unlock({0});", MigrationLockId);
-                }
+                await db.Database.CloseConnectionAsync();
             }
         }
 

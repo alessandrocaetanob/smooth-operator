@@ -105,9 +105,13 @@ public static class ApplicationServicesExtensions
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.AddHealthChecks()
-            .AddNpgSql(configuration.GetConnectionString("DefaultConnection") ?? "")
-            .AddRedis(configuration.GetConnectionString("Redis") ?? "localhost:6379");
+        var hcBuilder = services.AddHealthChecks();
+        var pgConnStr = configuration.GetConnectionString("DefaultConnection");
+        if (!string.IsNullOrEmpty(pgConnStr))
+            hcBuilder.AddNpgSql(pgConnStr);
+        var redisConnStr = configuration.GetConnectionString("Redis");
+        if (!string.IsNullOrEmpty(redisConnStr))
+            hcBuilder.AddRedis(redisConnStr);
         return services;
     }
 }

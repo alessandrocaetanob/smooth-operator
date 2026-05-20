@@ -19,7 +19,6 @@ import { AuthService } from '../../services/auth.service';
 import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { Drawer } from '../../shared/drawer/drawer';
-import { Mascot } from '../../shared/mascot/mascot';
 
 interface FormState {
   id: string | null;
@@ -51,7 +50,7 @@ const EMPTY_FORM: FormState = {
 
 @Component({
   selector: 'app-credentials',
-  imports: [FormsModule, Drawer, Mascot],
+  imports: [FormsModule, Drawer],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './credentials.html',
   styleUrl: './credentials.css',
