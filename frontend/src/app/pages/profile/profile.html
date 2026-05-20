@@ -353,4 +353,158 @@
       </div>
     }
   </section>
+
+  <!-- API tokens -->
+  <section
+    class="glass-panel rounded-2xl border border-outline-variant/40 p-6 md:p-8 mt-6"
+    aria-labelledby="api-tokens-heading"
+  >
+    <div class="flex items-center gap-3 mb-4">
+      <span class="material-symbols-outlined text-2xl text-primary" aria-hidden="true">key</span>
+      <div>
+        <h2 id="api-tokens-heading" class="text-base font-semibold text-on-surface">API tokens</h2>
+        <p class="text-xs text-on-surface-variant mt-0.5">
+          Long-lived bearer tokens for CLI, CI, and automation. Send as
+          <code class="font-mono text-on-surface">Authorization: Bearer sop_…</code>
+        </p>
+      </div>
+    </div>
+
+    @if (apiTokensError(); as e) {
+      <div
+        class="mb-4 rounded-lg border border-error/40 bg-error-container/30 text-on-error-container px-4 py-3 text-sm flex items-start gap-2"
+        role="alert"
+      >
+        <span class="material-symbols-outlined text-base" aria-hidden="true">error</span>
+        <span>{{ e }}</span>
+      </div>
+    }
+
+    @if (newTokenResult(); as nt) {
+      <div
+        class="rounded-lg border border-primary/30 bg-primary-container/10 p-4 mb-4"
+        role="alert"
+      >
+        <p class="text-sm font-semibold text-on-surface mb-1">Save this token now</p>
+        <p class="text-xs text-on-surface-variant mb-3">
+          This is the only time the plaintext token is shown. Store it somewhere safe — you won't
+          see it again.
+        </p>
+        <div
+          class="font-mono text-xs break-all bg-surface-container border border-outline-variant/40 rounded px-3 py-2 select-all mb-3 text-on-surface"
+        >
+          {{ nt.plaintextToken }}
+        </div>
+        <div class="flex gap-2">
+          <button
+            type="button"
+            class="btn-primary inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium"
+            (click)="copyNewToken()"
+          >
+            <span class="material-symbols-outlined text-base" aria-hidden="true">content_copy</span>
+            Copy
+          </button>
+          <button
+            type="button"
+            class="inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium border border-outline-variant/50 hover:border-primary/60 text-on-surface transition-colors"
+            (click)="dismissNewToken()"
+          >
+            I've saved this token
+          </button>
+        </div>
+      </div>
+    }
+
+    <!-- Create form -->
+    <div class="mb-6 flex flex-wrap items-end gap-3">
+      <div class="flex-1 min-w-[12rem]">
+        <label
+          for="new-token-name"
+          class="block text-xs font-semibold uppercase tracking-wider text-on-surface-variant mb-1.5"
+          >Token name</label
+        >
+        <input
+          id="new-token-name"
+          class="input-field w-full"
+          type="text"
+          placeholder="ci-bot, terraform, etc."
+          maxlength="100"
+          [ngModel]="newTokenName()"
+          (ngModelChange)="newTokenName.set($event)"
+        />
+      </div>
+      <div>
+        <label
+          for="new-token-expires"
+          class="block text-xs font-semibold uppercase tracking-wider text-on-surface-variant mb-1.5"
+          >Expires (optional)</label
+        >
+        <input
+          id="new-token-expires"
+          class="input-field"
+          type="date"
+          [ngModel]="newTokenExpiresAt()"
+          (ngModelChange)="newTokenExpiresAt.set($event)"
+        />
+      </div>
+      <button
+        type="button"
+        class="btn-primary inline-flex items-center gap-2 px-4 py-2 rounded-md font-medium"
+        (click)="createApiToken()"
+        [disabled]="creatingToken() || !newTokenName().trim()"
+      >
+        <span class="material-symbols-outlined text-base" aria-hidden="true">add</span>
+        {{ creatingToken() ? 'Creating…' : 'Create token' }}
+      </button>
+    </div>
+
+    <!-- Token list -->
+    @if (apiTokens().length === 0) {
+      <p class="text-sm text-on-surface-variant">No API tokens yet.</p>
+    } @else {
+      <ul class="divide-y divide-outline-variant/20 border border-outline-variant/30 rounded-lg">
+        @for (t of apiTokens(); track t.id) {
+          <li class="flex items-center justify-between px-4 py-3 gap-4">
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2">
+                <span class="text-sm font-medium text-on-surface truncate">{{ t.name }}</span>
+                @if (t.revokedAt) {
+                  <span
+                    class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono uppercase bg-error-container/30 border border-error/30 text-error"
+                  >
+                    Revoked
+                  </span>
+                } @else if (t.expiresAt && t.expiresAt < currentIso()) {
+                  <span
+                    class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono uppercase bg-error-container/30 border border-error/30 text-error"
+                  >
+                    Expired
+                  </span>
+                }
+              </div>
+              <p class="text-[11px] text-on-surface-variant mt-0.5">
+                Created {{ t.createdAt | date: 'mediumDate' }}
+                @if (t.lastUsedAt) {
+                  · Last used {{ t.lastUsedAt | date: 'mediumDate' }}
+                }
+                @if (t.expiresAt) {
+                  · Expires {{ t.expiresAt | date: 'mediumDate' }}
+                }
+              </p>
+            </div>
+            @if (!t.revokedAt) {
+              <button
+                type="button"
+                class="text-xs text-error hover:underline disabled:opacity-50"
+                (click)="revokeApiToken(t.id)"
+                [disabled]="revokingTokenId() === t.id"
+              >
+                {{ revokingTokenId() === t.id ? 'Revoking…' : 'Revoke' }}
+              </button>
+            }
+          </li>
+        }
+      </ul>
+    }
+  </section>
 </main>

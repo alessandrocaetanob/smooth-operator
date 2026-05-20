@@ -1,4 +1,7 @@
 using System.Net.Http.Headers;
+using System.Text.Json;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Options;
 using Prometheus;
 using Serilog;
@@ -68,7 +71,23 @@ public static class PipelineExtensions
 
         app.UseAuthorization();
         app.MapControllers();
-        app.MapHealthChecks("/health");
+
+        // Liveness: process is up. No checks executed — if the endpoint responds, we're alive.
+        app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => false });
+
+        // Readiness: tagged checks (DB + Redis) must succeed for the app to accept traffic.
+        app.MapHealthChecks("/health/ready", new HealthCheckOptions
+        {
+            Predicate = check => check.Tags.Contains("ready"),
+            ResponseWriter = WriteHealthCheckJson,
+        });
+
+        // Backwards-compat: legacy /health route stays pointed at readiness.
+        app.MapHealthChecks("/health", new HealthCheckOptions
+        {
+            Predicate = check => check.Tags.Contains("ready"),
+        });
+
         app.MapMetrics("/metrics").RequireAuthorization();
 
         return app;
@@ -84,6 +103,25 @@ public static class PipelineExtensions
         }
 
         throw new InvalidOperationException("Metrics:BearerToken must be configured outside Development/Testing environments.");
+    }
+
+    private static Task WriteHealthCheckJson(HttpContext context, HealthReport report)
+    {
+        context.Response.ContentType = "application/json";
+        var payload = new
+        {
+            status = report.Status.ToString().ToLowerInvariant(),
+            totalDuration = report.TotalDuration.TotalMilliseconds,
+            entries = report.Entries.ToDictionary(
+                e => e.Key,
+                e => new
+                {
+                    status = e.Value.Status.ToString().ToLowerInvariant(),
+                    description = e.Value.Description,
+                    durationMs = e.Value.Duration.TotalMilliseconds,
+                }),
+        };
+        return context.Response.WriteAsync(JsonSerializer.Serialize(payload));
     }
 
     private static bool HasValidMetricsBearerToken(HttpContext context, string? expectedToken)

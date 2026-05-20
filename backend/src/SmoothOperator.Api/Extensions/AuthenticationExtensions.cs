@@ -1,9 +1,11 @@
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using SmoothOperator.Api.Authentication;
 using SmoothOperator.Infrastructure.Data;
 using SmoothOperator.Infrastructure.Services;
 
@@ -11,6 +13,8 @@ namespace SmoothOperator.Api.Extensions;
 
 public static class AuthenticationExtensions
 {
+    public const string JwtOrPatScheme = "JWT_OR_PAT";
+
     // Build TokenValidationParameters directly from configuration so AddJwtBearer
     // doesn't depend on a resolved IOptions<T> (which isn't available yet during host build).
     // Options validation will still catch misconfiguration at startup via ValidateOnStart().
@@ -24,9 +28,29 @@ public static class AuthenticationExtensions
 
         services.AddAuthentication(options =>
         {
-            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-        }).AddJwtBearer(options =>
+            // Default scheme is a policy that dispatches by Authorization header shape:
+            //   "Bearer sop_..."  → ApiToken scheme (PAT)
+            //   anything else     → JwtBearer (cookie or JWT header)
+            options.DefaultScheme = JwtOrPatScheme;
+            options.DefaultAuthenticateScheme = JwtOrPatScheme;
+            options.DefaultChallengeScheme = JwtOrPatScheme;
+        })
+        .AddPolicyScheme(JwtOrPatScheme, "JWT or PAT", o =>
+        {
+            o.ForwardDefaultSelector = ctx =>
+            {
+                var auth = ctx.Request.Headers.Authorization.ToString();
+                if (!string.IsNullOrEmpty(auth) &&
+                    auth.StartsWith("Bearer sop_", StringComparison.OrdinalIgnoreCase))
+                {
+                    return ApiTokenAuthHandler.SchemeName;
+                }
+                return JwtBearerDefaults.AuthenticationScheme;
+            };
+        })
+        .AddScheme<AuthenticationSchemeOptions, ApiTokenAuthHandler>(
+            ApiTokenAuthHandler.SchemeName, _ => { })
+        .AddJwtBearer(options =>
         {
             options.TokenValidationParameters = new TokenValidationParameters
             {

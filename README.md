@@ -4,8 +4,9 @@ Smooth Operator is a cloud-native, clientless remote access vault. It gives team
 
 End users never see actual credentials. Admins control exactly who can access what, through granular role-based permissions and vault assignments.
 
-> Full documentation → [http://localhost:3000](http://localhost:3000) (start the docs container with `docker compose up docs`)
+> Full documentation → [smooth-operator-docs.pages.dev](https://smooth-operator-docs.pages.dev) (or run locally with `docker compose up docs`)
 
+[![Docs](https://img.shields.io/badge/docs-online-blue)](https://smooth-operator-docs.pages.dev)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=alessandrocaetanob_smooth-operator&metric=alert_status&token=09830f0b5cf4a5c457100e56455064855fc33559)](https://sonarcloud.io/summary/new_code?id=alessandrocaetanob_smooth-operator)
 [![codecov](https://codecov.io/gh/alessandrocaetanob/smooth-operator/graph/badge.svg?token=6WSJBQ1HU6)](https://codecov.io/gh/alessandrocaetanob/smooth-operator)
 

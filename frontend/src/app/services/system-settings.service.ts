@@ -5,11 +5,15 @@ import { pickOr, RawRecord } from './json-utils';
 
 export interface SystemSettings {
   auditLogRetentionDays: number;
+  idleTimeoutMinutes: number;
+  maxSessionMinutes: number;
   updatedAt?: string | null;
 }
 
 export interface UpdateSystemSettingsRequest {
   auditLogRetentionDays: number;
+  idleTimeoutMinutes: number;
+  maxSessionMinutes: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -35,6 +39,8 @@ export class SystemSettingsService {
   private normalize(raw: RawRecord): SystemSettings {
     return {
       auditLogRetentionDays: pickOr(raw, 0, 'auditLogRetentionDays', 'AuditLogRetentionDays'),
+      idleTimeoutMinutes: pickOr(raw, 0, 'idleTimeoutMinutes', 'IdleTimeoutMinutes'),
+      maxSessionMinutes: pickOr(raw, 0, 'maxSessionMinutes', 'MaxSessionMinutes'),
       updatedAt: pickOr(raw, null as string | null, 'updatedAt', 'UpdatedAt'),
     };
   }

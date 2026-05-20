@@ -21,7 +21,13 @@ namespace SmoothOperator.Application.Features.SystemSettings.Queries
             var s = await _db.SystemSettings.AsNoTracking().FirstOrDefaultAsync(cancellationToken);
 
             if (s == null)
-                return new SystemSettingsDto { AuditLogRetentionDays = 0, UpdatedAt = DateTime.UtcNow };
+                return new SystemSettingsDto
+                {
+                    AuditLogRetentionDays = 0,
+                    IdleTimeoutMinutes = 0,
+                    MaxSessionMinutes = 0,
+                    UpdatedAt = DateTime.UtcNow,
+                };
 
             return ToDto(s);
         }
@@ -29,6 +35,8 @@ namespace SmoothOperator.Application.Features.SystemSettings.Queries
         internal static SystemSettingsDto ToDto(Domain.Models.SystemSettings s) => new()
         {
             AuditLogRetentionDays = s.AuditLogRetentionDays,
+            IdleTimeoutMinutes = s.IdleTimeoutMinutes,
+            MaxSessionMinutes = s.MaxSessionMinutes,
             UpdatedAt = s.UpdatedAt,
         };
     }

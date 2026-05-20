@@ -9,6 +9,7 @@ import { Profile } from './profile';
 import { ProfileService } from '../../services/profile.service';
 import { AuthService } from '../../services/auth.service';
 import { MfaService } from '../../services/mfa.service';
+import { ApiTokensService } from '../../services/api-tokens.service';
 
 vi.mock('qrcode', () => ({
   toDataURL: vi.fn(() => Promise.resolve('data:image/png;base64,QR')),
@@ -31,6 +32,11 @@ describe('Profile', () => {
     confirm: ReturnType<typeof vi.fn>;
     disable: ReturnType<typeof vi.fn>;
   };
+  let apiTokensSvc: {
+    list: ReturnType<typeof vi.fn>;
+    create: ReturnType<typeof vi.fn>;
+    revoke: ReturnType<typeof vi.fn>;
+  };
   let auth: {
     currentUser: ReturnType<
       typeof signal<{ id: string; name: string; avatarUrl?: string | null } | null>
@@ -46,6 +52,7 @@ describe('Profile', () => {
         { provide: ProfileService, useValue: profileSvc },
         { provide: AuthService, useValue: auth },
         { provide: MfaService, useValue: mfaSvc },
+        { provide: ApiTokensService, useValue: apiTokensSvc },
       ],
     }).compileComponents();
     fixture = TestBed.createComponent(Profile);
@@ -62,6 +69,19 @@ describe('Profile', () => {
       enroll: vi.fn(() => of({ secretBase32: 'ABCD', otpAuthUri: 'otpauth://totp/x' })),
       confirm: vi.fn(() => of({ recoveryCodes: ['AAAA-BBBB', 'CCCC-DDDD'] })),
       disable: vi.fn(() => of(undefined)),
+    };
+    apiTokensSvc = {
+      list: vi.fn(() => of([])),
+      create: vi.fn(() =>
+        of({
+          id: 't1',
+          name: 'ci-bot',
+          plaintextToken: 'sop_lookup_secret',
+          createdAt: '2026-05-20T00:00:00Z',
+          expiresAt: null,
+        }),
+      ),
+      revoke: vi.fn(() => of(undefined)),
     };
     auth = {
       currentUser: signal<{ id: string; name: string; avatarUrl?: string | null } | null>({
@@ -429,6 +449,131 @@ describe('Profile', () => {
         component.mfaDisablePassword.set('bad');
         component.confirmMfaDisable();
         expect(component.mfaError()).toBe('Could not disable MFA.');
+      });
+    });
+  });
+
+  describe('API tokens section', () => {
+    it('loadApiTokens populates list on init', () => {
+      expect(apiTokensSvc.list).toHaveBeenCalled();
+      expect(component.apiTokens()).toEqual([]);
+    });
+
+    it('loadApiTokens error falls back to empty array', async () => {
+      apiTokensSvc.list.mockReturnValueOnce(throwError(() => new Error('boom')));
+      TestBed.resetTestingModule();
+      await build();
+      expect(component.apiTokens()).toEqual([]);
+    });
+
+    describe('createApiToken()', () => {
+      it('empty name is a no-op', () => {
+        component.newTokenName.set('   ');
+        component.createApiToken();
+        expect(apiTokensSvc.create).not.toHaveBeenCalled();
+      });
+
+      it('success populates newTokenResult and reloads list', () => {
+        component.newTokenName.set('ci-bot');
+        component.createApiToken();
+        expect(apiTokensSvc.create).toHaveBeenCalledWith({ name: 'ci-bot', expiresAt: null });
+        expect(component.newTokenResult()?.plaintextToken).toBe('sop_lookup_secret');
+        expect(component.newTokenName()).toBe('');
+      });
+
+      it('passes expiresAt when set', () => {
+        component.newTokenName.set('ci-bot');
+        component.newTokenExpiresAt.set('2027-01-01');
+        component.createApiToken();
+        expect(apiTokensSvc.create).toHaveBeenCalledWith({
+          name: 'ci-bot',
+          expiresAt: '2027-01-01',
+        });
+      });
+
+      it('service error sets apiTokensError', () => {
+        apiTokensSvc.create.mockReturnValueOnce(
+          throwError(() => ({ error: { message: 'name taken' } })),
+        );
+        component.newTokenName.set('dup');
+        component.createApiToken();
+        expect(component.apiTokensError()).toBe('name taken');
+        expect(component.creatingToken()).toBe(false);
+      });
+
+      it('default error when backend gives none', () => {
+        apiTokensSvc.create.mockReturnValueOnce(throwError(() => ({})));
+        component.newTokenName.set('x');
+        component.createApiToken();
+        expect(component.apiTokensError()).toBe('Could not create token.');
+      });
+    });
+
+    describe('revokeApiToken()', () => {
+      it('success clears revoking id and reloads list', () => {
+        apiTokensSvc.list.mockClear();
+        component.revokeApiToken('abc');
+        expect(apiTokensSvc.revoke).toHaveBeenCalledWith('abc');
+        expect(component.revokingTokenId()).toBeNull();
+        expect(apiTokensSvc.list).toHaveBeenCalled();
+      });
+
+      it('service error sets apiTokensError', () => {
+        apiTokensSvc.revoke.mockReturnValueOnce(
+          throwError(() => ({ error: { message: 'forbidden' } })),
+        );
+        component.revokeApiToken('abc');
+        expect(component.apiTokensError()).toBe('forbidden');
+        expect(component.revokingTokenId()).toBeNull();
+      });
+
+      it('default error when backend gives none', () => {
+        apiTokensSvc.revoke.mockReturnValueOnce(throwError(() => ({})));
+        component.revokeApiToken('abc');
+        expect(component.apiTokensError()).toBe('Could not revoke token.');
+      });
+    });
+
+    describe('dismissNewToken() / copyNewToken()', () => {
+      it('dismissNewToken clears the result', () => {
+        component.newTokenName.set('ci-bot');
+        component.createApiToken();
+        expect(component.newTokenResult()).not.toBeNull();
+        component.dismissNewToken();
+        expect(component.newTokenResult()).toBeNull();
+      });
+
+      it('copyNewToken writes plaintext to clipboard', async () => {
+        const writeText = vi.fn(() => Promise.resolve());
+        Object.defineProperty(navigator, 'clipboard', {
+          configurable: true,
+          value: { writeText },
+        });
+        component.newTokenName.set('ci-bot');
+        component.createApiToken();
+        await component.copyNewToken();
+        expect(writeText).toHaveBeenCalledWith('sop_lookup_secret');
+      });
+
+      it('copyNewToken swallows clipboard errors', async () => {
+        const writeText = vi.fn(() => Promise.reject(new Error('blocked')));
+        Object.defineProperty(navigator, 'clipboard', {
+          configurable: true,
+          value: { writeText },
+        });
+        component.newTokenName.set('ci-bot');
+        component.createApiToken();
+        await expect(component.copyNewToken()).resolves.toBeUndefined();
+      });
+
+      it('copyNewToken with no result is a no-op', async () => {
+        const writeText = vi.fn();
+        Object.defineProperty(navigator, 'clipboard', {
+          configurable: true,
+          value: { writeText },
+        });
+        await component.copyNewToken();
+        expect(writeText).not.toHaveBeenCalled();
       });
     });
   });

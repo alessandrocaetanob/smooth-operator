@@ -75,18 +75,41 @@ describe('Retention', () => {
     expect(component.error()).toContain('integer');
   });
 
-  it('save success with retention sets descriptive message', () => {
+  it('save sends all three settings fields and shows success message', () => {
     component.retentionDays.set(90);
+    component.idleTimeoutMinutes.set(15);
+    component.maxSessionMinutes.set(480);
     component.save();
-    expect(svc.update).toHaveBeenCalledWith({ auditLogRetentionDays: 90 });
-    expect(component.message()).toContain('older than 90');
+    expect(svc.update).toHaveBeenCalledWith({
+      auditLogRetentionDays: 90,
+      idleTimeoutMinutes: 15,
+      maxSessionMinutes: 480,
+    });
+    expect(component.message()).toBe('Settings saved.');
   });
 
-  it('save success with 0 sets forever message', () => {
-    svc.update.mockReturnValueOnce(of({ auditLogRetentionDays: 0 }));
+  it('save success with 0 retention persists value', () => {
+    svc.update.mockReturnValueOnce(
+      of({ auditLogRetentionDays: 0, idleTimeoutMinutes: 0, maxSessionMinutes: 0 }),
+    );
     component.retentionDays.set(0);
     component.save();
-    expect(component.message()).toContain('forever');
+    expect(component.retentionDays()).toBe(0);
+    expect(component.message()).toBe('Settings saved.');
+  });
+
+  it('save rejects idleTimeout above 10080', () => {
+    component.idleTimeoutMinutes.set(10081);
+    component.save();
+    expect(component.error()).toContain('Idle timeout');
+    expect(svc.update).not.toHaveBeenCalled();
+  });
+
+  it('save rejects negative maxSession', () => {
+    component.maxSessionMinutes.set(-1);
+    component.save();
+    expect(component.error()).toContain('Max session');
+    expect(svc.update).not.toHaveBeenCalled();
   });
 
   it('save no-ops when busy', () => {

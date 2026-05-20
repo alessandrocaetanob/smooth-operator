@@ -26,6 +26,7 @@ namespace SmoothOperator.Infrastructure.Data
         public DbSet<SecretProvider> SecretProviders { get; set; } = null!;
         public DbSet<MfaCredential> MfaCredentials { get; set; } = null!;
         public DbSet<MfaRecoveryCode> MfaRecoveryCodes { get; set; } = null!;
+        public DbSet<ApiToken> ApiTokens { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -137,6 +138,27 @@ namespace SmoothOperator.Infrastructure.Data
                 .WithMany(m => m.RecoveryCodes)
                 .HasForeignKey(r => r.MfaCredentialId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // ApiToken: cascade on user delete
+            modelBuilder.Entity<ApiToken>()
+                .HasOne(t => t.User)
+                .WithMany()
+                .HasForeignKey(t => t.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Globally unique lookup (used for O(1) auth scheme dispatch)
+            modelBuilder.Entity<ApiToken>()
+                .HasIndex(t => t.TokenLookup)
+                .IsUnique();
+
+            // One token name per user (so list UI can't show ambiguous duplicates)
+            modelBuilder.Entity<ApiToken>()
+                .HasIndex(t => new { t.UserId, t.Name })
+                .IsUnique();
+
+            modelBuilder.Entity<ApiToken>()
+                .Property(t => t.Name)
+                .HasMaxLength(100);
         }
     }
 }

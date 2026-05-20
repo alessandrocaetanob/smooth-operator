@@ -123,6 +123,18 @@ jobs:
           path: frontend/coverage
           destination: frontend-coverage
 
+  docs-build:
+    executor: node-lts
+    steps:
+      - checkout
+      - node/install-packages:
+          pkg-manager: npm
+          app-dir: docs
+      - run:
+          name: Docusaurus production build smoke
+          working_directory: docs
+          command: npm run build
+
   sonarcloud-scan:
     executor: dotnet
     steps:
@@ -227,6 +239,7 @@ workflows:
     jobs:
       - backend-ci
       - frontend-ci
+      - docs-build
       - sonarcloud-scan:
           requires:
             - backend-ci

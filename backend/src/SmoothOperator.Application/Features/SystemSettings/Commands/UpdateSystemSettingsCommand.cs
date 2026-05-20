@@ -36,6 +36,8 @@ namespace SmoothOperator.Application.Features.SystemSettings.Commands
             }
 
             s.AuditLogRetentionDays = request.AuditLogRetentionDays;
+            s.IdleTimeoutMinutes = request.IdleTimeoutMinutes;
+            s.MaxSessionMinutes = request.MaxSessionMinutes;
             s.UpdatedAt = DateTime.UtcNow;
 
             await _db.SaveChangesAsync(cancellationToken);
@@ -43,7 +45,7 @@ namespace SmoothOperator.Application.Features.SystemSettings.Commands
                 creating ? "system_settings.created" : "system_settings.updated",
                 "SystemSettings",
                 s.Id.ToString(),
-                new { s.AuditLogRetentionDays });
+                new { s.AuditLogRetentionDays, s.IdleTimeoutMinutes, s.MaxSessionMinutes });
 
             return Queries.GetSystemSettingsQueryHandler.ToDto(s);
         }

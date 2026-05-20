@@ -15,7 +15,10 @@ const config: Config = {
     format: 'mdx',
   },
 
-  url: 'http://localhost:3000',
+  // Production deployment URL. Cloudflare Pages auto-assigns
+  // <project-name>.pages.dev when the GitHub integration is configured;
+  // override with a custom domain by editing this value.
+  url: 'https://smooth-operator-docs.pages.dev',
   baseUrl: '/',
 
   organizationName: 'alessandrocaetanob',
