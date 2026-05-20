@@ -172,13 +172,13 @@ jobs:
           name: Resolve image tag from git tag
           command: |
             # CIRCLE_TAG is set when the workflow is triggered by a git tag push.
-            # We accept v1.2.3 style tags only (enforced by the workflow filter)
-            # and tag the image with both the exact version and `latest`.
+            # We accept vX.Y or vX.Y.Z (case-insensitive on the leading v) and
+            # tag the image with both the exact tag and `latest`.
             if [ -z "$CIRCLE_TAG" ]; then
               echo "CIRCLE_TAG is empty — this job should only run on tag pushes." >&2
               exit 1
             fi
-            VERSION="${CIRCLE_TAG#v}"
+            VERSION="${CIRCLE_TAG#[vV]}"
             echo "export IMAGE_VERSION=\"$VERSION\"" >> "$BASH_ENV"
             echo "export IMAGE_TAG=\"$CIRCLE_TAG\""  >> "$BASH_ENV"
             echo "Building images for $CIRCLE_TAG (version $VERSION)"
@@ -232,14 +232,15 @@ workflows:
             - backend-ci
             - frontend-ci
 
-  # Triggered by GitHub releases (which push a v*.*.* tag). Each job needs the
-  # same tag filter or the workflow won't fire on tag pushes — CircleCI's
-  # default ignores tags entirely.
+  # Triggered by GitHub releases. Accepts vX.Y or vX.Y.Z, lower- or upper-case
+  # leading v (matches both the historical V0.9 / v0.9.3 styles in this repo).
+  # Each job needs the same tag filter or the workflow won't fire on tag
+  # pushes — CircleCI's default ignores tags entirely.
   release:
     jobs:
       - publish-images:
           filters:
             tags:
-              only: /^v\d+\.\d+\.\d+$/
+              only: /^[vV]\d+\.\d+(\.\d+)?$/
             branches:
               ignore: /.*/
