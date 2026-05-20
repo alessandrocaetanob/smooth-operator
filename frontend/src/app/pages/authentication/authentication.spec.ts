@@ -16,6 +16,7 @@ describe('Authentication', () => {
     providers: ReturnType<typeof signal<Providers>>;
     canAccessSettings: ReturnType<typeof signal<boolean>>;
     login: ReturnType<typeof vi.fn>;
+    verifyMfa: ReturnType<typeof vi.fn>;
   };
   let runtimeConfig: { config: { helpUrl: string } };
 
@@ -24,6 +25,7 @@ describe('Authentication', () => {
       providers: signal<Providers>({ local: true, sso: null }),
       canAccessSettings: signal(false),
       login: vi.fn(() => of(undefined)),
+      verifyMfa: vi.fn(() => of(undefined)),
     };
     runtimeConfig = { config: { helpUrl: 'https://help.example.com' } };
 
@@ -160,6 +162,91 @@ describe('Authentication', () => {
       component.form.setValue({ email: 'a@b.com', password: 'pw' });
       component.submit();
       expect(component.errorMessage()).toBe('Sign-in failed.');
+    });
+  });
+
+  describe('MFA challenge flow', () => {
+    it('submit() with mfaRequired transitions step to mfa', () => {
+      auth.login.mockReturnValueOnce(of({ mfaRequired: true, challengeToken: 'tok-123' }));
+      component.form.setValue({ email: 'a@b.com', password: 'pw' });
+      component.submit();
+      expect(component.step()).toBe('mfa');
+    });
+
+    it('submitMfaCode() no-ops while submitting', () => {
+      component.submitting.set(true);
+      component.submitMfaCode();
+      expect(auth.verifyMfa).not.toHaveBeenCalled();
+    });
+
+    it('submitMfaCode() marks all as touched when form invalid', () => {
+      const spy = vi.spyOn(component.mfaForm, 'markAllAsTouched');
+      component.submitMfaCode();
+      expect(spy).toHaveBeenCalled();
+      expect(auth.verifyMfa).not.toHaveBeenCalled();
+    });
+
+    it('submitMfaCode() success navigates to /vault', () => {
+      // First transition into the MFA step so challengeToken is populated
+      auth.login.mockReturnValueOnce(of({ mfaRequired: true, challengeToken: 'tok-xyz' }));
+      component.form.setValue({ email: 'a@b.com', password: 'pw' });
+      component.submit();
+
+      const router = TestBed.inject(Router);
+      const nav = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+      component.mfaForm.setValue({ code: '123456' });
+      component.submitMfaCode();
+      expect(auth.verifyMfa).toHaveBeenCalledWith('tok-xyz', '123456');
+      expect(nav).toHaveBeenCalledWith('/vault');
+    });
+
+    it('submitMfaCode() success navigates to /administration when canAccessSettings', () => {
+      auth.canAccessSettings.set(true);
+      auth.login.mockReturnValueOnce(of({ mfaRequired: true, challengeToken: 'tok' }));
+      component.form.setValue({ email: 'a@b.com', password: 'pw' });
+      component.submit();
+
+      const router = TestBed.inject(Router);
+      const nav = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+      component.mfaForm.setValue({ code: '111111' });
+      component.submitMfaCode();
+      expect(nav).toHaveBeenCalledWith('/administration');
+    });
+
+    it('submitMfaCode() backend error sets errorMessage', () => {
+      auth.verifyMfa.mockReturnValueOnce(throwError(() => ({ error: { message: 'bad code' } })));
+      component.mfaForm.setValue({ code: '123456' });
+      component.submitMfaCode();
+      expect(component.errorMessage()).toBe('bad code');
+      expect(component.submitting()).toBe(false);
+    });
+
+    it('submitMfaCode() rate-limit message on 429', () => {
+      auth.verifyMfa.mockReturnValueOnce(
+        throwError(() => new HttpErrorResponse({ status: 429, statusText: 'Too many' })),
+      );
+      component.mfaForm.setValue({ code: '123456' });
+      component.submitMfaCode();
+      expect(component.errorMessage()).toContain('Too many');
+    });
+
+    it('submitMfaCode() default error fallback', () => {
+      auth.verifyMfa.mockReturnValueOnce(throwError(() => ({})));
+      component.mfaForm.setValue({ code: '123456' });
+      component.submitMfaCode();
+      expect(component.errorMessage()).toBe('Verification failed.');
+    });
+
+    it('backToCredentials() resets step + clears form', () => {
+      auth.login.mockReturnValueOnce(of({ mfaRequired: true, challengeToken: 'tok' }));
+      component.form.setValue({ email: 'a@b.com', password: 'pw' });
+      component.submit();
+      component.errorMessage.set('e');
+      component.mfaForm.setValue({ code: '111111' });
+      component.backToCredentials();
+      expect(component.step()).toBe('credentials');
+      expect(component.errorMessage()).toBeNull();
+      expect(component.mfaForm.value.code).toBe('');
     });
   });
 

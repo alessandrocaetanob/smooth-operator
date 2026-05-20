@@ -174,14 +174,93 @@ public class MfaFlowTests
 
         await EnrollAndConfirmAsync(client);
 
-        var disableRes = await client.SendAsync(new HttpRequestMessage(HttpMethod.Delete, "/api/mfa")
-        {
-            Content = JsonContent.Create(new { password = DefaultPassword }),
-        });
+        var disableRes = await client.PostAsJsonAsync("/api/mfa/disable", new { password = DefaultPassword });
         Assert.Equal(HttpStatusCode.NoContent, disableRes.StatusCode);
 
         var statusRes = await client.GetAsync("/api/mfa/status");
         using var doc = JsonDocument.Parse(await statusRes.Content.ReadAsStringAsync());
         Assert.False(doc.RootElement.GetProperty("isEnabled").GetBoolean());
+    }
+
+    [Fact]
+    public async Task Status_WithNoCredential_ReturnsDisabledZero()
+    {
+        var userId = Guid.NewGuid();
+        await using var factory = new TestWebApplicationFactory(db =>
+            SeedUserWithPassword(db, userId, "mfa-nostatus@example.com"));
+        var client = AuthenticatedClient(factory, userId);
+
+        var statusRes = await client.GetAsync("/api/mfa/status");
+        Assert.Equal(HttpStatusCode.OK, statusRes.StatusCode);
+        using var doc = JsonDocument.Parse(await statusRes.Content.ReadAsStringAsync());
+        Assert.False(doc.RootElement.GetProperty("isEnabled").GetBoolean());
+        Assert.Equal(0, doc.RootElement.GetProperty("recoveryCodesRemaining").GetInt32());
+    }
+
+    [Fact]
+    public async Task Enroll_WhenMfaAlreadyEnabled_Returns409Conflict()
+    {
+        var userId = Guid.NewGuid();
+        await using var factory = new TestWebApplicationFactory(db =>
+            SeedUserWithPassword(db, userId, "mfa-already-enabled@example.com"));
+        var client = AuthenticatedClient(factory, userId);
+
+        await EnrollAndConfirmAsync(client);
+
+        var reEnrollRes = await client.PostAsync("/api/mfa/enroll", null!);
+        Assert.Equal(HttpStatusCode.Conflict, reEnrollRes.StatusCode);
+    }
+
+    [Fact]
+    public async Task Confirm_WithoutPriorEnrollment_Returns404NotFound()
+    {
+        var userId = Guid.NewGuid();
+        await using var factory = new TestWebApplicationFactory(db =>
+            SeedUserWithPassword(db, userId, "mfa-no-enroll@example.com"));
+        var client = AuthenticatedClient(factory, userId);
+
+        var confirmRes = await client.PostAsJsonAsync("/api/mfa/confirm", new { code = "123456" });
+        Assert.Equal(HttpStatusCode.NotFound, confirmRes.StatusCode);
+    }
+
+    [Fact]
+    public async Task Confirm_WithInvalidCode_Returns401Unauthorized()
+    {
+        var userId = Guid.NewGuid();
+        await using var factory = new TestWebApplicationFactory(db =>
+            SeedUserWithPassword(db, userId, "mfa-bad-code@example.com"));
+        var client = AuthenticatedClient(factory, userId);
+
+        var enrollRes = await client.PostAsync("/api/mfa/enroll", null!);
+        Assert.Equal(HttpStatusCode.OK, enrollRes.StatusCode);
+
+        var confirmRes = await client.PostAsJsonAsync("/api/mfa/confirm", new { code = "000000" });
+        Assert.Equal(HttpStatusCode.Unauthorized, confirmRes.StatusCode);
+    }
+
+    [Fact]
+    public async Task Disable_WithWrongPassword_Returns401Unauthorized()
+    {
+        var userId = Guid.NewGuid();
+        await using var factory = new TestWebApplicationFactory(db =>
+            SeedUserWithPassword(db, userId, "mfa-disable-wrong@example.com"));
+        var client = AuthenticatedClient(factory, userId);
+
+        await EnrollAndConfirmAsync(client);
+
+        var disableRes = await client.PostAsJsonAsync("/api/mfa/disable", new { password = "wrong-password" });
+        Assert.Equal(HttpStatusCode.Unauthorized, disableRes.StatusCode);
+    }
+
+    [Fact]
+    public async Task Disable_WhenMfaNotEnabled_Returns404NotFound()
+    {
+        var userId = Guid.NewGuid();
+        await using var factory = new TestWebApplicationFactory(db =>
+            SeedUserWithPassword(db, userId, "mfa-disable-none@example.com"));
+        var client = AuthenticatedClient(factory, userId);
+
+        var disableRes = await client.PostAsJsonAsync("/api/mfa/disable", new { password = DefaultPassword });
+        Assert.Equal(HttpStatusCode.NotFound, disableRes.StatusCode);
     }
 }
