@@ -1,6 +1,8 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using SmoothOperator.Api.Tests.Infrastructure;
@@ -62,7 +64,8 @@ public class ApiTokensFlowTests
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var token = db.ApiTokens.Single(t => t.Id == id);
         Assert.NotEqual(plaintext, token.TokenHash);
-        Assert.True(BCrypt.Net.BCrypt.Verify(plaintext, token.TokenHash));
+        var expected = Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(plaintext)));
+        Assert.Equal(expected, token.TokenHash);
     }
 
     [Fact]
@@ -184,6 +187,65 @@ public class ApiTokensFlowTests
 
         var meRes = await patClient.GetAsync("/api/auth/me");
         Assert.Equal(HttpStatusCode.Unauthorized, meRes.StatusCode);
+    }
+
+    [Fact]
+    public async Task AuthHeaderWithMalformedToken_Returns401()
+    {
+        var userId = Guid.NewGuid();
+        await using var factory = new TestWebApplicationFactory(db => SeedUser(db, userId));
+        var patClient = factory.CreateClient();
+        // "sop_" prefix matches but no second underscore — handler short-circuits to Fail.
+        patClient.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", "sop_missingsecond");
+
+        var res = await patClient.GetAsync("/api/auth/me");
+        Assert.Equal(HttpStatusCode.Unauthorized, res.StatusCode);
+    }
+
+    [Fact]
+    public async Task AuthHeaderWithExpiredToken_Returns401()
+    {
+        var userId = Guid.NewGuid();
+        await using var factory = new TestWebApplicationFactory(db => SeedUser(db, userId));
+        var client = AsUser(factory, userId);
+        var (id, plaintext) = await CreateTokenAsync(client, "expires-soon");
+
+        // Backdate ExpiresAt to make this PAT immediately expired.
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var token = db.ApiTokens.Single(t => t.Id == id);
+            token.ExpiresAt = DateTime.UtcNow.AddMinutes(-1);
+            await db.SaveChangesAsync();
+        }
+
+        var patClient = factory.CreateClient();
+        patClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", plaintext);
+
+        var res = await patClient.GetAsync("/api/auth/me");
+        Assert.Equal(HttpStatusCode.Unauthorized, res.StatusCode);
+    }
+
+    [Fact]
+    public async Task AuthHeaderWithCorruptedSecret_Returns401()
+    {
+        var userId = Guid.NewGuid();
+        await using var factory = new TestWebApplicationFactory(db => SeedUser(db, userId));
+        var client = AsUser(factory, userId);
+        var (_, plaintext) = await CreateTokenAsync(client);
+
+        // Flip one character in the secret half; lookup still resolves, hash compare fails.
+        var firstUnderscoreAfterPrefix = plaintext.IndexOf('_', 4);
+        var corrupted = plaintext[..(firstUnderscoreAfterPrefix + 1)]
+            + (plaintext[firstUnderscoreAfterPrefix + 1] == 'A' ? 'B' : 'A')
+            + plaintext[(firstUnderscoreAfterPrefix + 2)..];
+
+        var patClient = factory.CreateClient();
+        patClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", corrupted);
+
+        var res = await patClient.GetAsync("/api/auth/me");
+        Assert.Equal(HttpStatusCode.Unauthorized, res.StatusCode);
     }
 
     [Fact]

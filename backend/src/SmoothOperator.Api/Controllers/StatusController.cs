@@ -25,9 +25,7 @@ public class StatusController : ControllerBase
         var report = await hc.CheckHealthAsync(c => c.Tags.Contains("ready"), cancellationToken);
         var assembly = typeof(Program).Assembly;
         var version = assembly.GetName().Version?.ToString() ?? "0.0.0";
-        var informational = assembly
-            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
-        var commit = informational?.Split('+').ElementAtOrDefault(1) ?? "unknown";
+        var commit = ParseCommitHash(assembly);
 
         return Ok(new
         {
@@ -39,5 +37,30 @@ public class StatusController : ControllerBase
                 e => e.Key,
                 e => new { status = e.Value.Status.ToString().ToLowerInvariant() }),
         });
+    }
+
+    /// <summary>
+    /// Extracts the git SHA injected at build time via the MSBuild
+    /// <c>SourceRevisionId</c> property (which generates the
+    /// <c>AssemblyInformationalVersionAttribute</c> value <c>X.Y.Z+&lt;sha&gt;</c>).
+    /// Returns <c>"unknown"</c> when the attribute is missing or malformed.
+    /// </summary>
+    internal static string ParseCommitHash(System.Reflection.Assembly assembly)
+    {
+        var informational = assembly
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+        if (string.IsNullOrEmpty(informational)) return "unknown";
+
+        var plusIdx = informational.IndexOf('+');
+        if (plusIdx < 0 || plusIdx == informational.Length - 1) return "unknown";
+
+        var sha = informational[(plusIdx + 1)..];
+        // SourceRevisionId is a hex git SHA; reject anything else as malformed.
+        foreach (var c in sha)
+        {
+            if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')))
+                return "unknown";
+        }
+        return sha;
     }
 }

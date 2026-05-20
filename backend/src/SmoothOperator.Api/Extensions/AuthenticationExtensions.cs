@@ -37,11 +37,12 @@ public static class AuthenticationExtensions
         })
         .AddPolicyScheme(JwtOrPatScheme, "JWT or PAT", o =>
         {
+            const string patHeaderPrefix = "Bearer " + ApiTokenAuthHandler.TokenPrefix;
             o.ForwardDefaultSelector = ctx =>
             {
                 var auth = ctx.Request.Headers.Authorization.ToString();
                 if (!string.IsNullOrEmpty(auth) &&
-                    auth.StartsWith("Bearer sop_", StringComparison.OrdinalIgnoreCase))
+                    auth.StartsWith(patHeaderPrefix, StringComparison.OrdinalIgnoreCase))
                 {
                     return ApiTokenAuthHandler.SchemeName;
                 }

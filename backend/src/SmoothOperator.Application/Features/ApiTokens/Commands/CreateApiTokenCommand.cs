@@ -1,5 +1,6 @@
 using System;
 using System.Security.Cryptography;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
@@ -60,7 +61,7 @@ namespace SmoothOperator.Application.Features.ApiTokens.Commands
                 UserId = request.UserId,
                 Name = name,
                 TokenLookup = lookup,
-                TokenHash = BCrypt.Net.BCrypt.HashPassword(plaintext),
+                TokenHash = ComputeTokenHash(plaintext),
                 CreatedAt = DateTime.UtcNow,
                 ExpiresAt = expiresAtUtc,
             };
@@ -85,6 +86,16 @@ namespace SmoothOperator.Application.Features.ApiTokens.Commands
             var buf = new byte[byteCount];
             RandomNumberGenerator.Fill(buf);
             return OtpNet.Base32Encoding.ToString(buf).TrimEnd('=');
+        }
+
+        /// <summary>
+        /// Base64-encoded SHA-256 digest of the plaintext token. Fast (microseconds)
+        /// and safe given the 160-bit random secret embedded in the token.
+        /// </summary>
+        internal static string ComputeTokenHash(string plaintext)
+        {
+            var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(plaintext));
+            return Convert.ToBase64String(bytes);
         }
     }
 }

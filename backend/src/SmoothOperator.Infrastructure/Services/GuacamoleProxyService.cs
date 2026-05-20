@@ -529,6 +529,36 @@ namespace SmoothOperator.Infrastructure.Services
             // Cancel the watchdog promptly so its Task.Delay loop exits cleanly even
             // when the relay finished first.
             await watchdogCts.CancelAsync();
+            // Ensure the watchdog has fully completed before returning so the caller's
+            // finally block doesn't race the watchdog's DbContext use on shutdown.
+            try { await watchdogTask; }
+            catch (OperationCanceledException) { /* expected on cancellation */ }
+        }
+
+        /// <summary>
+        /// Pure decision function: given the relevant timestamps + configured
+        /// thresholds, returns the close reason if a timeout is breached, else null.
+        /// Extracted so the policy is unit-testable without standing up a real
+        /// WebSocket + guacd round-trip.
+        /// </summary>
+        internal static string? EvaluateSessionTimeout(
+            DateTime sessionStartedAt,
+            DateTime lastActivityAt,
+            DateTime now,
+            int idleTimeoutMinutes,
+            int maxSessionMinutes)
+        {
+            if (idleTimeoutMinutes > 0 &&
+                now - lastActivityAt > TimeSpan.FromMinutes(idleTimeoutMinutes))
+            {
+                return "idle-timeout";
+            }
+            if (maxSessionMinutes > 0 &&
+                now - sessionStartedAt > TimeSpan.FromMinutes(maxSessionMinutes))
+            {
+                return "max-session-exceeded";
+            }
+            return null;
         }
 
         /// <summary>
@@ -553,18 +583,12 @@ namespace SmoothOperator.Infrastructure.Services
                 }
 
                 var now = DateTime.UtcNow;
-                string? reason = null;
-
-                if (req.IdleTimeoutMinutes > 0 &&
-                    now - req.LastActivityAt > TimeSpan.FromMinutes(req.IdleTimeoutMinutes))
-                {
-                    reason = "idle-timeout";
-                }
-                else if (req.MaxSessionMinutes > 0 &&
-                         now - req.SessionStartedAt > TimeSpan.FromMinutes(req.MaxSessionMinutes))
-                {
-                    reason = "max-session-exceeded";
-                }
+                var reason = EvaluateSessionTimeout(
+                    sessionStartedAt: req.SessionStartedAt,
+                    lastActivityAt: req.LastActivityAt,
+                    now: now,
+                    idleTimeoutMinutes: req.IdleTimeoutMinutes,
+                    maxSessionMinutes: req.MaxSessionMinutes);
 
                 if (reason is null) continue;
 
@@ -572,23 +596,31 @@ namespace SmoothOperator.Infrastructure.Services
                     "Closing session {SessionId} for connection {ConnectionId}: {Reason}",
                     req.SessionId, req.Connection.Id, reason);
 
-                req.DbContext.AuditLogs.Add(new AuditLog
+                // Audit on a fresh DbContext from the scope factory — the request-scoped
+                // req.DbContext is also used by the relay tasks and DbContext is NOT
+                // thread-safe (Gemini PR #127 review).
+                try
                 {
-                    Id = Guid.NewGuid(),
-                    UserId = req.User.Id,
-                    Action = "session.timeout_closed",
-                    ResourceType = ResourceTypeConnection,
-                    ResourceId = req.Connection.Id.ToString(),
-                    Details = JsonSerializer.Serialize(new
+                    using var scope = _scopeFactory.CreateScope();
+                    var bgDb = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                    bgDb.AuditLogs.Add(new AuditLog
                     {
-                        sessionId = req.SessionId,
-                        reason,
-                        idleMinutes = (int)(now - req.LastActivityAt).TotalMinutes,
-                        totalMinutes = (int)(now - req.SessionStartedAt).TotalMinutes,
-                    }),
-                    IpAddress = req.IpAddress,
-                });
-                try { await req.DbContext.SaveChangesAsync(CancellationToken.None); }
+                        Id = Guid.NewGuid(),
+                        UserId = req.User.Id,
+                        Action = "session.timeout_closed",
+                        ResourceType = ResourceTypeConnection,
+                        ResourceId = req.Connection.Id.ToString(),
+                        Details = JsonSerializer.Serialize(new
+                        {
+                            sessionId = req.SessionId,
+                            reason,
+                            idleMinutes = (int)(now - req.LastActivityAt).TotalMinutes,
+                            totalMinutes = (int)(now - req.SessionStartedAt).TotalMinutes,
+                        }),
+                        IpAddress = req.IpAddress,
+                    });
+                    await bgDb.SaveChangesAsync(CancellationToken.None);
+                }
                 catch { /* swallow — best-effort audit */ }
 
                 if (req.WebSocket.State == WebSocketState.Open)

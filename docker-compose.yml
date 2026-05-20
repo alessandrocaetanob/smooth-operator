@@ -32,6 +32,8 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    ports:
+      - "5000:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
     volumes:

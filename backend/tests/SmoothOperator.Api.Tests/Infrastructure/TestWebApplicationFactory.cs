@@ -139,11 +139,13 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
                 .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(TestAuthHandler.SchemeName, _ => { })
                 .AddPolicyScheme(testPolicyScheme, "TestPolicyScheme", o =>
                 {
+                    const string patHeaderPrefix =
+                        "Bearer " + SmoothOperator.Api.Authentication.ApiTokenAuthHandler.TokenPrefix;
                     o.ForwardDefaultSelector = ctx =>
                     {
                         var auth = ctx.Request.Headers.Authorization.ToString();
                         if (!string.IsNullOrEmpty(auth) &&
-                            auth.StartsWith("Bearer sop_", StringComparison.OrdinalIgnoreCase))
+                            auth.StartsWith(patHeaderPrefix, StringComparison.OrdinalIgnoreCase))
                         {
                             return SmoothOperator.Api.Authentication.ApiTokenAuthHandler.SchemeName;
                         }

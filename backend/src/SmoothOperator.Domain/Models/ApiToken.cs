@@ -8,8 +8,13 @@ namespace SmoothOperator.Domain.Models
     ///
     /// Token format: <c>sop_&lt;12-char-base32-lookup&gt;_&lt;32-char-base32-secret&gt;</c>.
     /// The <see cref="TokenLookup"/> segment is stored in plaintext and indexed
-    /// for O(1) lookup; <see cref="TokenHash"/> is a BCrypt hash of the full
-    /// token verified server-side.
+    /// for O(1) lookup; <see cref="TokenHash"/> is a Base64-encoded SHA-256
+    /// digest of the full plaintext token, compared with
+    /// <c>CryptographicOperations.FixedTimeEquals</c>. The 32-byte (160-bit)
+    /// random secret makes the token brute-force resistant on its own, so a
+    /// computationally expensive password hash (BCrypt/Argon2) is unnecessary
+    /// and would impose hundreds of ms of overhead on every PAT-authenticated
+    /// request.
     /// </summary>
     public class ApiToken
     {
@@ -23,7 +28,7 @@ namespace SmoothOperator.Domain.Models
         /// <summary>Public prefix used for fast lookup; e.g. <c>sop_AbCd1234EfGh</c>.</summary>
         public string TokenLookup { get; set; } = string.Empty;
 
-        /// <summary>BCrypt hash of the full plaintext token.</summary>
+        /// <summary>Base64-encoded SHA-256 digest of the full plaintext token.</summary>
         public string TokenHash { get; set; } = string.Empty;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
