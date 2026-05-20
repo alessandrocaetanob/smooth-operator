@@ -3,15 +3,25 @@
 # Stage 1: Restore — cached unless .csproj files change.
 # The BuildKit cache mount keeps the NuGet package cache warm across builds;
 # the same cache is re-mounted in the build/publish stages so --no-restore works.
+#
+# TARGETARCH is set automatically by `docker buildx build --platform …`; it
+# maps to the matching .NET musl RID so ReadyToRun native code is generated
+# for the target architecture (amd64 → linux-musl-x64, arm64 → linux-musl-arm64).
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS restore
+ARG TARGETARCH=amd64
 WORKDIR /repo
 COPY ["src/SmoothOperator.Domain/SmoothOperator.Domain.csproj", "src/SmoothOperator.Domain/"]
 COPY ["src/SmoothOperator.Application/SmoothOperator.Application.csproj", "src/SmoothOperator.Application/"]
 COPY ["src/SmoothOperator.Infrastructure/SmoothOperator.Infrastructure.csproj", "src/SmoothOperator.Infrastructure/"]
 COPY ["src/SmoothOperator.Api/SmoothOperator.Api.csproj", "src/SmoothOperator.Api/"]
 RUN --mount=type=cache,target=/root/.nuget/packages \
+    case "$TARGETARCH" in \
+      amd64) RID="linux-musl-x64" ;; \
+      arm64) RID="linux-musl-arm64" ;; \
+      *) echo "Unsupported TARGETARCH: $TARGETARCH" >&2; exit 1 ;; \
+    esac && \
     dotnet restore "src/SmoothOperator.Api/SmoothOperator.Api.csproj" \
-    -r linux-musl-x64 /p:PublishReadyToRun=true
+    -r "$RID" /p:PublishReadyToRun=true
 
 # Stage 2: Build
 FROM restore AS build
@@ -19,12 +29,18 @@ COPY . .
 RUN --mount=type=cache,target=/root/.nuget/packages \
     dotnet build "src/SmoothOperator.Api/SmoothOperator.Api.csproj" -c Release --no-restore -o /app/build
 
-# Stage 3: Publish — ReadyToRun compiled for musl (linux-musl-x64) to match the
-# Alpine runtime image, so the R2R native code is actually usable.
+# Stage 3: Publish — ReadyToRun compiled for the target musl RID so the R2R
+# native code matches the Alpine runtime image's architecture.
 FROM build AS publish
+ARG TARGETARCH=amd64
 RUN --mount=type=cache,target=/root/.nuget/packages \
+    case "$TARGETARCH" in \
+      amd64) RID="linux-musl-x64" ;; \
+      arm64) RID="linux-musl-arm64" ;; \
+      *) echo "Unsupported TARGETARCH: $TARGETARCH" >&2; exit 1 ;; \
+    esac && \
     dotnet publish "src/SmoothOperator.Api/SmoothOperator.Api.csproj" \
-    -c Release --no-restore -r linux-musl-x64 --no-self-contained \
+    -c Release --no-restore -r "$RID" --no-self-contained \
     -o /app/publish \
     /p:UseAppHost=false /p:PublishReadyToRun=true
 
