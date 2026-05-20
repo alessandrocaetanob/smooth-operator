@@ -196,6 +196,28 @@ export class Profile {
     });
   }
 
+  downloadRecoveryCodes(): void {
+    const codes = this.mfaRecoveryCodes();
+    const date = new Date().toISOString().slice(0, 10);
+    const content = [
+      'Smooth Operator — MFA Recovery Codes',
+      `Generated: ${date}`,
+      '',
+      'Each code can be used once to sign in if you lose your authenticator.',
+      'Store this file somewhere safe and delete it after printing.',
+      '',
+      ...codes,
+      '',
+    ].join('\n');
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `smooth-operator-recovery-codes-${date}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   finishMfaEnrollment(): void {
     this.mfaEnrollStep.set('idle');
     this.mfaQrDataUrl.set(null);

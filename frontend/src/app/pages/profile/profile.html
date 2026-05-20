@@ -279,14 +279,24 @@
           >
         }
       </div>
-      <button
-        type="button"
-        class="btn-primary inline-flex items-center gap-2 px-4 py-2 rounded-md font-medium"
-        (click)="finishMfaEnrollment()"
-      >
-        <span class="material-symbols-outlined text-base" aria-hidden="true">check</span>
-        I've saved these codes
-      </button>
+      <div class="flex items-center gap-3">
+        <button
+          type="button"
+          class="btn-primary inline-flex items-center gap-2 px-4 py-2 rounded-md font-medium"
+          (click)="finishMfaEnrollment()"
+        >
+          <span class="material-symbols-outlined text-base" aria-hidden="true">check</span>
+          I've saved these codes
+        </button>
+        <button
+          type="button"
+          class="inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium border border-outline-variant/50 hover:border-primary/60 text-on-surface transition-colors"
+          (click)="downloadRecoveryCodes()"
+        >
+          <span class="material-symbols-outlined text-base" aria-hidden="true">download</span>
+          Download as .txt
+        </button>
+      </div>
     } @else if (mfaStatus()!.isEnabled && mfaDisableStep() === 'idle') {
       <!-- Enabled, idle -->
       <p class="text-sm text-on-surface-variant mb-2">
