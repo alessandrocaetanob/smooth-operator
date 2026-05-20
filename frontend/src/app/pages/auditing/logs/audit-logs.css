@@ -88,6 +88,10 @@
   position: fixed;
   top: 0;
   right: 0;
+  /* Override browser UA styles for <dialog>: inset:0 + margin:auto would pin to left */
+  left: auto;
+  bottom: auto;
+  margin: 0;
   width: min(480px, 95vw);
   height: 100vh;
   z-index: 50;
