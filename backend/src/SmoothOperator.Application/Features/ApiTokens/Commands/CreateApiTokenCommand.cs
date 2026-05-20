@@ -34,7 +34,14 @@ namespace SmoothOperator.Application.Features.ApiTokens.Commands
             if (string.IsNullOrEmpty(name))
                 throw new BadRequestException("Token name is required.");
 
-            if (request.ExpiresAt is { } exp && exp <= DateTime.UtcNow)
+            // Frontend sends a bare ISO date ("2027-01-01") which JSON model binding
+            // produces as Kind=Unspecified. Postgres timestamptz rejects that — coerce
+            // to UTC before either validating or persisting.
+            DateTime? expiresAtUtc = request.ExpiresAt is { } exp
+                ? DateTime.SpecifyKind(exp, DateTimeKind.Utc)
+                : null;
+
+            if (expiresAtUtc is { } expUtc && expUtc <= DateTime.UtcNow)
                 throw new BadRequestException("ExpiresAt must be in the future.");
 
             var nameExists = await _context.ApiTokens
@@ -55,7 +62,7 @@ namespace SmoothOperator.Application.Features.ApiTokens.Commands
                 TokenLookup = lookup,
                 TokenHash = BCrypt.Net.BCrypt.HashPassword(plaintext),
                 CreatedAt = DateTime.UtcNow,
-                ExpiresAt = request.ExpiresAt,
+                ExpiresAt = expiresAtUtc,
             };
             _context.ApiTokens.Add(token);
             await _context.SaveChangesAsync(cancellationToken);

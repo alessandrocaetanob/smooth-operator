@@ -80,6 +80,33 @@ public class ApiTokensFlowTests
     }
 
     [Fact]
+    public async Task Create_WithBareIsoDateExpiresAt_PersistsAsUtc()
+    {
+        // Reproduces the frontend payload shape: ExpiresAt arrives as a JSON string
+        // ("2027-01-01") with no offset, which model binding produces as
+        // DateTime.Kind=Unspecified. Postgres timestamptz only accepts UTC, so
+        // the handler must coerce before persistence.
+        var userId = Guid.NewGuid();
+        await using var factory = new TestWebApplicationFactory(db => SeedUser(db, userId));
+        var client = AsUser(factory, userId);
+
+        var res = await client.PostAsJsonAsync("/api/api-tokens", new
+        {
+            name = "with-expiry",
+            expiresAt = "2099-01-01",
+        });
+        Assert.Equal(HttpStatusCode.OK, res.StatusCode);
+        using var doc = JsonDocument.Parse(await res.Content.ReadAsStringAsync());
+        var id = doc.RootElement.GetProperty("id").GetGuid();
+
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var token = db.ApiTokens.Single(t => t.Id == id);
+        Assert.NotNull(token.ExpiresAt);
+        Assert.Equal(DateTimeKind.Utc, token.ExpiresAt!.Value.Kind);
+    }
+
+    [Fact]
     public async Task Create_PastExpiresAt_Returns400BadRequest()
     {
         var userId = Guid.NewGuid();
