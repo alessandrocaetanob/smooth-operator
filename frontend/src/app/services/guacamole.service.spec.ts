@@ -186,7 +186,8 @@ describe('GuacamoleSession', () => {
       req.flush({ ticket: 't' });
       await first;
       await second;
-      // verify httpTesting has nothing pending — covered by afterEach
+      // Only one Guacamole client should have been constructed despite two connect() calls.
+      expect(clientInstances).toHaveLength(1);
     });
 
     it('disconnect tears down client and detaches display', async () => {

@@ -30,7 +30,7 @@ namespace SmoothOperator.Application.Features.Invites.Commands
                 throw new NotFoundException("Invitation is invalid or has expired.");
 
             var user = invitation.User;
-            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password, workFactor: 12);
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password, workFactor: 13);
             if (!string.IsNullOrWhiteSpace(request.Name))
                 user.Name = request.Name.Trim();
             user.IsActive = true;

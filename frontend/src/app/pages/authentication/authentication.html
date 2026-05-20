@@ -148,13 +148,15 @@
     <div
       class="mt-app-margin pt-app-md w-full flex justify-between items-center text-on-surface-variant border-t border-white/5"
     >
-      <a
-        class="font-body-sm text-body-sm hover:text-primary-fixed-dim transition-colors"
-        [href]="helpUrl"
-        target="_blank"
-        rel="noopener noreferrer"
-        >Help</a
-      >
+      @if (helpUrl) {
+        <a
+          class="font-body-sm text-body-sm hover:text-primary-fixed-dim transition-colors"
+          [href]="helpUrl"
+          target="_blank"
+          rel="noopener noreferrer"
+          >Help</a
+        >
+      }
       <a class="font-body-sm text-body-sm hover:text-primary-fixed-dim transition-colors" href="#"
         >Privacy</a
       >

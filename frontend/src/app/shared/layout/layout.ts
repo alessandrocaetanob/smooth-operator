@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, DOCUMENT, effect, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { TopNavBar } from '../top-nav-bar/top-nav-bar';
 import { SideNavBar } from '../side-nav-bar/side-nav-bar';
@@ -18,4 +18,11 @@ import { routeFade } from '../animations';
 export class Layout {
   readonly layout = inject(LayoutService);
   readonly collapsed = this.layout.collapsed;
+  private readonly document = inject(DOCUMENT);
+
+  constructor() {
+    effect(() => {
+      this.document.documentElement.classList.toggle('sidebar-collapsed', this.collapsed());
+    });
+  }
 }
