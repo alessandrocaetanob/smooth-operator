@@ -269,8 +269,8 @@
       (keydown.enter)="closeVaultAssignments()"
       (keydown.escape)="closeVaultAssignments()"
     >
-      <div
-        role="dialog"
+      <dialog
+        open
         tabindex="-1"
         class="w-full max-w-lg glass-panel rounded-lg p-5"
         (click)="$event.stopPropagation()"
@@ -315,7 +315,7 @@
             {{ vaultAssignmentBusy() ? 'Saving…' : 'Save assignments' }}
           </button>
         </div>
-      </div>
+      </dialog>
     </div>
   }
 </div>

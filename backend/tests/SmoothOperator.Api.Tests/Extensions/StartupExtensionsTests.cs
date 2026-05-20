@@ -229,7 +229,7 @@ public class StartupExtensionsTests
             .Get(JwtBearerDefaults.AuthenticationScheme);
 
         var httpContext = new DefaultHttpContext();
-        httpContext.Request.Headers["Cookie"] = $"{AuthCookieExtensions.CookieName}=my-test-token";
+        httpContext.Request.Headers.Cookie = $"{AuthCookieExtensions.CookieName}=my-test-token";
         var scheme = new AuthenticationScheme(
             JwtBearerDefaults.AuthenticationScheme, null, typeof(JwtBearerHandler));
         var ctx = new MessageReceivedContext(httpContext, scheme, options);
@@ -250,7 +250,7 @@ public class StartupExtensionsTests
             .Get(JwtBearerDefaults.AuthenticationScheme);
 
         var httpContext = new DefaultHttpContext();
-        httpContext.Request.Headers["Cookie"] = $"{AuthCookieExtensions.CookieName}=cookie-token";
+        httpContext.Request.Headers.Cookie = $"{AuthCookieExtensions.CookieName}=cookie-token";
         var scheme = new AuthenticationScheme(
             JwtBearerDefaults.AuthenticationScheme, null, typeof(JwtBearerHandler));
         var ctx = new MessageReceivedContext(httpContext, scheme, options) { Token = "bearer-token" };

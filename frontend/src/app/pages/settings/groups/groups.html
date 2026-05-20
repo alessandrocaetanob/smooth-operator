@@ -136,8 +136,8 @@
       (keydown.enter)="closeMembers()"
       (keydown.escape)="closeMembers()"
     >
-      <div
-        role="dialog"
+      <dialog
+        open
         tabindex="-1"
         class="w-full max-w-lg glass-panel rounded-lg p-5"
         (click)="$event.stopPropagation()"
@@ -191,7 +191,7 @@
             {{ membersBusy() ? 'Saving…' : 'Save members' }}
           </button>
         </div>
-      </div>
+      </dialog>
     </div>
   }
 </div>

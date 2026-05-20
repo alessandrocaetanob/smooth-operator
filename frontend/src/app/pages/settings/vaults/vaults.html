@@ -128,8 +128,8 @@
     (keydown.enter)="closeAssignments()"
     (keydown.escape)="closeAssignments()"
   >
-    <div
-      role="dialog"
+    <dialog
+      open
       tabindex="-1"
       class="w-full max-w-xl glass-panel rounded-lg p-5"
       (click)="$event.stopPropagation()"
@@ -221,6 +221,6 @@
           {{ assignBusy() ? 'Saving…' : 'Save assignments' }}
         </button>
       </div>
-    </div>
+    </dialog>
   </div>
 }

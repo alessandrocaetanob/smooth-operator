@@ -8,9 +8,9 @@
 ></div>
 
 <!-- Drawer panel -->
-<div
+<dialog
   @drawerPanel
-  role="dialog"
+  open
   aria-modal="true"
   class="fixed inset-y-0 right-0 z-50 flex h-dvh max-h-dvh w-full max-w-[min(42rem,calc(100vw-var(--sidebar-width)))] flex-col overflow-hidden glass-panel border-l border-outline-variant/30 shadow-2xl"
   aria-labelledby="drawer-title"
@@ -40,4 +40,4 @@
   <div class="flex-1 overflow-y-auto overflow-x-hidden px-4 py-5 sm:px-6 sm:py-6">
     <ng-content></ng-content>
   </div>
-</div>
+</dialog>
