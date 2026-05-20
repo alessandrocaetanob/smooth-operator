@@ -1,0 +1,26 @@
+# Smooth Operator — Web stack (Komodo target: web/frontend host).
+# Pulls the published frontend image from Docker Hub.
+# Required env (see komodo/smooth-operator.toml for Variables):
+#   SO_VERSION   — image tag (e.g. v1.2.3 or latest)
+#   API_URL      — backend address (e.g. https://api.example.com or http://10.0.0.10:5000)
+#   APP_HELP_URL, APP_DOCS_URL, APP_FEATURE_FLAGS (optional)
+services:
+  frontend:
+    image: alessandrocaetanob/smooth-operator-frontend:${SO_VERSION:-latest}
+    ports:
+      - "${FRONTEND_HOST_PORT:-8080}:8080"
+    environment:
+      - API_URL=${API_URL}
+      - APP_HELP_URL=${APP_HELP_URL:-}
+      - APP_DOCS_URL=${APP_DOCS_URL:-}
+      - APP_FEATURE_FLAGS=${APP_FEATURE_FLAGS:-{}}
+    restart: unless-stopped
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs:
+      - /tmp
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 128M

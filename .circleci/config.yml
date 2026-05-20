@@ -13,6 +13,13 @@ executors:
     docker:
       - image: cimg/node:22.12
     resource_class: medium
+  # machine executor for multi-arch buildx — needs a real Linux VM (not a
+  # remote Docker host) so QEMU emulation for arm64 builds works reliably.
+  linux-vm:
+    machine:
+      image: ubuntu-2204:current
+      docker_layer_caching: true
+    resource_class: medium
 
 jobs:
   backend-ci:
@@ -157,6 +164,64 @@ jobs:
           name: End SonarCloud analysis
           command: dotnet sonarscanner end /d:sonar.token="$SONAR_TOKEN"
 
+  publish-images:
+    executor: linux-vm
+    steps:
+      - checkout
+      - run:
+          name: Resolve image tag from git tag
+          command: |
+            # CIRCLE_TAG is set when the workflow is triggered by a git tag push.
+            # We accept v1.2.3 style tags only (enforced by the workflow filter)
+            # and tag the image with both the exact version and `latest`.
+            if [ -z "$CIRCLE_TAG" ]; then
+              echo "CIRCLE_TAG is empty — this job should only run on tag pushes." >&2
+              exit 1
+            fi
+            VERSION="${CIRCLE_TAG#v}"
+            echo "export IMAGE_VERSION=\"$VERSION\"" >> "$BASH_ENV"
+            echo "export IMAGE_TAG=\"$CIRCLE_TAG\""  >> "$BASH_ENV"
+            echo "Building images for $CIRCLE_TAG (version $VERSION)"
+      - run:
+          name: Enable QEMU + buildx for multi-arch builds
+          command: |
+            docker run --privileged --rm tonistiigi/binfmt --install all
+            docker buildx create --use --name so-builder
+            docker buildx inspect --bootstrap
+      - run:
+          name: Log in to Docker Hub
+          command: |
+            if [ -z "$DOCKERHUB_USERNAME" ] || [ -z "$DOCKERHUB_TOKEN" ]; then
+              echo "DOCKERHUB_USERNAME / DOCKERHUB_TOKEN must be set as CircleCI env vars." >&2
+              exit 1
+            fi
+            echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+      - run:
+          name: Build and push backend image (linux/amd64,linux/arm64)
+          no_output_timeout: 30m
+          command: |
+            docker buildx build \
+              --platform linux/amd64,linux/arm64 \
+              --tag "alessandrocaetanob/smooth-operator-backend:${IMAGE_TAG}" \
+              --tag "alessandrocaetanob/smooth-operator-backend:latest" \
+              --push \
+              ./backend
+      - run:
+          name: Build and push frontend image (linux/amd64,linux/arm64)
+          no_output_timeout: 30m
+          command: |
+            docker buildx build \
+              --platform linux/amd64,linux/arm64 \
+              --tag "alessandrocaetanob/smooth-operator-frontend:${IMAGE_TAG}" \
+              --tag "alessandrocaetanob/smooth-operator-frontend:latest" \
+              --push \
+              ./frontend
+      - run:
+          name: Verify multi-arch manifests on Docker Hub
+          command: |
+            docker buildx imagetools inspect "alessandrocaetanob/smooth-operator-backend:${IMAGE_TAG}"
+            docker buildx imagetools inspect "alessandrocaetanob/smooth-operator-frontend:${IMAGE_TAG}"
+
 workflows:
   ci:
     jobs:
@@ -166,3 +231,15 @@ workflows:
           requires:
             - backend-ci
             - frontend-ci
+
+  # Triggered by GitHub releases (which push a v*.*.* tag). Each job needs the
+  # same tag filter or the workflow won't fire on tag pushes — CircleCI's
+  # default ignores tags entirely.
+  release:
+    jobs:
+      - publish-images:
+          filters:
+            tags:
+              only: /^v\d+\.\d+\.\d+$/
+            branches:
+              ignore: /.*/

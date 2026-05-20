@@ -1,0 +1,145 @@
+# Smooth Operator — API stack (Komodo target: api host).
+# Pulls published images from Docker Hub; no build context here.
+# Required env (see komodo/smooth-operator.toml for Variables):
+#   SO_VERSION                              — image tag (e.g. v1.2.3 or latest)
+#   POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB
+#   ConnectionStrings__DefaultConnection
+#   ConnectionStrings__Redis
+#   Jwt__Key, Encryption__Key
+#   AppUrls__App, AppUrls__Frontend         — public URL of the frontend host
+#   Metrics__BearerToken                    — required outside Development/Testing
+services:
+  backend:
+    image: alessandrocaetanob/smooth-operator-backend:${SO_VERSION:-latest}
+    ports:
+      # Exposed so the frontend host can reach the API. Put behind TLS in production.
+      - "${BACKEND_HOST_PORT:-5000}:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Production}
+      - ConnectionStrings__DefaultConnection=${ConnectionStrings__DefaultConnection}
+      - ConnectionStrings__Redis=${ConnectionStrings__Redis:-redis:6379}
+      - Guacd__Host=${Guacd__Host:-guacd}
+      - Guacd__Port=${Guacd__Port:-4822}
+      - Encryption__Key=${Encryption__Key}
+      - Jwt__Key=${Jwt__Key}
+      - Jwt__Issuer=${Jwt__Issuer:-smooth-operator}
+      - Jwt__Audience=${Jwt__Audience:-smooth-operator-api}
+      - AppUrls__App=${AppUrls__App}
+      - AppUrls__Frontend=${AppUrls__Frontend}
+      - Metrics__BearerToken=${Metrics__BearerToken}
+      - Otel__Endpoint=${Otel__Endpoint:-}
+      - Otel__ServiceName=${Otel__ServiceName:-smooth-operator-backend}
+    volumes:
+      - dp_keys:/data/protection-keys
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      guacd:
+        condition: service_started
+    restart: unless-stopped
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs:
+      - /tmp
+    networks:
+      - smooth-operator-api-net
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 1024M
+        reservations:
+          memory: 256M
+
+  postgres:
+    image: postgres:18.4-alpine
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB:-smoothoperator}
+    command:
+      - "postgres"
+      - "-c"
+      - "shared_buffers=256MB"
+      - "-c"
+      - "effective_cache_size=768MB"
+      - "-c"
+      - "work_mem=8MB"
+      - "-c"
+      - "maintenance_work_mem=64MB"
+      - "-c"
+      - "max_connections=120"
+      - "-c"
+      - "random_page_cost=1.1"
+      - "-c"
+      - "effective_io_concurrency=200"
+      - "-c"
+      - "wal_compression=on"
+      - "-c"
+      - "checkpoint_completion_target=0.9"
+      - "-c"
+      - "shared_preload_libraries=pg_stat_statements"
+      - "-c"
+      - "pg_stat_statements.track=top"
+      - "-c"
+      - "track_io_timing=on"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    restart: unless-stopped
+    networks:
+      - smooth-operator-api-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-smoothoperator}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 1024M
+        reservations:
+          memory: 256M
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - smooth-operator-api-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 256M
+
+  guacd:
+    image: guacamole/guacd:1.6.0
+    restart: unless-stopped
+    networks:
+      - smooth-operator-api-net
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 256M
+
+volumes:
+  postgres_data:
+  redis_data:
+  dp_keys:
+
+networks:
+  smooth-operator-api-net:
+    driver: bridge

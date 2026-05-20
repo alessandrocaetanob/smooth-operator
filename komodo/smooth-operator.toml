@@ -1,0 +1,110 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Smooth Operator — Komodo ResourceSync definition.
+#
+# This file declares two Stacks that can be deployed to different Komodo
+# Servers (e.g. an API host and a web host), plus a shared SO_VERSION
+# Variable for pinning the Docker Hub image tag.
+#
+# Usage:
+#   1. Add this repo as a ResourceSync resource in Komodo, pointing at this file.
+#   2. In the Komodo UI, set the `server` field on each [[stack]] to your
+#      Server resource name. The placeholders below are commented out so
+#      `komodo sync` doesn't try to deploy to a server that doesn't exist.
+#   3. Fill in the secret Variables (Jwt__Key, Encryption__Key, etc.) via the
+#      Komodo Variables UI; they're declared here only as defaults/placeholders.
+#
+# Docs: https://komo.do/docs/sync-resources
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── Variables ────────────────────────────────────────────────────────────────
+# Shared across both stacks; secret values should be marked is_secret = true
+# and overridden in Komodo (never committed to git).
+
+[[variable]]
+name = "SO_VERSION"
+value = "latest"
+description = "Docker Hub tag to deploy (e.g. v1.2.3 or latest)."
+
+[[variable]]
+name = "API_URL"
+value = "https://api.example.com"
+description = "Public URL of the backend host — used by the web stack's nginx upstream."
+
+[[variable]]
+name = "POSTGRES_PASSWORD"
+value = "CHANGE_ME"
+description = "PostgreSQL password for the smoothoperator database."
+is_secret = true
+
+[[variable]]
+name = "Jwt__Key"
+value = "CHANGE_ME"
+description = "JWT signing key (>=32 bytes). Generate with: openssl rand -hex 32"
+is_secret = true
+
+[[variable]]
+name = "Encryption__Key"
+value = "CHANGE_ME"
+description = "Vault encryption key (64 hex chars). Generate with: openssl rand -hex 32"
+is_secret = true
+
+[[variable]]
+name = "Metrics__BearerToken"
+value = "CHANGE_ME"
+description = "Bearer token required by /metrics outside Development."
+is_secret = true
+
+# ── Stack: API (backend + postgres + redis + guacd) ──────────────────────────
+[[stack]]
+name = "smooth-operator-api"
+description = "Backend API, PostgreSQL, Redis, and guacd. Deploy to the API host."
+
+[stack.config]
+# Uncomment and set to your Komodo Server name:
+# server = "api-host"
+git_provider = "github.com"
+repo = "alessandrocaetanob/smooth-operator"
+branch = "master"
+file_paths = ["komodo/compose.api.yml"]
+poll_for_updates = true
+auto_pull = true
+run_directory = "komodo"
+environment = """
+SO_VERSION=[[SO_VERSION]]
+POSTGRES_USER=postgres
+POSTGRES_DB=smoothoperator
+POSTGRES_PASSWORD=[[POSTGRES_PASSWORD]]
+ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=smoothoperator;Username=postgres;Password=[[POSTGRES_PASSWORD]]
+ConnectionStrings__Redis=redis:6379
+Jwt__Key=[[Jwt__Key]]
+Jwt__Issuer=smooth-operator
+Jwt__Audience=smooth-operator-api
+Encryption__Key=[[Encryption__Key]]
+Metrics__BearerToken=[[Metrics__BearerToken]]
+AppUrls__App=https://app.example.com
+AppUrls__Frontend=https://app.example.com
+BACKEND_HOST_PORT=5000
+"""
+
+# ── Stack: Web (frontend) ────────────────────────────────────────────────────
+[[stack]]
+name = "smooth-operator-web"
+description = "Frontend (Angular SPA + nginx). Deploy to the web host."
+
+[stack.config]
+# Uncomment and set to your Komodo Server name:
+# server = "web-host"
+git_provider = "github.com"
+repo = "alessandrocaetanob/smooth-operator"
+branch = "master"
+file_paths = ["komodo/compose.web.yml"]
+poll_for_updates = true
+auto_pull = true
+run_directory = "komodo"
+environment = """
+SO_VERSION=[[SO_VERSION]]
+API_URL=[[API_URL]]
+APP_HELP_URL=https://docs.example.com
+APP_DOCS_URL=https://docs.example.com
+FRONTEND_HOST_PORT=8080
+"""

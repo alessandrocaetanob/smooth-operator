@@ -68,6 +68,11 @@ ARG NGINX_VERSION
 # Switch to root temporarily for file setup
 USER root
 
+# gettext provides envsubst, used by entrypoint.sh to render the API_URL into
+# the nginx upstream block at startup. The base alpine image already ships it,
+# but pin it explicitly so an upstream slim-down doesn't break the entrypoint.
+RUN apk add --no-cache gettext
+
 # Brotli dynamic modules — loaded via load_module in nginx-main.conf
 COPY --from=brotli-build \
     /build/nginx-${NGINX_VERSION}/objs/ngx_http_brotli_filter_module.so \
@@ -77,9 +82,10 @@ COPY --from=brotli-build \
 # Copy the Angular build output (including the precompressed .gz/.br variants)
 COPY --from=build /app/dist/frontend/browser /usr/share/nginx/html
 
-# Copy nginx configs: main context (worker + module loading) and server block
+# Copy nginx configs: main context (worker + module loading) and the server
+# block as a template (rendered at startup by entrypoint.sh with $API_URL).
 COPY nginx-main.conf /etc/nginx/nginx.conf
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY nginx.conf /etc/nginx/templates/default.conf.template
 COPY entrypoint.sh /entrypoint.sh
 # Strip Windows CRLF line endings (defensive: script must be pure LF for the shebang to work on Linux)
 RUN sed -i 's/\r$//' /entrypoint.sh && chmod +x /entrypoint.sh
