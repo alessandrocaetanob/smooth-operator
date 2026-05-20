@@ -23,6 +23,8 @@ namespace SmoothOperator.Application.Interfaces
         DbSet<SsoProvider> SsoProviders { get; }
         DbSet<SsoAuthState> SsoAuthStates { get; }
         DbSet<SecretProvider> SecretProviders { get; }
+        DbSet<MfaCredential> MfaCredentials { get; }
+        DbSet<MfaRecoveryCode> MfaRecoveryCodes { get; }
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     }
 }

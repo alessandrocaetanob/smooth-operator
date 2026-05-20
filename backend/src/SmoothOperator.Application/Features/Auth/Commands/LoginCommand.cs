@@ -9,9 +9,9 @@ using SmoothOperator.Application.Interfaces;
 
 namespace SmoothOperator.Application.Features.Auth.Commands
 {
-    public sealed record LoginCommand(string Email, string Password) : IRequest<AuthResponse>;
+    public sealed record LoginCommand(string Email, string Password) : IRequest<LoginResult>;
 
-    public sealed class LoginCommandHandler : IRequestHandler<LoginCommand, AuthResponse>
+    public sealed class LoginCommandHandler : IRequestHandler<LoginCommand, LoginResult>
     {
         private const string ProviderLocal = "local";
         private const string OutcomeFailure = "failure";
@@ -33,7 +33,7 @@ namespace SmoothOperator.Application.Features.Auth.Commands
             _metrics = metrics;
         }
 
-        public async Task<AuthResponse> Handle(LoginCommand request, CancellationToken cancellationToken)
+        public async Task<LoginResult> Handle(LoginCommand request, CancellationToken cancellationToken)
         {
             var email = request.Email.Trim().ToLowerInvariant();
             var user = await _context.Users
@@ -66,11 +66,23 @@ namespace SmoothOperator.Application.Features.Auth.Commands
                 throw new ForbiddenException("User account is disabled.");
             }
 
+            // Check if MFA is enabled for this user
+            var hasMfa = await _context.MfaCredentials
+                .AsNoTracking()
+                .AnyAsync(m => m.UserId == user.Id && m.IsEnabled, cancellationToken);
+
+            if (hasMfa)
+            {
+                // Return a short-lived challenge token; the full JWT is issued after MFA verification
+                var challengeToken = _tokenService.CreateMfaChallengeToken(user.Id);
+                return new LoginResult { MfaRequired = true, ChallengeToken = challengeToken };
+            }
+
             await _audit.WriteAsync("user.login", "User", user.Id.ToString(),
                 new { provider = ProviderLocal });
             _metrics.RecordLoginAttempt("success");
 
-            return UserHelper.ToAuthResponse(user, _tokenService);
+            return new LoginResult { Auth = UserHelper.ToAuthResponse(user, _tokenService) };
         }
     }
 }

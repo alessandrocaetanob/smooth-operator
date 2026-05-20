@@ -8,6 +8,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using SmoothOperator.Application.Options;
 using SmoothOperator.Application.Interfaces;
+using System.Collections.Generic;
 
 namespace SmoothOperator.Infrastructure.Services
 {
@@ -15,6 +16,9 @@ namespace SmoothOperator.Infrastructure.Services
     {
         public const string LocalIssuer = "smooth-operator";
         public const string LocalAudience = "smooth-operator-api";
+        public const string MfaChallengeAudience = "smooth-operator-mfa";
+
+        private static readonly TimeSpan MfaChallengeLifetime = TimeSpan.FromMinutes(5);
 
         private readonly SymmetricSecurityKey _signingKey;
         private readonly string _issuer;
@@ -62,6 +66,54 @@ namespace SmoothOperator.Infrastructure.Services
                 signingCredentials: creds);
 
             return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        public string CreateMfaChallengeToken(Guid userId)
+        {
+            var claims = new List<Claim>
+            {
+                new(JwtRegisteredClaimNames.Sub, userId.ToString()),
+                new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                new(ClaimTypes.NameIdentifier, userId.ToString()),
+            };
+
+            var creds = new SigningCredentials(_signingKey, SecurityAlgorithms.HmacSha256);
+
+            var token = new JwtSecurityToken(
+                issuer: _issuer,
+                audience: MfaChallengeAudience,
+                claims: claims,
+                notBefore: DateTime.UtcNow,
+                expires: DateTime.UtcNow.Add(MfaChallengeLifetime),
+                signingCredentials: creds);
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        public Guid? ValidateMfaChallengeToken(string token)
+        {
+            var handler = new JwtSecurityTokenHandler();
+            try
+            {
+                var principal = handler.ValidateToken(token, new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidIssuer = _issuer,
+                    ValidateAudience = true,
+                    ValidAudience = MfaChallengeAudience,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = _signingKey,
+                    ClockSkew = TimeSpan.Zero,
+                }, out _);
+
+                var sub = principal.FindFirstValue(ClaimTypes.NameIdentifier);
+                return Guid.TryParse(sub, out var userId) ? userId : null;
+            }
+            catch
+            {
+                return null;
+            }
         }
     }
 }

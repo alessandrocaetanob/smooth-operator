@@ -69,6 +69,37 @@ namespace SmoothOperator.Application.DTOs
         public string? AvatarMimeType { get; set; }
     }
 
+    public class MfaVerifyRequest
+    {
+        [Required(ErrorMessage = "Challenge token is required")]
+        public string ChallengeToken { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Code is required")]
+        [StringLength(10, MinimumLength = 6, ErrorMessage = "Code must be 6-10 characters")]
+        public string Code { get; set; } = string.Empty;
+    }
+
+    public class LoginResult
+    {
+        public bool MfaRequired { get; init; }
+        public string? ChallengeToken { get; init; }
+        public AuthResponse? Auth { get; init; }
+    }
+
+    public class MfaConfirmRequest
+    {
+        [Required(ErrorMessage = "Code is required")]
+        [StringLength(6, MinimumLength = 6, ErrorMessage = "TOTP code must be 6 digits")]
+        public string Code { get; set; } = string.Empty;
+    }
+
+    public class MfaDisableRequest
+    {
+        [Required(ErrorMessage = "Password is required")]
+        [StringLength(128)]
+        public string Password { get; set; } = string.Empty;
+    }
+
     public class InviteUserRequest
     {
         [Required(ErrorMessage = "Email is required")]
