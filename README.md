@@ -4,8 +4,9 @@ Smooth Operator is a cloud-native, clientless remote access vault. It gives team
 
 End users never see actual credentials. Admins control exactly who can access what, through granular role-based permissions and vault assignments.
 
-> Full documentation → [http://localhost:3000](http://localhost:3000) (start the docs container with `docker compose up docs`)
+> Full documentation → [smooth-operator-docs.pages.dev](https://smooth-operator-docs.pages.dev) (or run locally with `docker compose up docs`)
 
+[![Docs](https://img.shields.io/badge/docs-online-blue)](https://smooth-operator-docs.pages.dev)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=alessandrocaetanob_smooth-operator&metric=alert_status&token=09830f0b5cf4a5c457100e56455064855fc33559)](https://sonarcloud.io/summary/new_code?id=alessandrocaetanob_smooth-operator)
 [![codecov](https://codecov.io/gh/alessandrocaetanob/smooth-operator/graph/badge.svg?token=6WSJBQ1HU6)](https://codecov.io/gh/alessandrocaetanob/smooth-operator)
 
@@ -49,7 +50,7 @@ graph TD
         Cache[("Redis 7\n:6379")]
         Guacd["guacd 1.6\nApache Guacamole\n:4822"]
         Docs["Docusaurus\nDocs Site · :3000"]
-        
+
         subgraph Observability
             Loki["Loki (Logs)"]
             Prom["Prometheus (Metrics)"]
@@ -69,15 +70,15 @@ graph TD
 
 ### Component Breakdown
 
-| Component | Technology | Role |
-|-----------|-----------|------|
-| **Frontend** | Angular 21, Tailwind CSS 4, guacamole-common-js | SPA served via nginx; lazy-loaded feature modules, NgRx Signal Stores, runtime config |
-| **Backend** | .NET 10, ASP.NET Core, EF Core 10 | Clean Architecture (Domain/Application/Infrastructure/Api); CQRS via MediatR; REST API + WebSocket tunnel |
-| **Database** | PostgreSQL 18.4 | Users, vaults, connections, credentials, groups, audit logs |
-| **Cache** | Redis 7 | Rate limiting, session state |
-| **Connection Engine** | Apache guacd 1.6 | Translates RDP/SSH/VNC to Guacamole protocol over WebSocket |
-| **Observability** | Prometheus, Loki, Tempo | Metrics, centralized logging, and distributed tracing |
-| **Docs** | Docusaurus 3 | User guide, admin guide, and API reference |
+| Component             | Technology                                      | Role                                                                                                      |
+| --------------------- | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| **Frontend**          | Angular 21, Tailwind CSS 4, guacamole-common-js | SPA served via nginx; lazy-loaded feature modules, NgRx Signal Stores, runtime config                     |
+| **Backend**           | .NET 10, ASP.NET Core, EF Core 10               | Clean Architecture (Domain/Application/Infrastructure/Api); CQRS via MediatR; REST API + WebSocket tunnel |
+| **Database**          | PostgreSQL 18.4                                 | Users, vaults, connections, credentials, groups, audit logs                                               |
+| **Cache**             | Redis 7                                         | Rate limiting, session state                                                                              |
+| **Connection Engine** | Apache guacd 1.6                                | Translates RDP/SSH/VNC to Guacamole protocol over WebSocket                                               |
+| **Observability**     | Prometheus, Loki, Tempo                         | Metrics, centralized logging, and distributed tracing                                                     |
+| **Docs**              | Docusaurus 3                                    | User guide, admin guide, and API reference                                                                |
 
 ### Backend Architecture (Clean Architecture + CQRS)
 
@@ -217,18 +218,24 @@ erDiagram
 ## Features
 
 ### Security & Access Control
+
 - **Role-Based Access Control (RBAC)** — four built-in roles: `Owner`, `Admin`, `TeamAdmin`, `User`
 - **Vault-based isolation** — users only see connections in vaults they're assigned to, never raw credentials
 - **Invite-only registration** — no public self-registration; admins send email invites
 - **Rate limiting** — fixed-window limiter on auth endpoints (5 req/min per IP)
+- **Idle + max session timeouts** — admins enforce both an inactivity cap and an absolute lifetime on every live Guacamole connection. Independent settings; either can be disabled.
 
 ### Authentication
+
 - **Local auth** — username/password with BCrypt hashing + HS256 JWT
+- **TOTP two-factor authentication** — RFC 6238 TOTP enrolment via QR code, one-time recovery codes (10 per user, downloadable as `.txt`)
+- **Personal Access Tokens (PATs)** — long-lived bearer tokens (`sop_…`) for CLI/CI/Terraform; SHA-256 hashed at rest, FixedTimeEquals verified, optional expiry, soft revoke. PATs cannot mint other PATs.
 - **SSO via OIDC** — plug in any OpenID Connect provider (Azure AD, Okta, Auth0, …)
 - **SSO via SAML 2.0** — enterprise identity federation
 - **Forgot-password flow** — email-based password reset (requires SMTP)
 
 ### Remote Sessions
+
 - **RDP, SSH, VNC** — all three protocols via Apache Guacamole
 - **Browser-native** — zero client software; runs on any modern browser
 - **HTML5 Canvas rendering** — full keyboard/mouse capture via `guacamole-common-js`
@@ -236,17 +243,66 @@ erDiagram
 - **SSH key pair generation** — generate and store SSH keys directly in the vault
 
 ### Administration
+
 - **User & group management** — create groups, assign members, bulk-grant vault access
 - **Known hosts** — store and verify SSH host fingerprints
 - **SMTP configuration** — connect any SMTP server for invite/reset emails; test with one click
-- **Audit logs** — complete action history with IP addresses, exportable to CSV
+- **Audit logs** — complete action history with IP addresses, exportable to CSV; trigram-indexed for case-insensitive search at scale
 - **Credential vault** — store passwords and SSH keys, encrypted at rest
 
+### Operations
+
+- **Liveness + readiness probes** — `/health/live` (process up) and `/health/ready` (DB + Redis reachable) for k8s/uptime monitors
+- **Public status endpoint** — `GET /status.json` returns build version, git SHA, uptime, and per-check status. No auth required, outside the rate limiter.
+- **Prometheus metrics** — `/metrics` (bearer-token gated outside Dev/Testing). MediatR pipeline emits per-request duration histograms.
+
 ### UX & Design
+
 - **Operator Glass design system** — glassmorphic UI built on Material Design 3 color tokens
 - **Light / dark theme** — auto-detects `prefers-color-scheme`; user-toggleable at runtime
 - **Fully responsive** — works on desktop and tablets
 - See [frontend/DESIGN_SYSTEM.md](frontend/DESIGN_SYSTEM.md) for the full token reference
+
+---
+
+## Roadmap
+
+### v1.0.0 — shipped
+
+The "1.0" cut: 2FA, automation tokens, compliance-grade session enforcement, and the operational hooks every monitor expects.
+
+- ✅ **TOTP MFA** — RFC 6238 enrolment + verification, 10 recovery codes per user, downloadable as `.txt`
+- ✅ **Personal Access Tokens** — `sop_` bearer tokens with SHA-256 hashing, optional expiry, soft revoke, profile-page UI
+- ✅ **Idle + max session timeouts** — enforced inside `GuacamoleProxyService` via a watchdog task; closes WebSockets with `PolicyViolation` and audits `session.timeout_closed`
+- ✅ **Health endpoints split** — `/health/live` (liveness) + `/health/ready` (DB + Redis) + public `/status.json` with version/uptime
+- ✅ **Public docs site** — Docusaurus deployed via Cloudflare Pages; in-app help links resolve to the public domain
+- ✅ **Production deploy pipeline** — multi-arch Docker images, runtime `API_URL`, Komodo TOML
+
+### v1.0.x — fast-follow (~4 weeks after 1.0)
+
+| Version    | Headline                                     | Notes                                                                                                                                                                                         |
+| ---------- | -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **v1.0.1** | **Webhooks** for audit events                | HMAC-signed `Features/Webhooks/` hooked into `AuditService`. Trivial once PATs landed — same auth-token mental model.                                                                         |
+| **v1.0.2** | **Session recording + playback**             | `GuacamoleProxyService` passes `recording-path` + `create-recording-path` to guacd; playback page reuses `Guacamole.SessionRecording` from `guacamole-common-js`. The defining vault feature. |
+| **v1.0.3** | **In-session file transfer**                 | SFTP for SSH + drive redirect for RDP via Guacamole filesystem instructions. New file-tree component.                                                                                         |
+| **v1.0.4** | **Backup & restore**                         | Encrypted bundle (DB dump + Data Protection keys + system settings) plus `dotnet smooth-operator backup/restore` CLI surface.                                                                 |
+| **v1.0.5** | **First-run onboarding tour + empty states** | Extend the existing `empty-state.ts` pattern to every list page; 4-step popover after `SetupCommand` succeeds.                                                                                |
+
+### v1.1+ — explicitly deferred
+
+- **WebAuthn / Passkeys** — pairs with TOTP (same auth flow extension via `Fido2NetLib`). Deferred to keep the v1.0 surface focused on the recovery-codes UX.
+- **JIT access workflow** — high design cost; revisit when a customer pulls.
+- **SCIM 2.0 provisioning** — only when an enterprise SSO customer asks.
+- **Terraform provider / `smopctl` CLI** — waits for stable API; PATs prep the ground.
+- **i18n** — premature without a non-English customer.
+
+### Already-deferred performance items
+
+Tracked separately so they don't get re-litigated:
+
+- Compiled EF queries — gated on benchmark data
+- Broad output-cache expansion — per-endpoint follow-up
+- Redis-backed rate limiting — affects HA story; revisit when running >1 backend replica
 
 ---
 
@@ -302,6 +358,7 @@ erDiagram
 ## Quick Start
 
 ### Prerequisites
+
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) (or Docker Engine + Compose)
 - Ports `4200`, `5000`, `3000`, `5432`, `6379`, `4822` available
 
@@ -313,12 +370,12 @@ cd smooth-operator
 docker compose up --build
 ```
 
-| Service | URL |
-|---------|-----|
-| **App** | http://localhost:4200 |
-| **API** | http://localhost:5000 |
+| Service                | URL                           |
+| ---------------------- | ----------------------------- |
+| **App**                | http://localhost:4200         |
+| **API**                | http://localhost:5000         |
 | **API Docs (Swagger)** | http://localhost:5000/swagger |
-| **Docs site** | http://localhost:3000 |
+| **Docs site**          | http://localhost:3000         |
 
 ### 2. First-access setup
 
@@ -343,6 +400,7 @@ Users see their assigned connections under **My Access** or **My Vaults** and ca
 ## Running Services Independently
 
 ### Frontend (Angular)
+
 ```bash
 cd frontend
 npm install
@@ -351,6 +409,7 @@ npm start
 ```
 
 ### Backend (.NET)
+
 ```bash
 cd backend/src/SmoothOperator.Api
 dotnet restore ../../../smooth-operator.sln
@@ -360,6 +419,7 @@ dotnet run
 ```
 
 ### Docs site (Docusaurus)
+
 ```bash
 cd docs
 npm install
@@ -376,58 +436,58 @@ See `.env.example` for a full template with generation hints.
 
 ### Required
 
-| Variable | Service | Description |
-|----------|---------|-------------|
-| `ConnectionStrings__DefaultConnection` | backend | PostgreSQL connection string |
-| `ConnectionStrings__Redis` | backend | Redis host:port |
-| `Encryption__Key` | backend | 64-char hex (256-bit) — encrypts stored credentials. Generate: `openssl rand -hex 32` |
-| `Jwt__Key` | backend | ≥32-byte random secret for HS256 signing. Generate: `openssl rand -hex 32` |
+| Variable                               | Service | Description                                                                           |
+| -------------------------------------- | ------- | ------------------------------------------------------------------------------------- |
+| `ConnectionStrings__DefaultConnection` | backend | PostgreSQL connection string                                                          |
+| `ConnectionStrings__Redis`             | backend | Redis host:port                                                                       |
+| `Encryption__Key`                      | backend | 64-char hex (256-bit) — encrypts stored credentials. Generate: `openssl rand -hex 32` |
+| `Jwt__Key`                             | backend | ≥32-byte random secret for HS256 signing. Generate: `openssl rand -hex 32`            |
 
 ### Optional / Defaults
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `ASPNETCORE_ENVIRONMENT` | `Production` | `Development` enables Swagger UI and detailed errors |
-| `Cache__UseRedis` | `false` | Back the ASP.NET output cache with Redis instead of in-memory — recommended when running multiple backend replicas |
-| `Jwt__Issuer` | `smooth-operator` | JWT issuer claim |
-| `Jwt__Audience` | `smooth-operator-api` | JWT audience claim |
-| `Jwt__AccessTokenExpirationMinutes` | `60` | Access token lifetime |
-| `Jwt__RefreshTokenExpirationDays` | `7` | Refresh token lifetime |
-| `Guacd__Host` | `guacd` | guacd service hostname |
-| `Guacd__Port` | `4822` | guacd TCP port |
-| `AppUrls__App` | `http://localhost:4200` | Public app URL (used in email links) |
-| `AppUrls__Frontend` | `http://localhost:4200` | Frontend origin for CORS allow-list |
-| `AppUrls__AllowedOrigins` | `[]` | Comma-separated extra CORS origins |
-| `DataProtection__KeysPath` | `/data/protection-keys` | Where ASP.NET Data Protection writes key ring |
-| `Otel__Endpoint` | *(disabled)* | OpenTelemetry OTLP gRPC endpoint |
-| `Otel__ServiceName` | `smooth-operator-backend` | Service name in traces/metrics |
+| Variable                            | Default                   | Description                                                                                                        |
+| ----------------------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `ASPNETCORE_ENVIRONMENT`            | `Production`              | `Development` enables Swagger UI and detailed errors                                                               |
+| `Cache__UseRedis`                   | `false`                   | Back the ASP.NET output cache with Redis instead of in-memory — recommended when running multiple backend replicas |
+| `Jwt__Issuer`                       | `smooth-operator`         | JWT issuer claim                                                                                                   |
+| `Jwt__Audience`                     | `smooth-operator-api`     | JWT audience claim                                                                                                 |
+| `Jwt__AccessTokenExpirationMinutes` | `60`                      | Access token lifetime                                                                                              |
+| `Jwt__RefreshTokenExpirationDays`   | `7`                       | Refresh token lifetime                                                                                             |
+| `Guacd__Host`                       | `guacd`                   | guacd service hostname                                                                                             |
+| `Guacd__Port`                       | `4822`                    | guacd TCP port                                                                                                     |
+| `AppUrls__App`                      | `http://localhost:4200`   | Public app URL (used in email links)                                                                               |
+| `AppUrls__Frontend`                 | `http://localhost:4200`   | Frontend origin for CORS allow-list                                                                                |
+| `AppUrls__AllowedOrigins`           | `[]`                      | Comma-separated extra CORS origins                                                                                 |
+| `DataProtection__KeysPath`          | `/data/protection-keys`   | Where ASP.NET Data Protection writes key ring                                                                      |
+| `Otel__Endpoint`                    | _(disabled)_              | OpenTelemetry OTLP gRPC endpoint                                                                                   |
+| `Otel__ServiceName`                 | `smooth-operator-backend` | Service name in traces/metrics                                                                                     |
 
 ### SSO (optional)
 
-| Variable | Description |
-|----------|-------------|
-| `AzureAd__Instance` | `https://login.microsoftonline.com/` — enables Entra ID SSO |
-| `AzureAd__TenantId` | Entra ID tenant GUID |
-| `AzureAd__ClientId` | Entra ID app client ID |
-| `AzureAd__ClientSecret` | Entra ID client secret |
+| Variable                | Description                                                 |
+| ----------------------- | ----------------------------------------------------------- |
+| `AzureAd__Instance`     | `https://login.microsoftonline.com/` — enables Entra ID SSO |
+| `AzureAd__TenantId`     | Entra ID tenant GUID                                        |
+| `AzureAd__ClientId`     | Entra ID app client ID                                      |
+| `AzureAd__ClientSecret` | Entra ID client secret                                      |
 
 ### SMTP (optional)
 
-| Variable | Description |
-|----------|-------------|
-| `Smtp__Host` | SMTP server hostname |
-| `Smtp__Port` | SMTP port (default `587`) |
-| `Smtp__Username` | SMTP username |
-| `Smtp__Password` | SMTP password |
+| Variable            | Description                          |
+| ------------------- | ------------------------------------ |
+| `Smtp__Host`        | SMTP server hostname                 |
+| `Smtp__Port`        | SMTP port (default `587`)            |
+| `Smtp__Username`    | SMTP username                        |
+| `Smtp__Password`    | SMTP password                        |
 | `Smtp__FromAddress` | From address for invite/reset emails |
 
 ### Frontend runtime config
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `APP_HELP_URL` | `http://localhost:3000` | Help link in sidebar |
-| `APP_DOCS_URL` | `http://localhost:3000` | Docs link in login page |
-| `APP_FEATURE_FLAGS` | `{}` | JSON feature-flag map |
+| Variable            | Default                 | Description             |
+| ------------------- | ----------------------- | ----------------------- |
+| `APP_HELP_URL`      | `http://localhost:3000` | Help link in sidebar    |
+| `APP_DOCS_URL`      | `http://localhost:3000` | Docs link in login page |
+| `APP_FEATURE_FLAGS` | `{}`                    | JSON feature-flag map   |
 
 > **Security:** The default `Encryption__Key` and `Jwt__Key` in `docker-compose.yml` are placeholders for **development only**. Always supply strong random secrets in non-local environments — via Docker secrets, a secrets manager, or a `.env` file that is **never committed**.
 
@@ -465,16 +525,16 @@ Store `dp.pfx` in a secure location (secrets manager or password vault). **Never
 
 ```yaml
 secrets:
-  dp_cert:
-    file: ./secrets/dp.pfx
+    dp_cert:
+        file: ./secrets/dp.pfx
 
 services:
-  backend:
-    secrets:
-      - dp_cert
-    environment:
-      - DataProtection__CertPath=/run/secrets/dp_cert
-      # Omit DataProtection__CertPassword if the PFX has no password (passout pass: above)
+    backend:
+        secrets:
+            - dp_cert
+        environment:
+            - DataProtection__CertPath=/run/secrets/dp_cert
+            # Omit DataProtection__CertPassword if the PFX has no password (passout pass: above)
 ```
 
 **Key rotation:** when you issue a new certificate, keep the old one in the volume until all existing sessions have expired (ASP.NET Core's default key lifetime is 90 days). The runtime needs the old certificate to decrypt existing keys even after you switch to the new one for writing.
@@ -485,15 +545,15 @@ services:
 
 GitHub Actions workflows run on every push and PR:
 
-| Workflow | What it checks |
-|----------|---------------|
-| **CodeQL** | Static analysis for C# and TypeScript vulnerabilities |
-| **Dependency scan** | Known CVEs in npm and NuGet packages |
-| **Docker scan** | Container image vulnerability scanning |
-| **Build validation** | Frontend build + backend compile |
-| **Format check** | Prettier (frontend) + dotnet format (backend) |
-| **Tests** | Vitest unit tests (frontend) + xUnit integration tests (backend) |
-| **Smoke Tests** | Playwright E2E browser automation |
+| Workflow             | What it checks                                                   |
+| -------------------- | ---------------------------------------------------------------- |
+| **CodeQL**           | Static analysis for C# and TypeScript vulnerabilities            |
+| **Dependency scan**  | Known CVEs in npm and NuGet packages                             |
+| **Docker scan**      | Container image vulnerability scanning                           |
+| **Build validation** | Frontend build + backend compile                                 |
+| **Format check**     | Prettier (frontend) + dotnet format (backend)                    |
+| **Tests**            | Vitest unit tests (frontend) + xUnit integration tests (backend) |
+| **Smoke Tests**      | Playwright E2E browser automation                                |
 
 ---
 
@@ -502,6 +562,7 @@ GitHub Actions workflows run on every push and PR:
 We maintain high code quality with automated test coverage enforcement (80% on Codecov `backend` flag / 70% frontend patch).
 
 ### Test Stack
+
 - **Backend:** xUnit + FluentAssertions + WebApplicationFactory integration tests
 - **Architecture:** NetArchTest.Rules — enforces Clean Architecture layer boundaries in CI
 - **Frontend:** Vitest + Angular Testing Library
@@ -513,7 +574,7 @@ We maintain high code quality with automated test coverage enforcement (80% on C
 #### Backend
 
 ```bash
-# From repo root — runs all 151 tests (142 integration + 9 architecture)
+# From repo root — runs all backend tests (integration + unit + architecture)
 dotnet test smooth-operator.sln
 ```
 
@@ -535,6 +596,7 @@ npm test -- --run     # single-run (CI)
 ```
 
 ### Testing Decisions
+
 1. **Impersonation headers** — integration tests inject `X-Test-UserId` / `X-Test-Roles` headers to simulate any user role without JWT ceremony.
 2. **Real EF with SQLite** — integration tests use EF Core + in-memory SQLite for per-test isolation; no mocked repositories.
 3. **Architecture tests** — `SmoothOperator.ArchitectureTests` asserts layer dependency rules using NetArchTest so violations fail CI immediately.
@@ -549,22 +611,26 @@ Workflow details: [.github/workflows/README.md](.github/workflows/README.md)
 Performance work spans the frontend bundle, the API, and the container infrastructure.
 
 ### Frontend
+
 - **esbuild application builder** with fully lazy-loaded feature routes and `OnPush` change detection on list-heavy pages.
 - **Precompressed static assets** — JS/CSS/HTML are compressed to `.br` and `.gz` at build time and served via nginx `brotli_static` / `gzip_static` (no per-request compression). The `ngx_brotli` module is compiled in a dedicated Docker build stage.
 - **Bundle analysis** — `npm run analyze` renders a local source-map treemap; CI uploads bundle stats to CodeCov for per-PR size tracking.
 
 ### Backend
+
 - **EF Core `DbContextPool`** + Npgsql connection pooling; `AsNoTracking` reads and `SplitQuery`.
 - **Response compression** (Brotli + Gzip) and an **output cache** (`ShortCache` policy) — in-memory by default, Redis-backed via `Cache__UseRedis`.
 - **Trigram search** — `pg_trgm` expression GIN indexes make case-insensitive audit-log/user substring filters index-backed instead of sequential scans.
 - **MediatR metrics** — every command/query records a Prometheus duration histogram (`smooth_operator_mediatr_request_duration_seconds`).
 
 ### Infrastructure
+
 - **Tuned PostgreSQL** (`shared_buffers`, planner costs, `wal_compression`, `pg_stat_statements`) and **Redis** (`maxmemory` + `allkeys-lru`, persistence off) via `docker-compose.yml`.
 - **Docker** — multi-stage builds with BuildKit cache mounts, Alpine runtime images, and per-service resource limits.
 - **nginx** — HTTP/2, an upstream keepalive pool for the API proxy, and tuned worker settings.
 
 ### Measurement tooling
+
 - **k6 load test** — `k6 run load-tests/smoke.js` exercises the auth + connections hot paths (see [load-tests/README.md](load-tests/README.md)).
 - **BenchmarkDotNet** — micro-benchmarks under `backend/benchmarks/SmoothOperator.Benchmarks` (run with `dotnet run -c Release`).
 
@@ -572,7 +638,7 @@ Performance work spans the frontend bundle, the API, and the container infrastru
 
 ## Documentation
 
-Full user guides, admin reference, integration guides, and API documentation are available in the **Smooth Operator Docs** site.
+Full user guides, admin reference, integration guides, and API documentation live at **[smooth-operator-docs.pages.dev](https://smooth-operator-docs.pages.dev)** (Cloudflare Pages, auto-deployed from `master`). You can also build and serve the docs locally:
 
 ```bash
 # Start only the docs container
@@ -580,9 +646,9 @@ docker compose up docs
 # → http://localhost:3000
 ```
 
-| Section | Contents |
-|---------|---------|
-| [Getting Started](http://localhost:3000/docs/getting-started) | Installation, first setup, prerequisites |
-| [User Guide](http://localhost:3000/docs/user-guide) | My Access, active sessions, profile |
-| [Admin Guide](http://localhost:3000/docs/admin-guide) | Users, groups, vaults, connections, credentials, SSO, SMTP |
-| [API Reference](http://localhost:3000/docs/api-reference) | Interactive Swagger UI + integration examples |
+| Section                                                                        | Contents                                                   |
+| ------------------------------------------------------------------------------ | ---------------------------------------------------------- |
+| [Getting Started](https://smooth-operator-docs.pages.dev/docs/getting-started) | Installation, first setup, prerequisites                   |
+| [User Guide](https://smooth-operator-docs.pages.dev/docs/user-guide)           | My Access, active sessions, profile                        |
+| [Admin Guide](https://smooth-operator-docs.pages.dev/docs/admin-guide)         | Users, groups, vaults, connections, credentials, SSO, SMTP |
+| [API Reference](https://smooth-operator-docs.pages.dev/docs/api-reference)     | Interactive Swagger UI + integration examples              |

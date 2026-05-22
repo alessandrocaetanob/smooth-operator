@@ -1,8 +1,14 @@
 import { Component, computed, inject, signal } from '@angular/core';
+import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ProfileService } from '../../services/profile.service';
 import { AuthService } from '../../services/auth.service';
 import { MfaService, MfaStatus } from '../../services/mfa.service';
+import {
+  ApiTokensService,
+  ApiTokenSummary,
+  CreateApiTokenResult,
+} from '../../services/api-tokens.service';
 import { toDataURL as qrToDataURL } from 'qrcode';
 
 const MAX_AVATAR_BYTES = 1_048_576; // 1 MB
@@ -11,7 +17,7 @@ const TARGET_DIMENSION = 512;
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, DatePipe],
   templateUrl: './profile.html',
   styleUrl: './profile.css',
 })
@@ -19,6 +25,7 @@ export class Profile {
   private readonly profile = inject(ProfileService);
   private readonly auth = inject(AuthService);
   private readonly mfaSvc = inject(MfaService);
+  private readonly apiTokensSvc = inject(ApiTokensService);
 
   readonly user = this.auth.currentUser;
   readonly name = signal('');
@@ -44,6 +51,15 @@ export class Profile {
   readonly mfaDisabling = signal(false);
   readonly mfaError = signal<string | null>(null);
 
+  // API tokens state
+  readonly apiTokens = signal<ApiTokenSummary[]>([]);
+  readonly newTokenName = signal('');
+  readonly newTokenExpiresAt = signal('');
+  readonly creatingToken = signal(false);
+  readonly revokingTokenId = signal<string | null>(null);
+  readonly newTokenResult = signal<CreateApiTokenResult | null>(null);
+  readonly apiTokensError = signal<string | null>(null);
+
   readonly initials = computed(() => {
     const u = this.user();
     if (!u?.name) return '?';
@@ -54,6 +70,9 @@ export class Profile {
 
   readonly currentAvatar = computed(() => this.previewUrl() ?? this.user()?.avatarUrl ?? null);
 
+  /** Current UTC ISO timestamp; used for "expired?" comparisons in the template. */
+  readonly currentIso = (): string => new Date().toISOString();
+
   readonly canRemove = computed(
     () => !!this.user()?.avatarUrl && !this.pendingBase64() && !this.removing(),
   );
@@ -62,6 +81,7 @@ export class Profile {
     const u = this.user();
     if (u) this.name.set(u.name);
     this.loadMfaStatus();
+    this.loadApiTokens();
   }
 
   async onFileSelected(event: Event): Promise<void> {
@@ -262,6 +282,65 @@ export class Profile {
       error: (err) => {
         this.mfaDisabling.set(false);
         this.mfaError.set(err?.error?.message ?? 'Could not disable MFA.');
+      },
+    });
+  }
+
+  // ── API tokens methods ──────────────────────────────────────────────────
+
+  loadApiTokens(): void {
+    this.apiTokensSvc.list().subscribe({
+      next: (tokens) => this.apiTokens.set(tokens),
+      error: () => this.apiTokens.set([]),
+    });
+  }
+
+  createApiToken(): void {
+    const name = this.newTokenName().trim();
+    if (!name) return;
+    this.apiTokensError.set(null);
+    this.creatingToken.set(true);
+    const expiresAt = this.newTokenExpiresAt() || null;
+    this.apiTokensSvc.create({ name, expiresAt }).subscribe({
+      next: (result) => {
+        this.creatingToken.set(false);
+        this.newTokenResult.set(result);
+        this.newTokenName.set('');
+        this.newTokenExpiresAt.set('');
+        this.loadApiTokens();
+      },
+      error: (err) => {
+        this.creatingToken.set(false);
+        this.apiTokensError.set(err?.error?.message ?? 'Could not create token.');
+      },
+    });
+  }
+
+  dismissNewToken(): void {
+    this.newTokenResult.set(null);
+  }
+
+  async copyNewToken(): Promise<void> {
+    const plaintext = this.newTokenResult()?.plaintextToken;
+    if (!plaintext) return;
+    try {
+      await navigator.clipboard.writeText(plaintext);
+    } catch {
+      // Clipboard API may be unavailable (non-HTTPS, permission denied) — silently ignore.
+    }
+  }
+
+  revokeApiToken(id: string): void {
+    this.apiTokensError.set(null);
+    this.revokingTokenId.set(id);
+    this.apiTokensSvc.revoke(id).subscribe({
+      next: () => {
+        this.revokingTokenId.set(null);
+        this.loadApiTokens();
+      },
+      error: (err) => {
+        this.revokingTokenId.set(null);
+        this.apiTokensError.set(err?.error?.message ?? 'Could not revoke token.');
       },
     });
   }

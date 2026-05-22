@@ -18,6 +18,10 @@ export class Retention implements OnInit {
 
   readonly retentionDays = signal(0);
 
+  /** Pass-through values so we don't clobber session-timeout settings when saving. */
+  private idleTimeoutMinutes = 0;
+  private maxSessionMinutes = 0;
+
   readonly presets = [
     { days: 0, label: 'Forever' },
     { days: 30, label: '30 days' },
@@ -41,6 +45,8 @@ export class Retention implements OnInit {
       next: (s) => {
         this.loading.set(false);
         this.retentionDays.set(s.auditLogRetentionDays);
+        this.idleTimeoutMinutes = s.idleTimeoutMinutes;
+        this.maxSessionMinutes = s.maxSessionMinutes;
       },
       error: (err) => {
         this.loading.set(false);
@@ -59,21 +65,27 @@ export class Retention implements OnInit {
     this.busy.set(true);
     this.message.set(null);
     this.error.set(null);
-    this.system.update({ auditLogRetentionDays: value }).subscribe({
-      next: (s) => {
-        this.busy.set(false);
-        this.retentionDays.set(s.auditLogRetentionDays);
-        this.message.set(
-          s.auditLogRetentionDays === 0
-            ? 'Retention disabled — audit logs will be kept forever.'
-            : `Audit logs older than ${s.auditLogRetentionDays} day(s) will be purged daily.`,
-        );
-      },
-      error: (err) => {
-        this.busy.set(false);
-        this.error.set(this.toMessage(err) || 'Failed to save settings.');
-      },
-    });
+    this.system
+      .update({
+        auditLogRetentionDays: value,
+        idleTimeoutMinutes: this.idleTimeoutMinutes,
+        maxSessionMinutes: this.maxSessionMinutes,
+      })
+      .subscribe({
+        next: (s) => {
+          this.busy.set(false);
+          this.retentionDays.set(s.auditLogRetentionDays);
+          this.message.set(
+            s.auditLogRetentionDays === 0
+              ? 'Retention disabled — audit logs will be kept forever.'
+              : `Audit logs older than ${s.auditLogRetentionDays} day(s) will be purged daily.`,
+          );
+        },
+        error: (err) => {
+          this.busy.set(false);
+          this.error.set(this.toMessage(err) || 'Failed to save settings.');
+        },
+      });
   }
 
   private toMessage(err: unknown): string | null {

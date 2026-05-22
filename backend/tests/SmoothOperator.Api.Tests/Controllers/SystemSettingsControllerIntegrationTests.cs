@@ -41,12 +41,14 @@ public class SystemSettingsControllerIntegrationTests
 
         var client = AsUser(factory, adminId, AppRoles.Admin);
 
-        // 1. Get initial
+        // 1. Get initial — all three fields default to 0
         var getInitialRes = await client.GetAsync("/api/settings/system");
         Assert.Equal(HttpStatusCode.OK, getInitialRes.StatusCode);
         var initial = await getInitialRes.Content.ReadFromJsonAsync<SystemSettingsDto>();
         Assert.NotNull(initial);
         Assert.Equal(0, initial.AuditLogRetentionDays);
+        Assert.Equal(0, initial.IdleTimeoutMinutes);
+        Assert.Equal(0, initial.MaxSessionMinutes);
 
         // 2. Update
         var updateReq = new UpdateSystemSettingsRequest { AuditLogRetentionDays = 30 };
@@ -62,5 +64,80 @@ public class SystemSettingsControllerIntegrationTests
         var final = await getAgainRes.Content.ReadFromJsonAsync<SystemSettingsDto>();
         Assert.NotNull(final);
         Assert.Equal(30, final.AuditLogRetentionDays);
+    }
+
+    [Fact]
+    public async Task Update_AcceptsIdleAndMaxSessionMinutes_ReturnsValues()
+    {
+        var adminId = Guid.NewGuid();
+        await using var factory = new TestWebApplicationFactory(db =>
+        {
+            var admin = new User { Id = adminId, Email = "sys-t@a", Name = "sys", IsActive = true, CreatedAt = DateTime.UtcNow };
+            AttachRoles(db, admin, AppRoles.Admin);
+            db.Users.Add(admin);
+        });
+        var client = AsUser(factory, adminId, AppRoles.Admin);
+
+        var updateReq = new UpdateSystemSettingsRequest
+        {
+            AuditLogRetentionDays = 90,
+            IdleTimeoutMinutes = 15,
+            MaxSessionMinutes = 480,
+        };
+        var updateRes = await client.PutAsJsonAsync("/api/settings/system", updateReq);
+        Assert.Equal(HttpStatusCode.OK, updateRes.StatusCode);
+        var updated = await updateRes.Content.ReadFromJsonAsync<SystemSettingsDto>();
+        Assert.NotNull(updated);
+        Assert.Equal(15, updated.IdleTimeoutMinutes);
+        Assert.Equal(480, updated.MaxSessionMinutes);
+
+        // Re-fetch to confirm persistence
+        var getRes = await client.GetAsync("/api/settings/system");
+        var reloaded = await getRes.Content.ReadFromJsonAsync<SystemSettingsDto>();
+        Assert.NotNull(reloaded);
+        Assert.Equal(15, reloaded.IdleTimeoutMinutes);
+        Assert.Equal(480, reloaded.MaxSessionMinutes);
+    }
+
+    [Fact]
+    public async Task Update_NegativeIdleTimeout_Returns400()
+    {
+        var adminId = Guid.NewGuid();
+        await using var factory = new TestWebApplicationFactory(db =>
+        {
+            var admin = new User { Id = adminId, Email = "sys-neg@a", Name = "sys", IsActive = true, CreatedAt = DateTime.UtcNow };
+            AttachRoles(db, admin, AppRoles.Admin);
+            db.Users.Add(admin);
+        });
+        var client = AsUser(factory, adminId, AppRoles.Admin);
+
+        var res = await client.PutAsJsonAsync("/api/settings/system", new UpdateSystemSettingsRequest
+        {
+            AuditLogRetentionDays = 0,
+            IdleTimeoutMinutes = -1,
+            MaxSessionMinutes = 0,
+        });
+        Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
+    }
+
+    [Fact]
+    public async Task Update_MaxSessionAbove10080_Returns400()
+    {
+        var adminId = Guid.NewGuid();
+        await using var factory = new TestWebApplicationFactory(db =>
+        {
+            var admin = new User { Id = adminId, Email = "sys-big@a", Name = "sys", IsActive = true, CreatedAt = DateTime.UtcNow };
+            AttachRoles(db, admin, AppRoles.Admin);
+            db.Users.Add(admin);
+        });
+        var client = AsUser(factory, adminId, AppRoles.Admin);
+
+        var res = await client.PutAsJsonAsync("/api/settings/system", new UpdateSystemSettingsRequest
+        {
+            AuditLogRetentionDays = 0,
+            IdleTimeoutMinutes = 0,
+            MaxSessionMinutes = 10081,
+        });
+        Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
     }
 }

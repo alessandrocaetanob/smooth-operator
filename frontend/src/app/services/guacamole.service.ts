@@ -101,6 +101,8 @@ export class GuacamoleSession {
   private pasteListener: ((ev: ClipboardEvent) => void) | null = null;
   private timerInterval: ReturnType<typeof setInterval> | null = null;
   private connectPromise: Promise<void> | null = null;
+  /** Last display size sent to guacd; guards against redundant `size` instructions. */
+  private lastSentSize: { w: number; h: number } | null = null;
 
   private readonly _state = signal<GuacState>('idle');
   private readonly _logs = signal<GuacLogEntry[]>([]);
@@ -355,10 +357,15 @@ export class GuacamoleSession {
       /* ignore focus errors */
     }
 
+    // Re-send our container size to guacd only when OUR window/container changes
+    // (browser resize + initial attach) — never in response to guacd's own `size`
+    // replies. Wiring display.onresize back to sendSize() creates an unbounded
+    // feedback loop: terminal displays (SSH/telnet) quantize to whole character
+    // cells, so guacd's echoed size never exactly matches the request, and the two
+    // sides ping-pong `size` instructions many times per second forever.
     const doResize = () => this.resizeToHost();
     this.resizeListener = doResize;
     globalThis.addEventListener('resize', doResize);
-    display.onresize = () => doResize();
     queueMicrotask(doResize);
 
     const onPaste = (ev: ClipboardEvent) => {
@@ -427,6 +434,8 @@ export class GuacamoleSession {
       }
     }
     this.displayHost = null;
+    // Force the next attach to re-send the size to guacd (the new host may differ).
+    this.lastSentSize = null;
   }
 
   disconnect(): void {
@@ -459,11 +468,15 @@ export class GuacamoleSession {
     if (!this.client || !this.displayHost) return;
     const w = Math.max(320, Math.floor(this.displayHost.clientWidth));
     const h = Math.max(240, Math.floor(this.displayHost.clientHeight));
+    // Skip when the container size is unchanged — a stray 'resize' event with no
+    // real dimension change must not trigger a needless guacd round-trip.
+    if (this.lastSentSize?.w === w && this.lastSentSize?.h === h) return;
     const display = this.client.getDisplay();
     // Reset scale to 1 — CSS scaling causes blurry text in SSH terminals.
     display.scale(1);
     try {
       this.client.sendSize(w, h);
+      this.lastSentSize = { w, h };
     } catch {
       // sendSize fails before the connect handshake completes; safe to ignore.
     }

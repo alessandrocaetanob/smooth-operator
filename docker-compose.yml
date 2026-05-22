@@ -10,8 +10,8 @@ services:
       # parses this at startup and renders the upstream block — works for
       # single-host (default) and split-host deployments alike.
       - API_URL=${API_URL:-http://backend:8080}
-      - APP_HELP_URL=${APP_HELP_URL:-http://localhost:3000}
-      - APP_DOCS_URL=${APP_DOCS_URL:-http://localhost:3000}
+      - APP_HELP_URL=${APP_HELP_URL:-https://smooth-operator-docs.pages.dev}
+      - APP_DOCS_URL=${APP_DOCS_URL:-https://smooth-operator-docs.pages.dev}
       - APP_FEATURE_FLAGS=${APP_FEATURE_FLAGS:-{}}
     depends_on:
       - backend
@@ -32,6 +32,8 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    ports:
+      - "5000:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
     volumes:
@@ -148,10 +150,15 @@ services:
           cpus: "1.0"
           memory: 256M
 
+  # ── Docs stack ──────────────────────────────────────────────────────
+  # Start with: docker compose --profile docs up -d
+  # Core stack only (no docs): docker compose up -d
+
   docs:
     build:
       context: ./docs
       dockerfile: Dockerfile
+    profiles: [docs]
     ports:
       - "3000:8080"
     restart: unless-stopped

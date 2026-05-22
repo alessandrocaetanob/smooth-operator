@@ -449,6 +449,105 @@ public class GuacamoleProxyServiceTests
         Assert.NotNull(log);
         Assert.Contains($"\"port\":{expectedPort}", log!.Details);
     }
+
+    [Fact]
+    public async Task HandleWebSocketAsync_WithNoSessionTimeoutConfigured_KeepsRelayingUntilGuacdCloses()
+    {
+        // Regression test: when no idle/max session timeout is configured,
+        // RunIdleAndMaxSessionWatchdogAsync returns synchronously, so its task is
+        // already complete. Including it in `Task.WhenAny(receiveTask, sendTask,
+        // watchdogTask)` tore the relay down the instant the session started,
+        // closing the WebSocket with the default reason "Session ended" (the bug
+        // the user observed for SSH/RDP/VNC). The relay must instead stay alive
+        // until guacd or the client actually disconnects.
+
+        // Arrange
+        var userId = Guid.NewGuid();
+        var connectionId = Guid.NewGuid();
+        var hostId = Guid.NewGuid();
+        var ip = "127.0.0.1";
+
+        // Target host for the pre-flight probe — only needs to accept the TCP SYN.
+        using var targetListener = new TcpListener(IPAddress.Loopback, 0);
+        targetListener.Start();
+        var targetPort = ((IPEndPoint)targetListener.LocalEndpoint).Port;
+
+        // Fake guacd: completes the handshake, holds the session open well past
+        // the point the buggy code would have torn it down, then relays one
+        // post-handshake instruction to prove the relay is still alive.
+        using var guacdListener = new TcpListener(IPAddress.Loopback, 0);
+        guacdListener.Start();
+        var guacdPort = ((IPEndPoint)guacdListener.LocalEndpoint).Port;
+
+        var fakeGuacd = Task.Run(async () =>
+        {
+            using var client = await guacdListener.AcceptTcpClientAsync();
+            var stream = client.GetStream();
+            // Reply to `select` with an `args` instruction (version-only).
+            await stream.WriteAsync(Encoding.UTF8.GetBytes("4.args,13.VERSION_1_5_0;"));
+            await stream.FlushAsync();
+            // Hold open past any plausible buggy teardown, then send one
+            // instruction so a surviving relay has something to forward.
+            await Task.Delay(400);
+            await stream.WriteAsync(Encoding.UTF8.GetBytes("5.ready;"));
+            await stream.FlushAsync();
+            await Task.Delay(50);
+            client.Close();
+        });
+
+        var service = new GuacamoleProxyService(
+            _loggerMock.Object,
+            Options.Create(new GuacdOptions { Host = "127.0.0.1", Port = guacdPort }),
+            _scopeFactoryMock.Object,
+            _encryptionServiceMock.Object,
+            _redisMock.Object,
+            _metricsMock.Object,
+            _secretProviderFactoryMock.Object);
+
+        using var scope = _scopeFactoryMock.Object.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        dbContext.Users.Add(new User { Id = userId, IsActive = true, Name = "active-user", Email = "test@test.com" });
+        var host = new SmoothOperator.Domain.Models.Host { Id = hostId, Name = "test-host", Address = "127.0.0.1" };
+        dbContext.Hosts.Add(host);
+        dbContext.Connections.Add(new Connection
+        {
+            Id = connectionId,
+            HostId = hostId,
+            Host = host,
+            Protocol = "ssh",
+            Settings = $"{{\"port\":\"{targetPort}\"}}"
+        });
+        // No SystemSettings row → IdleTimeoutMinutes / MaxSessionMinutes default to 0 (disabled).
+        await dbContext.SaveChangesAsync();
+
+        _dbMock.Setup(db => db.KeyDeleteAsync(It.IsAny<RedisKey>(), It.IsAny<CommandFlags>()))
+            .ReturnsAsync(true);
+
+        var relayedInstructions = new List<string>();
+        var wsMock = new Mock<System.Net.WebSockets.WebSocket>();
+        wsMock.Setup(w => w.State).Returns(System.Net.WebSockets.WebSocketState.Open);
+        wsMock.Setup(w => w.CloseAsync(It.IsAny<System.Net.WebSockets.WebSocketCloseStatus>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+              .Returns(Task.CompletedTask);
+        wsMock.Setup(w => w.SendAsync(It.IsAny<ArraySegment<byte>>(), It.IsAny<System.Net.WebSockets.WebSocketMessageType>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+              .Returns(Task.CompletedTask)
+              .Callback<ArraySegment<byte>, System.Net.WebSockets.WebSocketMessageType, bool, CancellationToken>(
+                  (seg, _, _, _) => relayedInstructions.Add(Encoding.UTF8.GetString(seg.Array!, seg.Offset, seg.Count)));
+        // The client→guacd direction never produces input; park it so it doesn't
+        // end the session before guacd does.
+        var clientReceive = new TaskCompletionSource<System.Net.WebSockets.WebSocketReceiveResult>();
+        wsMock.Setup(w => w.ReceiveAsync(It.IsAny<ArraySegment<byte>>(), It.IsAny<CancellationToken>()))
+              .Returns(clientReceive.Task);
+
+        // Act
+        await service.HandleWebSocketAsync(wsMock.Object, connectionId, userId, ip);
+        clientReceive.TrySetResult(new System.Net.WebSockets.WebSocketReceiveResult(
+            0, System.Net.WebSockets.WebSocketMessageType.Close, true));
+        await fakeGuacd;
+
+        // Assert — the post-handshake `ready` instruction was relayed, proving the
+        // session survived past the handshake instead of ending immediately.
+        Assert.Contains(relayedInstructions, i => i.Contains("ready"));
+    }
 }
 
 public class GuacamoleProxyServiceInternalTests

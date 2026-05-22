@@ -15,6 +15,18 @@ namespace SmoothOperator.Domain.Models
         /// </summary>
         public int AuditLogRetentionDays { get; set; } = 0;
 
+        /// <summary>
+        /// Maximum minutes a Guacamole session may be idle (no user input) before
+        /// the proxy forcibly closes the WebSocket. 0 = disabled.
+        /// </summary>
+        public int IdleTimeoutMinutes { get; set; } = 0;
+
+        /// <summary>
+        /// Hard cap on session lifetime measured from connection start, regardless
+        /// of activity. 0 = unlimited.
+        /// </summary>
+        public int MaxSessionMinutes { get; set; } = 0;
+
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     }
 }

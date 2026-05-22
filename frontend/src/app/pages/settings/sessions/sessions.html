@@ -1,0 +1,216 @@
+<div>
+  <div class="mb-6">
+    <h2 class="text-lg font-semibold text-on-surface">Session timeouts</h2>
+    <p class="text-sm text-on-surface-variant mt-1">
+      Forcibly close remote sessions that have been idle too long or exceeded a hard lifetime cap.
+      These limits apply to every Guacamole connection (RDP, SSH, VNC) regardless of vault.
+    </p>
+  </div>
+
+  @if (message()) {
+    <div
+      class="mb-4 p-3 border border-tertiary/40 bg-tertiary/10 rounded-lg text-sm text-tertiary flex items-center gap-2"
+    >
+      <span class="material-symbols-outlined text-base">check_circle</span>
+      {{ message() }}
+    </div>
+  }
+  @if (error()) {
+    <div
+      class="mb-4 p-3 border border-error/40 bg-error/10 rounded-lg text-sm text-error flex items-center gap-2"
+    >
+      <span class="material-symbols-outlined text-base">error</span>
+      {{ error() }}
+    </div>
+  }
+
+  <form (ngSubmit)="save()" class="space-y-4">
+    <!-- Idle timeout card -->
+    <div class="session-card">
+      <div class="session-card-header">
+        <span
+          class="material-symbols-outlined"
+          style="color: rgb(var(--color-primary)); font-size: 20px"
+          >motion_sensor_idle</span
+        >
+        <h3 class="text-sm font-semibold text-on-surface">Idle timeout</h3>
+      </div>
+      <div class="p-5">
+        <p class="text-xs uppercase tracking-widest text-on-surface-variant mb-3 font-semibold">
+          Quick select
+        </p>
+        <div class="flex flex-wrap gap-2 mb-5">
+          @for (p of idlePresets; track p.minutes) {
+            <button
+              type="button"
+              class="preset-chip"
+              [class.preset-chip-active]="idleTimeoutMinutes() === p.minutes"
+              (click)="selectIdlePreset(p.minutes)"
+              [disabled]="loading() || busy()"
+            >
+              {{ p.label }}
+            </button>
+          }
+        </div>
+
+        <div class="flex items-end gap-4">
+          <div class="max-w-[180px]">
+            <label
+              for="idleTimeoutMinutes"
+              class="block text-xs uppercase tracking-widest text-on-surface-variant mb-2 font-semibold"
+            >
+              Custom (minutes)
+            </label>
+            <input
+              id="idleTimeoutMinutes"
+              type="number"
+              min="0"
+              max="10080"
+              step="1"
+              [ngModel]="idleTimeoutMinutes()"
+              (ngModelChange)="idleTimeoutMinutes.set($event)"
+              name="idleTimeoutMinutes"
+              class="w-full input-field"
+              [disabled]="loading() || busy()"
+            />
+          </div>
+          <div class="session-description pb-2">
+            @if (idleTimeoutMinutes() === 0) {
+              <span class="material-symbols-outlined text-tertiary" style="font-size: 16px"
+                >all_inclusive</span
+              >
+              <span class="text-tertiary text-sm font-medium">No idle timeout</span>
+            } @else {
+              <span class="material-symbols-outlined text-amber-400" style="font-size: 16px"
+                >timer</span
+              >
+              <span class="text-on-surface-variant text-sm"
+                >Closes after
+                <strong class="text-on-surface">{{ idleTimeoutMinutes() }}</strong>
+                min of inactivity</span
+              >
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Max session lifetime card -->
+    <div class="session-card">
+      <div class="session-card-header">
+        <span
+          class="material-symbols-outlined"
+          style="color: rgb(var(--color-secondary)); font-size: 20px"
+          >schedule</span
+        >
+        <h3 class="text-sm font-semibold text-on-surface">Max session lifetime</h3>
+      </div>
+      <div class="p-5">
+        <p class="text-xs uppercase tracking-widest text-on-surface-variant mb-3 font-semibold">
+          Quick select
+        </p>
+        <div class="flex flex-wrap gap-2 mb-5">
+          @for (p of maxPresets; track p.minutes) {
+            <button
+              type="button"
+              class="preset-chip"
+              [class.preset-chip-active]="maxSessionMinutes() === p.minutes"
+              (click)="selectMaxPreset(p.minutes)"
+              [disabled]="loading() || busy()"
+            >
+              {{ p.label }}
+            </button>
+          }
+        </div>
+
+        <div class="flex items-end gap-4">
+          <div class="max-w-[180px]">
+            <label
+              for="maxSessionMinutes"
+              class="block text-xs uppercase tracking-widest text-on-surface-variant mb-2 font-semibold"
+            >
+              Custom (minutes)
+            </label>
+            <input
+              id="maxSessionMinutes"
+              type="number"
+              min="0"
+              max="10080"
+              step="1"
+              [ngModel]="maxSessionMinutes()"
+              (ngModelChange)="maxSessionMinutes.set($event)"
+              name="maxSessionMinutes"
+              class="w-full input-field"
+              [disabled]="loading() || busy()"
+            />
+          </div>
+          <div class="session-description pb-2">
+            @if (maxSessionMinutes() === 0) {
+              <span class="material-symbols-outlined text-tertiary" style="font-size: 16px"
+                >all_inclusive</span
+              >
+              <span class="text-tertiary text-sm font-medium">Unlimited</span>
+            } @else {
+              <span class="material-symbols-outlined text-amber-400" style="font-size: 16px"
+                >hourglass_top</span
+              >
+              <span class="text-on-surface-variant text-sm"
+                >Hard cap at
+                <strong class="text-on-surface">{{ maxSessionMinutes() }}</strong> min</span
+              >
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Guidance card -->
+    <div class="session-card">
+      <div class="session-card-header">
+        <span
+          class="material-symbols-outlined"
+          style="color: rgb(var(--color-secondary)); font-size: 20px"
+          >tips_and_updates</span
+        >
+        <h3 class="text-sm font-semibold text-on-surface">Recommended settings</h3>
+      </div>
+      <div class="p-4">
+        <div class="guidance-grid">
+          <div class="guidance-tier">
+            <span class="guidance-tier-label">Standard</span>
+            <span class="guidance-tier-value">15 / 480</span>
+            <span class="guidance-tier-desc">idle / max — typical office use</span>
+          </div>
+          <div class="guidance-divider"></div>
+          <div class="guidance-tier">
+            <span class="guidance-tier-label">High security</span>
+            <span class="guidance-tier-value">5 / 60</span>
+            <span class="guidance-tier-desc">shared workstations, kiosks</span>
+          </div>
+          <div class="guidance-divider"></div>
+          <div class="guidance-tier">
+            <span class="guidance-tier-label">Long-running</span>
+            <span class="guidance-tier-value">60 / 720</span>
+            <span class="guidance-tier-desc">build / migration jobs</span>
+          </div>
+        </div>
+        <p class="text-xs text-on-surface-variant/50 mt-3">
+          Set either field to <strong class="text-on-surface-variant/80">0</strong> to disable that
+          limit independently. Active connections that exceed a limit are audited as
+          <code class="font-mono text-on-surface-variant/80">session.timeout_closed</code>.
+        </p>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <button type="submit" class="btn-primary" [disabled]="loading() || busy()">
+        <span class="material-symbols-outlined text-sm" aria-hidden="true">save</span>
+        {{ busy() ? 'Saving…' : 'Save' }}
+      </button>
+      <button type="button" class="btn-ghost" (click)="refresh()" [disabled]="loading() || busy()">
+        <span class="material-symbols-outlined text-sm" aria-hidden="true">undo</span>
+        Reset
+      </button>
+    </div>
+  </form>
+</div>

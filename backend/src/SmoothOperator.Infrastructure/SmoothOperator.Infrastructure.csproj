@@ -14,6 +14,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="SmoothOperator.Infrastructure.Tests" />
+    <InternalsVisibleTo Include="SmoothOperator.Api.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
     <PackageReference Include="Otp.NET" Version="1.4.0" />
     <PackageReference Include="Duende.IdentityModel" Version="8.1.0" />

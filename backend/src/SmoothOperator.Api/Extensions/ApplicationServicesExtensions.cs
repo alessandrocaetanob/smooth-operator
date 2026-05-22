@@ -109,10 +109,10 @@ public static class ApplicationServicesExtensions
         var hcBuilder = services.AddHealthChecks();
         var pgConnStr = configuration.GetConnectionString("DefaultConnection");
         if (!string.IsNullOrEmpty(pgConnStr))
-            hcBuilder.AddNpgSql(pgConnStr);
+            hcBuilder.AddNpgSql(pgConnStr, tags: ["ready", "db"]);
         var redisConnStr = configuration.GetConnectionString("Redis");
         if (!string.IsNullOrEmpty(redisConnStr))
-            hcBuilder.AddRedis(redisConnStr);
+            hcBuilder.AddRedis(redisConnStr, tags: ["ready", "redis"]);
         return services;
     }
 }

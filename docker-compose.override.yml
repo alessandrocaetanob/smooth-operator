@@ -7,6 +7,7 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=smoothoperator;Username=postgres;Password=postgres
       - ConnectionStrings__Redis=redis:6379
+      - Cache__UseRedis=true
       - Guacd__Host=guacd
       - Guacd__Port=4822
       - Encryption__Key=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef # WARNING: FOR DEVELOPMENT ONLY! Use Docker secrets or a secrets manager in production

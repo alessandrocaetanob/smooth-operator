@@ -71,14 +71,23 @@ describe('SystemSettingsService', () => {
 
   describe('update()', () => {
     it('should PUT /api/settings/system with payload and update current signal', () => {
-      const payload: UpdateSystemSettingsRequest = { auditLogRetentionDays: 180 };
+      const payload: UpdateSystemSettingsRequest = {
+        auditLogRetentionDays: 180,
+        idleTimeoutMinutes: 0,
+        maxSessionMinutes: 0,
+      };
       let result: SystemSettings | undefined;
       service.update(payload).subscribe((s) => (result = s));
 
       const req = http.expectOne('/api/settings/system');
       expect(req.request.method).toBe('PUT');
-      expect(req.request.body).toEqual({ auditLogRetentionDays: 180 });
-      req.flush({ auditLogRetentionDays: 180, updatedAt: '2024-06-15T00:00:00Z' });
+      expect(req.request.body).toEqual(payload);
+      req.flush({
+        auditLogRetentionDays: 180,
+        idleTimeoutMinutes: 0,
+        maxSessionMinutes: 0,
+        updatedAt: '2024-06-15T00:00:00Z',
+      });
 
       expect(result?.auditLogRetentionDays).toBe(180);
       expect(service.current()?.auditLogRetentionDays).toBe(180);
@@ -86,7 +95,9 @@ describe('SystemSettingsService', () => {
 
     it('should normalize PascalCase update response', () => {
       let result: SystemSettings | undefined;
-      service.update({ auditLogRetentionDays: 365 }).subscribe((s) => (result = s));
+      service
+        .update({ auditLogRetentionDays: 365, idleTimeoutMinutes: 0, maxSessionMinutes: 0 })
+        .subscribe((s) => (result = s));
 
       http
         .expectOne('/api/settings/system')
@@ -96,9 +107,26 @@ describe('SystemSettingsService', () => {
     });
 
     it('should update current signal after PUT', () => {
-      service.update({ auditLogRetentionDays: 45 }).subscribe();
+      service
+        .update({ auditLogRetentionDays: 45, idleTimeoutMinutes: 0, maxSessionMinutes: 0 })
+        .subscribe();
       http.expectOne('/api/settings/system').flush({ auditLogRetentionDays: 45, updatedAt: null });
       expect(service.current()?.auditLogRetentionDays).toBe(45);
+    });
+
+    it('round-trips idleTimeoutMinutes and maxSessionMinutes', () => {
+      let result: SystemSettings | undefined;
+      service
+        .update({ auditLogRetentionDays: 0, idleTimeoutMinutes: 15, maxSessionMinutes: 480 })
+        .subscribe((s) => (result = s));
+      http.expectOne('/api/settings/system').flush({
+        auditLogRetentionDays: 0,
+        idleTimeoutMinutes: 15,
+        maxSessionMinutes: 480,
+        updatedAt: '2026-01-01T00:00:00Z',
+      });
+      expect(result?.idleTimeoutMinutes).toBe(15);
+      expect(result?.maxSessionMinutes).toBe(480);
     });
   });
 });

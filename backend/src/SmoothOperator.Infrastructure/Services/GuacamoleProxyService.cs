@@ -22,7 +22,7 @@ using SmoothOperator.Application.Options;
 
 namespace SmoothOperator.Infrastructure.Services
 {
-    public class GuacamoleProxyService
+    public partial class GuacamoleProxyService
     {
         private const string ResourceTypeConnection = "Connection";
         private const string TicketInvalidAction = "connection.ticket.invalid";
@@ -218,26 +218,45 @@ namespace SmoothOperator.Infrastructure.Services
             var db = _redis.GetDatabase();
             await RegisterSessionAsync(db, sessionId, dbUser.Id, connectionId);
 
-            await RunGuacamoleSessionAsync(new GuacSessionRequest(
-                webSocket,
-                connection,
-                sessionId,
-                dbUser,
-                ipAddress,
-                dbContext,
-                db,
-                sessionSettingsOverrides));
+            await RunGuacamoleSessionAsync(new GuacSessionRequest
+            {
+                WebSocket = webSocket,
+                Connection = connection,
+                SessionId = sessionId,
+                User = dbUser,
+                IpAddress = ipAddress,
+                DbContext = dbContext,
+                RedisDb = db,
+                SettingsOverrides = sessionSettingsOverrides,
+            });
         }
 
-        private sealed record GuacSessionRequest(
-            WebSocket WebSocket,
-            Connection Connection,
-            string SessionId,
-            User User,
-            string IpAddress,
-            AppDbContext DbContext,
-            IDatabase RedisDb,
-            IDictionary<string, string>? SettingsOverrides);
+        /// <summary>
+        /// Mutable per-session state. <see cref="LastActivityAt"/> is bumped after every
+        /// user-initiated payload reaches guacd; the watchdog reads it to enforce idle
+        /// timeouts. Class (not record) so the watchdog and the relay loop see the same
+        /// mutable values.
+        /// </summary>
+        private sealed class GuacSessionRequest
+        {
+            public required WebSocket WebSocket { get; init; }
+            public required Connection Connection { get; init; }
+            public required string SessionId { get; init; }
+            public required User User { get; init; }
+            public required string IpAddress { get; init; }
+            public required AppDbContext DbContext { get; init; }
+            public required IDatabase RedisDb { get; init; }
+            public required IDictionary<string, string>? SettingsOverrides { get; init; }
+
+            public DateTime SessionStartedAt { get; init; } = DateTime.UtcNow;
+            public DateTime LastActivityAt { get; set; } = DateTime.UtcNow;
+
+            /// <summary>0 = disabled.</summary>
+            public int IdleTimeoutMinutes { get; set; }
+
+            /// <summary>0 = unlimited.</summary>
+            public int MaxSessionMinutes { get; set; }
+        }
 
         private static Task<User?> LoadAuthorizedUserAsync(AppDbContext dbContext, Guid userId) =>
             dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId && u.IsActive);
@@ -374,7 +393,13 @@ namespace SmoothOperator.Infrastructure.Services
                 sessionMetricRecorded = true;
                 connectionSuccessful = true;
 
-                await RunBidirectionalProxyAsync(reader, req.WebSocket, networkStream, req.Connection.Id, msg =>
+                // Load timeout settings once at session start. Settings rarely change mid-session,
+                // and the watchdog uses these values to decide when to terminate.
+                var settings = await req.DbContext.SystemSettings.AsNoTracking().FirstOrDefaultAsync();
+                req.IdleTimeoutMinutes = settings?.IdleTimeoutMinutes ?? 0;
+                req.MaxSessionMinutes = settings?.MaxSessionMinutes ?? 0;
+
+                await RunBidirectionalProxyAsync(req, reader, networkStream, msg =>
                 {
                     failureReason ??= msg;
                     _logger.LogWarning("guacd reported error for connection {ConnectionId}: {Error}", req.Connection.Id, msg);
@@ -488,19 +513,189 @@ namespace SmoothOperator.Infrastructure.Services
             }
         }
 
-        private static async Task RunBidirectionalProxyAsync(
+        private async Task RunBidirectionalProxyAsync(
+            GuacSessionRequest req,
             GuacInstructionReader reader,
-            WebSocket webSocket,
             NetworkStream networkStream,
-            Guid connectionId,
             Action<string> onGuacError)
         {
             // Bidirectional proxy with proper instruction framing on the guacd→ws side.
-            _ = connectionId; // reserved for future telemetry tagging
-            var receiveTask = ProxyGuacdToWebSocket(reader, webSocket, onGuacError);
-            var sendTask = ProxyWebSocketToGuacd(webSocket, networkStream);
+            using var watchdogCts = new CancellationTokenSource();
+            var receiveTask = ProxyGuacdToWebSocket(reader, req.WebSocket, onGuacError);
+            var sendTask = ProxyWebSocketToGuacd(req.WebSocket, networkStream, () =>
+            {
+                req.LastActivityAt = DateTime.UtcNow;
+                // Traces genuine user input that resets the idle clock (Debug — off by default).
+                LogUserActivityDetected(req.SessionId);
+            });
+            var watchdogTask = RunIdleAndMaxSessionWatchdogAsync(req, watchdogCts.Token);
+
+            // Session liveness is defined by the relay tasks only. The watchdog is a
+            // supervisor: when a timeout fires it closes the WebSocket, which makes the
+            // relay tasks complete here. It must NOT be part of this WhenAny — when no
+            // timeout is configured the watchdog returns synchronously, so its task is
+            // already complete and the relay would be torn down the instant it starts.
             await Task.WhenAny(receiveTask, sendTask);
+            // Cancel the watchdog promptly so its Task.Delay loop exits cleanly even
+            // when the relay finished first.
+            await watchdogCts.CancelAsync();
+            // Ensure the watchdog has fully completed before returning so the caller's
+            // finally block doesn't race the watchdog's DbContext use on shutdown.
+            try { await watchdogTask; }
+            catch (OperationCanceledException) { /* expected on cancellation */ }
         }
+
+        /// <summary>
+        /// Pure decision function: given the relevant timestamps + configured
+        /// thresholds, returns the close reason if a timeout is breached, else null.
+        /// Extracted so the policy is unit-testable without standing up a real
+        /// WebSocket + guacd round-trip.
+        /// </summary>
+        internal static string? EvaluateSessionTimeout(
+            DateTime sessionStartedAt,
+            DateTime lastActivityAt,
+            DateTime now,
+            int idleTimeoutMinutes,
+            int maxSessionMinutes)
+        {
+            if (idleTimeoutMinutes > 0 &&
+                now - lastActivityAt > TimeSpan.FromMinutes(idleTimeoutMinutes))
+            {
+                return "idle-timeout";
+            }
+            if (maxSessionMinutes > 0 &&
+                now - sessionStartedAt > TimeSpan.FromMinutes(maxSessionMinutes))
+            {
+                return "max-session-exceeded";
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Background sentinel that closes the WebSocket when idle/max-session limits
+        /// are exceeded. Only runs when at least one timeout is configured.
+        /// </summary>
+        private async Task RunIdleAndMaxSessionWatchdogAsync(GuacSessionRequest req, CancellationToken ct)
+        {
+            if (req.IdleTimeoutMinutes <= 0 && req.MaxSessionMinutes <= 0)
+            {
+                LogWatchdogDisabled(req.SessionId, req.IdleTimeoutMinutes, req.MaxSessionMinutes);
+                return;
+            }
+
+            LogWatchdogStarted(req.SessionId, req.IdleTimeoutMinutes, req.MaxSessionMinutes);
+
+            var pollInterval = TimeSpan.FromSeconds(15);
+            while (!ct.IsCancellationRequested && req.WebSocket.State == WebSocketState.Open)
+            {
+                try
+                {
+                    await Task.Delay(pollInterval, ct);
+                }
+                catch (OperationCanceledException)
+                {
+                    return;
+                }
+
+                var now = DateTime.UtcNow;
+                var reason = EvaluateSessionTimeout(
+                    sessionStartedAt: req.SessionStartedAt,
+                    lastActivityAt: req.LastActivityAt,
+                    now: now,
+                    idleTimeoutMinutes: req.IdleTimeoutMinutes,
+                    maxSessionMinutes: req.MaxSessionMinutes);
+
+                // Per-poll trace of the idle/session clocks (Debug — off by default).
+                LogWatchdogPoll(
+                    req.SessionId,
+                    (now - req.LastActivityAt).TotalSeconds, req.IdleTimeoutMinutes,
+                    (now - req.SessionStartedAt).TotalSeconds, req.MaxSessionMinutes,
+                    reason is null ? string.Empty : $" -> closing: {reason}");
+
+                if (reason is null) continue;
+
+                await CloseSessionForTimeoutAsync(req, reason, now);
+                return;
+            }
+        }
+
+        /// <summary>
+        /// Writes the timeout audit record and closes the WebSocket. Extracted from
+        /// the watchdog loop so <see cref="RunIdleAndMaxSessionWatchdogAsync"/> stays
+        /// within its cognitive-complexity budget.
+        /// </summary>
+        private async Task CloseSessionForTimeoutAsync(GuacSessionRequest req, string reason, DateTime now)
+        {
+            LogClosingSession(req.SessionId, req.Connection.Id, reason);
+
+            // Audit on a fresh DbContext from the scope factory — the request-scoped
+            // req.DbContext is also used by the relay tasks and DbContext is NOT
+            // thread-safe (Gemini PR #127 review).
+            try
+            {
+                using var scope = _scopeFactory.CreateScope();
+                var bgDb = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                bgDb.AuditLogs.Add(new AuditLog
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = req.User.Id,
+                    Action = "session.timeout_closed",
+                    ResourceType = ResourceTypeConnection,
+                    ResourceId = req.Connection.Id.ToString(),
+                    Details = JsonSerializer.Serialize(new
+                    {
+                        sessionId = req.SessionId,
+                        reason,
+                        idleMinutes = (int)(now - req.LastActivityAt).TotalMinutes,
+                        totalMinutes = (int)(now - req.SessionStartedAt).TotalMinutes,
+                    }),
+                    IpAddress = req.IpAddress,
+                });
+                await bgDb.SaveChangesAsync(CancellationToken.None);
+            }
+            catch { /* swallow — best-effort audit */ }
+
+            if (req.WebSocket.State != WebSocketState.Open) return;
+            try
+            {
+                await req.WebSocket.CloseAsync(
+                    WebSocketCloseStatus.PolicyViolation, reason, CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                // The relay tasks still observe the close on their next read;
+                // log so a failed close handshake is diagnosable.
+                _logger.LogWarning(ex,
+                    "Session {SessionId}: watchdog CloseAsync threw while closing for {Reason}",
+                    req.SessionId, reason);
+            }
+        }
+
+        // ---- Source-generated session-timeout logging -------------------------------
+        // [LoggerMessage] partial methods: no params-array allocation or value-type
+        // boxing at the call site, with a built-in IsEnabled gate (clears CA1873).
+
+        [LoggerMessage(Level = LogLevel.Debug,
+            Message = "Session {SessionId}: user activity detected — idle clock reset")]
+        partial void LogUserActivityDetected(string sessionId);
+
+        [LoggerMessage(Level = LogLevel.Information,
+            Message = "Session {SessionId}: idle/max-session watchdog disabled — no timeout configured (idle={Idle}, max={Max})")]
+        partial void LogWatchdogDisabled(string sessionId, int idle, int max);
+
+        [LoggerMessage(Level = LogLevel.Information,
+            Message = "Session {SessionId}: idle/max-session watchdog started (idle={Idle}min, max={Max}min)")]
+        partial void LogWatchdogStarted(string sessionId, int idle, int max);
+
+        [LoggerMessage(Level = LogLevel.Debug,
+            Message = "Session {SessionId}: watchdog poll — idle {IdleSeconds:F0}s (limit {IdleLimit}min), session {SessionSeconds:F0}s (limit {MaxLimit}min){Outcome}")]
+        partial void LogWatchdogPoll(
+            string sessionId, double idleSeconds, int idleLimit,
+            double sessionSeconds, int maxLimit, string outcome);
+
+        [LoggerMessage(Level = LogLevel.Information,
+            Message = "Closing session {SessionId} for connection {ConnectionId}: {Reason}")]
+        partial void LogClosingSession(string sessionId, Guid connectionId, string reason);
 
         private static async Task LogConnectionErrorAsync(
             AppDbContext dbContext, Guid userId, Guid connectionId, string ipAddress, string errorType, string message)
@@ -875,7 +1070,51 @@ namespace SmoothOperator.Infrastructure.Services
             return null;
         }
 
-        private static async Task ProxyWebSocketToGuacd(WebSocket webSocket, NetworkStream guacdStream)
+        // Client-to-guacd instructions that represent genuine human interaction.
+        // Only these reset the idle-timeout clock. Everything else the Guacamole
+        // client emits on its own must NOT count as activity, or the idle timeout
+        // never fires. That excludes the sync heartbeat, the tunnel keep-alive nop
+        // and ping, stream ack instructions, and crucially the size instruction.
+        // The size instruction is display-geometry negotiation, not input: the
+        // client emits it on display init, on every browser-window resize, and
+        // for terminal protocols such as SSH (whose display quantizes to whole
+        // character cells) in a continuous feedback loop with guacd's own size
+        // replies, firing many times per second while the user does nothing.
+        private static readonly string[] UserActivityOpcodes = ["key", "mouse", "touch", "clipboard"];
+
+        /// <summary>
+        /// True when a client→guacd payload contains at least one user-input
+        /// instruction (see <see cref="UserActivityOpcodes"/>). A single payload
+        /// may carry several concatenated <c>LENGTH.opcode,…;</c> instructions.
+        /// </summary>
+        internal static bool ContainsUserActivity(byte[] payload)
+        {
+            var text = Encoding.UTF8.GetString(payload);
+            int i = 0;
+            while (i < text.Length)
+            {
+                int dot = text.IndexOf('.', i);
+                if (dot < 0) break;
+                if (!int.TryParse(text.AsSpan(i, dot - i), out var len) || len < 0) break;
+
+                int opStart = dot + 1;
+                if (opStart + len > text.Length) break;
+
+                var opcode = text.AsSpan(opStart, len);
+                foreach (var activity in UserActivityOpcodes)
+                {
+                    if (opcode.SequenceEqual(activity)) return true;
+                }
+
+                // Skip to the end of this instruction (the next ';') and continue.
+                int semicolon = text.IndexOf(';', opStart + len);
+                if (semicolon < 0) break;
+                i = semicolon + 1;
+            }
+            return false;
+        }
+
+        private static async Task ProxyWebSocketToGuacd(WebSocket webSocket, NetworkStream guacdStream, Action onActivity)
         {
             var buffer = new byte[16 * 1024];
             using var ms = new MemoryStream();
@@ -894,6 +1133,9 @@ namespace SmoothOperator.Infrastructure.Services
                 if (payload.Length == 0) continue;
                 await guacdStream.WriteAsync(payload.AsMemory());
                 await guacdStream.FlushAsync();
+                // Only genuine user input resets the idle clock — keepalive
+                // traffic (sync/nop/ping) must not keep an idle session alive.
+                if (ContainsUserActivity(payload)) onActivity();
             }
         }
 

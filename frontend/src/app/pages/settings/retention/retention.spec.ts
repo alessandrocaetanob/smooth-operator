@@ -17,8 +17,10 @@ describe('Retention', () => {
 
   beforeEach(async () => {
     svc = {
-      load: vi.fn(() => of({ auditLogRetentionDays: 30 })),
-      update: vi.fn(() => of({ auditLogRetentionDays: 90 })),
+      load: vi.fn(() =>
+        of({ auditLogRetentionDays: 30, idleTimeoutMinutes: 15, maxSessionMinutes: 480 }),
+      ),
+      update: vi.fn((payload) => of(payload)),
     };
     await TestBed.configureTestingModule({
       imports: [Retention],
@@ -75,15 +77,22 @@ describe('Retention', () => {
     expect(component.error()).toContain('integer');
   });
 
-  it('save success with retention sets descriptive message', () => {
+  it('save sends retention and preserves session-timeout pass-throughs', () => {
+    component.ngOnInit();
     component.retentionDays.set(90);
     component.save();
-    expect(svc.update).toHaveBeenCalledWith({ auditLogRetentionDays: 90 });
+    expect(svc.update).toHaveBeenCalledWith({
+      auditLogRetentionDays: 90,
+      idleTimeoutMinutes: 15,
+      maxSessionMinutes: 480,
+    });
     expect(component.message()).toContain('older than 90');
   });
 
-  it('save success with 0 sets forever message', () => {
-    svc.update.mockReturnValueOnce(of({ auditLogRetentionDays: 0 }));
+  it('save with 0 retention shows forever message', () => {
+    svc.update.mockReturnValueOnce(
+      of({ auditLogRetentionDays: 0, idleTimeoutMinutes: 0, maxSessionMinutes: 0 }),
+    );
     component.retentionDays.set(0);
     component.save();
     expect(component.message()).toContain('forever');

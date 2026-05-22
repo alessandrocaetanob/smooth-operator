@@ -131,14 +131,32 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             services.RemoveAll<HealthCheckService>();
             services.AddHealthChecks();
 
-            // Replace authentication with our test handler.
-            services.AddAuthentication(TestAuthHandler.SchemeName)
-                .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(TestAuthHandler.SchemeName, _ => { });
+            // Add the test bypass scheme (X-Test-UserId). The real ApiTokenAuthHandler
+            // is already registered by prod via AddJwtAuthentication, so we reuse it
+            // for "Bearer sop_..." requests via a custom dispatcher policy scheme.
+            const string testPolicyScheme = "TestPolicyScheme";
+            services.AddAuthentication()
+                .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(TestAuthHandler.SchemeName, _ => { })
+                .AddPolicyScheme(testPolicyScheme, "TestPolicyScheme", o =>
+                {
+                    const string patHeaderPrefix =
+                        "Bearer " + SmoothOperator.Api.Authentication.ApiTokenAuthHandler.TokenPrefix;
+                    o.ForwardDefaultSelector = ctx =>
+                    {
+                        var auth = ctx.Request.Headers.Authorization.ToString();
+                        if (!string.IsNullOrEmpty(auth) &&
+                            auth.StartsWith(patHeaderPrefix, StringComparison.OrdinalIgnoreCase))
+                        {
+                            return SmoothOperator.Api.Authentication.ApiTokenAuthHandler.SchemeName;
+                        }
+                        return TestAuthHandler.SchemeName;
+                    };
+                });
             services.Configure<AuthenticationOptions>(o =>
             {
-                o.DefaultScheme = TestAuthHandler.SchemeName;
-                o.DefaultAuthenticateScheme = TestAuthHandler.SchemeName;
-                o.DefaultChallengeScheme = TestAuthHandler.SchemeName;
+                o.DefaultScheme = testPolicyScheme;
+                o.DefaultAuthenticateScheme = testPolicyScheme;
+                o.DefaultChallengeScheme = testPolicyScheme;
                 o.DefaultForbidScheme = TestAuthHandler.SchemeName;
             });
 
