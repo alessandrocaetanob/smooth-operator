@@ -22,7 +22,7 @@ using SmoothOperator.Application.Options;
 
 namespace SmoothOperator.Infrastructure.Services
 {
-    public class GuacamoleProxyService
+    public partial class GuacamoleProxyService
     {
         private const string ResourceTypeConnection = "Connection";
         private const string TicketInvalidAction = "connection.ticket.invalid";
@@ -526,7 +526,7 @@ namespace SmoothOperator.Infrastructure.Services
             {
                 req.LastActivityAt = DateTime.UtcNow;
                 // Traces genuine user input that resets the idle clock (Debug — off by default).
-                _logger.LogDebug("Session {SessionId}: user activity detected — idle clock reset", req.SessionId);
+                LogUserActivityDetected(req.SessionId);
             });
             var watchdogTask = RunIdleAndMaxSessionWatchdogAsync(req, watchdogCts.Token);
 
@@ -579,15 +579,11 @@ namespace SmoothOperator.Infrastructure.Services
         {
             if (req.IdleTimeoutMinutes <= 0 && req.MaxSessionMinutes <= 0)
             {
-                _logger.LogInformation(
-                    "Session {SessionId}: idle/max-session watchdog disabled — no timeout configured (idle={Idle}, max={Max})",
-                    req.SessionId, req.IdleTimeoutMinutes, req.MaxSessionMinutes);
+                LogWatchdogDisabled(req.SessionId, req.IdleTimeoutMinutes, req.MaxSessionMinutes);
                 return;
             }
 
-            _logger.LogInformation(
-                "Session {SessionId}: idle/max-session watchdog started (idle={Idle}min, max={Max}min)",
-                req.SessionId, req.IdleTimeoutMinutes, req.MaxSessionMinutes);
+            LogWatchdogStarted(req.SessionId, req.IdleTimeoutMinutes, req.MaxSessionMinutes);
 
             var pollInterval = TimeSpan.FromSeconds(15);
             while (!ct.IsCancellationRequested && req.WebSocket.State == WebSocketState.Open)
@@ -610,8 +606,7 @@ namespace SmoothOperator.Infrastructure.Services
                     maxSessionMinutes: req.MaxSessionMinutes);
 
                 // Per-poll trace of the idle/session clocks (Debug — off by default).
-                _logger.LogDebug(
-                    "Session {SessionId}: watchdog poll — idle {IdleSeconds:F0}s (limit {IdleLimit}min), session {SessionSeconds:F0}s (limit {MaxLimit}min){Outcome}",
+                LogWatchdogPoll(
                     req.SessionId,
                     (now - req.LastActivityAt).TotalSeconds, req.IdleTimeoutMinutes,
                     (now - req.SessionStartedAt).TotalSeconds, req.MaxSessionMinutes,
@@ -619,56 +614,88 @@ namespace SmoothOperator.Infrastructure.Services
 
                 if (reason is null) continue;
 
-                _logger.LogInformation(
-                    "Closing session {SessionId} for connection {ConnectionId}: {Reason}",
-                    req.SessionId, req.Connection.Id, reason);
-
-                // Audit on a fresh DbContext from the scope factory — the request-scoped
-                // req.DbContext is also used by the relay tasks and DbContext is NOT
-                // thread-safe (Gemini PR #127 review).
-                try
-                {
-                    using var scope = _scopeFactory.CreateScope();
-                    var bgDb = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-                    bgDb.AuditLogs.Add(new AuditLog
-                    {
-                        Id = Guid.NewGuid(),
-                        UserId = req.User.Id,
-                        Action = "session.timeout_closed",
-                        ResourceType = ResourceTypeConnection,
-                        ResourceId = req.Connection.Id.ToString(),
-                        Details = JsonSerializer.Serialize(new
-                        {
-                            sessionId = req.SessionId,
-                            reason,
-                            idleMinutes = (int)(now - req.LastActivityAt).TotalMinutes,
-                            totalMinutes = (int)(now - req.SessionStartedAt).TotalMinutes,
-                        }),
-                        IpAddress = req.IpAddress,
-                    });
-                    await bgDb.SaveChangesAsync(CancellationToken.None);
-                }
-                catch { /* swallow — best-effort audit */ }
-
-                if (req.WebSocket.State == WebSocketState.Open)
-                {
-                    try
-                    {
-                        await req.WebSocket.CloseAsync(
-                            WebSocketCloseStatus.PolicyViolation, reason, CancellationToken.None);
-                    }
-                    catch (Exception ex)
-                    {
-                        // The relay tasks still observe the close on their next read;
-                        // log so a failed close handshake is diagnosable.
-                        _logger.LogWarning(ex,
-                            "Session {SessionId}: watchdog CloseAsync threw while closing for {Reason}",
-                            req.SessionId, reason);
-                    }
-                }
+                await CloseSessionForTimeoutAsync(req, reason, now);
                 return;
             }
         }
+
+        /// <summary>
+        /// Writes the timeout audit record and closes the WebSocket. Extracted from
+        /// the watchdog loop so <see cref="RunIdleAndMaxSessionWatchdogAsync"/> stays
+        /// within its cognitive-complexity budget.
+        /// </summary>
+        private async Task CloseSessionForTimeoutAsync(GuacSessionRequest req, string reason, DateTime now)
+        {
+            LogClosingSession(req.SessionId, req.Connection.Id, reason);
+
+            // Audit on a fresh DbContext from the scope factory — the request-scoped
+            // req.DbContext is also used by the relay tasks and DbContext is NOT
+            // thread-safe (Gemini PR #127 review).
+            try
+            {
+                using var scope = _scopeFactory.CreateScope();
+                var bgDb = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                bgDb.AuditLogs.Add(new AuditLog
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = req.User.Id,
+                    Action = "session.timeout_closed",
+                    ResourceType = ResourceTypeConnection,
+                    ResourceId = req.Connection.Id.ToString(),
+                    Details = JsonSerializer.Serialize(new
+                    {
+                        sessionId = req.SessionId,
+                        reason,
+                        idleMinutes = (int)(now - req.LastActivityAt).TotalMinutes,
+                        totalMinutes = (int)(now - req.SessionStartedAt).TotalMinutes,
+                    }),
+                    IpAddress = req.IpAddress,
+                });
+                await bgDb.SaveChangesAsync(CancellationToken.None);
+            }
+            catch { /* swallow — best-effort audit */ }
+
+            if (req.WebSocket.State != WebSocketState.Open) return;
+            try
+            {
+                await req.WebSocket.CloseAsync(
+                    WebSocketCloseStatus.PolicyViolation, reason, CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                // The relay tasks still observe the close on their next read;
+                // log so a failed close handshake is diagnosable.
+                _logger.LogWarning(ex,
+                    "Session {SessionId}: watchdog CloseAsync threw while closing for {Reason}",
+                    req.SessionId, reason);
+            }
+        }
+
+        // ---- Source-generated session-timeout logging -------------------------------
+        // [LoggerMessage] partial methods: no params-array allocation or value-type
+        // boxing at the call site, with a built-in IsEnabled gate (clears CA1873).
+
+        [LoggerMessage(Level = LogLevel.Debug,
+            Message = "Session {SessionId}: user activity detected — idle clock reset")]
+        partial void LogUserActivityDetected(string sessionId);
+
+        [LoggerMessage(Level = LogLevel.Information,
+            Message = "Session {SessionId}: idle/max-session watchdog disabled — no timeout configured (idle={Idle}, max={Max})")]
+        partial void LogWatchdogDisabled(string sessionId, int idle, int max);
+
+        [LoggerMessage(Level = LogLevel.Information,
+            Message = "Session {SessionId}: idle/max-session watchdog started (idle={Idle}min, max={Max}min)")]
+        partial void LogWatchdogStarted(string sessionId, int idle, int max);
+
+        [LoggerMessage(Level = LogLevel.Debug,
+            Message = "Session {SessionId}: watchdog poll — idle {IdleSeconds:F0}s (limit {IdleLimit}min), session {SessionSeconds:F0}s (limit {MaxLimit}min){Outcome}")]
+        partial void LogWatchdogPoll(
+            string sessionId, double idleSeconds, int idleLimit,
+            double sessionSeconds, int maxLimit, string outcome);
+
+        [LoggerMessage(Level = LogLevel.Information,
+            Message = "Closing session {SessionId} for connection {ConnectionId}: {Reason}")]
+        partial void LogClosingSession(string sessionId, Guid connectionId, string reason);
 
         private static async Task LogConnectionErrorAsync(
             AppDbContext dbContext, Guid userId, Guid connectionId, string ipAddress, string errorType, string message)

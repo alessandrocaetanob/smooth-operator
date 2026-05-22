@@ -6,6 +6,8 @@ namespace SmoothOperator.Api.Tests.Controllers;
 
 public class StatusControllerIntegrationTests
 {
+    private static readonly string[] ValidStatuses = ["healthy", "degraded", "unhealthy"];
+
     [Fact]
     public async Task Status_ReturnsOk_WithoutAuth()
     {
@@ -37,8 +39,7 @@ public class StatusControllerIntegrationTests
         // check is unhealthy. We only assert the field is one of the documented
         // values; success vs. degraded vs. unhealthy is covered by the dedicated
         // /health/ready test.
-        Assert.Contains(status.GetString(),
-            new[] { "healthy", "degraded", "unhealthy" });
+        Assert.Contains(status.GetString(), ValidStatuses);
         Assert.True(root.TryGetProperty("checks", out _));
     }
 

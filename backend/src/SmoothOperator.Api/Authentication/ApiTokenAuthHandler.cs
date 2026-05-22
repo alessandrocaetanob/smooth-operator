@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
+using SmoothOperator.Domain.Models;
 using SmoothOperator.Infrastructure.Data;
 
 namespace SmoothOperator.Api.Authentication;
@@ -60,10 +61,7 @@ public sealed class ApiTokenAuthHandler : AuthenticationHandler<AuthenticationSc
             .FirstOrDefaultAsync(t => t.TokenLookup == lookup, Context.RequestAborted);
 
         if (token is null) return AuthenticateResult.Fail("API token not recognized.");
-        if (token.RevokedAt is not null) return AuthenticateResult.Fail("API token revoked.");
-        if (token.ExpiresAt is { } exp && exp <= DateTime.UtcNow) return AuthenticateResult.Fail("API token expired.");
-        if (!token.User.IsActive) return AuthenticateResult.Fail("Token owner is deactivated.");
-        if (!FixedTimeHashEquals(raw, token.TokenHash)) return AuthenticateResult.Fail("API token signature mismatch.");
+        if (ValidateToken(token, raw) is { } failure) return failure;
 
         // Update LastUsedAt without blocking the request. Resolve IServiceScopeFactory
         // (a singleton) up front — Context.RequestServices would already be disposed
@@ -102,6 +100,21 @@ public sealed class ApiTokenAuthHandler : AuthenticationHandler<AuthenticationSc
         var identity = new ClaimsIdentity(claims, SchemeName);
         var principal = new ClaimsPrincipal(identity);
         return AuthenticateResult.Success(new AuthenticationTicket(principal, Scheme.Name));
+    }
+
+    /// <summary>
+    /// Verifies a resolved token's lifecycle state (revocation, expiry, owner
+    /// status) and signature. Returns a failure result, or <c>null</c> when the
+    /// token is valid. Extracted to keep <see cref="HandleAuthenticateAsync"/>'s
+    /// cognitive complexity within limits.
+    /// </summary>
+    private static AuthenticateResult? ValidateToken(ApiToken token, string rawToken)
+    {
+        if (token.RevokedAt is not null) return AuthenticateResult.Fail("API token revoked.");
+        if (token.ExpiresAt is { } exp && exp <= DateTime.UtcNow) return AuthenticateResult.Fail("API token expired.");
+        if (!token.User.IsActive) return AuthenticateResult.Fail("Token owner is deactivated.");
+        if (!FixedTimeHashEquals(rawToken, token.TokenHash)) return AuthenticateResult.Fail("API token signature mismatch.");
+        return null;
     }
 
     /// <summary>

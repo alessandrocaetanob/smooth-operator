@@ -76,35 +76,40 @@ public static class AuthenticationExtensions
                 // Without this, a deleted/disabled user keeps full access until the JWT
                 // naturally expires (default 60 min). Audit logs would also lose the
                 // attribution (UserId would be null via AuditService's existence check).
-                OnTokenValidated = async ctx =>
-                {
-                    var idClaim = ctx.Principal?.FindFirstValue(ClaimTypes.NameIdentifier);
-                    if (!Guid.TryParse(idClaim, out var userId))
-                    {
-                        ctx.Fail("Token subject is not a valid user identifier.");
-                        return;
-                    }
-
-                    var db = ctx.HttpContext.RequestServices.GetRequiredService<AppDbContext>();
-                    var isActive = await db.Users
-                        .AsNoTracking()
-                        .Where(u => u.Id == userId)
-                        .Select(u => (bool?)u.IsActive)
-                        .FirstOrDefaultAsync(ctx.HttpContext.RequestAborted);
-
-                    if (isActive is null)
-                    {
-                        ctx.Fail("Token subject does not exist.");
-                        return;
-                    }
-                    if (isActive == false)
-                    {
-                        ctx.Fail("Token subject is deactivated.");
-                    }
-                },
+                OnTokenValidated = ValidateTokenSubjectAsync,
             };
         });
 
         return services;
+    }
+
+    // Rejects tokens whose subject is missing/malformed, no longer exists, or is
+    // deactivated. Extracted from the OnTokenValidated lambda to keep
+    // AddJwtAuthentication's cognitive complexity within limits.
+    private static async Task ValidateTokenSubjectAsync(TokenValidatedContext ctx)
+    {
+        var idClaim = ctx.Principal?.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(idClaim, out var userId))
+        {
+            ctx.Fail("Token subject is not a valid user identifier.");
+            return;
+        }
+
+        var db = ctx.HttpContext.RequestServices.GetRequiredService<AppDbContext>();
+        var isActive = await db.Users
+            .AsNoTracking()
+            .Where(u => u.Id == userId)
+            .Select(u => (bool?)u.IsActive)
+            .FirstOrDefaultAsync(ctx.HttpContext.RequestAborted);
+
+        if (isActive is null)
+        {
+            ctx.Fail("Token subject does not exist.");
+            return;
+        }
+        if (isActive == false)
+        {
+            ctx.Fail("Token subject is deactivated.");
+        }
     }
 }

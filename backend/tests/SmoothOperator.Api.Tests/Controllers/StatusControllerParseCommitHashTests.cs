@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Reflection.Emit;
 using Microsoft.Extensions.DependencyInjection;
 using SmoothOperator.Api.Controllers;
 
@@ -12,18 +13,17 @@ namespace SmoothOperator.Api.Tests.Controllers;
 /// </summary>
 public class StatusControllerParseCommitHashTests
 {
-    private static Assembly AssemblyWithInformationalVersion(string? value)
+    private static AssemblyBuilder AssemblyWithInformationalVersion(string? value)
     {
         // Build an in-memory assembly definition carrying the requested attribute.
         // System.Reflection.Emit is overkill here — we just create a dynamic assembly
         // and stamp the attribute via AssemblyBuilder.
         var asmName = new AssemblyName($"InformationalVersionTest-{Guid.NewGuid():N}");
-        var asm = System.Reflection.Emit.AssemblyBuilder.DefineDynamicAssembly(
-            asmName, System.Reflection.Emit.AssemblyBuilderAccess.Run);
+        var asm = AssemblyBuilder.DefineDynamicAssembly(asmName, AssemblyBuilderAccess.Run);
         if (value is not null)
         {
-            var ctor = typeof(AssemblyInformationalVersionAttribute).GetConstructor(new[] { typeof(string) })!;
-            asm.SetCustomAttribute(new System.Reflection.Emit.CustomAttributeBuilder(ctor, new object[] { value }));
+            var ctor = typeof(AssemblyInformationalVersionAttribute).GetConstructor([typeof(string)])!;
+            asm.SetCustomAttribute(new CustomAttributeBuilder(ctor, [value]));
         }
         return asm;
     }
