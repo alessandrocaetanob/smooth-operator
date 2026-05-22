@@ -11,6 +11,9 @@
    ============================================================ */
 
 :root {
+  /* Render native controls (date-picker icon/popup, select arrows,
+     scrollbars) in the light theme. */
+  color-scheme: light;
   /* Surface hierarchy */
   --color-background: 245 247 251;
   --color-surface: 255 255 255;
@@ -106,6 +109,10 @@
 }
 
 .dark {
+  /* Render native controls in the dark theme — without this the
+     input[type=date] calendar icon and picker popup stay light-themed
+     and become near-invisible against dark inputs. */
+  color-scheme: dark;
   /* Surface hierarchy */
   --color-background: 16 20 26;
   --color-surface: 16 20 26;
@@ -687,6 +694,12 @@
            transition-colors duration-150 disabled:opacity-50 btn-interactive;
   }
 
+  /* Form-field label — uppercase caps sitting above an input/select. */
+  .field-label {
+    @apply mb-1 flex items-center gap-1.5 text-[11px] font-semibold uppercase
+           tracking-widest text-on-surface-variant;
+  }
+
   .input-field {
     @apply bg-surface-container border border-outline-variant/60
            focus:border-primary text-sm text-on-surface rounded-lg px-3 py-2
@@ -698,6 +711,14 @@
     box-shadow:
       0 0 0 3px rgb(var(--color-primary) / 0.18),
       0 0 0 1px rgb(var(--color-primary) / 0.6);
+  }
+
+  /* Native date-picker calendar icon — keep it clearly tappable. With
+     `color-scheme` set per theme the browser already recolours the icon;
+     this just guarantees a pointer cursor and full opacity. */
+  input[type='date']::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 1;
   }
 
   .select-field {

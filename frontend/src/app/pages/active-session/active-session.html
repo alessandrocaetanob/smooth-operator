@@ -1,27 +1,28 @@
 <!-- ── Session Header ──────────────────────────────────────────────────── -->
 <header
-  class="session-header fixed top-0 left-0 w-full z-50 flex justify-between items-center px-5 h-12 shrink-0"
+  class="session-header fixed top-0 left-0 w-full z-50 flex justify-between items-center gap-2 px-3 sm:px-5 h-12 shrink-0"
 >
-  <div class="flex items-center gap-4">
+  <div class="flex min-w-0 items-center gap-2 sm:gap-4">
     <!-- Logo -->
     <div class="flex items-center gap-2.5">
       <app-mascot [isSmall]="true" [state]="mascotState()"></app-mascot>
-      <span class="text-sm font-black tracking-tighter text-on-surface uppercase logo-glow"
+      <span
+        class="hidden sm:inline text-sm font-black tracking-tighter text-on-surface uppercase logo-glow"
         >Smooth Operator</span
       >
     </div>
 
-    <div class="h-5 w-px bg-outline-variant/30"></div>
+    <div class="hidden sm:block h-5 w-px bg-outline-variant/30"></div>
 
     <!-- Connection status pill -->
-    <div class="flex items-center gap-2">
+    <div class="flex min-w-0 items-center gap-2">
       <div
         class="status-dot"
         [class.connected]="state() === 'connected'"
         [class.connecting]="state() === 'connecting' || state() === 'waiting'"
         [class.error]="state() === 'error' || state() === 'disconnected'"
       ></div>
-      <span class="text-xs text-on-surface-variant/60">
+      <span class="hidden sm:inline text-xs text-on-surface-variant/70">
         {{
           state() === 'connected'
             ? 'Connected to'
@@ -30,24 +31,26 @@
               : 'Connecting to'
         }}
       </span>
-      <span class="text-xs font-mono font-semibold text-on-surface/90">
+      <span class="truncate text-xs font-mono font-semibold text-on-surface/90">
         {{ remoteName() || connection()?.name || connectionId() }}
       </span>
       @if (protocol()) {
-        <span class="protocol-badge proto-{{ protocol().toLowerCase() }}">{{ protocol() }}</span>
+        <span class="protocol-badge proto-{{ protocol().toLowerCase() }} shrink-0">{{
+          protocol()
+        }}</span>
       }
     </div>
 
     <!-- Session timer (only when live) -->
     @if (state() === 'connected') {
-      <div class="session-timer">
+      <div class="session-timer hidden sm:flex">
         <span class="material-symbols-outlined" style="font-size: 12px">timer</span>
         {{ formattedElapsed() }}
       </div>
     }
   </div>
 
-  <div class="flex items-center gap-2">
+  <div class="flex shrink-0 items-center gap-2">
     <app-theme-toggle [compact]="true" aria-label="Toggle theme"></app-theme-toggle>
     @if (isSshConnection()) {
       <button
@@ -68,7 +71,7 @@
     </button>
     <button class="terminate-btn" (click)="terminate()" aria-label="Terminate session">
       <span class="material-symbols-outlined text-sm" aria-hidden="true">power_settings_new</span>
-      Terminate
+      <span class="hidden sm:inline">Terminate</span>
     </button>
   </div>
 </header>
@@ -81,7 +84,7 @@
   <div class="flex-1 bg-black relative flex items-center justify-center p-2">
     <div
       #display
-      class="w-full h-full flex items-center justify-center overflow-hidden bg-black select-none"
+      class="w-full h-full flex items-center justify-center overflow-auto bg-black select-none"
       aria-label="Remote desktop session"
     ></div>
 
@@ -156,13 +159,53 @@
 
       <div class="tool-btn-wrap" data-label="Key combo">
         <button class="tool-btn" (click)="openKeyComboModal()" aria-label="Send key combo">
-          <span class="material-symbols-outlined text-lg" aria-hidden="true">keyboard</span>
+          <span class="material-symbols-outlined text-lg" aria-hidden="true"
+            >keyboard_command_key</span
+          >
         </button>
       </div>
 
       <div class="tool-btn-wrap" data-label="Clipboard">
         <button class="tool-btn" (click)="openClipboardModal()" aria-label="Clipboard sync">
           <span class="material-symbols-outlined text-lg" aria-hidden="true">content_paste</span>
+        </button>
+      </div>
+
+      <div
+        class="tool-btn-wrap"
+        [attr.data-label]="keyboardActive() ? 'Hide keyboard' : 'Keyboard'"
+      >
+        <button
+          class="tool-btn"
+          [class.tool-btn-active]="keyboardActive()"
+          (pointerdown)="$event.preventDefault()"
+          (click)="toggleMobileKeyboard()"
+          [attr.aria-label]="
+            keyboardActive() ? 'Hide on-screen keyboard' : 'Show on-screen keyboard'
+          "
+          [attr.aria-pressed]="keyboardActive()"
+        >
+          <span class="material-symbols-outlined text-lg" aria-hidden="true">keyboard</span>
+        </button>
+      </div>
+
+      <div class="h-px w-6 bg-outline-variant/20 mx-auto"></div>
+
+      <div class="tool-btn-wrap" data-label="Zoom in">
+        <button class="tool-btn" (click)="zoomIn()" aria-label="Zoom in">
+          <span class="material-symbols-outlined text-lg" aria-hidden="true">zoom_in</span>
+        </button>
+      </div>
+
+      <div class="tool-btn-wrap" data-label="Zoom out">
+        <button class="tool-btn" (click)="zoomOut()" aria-label="Zoom out">
+          <span class="material-symbols-outlined text-lg" aria-hidden="true">zoom_out</span>
+        </button>
+      </div>
+
+      <div class="tool-btn-wrap" [attr.data-label]="'Fit to screen (' + zoomPercent() + ')'">
+        <button class="tool-btn" (click)="zoomReset()" aria-label="Reset zoom to fit screen">
+          <span class="material-symbols-outlined text-lg" aria-hidden="true">fit_screen</span>
         </button>
       </div>
 
@@ -245,7 +288,7 @@
           </button>
         </div>
 
-        <p class="text-xs text-on-surface-variant/40 mb-2 tracking-widest uppercase">Key</p>
+        <p class="text-xs text-on-surface-variant/70 mb-2 tracking-widest uppercase">Key</p>
         <div class="grid grid-cols-6 gap-1.5 mb-5 max-h-52 overflow-y-auto">
           @for (key of comboKeys; track key.keysym) {
             <button
@@ -303,7 +346,7 @@
           >
           Shared Clipboard
         </h2>
-        <p class="text-xs text-on-surface-variant/50 mb-4">
+        <p class="text-xs text-on-surface-variant/80 mb-4">
           Edit and push to host, or copy current host clipboard locally.
         </p>
 
@@ -317,7 +360,7 @@
             aria-label="Clipboard content"
           ></textarea>
           <div
-            class="absolute bottom-2 right-3 text-xs text-on-surface-variant/30 font-mono select-none pointer-events-none"
+            class="absolute bottom-2 right-3 text-xs text-on-surface-variant/60 font-mono select-none pointer-events-none"
             aria-hidden="true"
           >
             {{ clipboardDraft().length }} chars
@@ -379,7 +422,7 @@
           >
           Session Terminal Theme
         </h2>
-        <p class="mb-4 text-xs text-on-surface-variant/60">
+        <p class="mb-4 text-xs text-on-surface-variant/80">
           Applies on the next connect/reconnect for this browser session only.
         </p>
 
@@ -471,6 +514,63 @@
           </button>
         </div>
       </dialog>
+    </div>
+  }
+
+  <!-- ── Mobile soft keyboard ───────────────────────────────────────────── -->
+  <!-- Off-screen input: focusing it summons the device's native keyboard.
+       Typed text is forwarded to the host via (beforeinput). -->
+  <input
+    #hiddenKbd
+    type="text"
+    class="mobile-kbd-input"
+    aria-label="Remote keyboard input"
+    autocapitalize="off"
+    autocomplete="off"
+    autocorrect="off"
+    spellcheck="false"
+    enterkeyhint="enter"
+    (beforeinput)="onKbdBeforeInput($event)"
+    (compositionstart)="onKbdCompositionStart()"
+    (compositionend)="onKbdCompositionEnd($event)"
+    (blur)="onKbdBlur()"
+  />
+
+  @if (keyboardActive()) {
+    <!-- Special-key bar — keys a soft keyboard can't produce. Sits just above
+         the on-screen keyboard via the visualViewport-tracked inset. -->
+    <div class="mobile-kbd-bar" [style.bottom.px]="kbdInset()">
+      <button
+        type="button"
+        class="kbd-key kbd-key-mod"
+        [class.kbd-key-active]="kbdCtrl()"
+        [attr.aria-pressed]="kbdCtrl()"
+        (pointerdown)="$event.preventDefault()"
+        (click)="toggleKbdModifier('ctrl')"
+      >
+        Ctrl
+      </button>
+      <button
+        type="button"
+        class="kbd-key kbd-key-mod"
+        [class.kbd-key-active]="kbdAlt()"
+        [attr.aria-pressed]="kbdAlt()"
+        (pointerdown)="$event.preventDefault()"
+        (click)="toggleKbdModifier('alt')"
+      >
+        Alt
+      </button>
+      @for (key of specialKeys; track key.keysym) {
+        <button
+          type="button"
+          class="kbd-key"
+          [attr.aria-label]="key.label"
+          (pointerdown)="$event.preventDefault()"
+          (click)="pressSpecialKey(key.keysym)"
+        >
+          {{ key.label }}
+        </button>
+      }
     </div>
   }
 </main>

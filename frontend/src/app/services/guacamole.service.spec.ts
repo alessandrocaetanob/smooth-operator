@@ -6,6 +6,8 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 // ── Mock guacamole-common-js so no real WebSocket / canvas wiring runs. ──
 const fakeDisplay = {
   getElement: vi.fn(() => document.createElement('div')),
+  getWidth: vi.fn(() => 1024),
+  getHeight: vi.fn(() => 768),
   scale: vi.fn(),
   onresize: null as null | (() => void),
 };
@@ -389,6 +391,19 @@ describe('GuacamoleSession', () => {
       session.attachDisplay(host);
       session.resizeToHost();
       expect(clientInstances[0].sendSize).toHaveBeenCalledTimes(2);
+    });
+
+    it('setZoom clamps the multiplier and re-scales the display', () => {
+      const host = document.createElement('div');
+      Object.defineProperty(host, 'clientWidth', { value: 1024, configurable: true });
+      Object.defineProperty(host, 'clientHeight', { value: 768, configurable: true });
+      session.attachDisplay(host);
+      session.setZoom(2);
+      expect(session.getZoom()).toBe(2);
+      // Display fits 1:1 (1024×768), so the canvas scale equals the zoom.
+      expect(fakeDisplay.scale).toHaveBeenLastCalledWith(2);
+      session.setZoom(99);
+      expect(session.getZoom()).toBe(5); // clamped to the maximum
     });
   });
 
