@@ -15,11 +15,14 @@ namespace SmoothOperator.Application.Features.Webhooks.Commands
     {
         private readonly IAppDbContext _context;
         private readonly IAuditService _audit;
+        private readonly IWebhookEndpointCache _cache;
 
-        public UpdateWebhookCommandHandler(IAppDbContext context, IAuditService audit)
+        public UpdateWebhookCommandHandler(IAppDbContext context, IAuditService audit,
+            IWebhookEndpointCache cache)
         {
             _context = context;
             _audit = audit;
+            _cache = cache;
         }
 
         public async Task Handle(UpdateWebhookCommand request, CancellationToken cancellationToken)
@@ -38,6 +41,7 @@ namespace SmoothOperator.Application.Features.Webhooks.Commands
             endpoint.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync(cancellationToken);
+            _cache.Invalidate();
 
             await _audit.WriteAsync("webhook.updated", "WebhookEndpoint", endpoint.Id.ToString(),
                 new { name, url, eventTypes, enabled = request.Enabled });

@@ -44,7 +44,9 @@ public static class ApplicationServicesExtensions
         services.AddSingleton<IAppMetrics, AppMetrics>();
         services.AddHttpContextAccessor();
         services.AddScoped<IAuditService, AuditService>();
+        services.AddSingleton<IWebhookEndpointCache, WebhookEndpointCache>();
         services.AddScoped<IWebhookEnqueuer, WebhookEnqueuer>();
+        services.AddScoped<WebhookDeliveryProcessor>();
         services.AddHostedService<WebhookDeliveryService>();
         services.AddScoped<IInviteService, InviteService>();
         services.AddScoped<IEmailService, EmailService>();

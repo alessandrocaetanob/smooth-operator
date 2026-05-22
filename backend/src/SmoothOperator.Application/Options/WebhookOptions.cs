@@ -18,6 +18,10 @@ public sealed class WebhookOptions
     [Range(1, 1000)]
     public int BatchSize { get; set; } = 50;
 
+    /// <summary>Parallel in-flight HTTP requests when draining a batch.</summary>
+    [Range(1, 200)]
+    public int MaxConcurrency { get; set; } = 10;
+
     /// <summary>Total attempts before a delivery is marked Dead.</summary>
     [Range(1, 20)]
     public int MaxAttempts { get; set; } = 5;

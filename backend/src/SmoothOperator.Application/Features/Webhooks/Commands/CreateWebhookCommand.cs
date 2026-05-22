@@ -17,13 +17,16 @@ namespace SmoothOperator.Application.Features.Webhooks.Commands
         private readonly IAppDbContext _context;
         private readonly IEncryptionService _encryption;
         private readonly IAuditService _audit;
+        private readonly IWebhookEndpointCache _cache;
 
         public CreateWebhookCommandHandler(
-            IAppDbContext context, IEncryptionService encryption, IAuditService audit)
+            IAppDbContext context, IEncryptionService encryption, IAuditService audit,
+            IWebhookEndpointCache cache)
         {
             _context = context;
             _encryption = encryption;
             _audit = audit;
+            _cache = cache;
         }
 
         public async Task<WebhookSecretResult> Handle(
@@ -47,6 +50,7 @@ namespace SmoothOperator.Application.Features.Webhooks.Commands
 
             _context.WebhookEndpoints.Add(endpoint);
             await _context.SaveChangesAsync(cancellationToken);
+            _cache.Invalidate();
 
             await _audit.WriteAsync("webhook.created", "WebhookEndpoint", endpoint.Id.ToString(),
                 new { name, url, eventTypes });

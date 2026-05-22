@@ -1,9 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
 using SmoothOperator.Application.Features.Webhooks;
 using SmoothOperator.Application.Interfaces;
 using SmoothOperator.Domain.Models;
@@ -17,22 +15,24 @@ namespace SmoothOperator.Infrastructure.Services
     /// <see cref="AppDbContext"/>. It deliberately does not call SaveChanges — the
     /// originating audit write commits the deliveries in the same transaction.
     /// </summary>
+    /// <remarks>
+    /// The enabled-endpoint set is served from <see cref="IWebhookEndpointCache"/>
+    /// to keep the audit-write hot path off the database.
+    /// </remarks>
     public class WebhookEnqueuer : IWebhookEnqueuer
     {
         private readonly AppDbContext _context;
+        private readonly IWebhookEndpointCache _cache;
 
-        public WebhookEnqueuer(AppDbContext context) => _context = context;
+        public WebhookEnqueuer(AppDbContext context, IWebhookEndpointCache cache)
+        {
+            _context = context;
+            _cache = cache;
+        }
 
         public async Task EnqueueAsync(AuditLog entry, CancellationToken cancellationToken = default)
         {
-            // Enabled endpoints are a small set; load them and match in memory since
-            // EventTypes is free-form text, not a queryable structure.
-            var endpoints = await _context.WebhookEndpoints
-                .AsNoTracking()
-                .Where(w => w.Enabled)
-                .Select(w => new { w.Id, w.EventTypes })
-                .ToListAsync(cancellationToken);
-
+            var endpoints = await _cache.GetEnabledAsync(cancellationToken);
             if (endpoints.Count == 0)
                 return;
 

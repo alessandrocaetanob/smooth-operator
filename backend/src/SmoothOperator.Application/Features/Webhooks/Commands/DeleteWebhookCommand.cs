@@ -14,11 +14,14 @@ namespace SmoothOperator.Application.Features.Webhooks.Commands
     {
         private readonly IAppDbContext _context;
         private readonly IAuditService _audit;
+        private readonly IWebhookEndpointCache _cache;
 
-        public DeleteWebhookCommandHandler(IAppDbContext context, IAuditService audit)
+        public DeleteWebhookCommandHandler(IAppDbContext context, IAuditService audit,
+            IWebhookEndpointCache cache)
         {
             _context = context;
             _audit = audit;
+            _cache = cache;
         }
 
         public async Task Handle(DeleteWebhookCommand request, CancellationToken cancellationToken)
@@ -32,6 +35,7 @@ namespace SmoothOperator.Application.Features.Webhooks.Commands
             // Queued WebhookDelivery rows cascade-delete with the endpoint.
             _context.WebhookEndpoints.Remove(endpoint);
             await _context.SaveChangesAsync(cancellationToken);
+            _cache.Invalidate();
 
             await _audit.WriteAsync("webhook.deleted", "WebhookEndpoint", request.Id.ToString(),
                 new { name });

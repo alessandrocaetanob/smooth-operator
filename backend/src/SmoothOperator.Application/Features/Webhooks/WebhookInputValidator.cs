@@ -9,7 +9,7 @@ namespace SmoothOperator.Application.Features.Webhooks
     /// <see cref="BadRequestException"/> on bad input. Shared by the create and
     /// update handlers so both enforce the same rules.
     /// </summary>
-    internal static class WebhookInputValidator
+    public static class WebhookInputValidator
     {
         public static (string Name, string Url, string EventTypes) Normalize(
             string? name, string? url, string? eventTypes)

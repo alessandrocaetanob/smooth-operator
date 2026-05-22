@@ -1,9 +1,12 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using SmoothOperator.Api.Tests.Infrastructure;
+using SmoothOperator.Application.Interfaces;
 using SmoothOperator.Domain.Models;
 using SmoothOperator.Infrastructure.Data;
 
@@ -148,6 +151,63 @@ public class WebhooksFlowTests
     }
 
     [Fact]
+    public async Task Update_NonExistent_Returns404()
+    {
+        var userId = Guid.NewGuid();
+        await using var factory = new TestWebApplicationFactory(db => SeedUser(db, userId));
+        var client = AsUser(factory, userId);
+
+        var res = await client.PutAsJsonAsync($"/api/webhooks/{Guid.NewGuid()}", new
+        {
+            name = "ghost",
+            url = "https://example.com/hook",
+            eventTypes = "*",
+            enabled = true,
+        });
+        Assert.Equal(HttpStatusCode.NotFound, res.StatusCode);
+    }
+
+    [Fact]
+    public async Task Update_InvalidUrl_Returns400()
+    {
+        var userId = Guid.NewGuid();
+        await using var factory = new TestWebApplicationFactory(db => SeedUser(db, userId));
+        var client = AsUser(factory, userId);
+        var (id, _) = await CreateWebhookAsync(client);
+
+        var res = await client.PutAsJsonAsync($"/api/webhooks/{id}", new
+        {
+            name = "ok",
+            url = "not-a-url",
+            eventTypes = "*",
+            enabled = true,
+        });
+        Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
+    }
+
+    [Fact]
+    public async Task RotateSecret_NonExistent_Returns404()
+    {
+        var userId = Guid.NewGuid();
+        await using var factory = new TestWebApplicationFactory(db => SeedUser(db, userId));
+        var client = AsUser(factory, userId);
+
+        var res = await client.PostAsync($"/api/webhooks/{Guid.NewGuid()}/rotate-secret", null);
+        Assert.Equal(HttpStatusCode.NotFound, res.StatusCode);
+    }
+
+    [Fact]
+    public async Task SendTest_NonExistent_Returns404()
+    {
+        var userId = Guid.NewGuid();
+        await using var factory = new TestWebApplicationFactory(db => SeedUser(db, userId));
+        var client = AsUser(factory, userId);
+
+        var res = await client.PostAsync($"/api/webhooks/{Guid.NewGuid()}/test", null);
+        Assert.Equal(HttpStatusCode.NotFound, res.StatusCode);
+    }
+
+    [Fact]
     public async Task NonAdmin_GetForbidden()
     {
         var ownerId = Guid.NewGuid();
@@ -229,5 +289,43 @@ public class WebhooksFlowTests
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         Assert.False(await db.WebhookDeliveries.AnyAsync());
+    }
+
+    [Fact]
+    public async Task AuditWrite_SwallowsWebhookEnqueuerException_AndStillCommitsTheAuditLog()
+    {
+        var userId = Guid.NewGuid();
+        await using var factory = new TestWebApplicationFactory(
+            db => SeedUser(db, userId),
+            overrideServices: services =>
+            {
+                for (var i = services.Count - 1; i >= 0; i--)
+                {
+                    if (services[i].ServiceType == typeof(IWebhookEnqueuer))
+                        services.RemoveAt(i);
+                }
+                services.AddScoped<IWebhookEnqueuer, ThrowingWebhookEnqueuer>();
+            });
+        var client = AsUser(factory, userId);
+
+        // The webhook.created audit fires after the create — its enqueue will throw,
+        // and AuditService must catch it so the audit row is still persisted.
+        var res = await client.PostAsJsonAsync("/api/webhooks", new
+        {
+            name = "anyway",
+            url = "https://example.com/hook",
+            eventTypes = "*",
+        });
+        Assert.Equal(HttpStatusCode.OK, res.StatusCode);
+
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        Assert.True(await db.AuditLogs.AnyAsync(a => a.Action == "webhook.created"));
+    }
+
+    private sealed class ThrowingWebhookEnqueuer : IWebhookEnqueuer
+    {
+        public Task EnqueueAsync(AuditLog entry, CancellationToken cancellationToken = default)
+            => throw new InvalidOperationException("simulated enqueue failure");
     }
 }
