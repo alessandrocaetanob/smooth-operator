@@ -150,10 +150,15 @@ services:
           cpus: "1.0"
           memory: 256M
 
+  # ── Docs stack ──────────────────────────────────────────────────────
+  # Start with: docker compose --profile docs up -d
+  # Core stack only (no docs): docker compose up -d
+
   docs:
     build:
       context: ./docs
       dockerfile: Dockerfile
+    profiles: [docs]
     ports:
       - "3000:8080"
     restart: unless-stopped
