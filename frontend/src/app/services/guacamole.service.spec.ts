@@ -365,6 +365,31 @@ describe('GuacamoleSession', () => {
       session.resizeToHost();
       expect(clientInstances[0].sendSize).not.toHaveBeenCalled();
     });
+
+    it('resizeToHost skips redundant sendSize when the size is unchanged', () => {
+      const host = document.createElement('div');
+      Object.defineProperty(host, 'clientWidth', { value: 1024, configurable: true });
+      Object.defineProperty(host, 'clientHeight', { value: 768, configurable: true });
+      session.attachDisplay(host);
+      session.resizeToHost();
+      session.resizeToHost();
+      session.resizeToHost();
+      // Only the first call reaches guacd — the rest are deduplicated, so guacd's
+      // `size` reply can never drive an unbounded resize feedback loop.
+      expect(clientInstances[0].sendSize).toHaveBeenCalledTimes(1);
+    });
+
+    it('resizeToHost re-sends the size after a detach/attach cycle', () => {
+      const host = document.createElement('div');
+      Object.defineProperty(host, 'clientWidth', { value: 1024, configurable: true });
+      Object.defineProperty(host, 'clientHeight', { value: 768, configurable: true });
+      session.attachDisplay(host);
+      session.resizeToHost();
+      session.detachDisplay();
+      session.attachDisplay(host);
+      session.resizeToHost();
+      expect(clientInstances[0].sendSize).toHaveBeenCalledTimes(2);
+    });
   });
 
   describe('reset()', () => {
