@@ -35,6 +35,15 @@ const CLIENT_STATE_LABEL: Record<number, GuacState> = {
  */
 const TOUCH_BASE_WIDTH = 1024;
 
+/** Viewport width below which a session is treated as a phone. Mirrors the
+ *  Tailwind `md` breakpoint used by the responsive CSS/HTML. */
+export const NARROW_VIEWPORT_PX = 768;
+
+/** Display zoom bounds shared by the session service and the UI controls. */
+export const ZOOM_MIN = 0.5;
+export const ZOOM_MAX = 3;
+export const ZOOM_STEP = 0.25;
+
 const PROGRESS_BY_STATE: Record<GuacState, number> = {
   idle: 0,
   'requesting-ticket': 15,
@@ -484,7 +493,7 @@ export class GuacamoleSession {
     // On narrow (phone) viewports, request a desktop-class remote size and
     // scale the canvas down to fit instead — a 1:1 request would cramp an SSH
     // terminal to ~40 columns and clip wider output. The user can then zoom.
-    const narrow = globalThis.innerWidth > 0 && globalThis.innerWidth < 768;
+    const narrow = globalThis.innerWidth > 0 && globalThis.innerWidth < NARROW_VIEWPORT_PX;
     let w = cw;
     let h = ch;
     if (narrow && cw < TOUCH_BASE_WIDTH) {
@@ -508,7 +517,7 @@ export class GuacamoleSession {
 
   /** Set the user zoom multiplier (1 = fit-to-screen) and re-apply the scale. */
   setZoom(zoom: number): void {
-    this.userZoom = Math.min(5, Math.max(0.25, zoom));
+    this.userZoom = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, zoom));
     this.applyFitScale();
   }
 

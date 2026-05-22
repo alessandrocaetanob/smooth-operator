@@ -403,7 +403,36 @@ describe('GuacamoleSession', () => {
       // Display fits 1:1 (1024×768), so the canvas scale equals the zoom.
       expect(fakeDisplay.scale).toHaveBeenLastCalledWith(2);
       session.setZoom(99);
-      expect(session.getZoom()).toBe(5); // clamped to the maximum
+      expect(session.getZoom()).toBe(3); // clamped to ZOOM_MAX
+    });
+
+    it('resizeToHost requests a desktop-class width on narrow viewports', () => {
+      const host = document.createElement('div');
+      Object.defineProperty(host, 'clientWidth', { value: 390, configurable: true });
+      Object.defineProperty(host, 'clientHeight', { value: 720, configurable: true });
+      const innerOriginal = globalThis.innerWidth;
+      Object.defineProperty(globalThis, 'innerWidth', { configurable: true, value: 390 });
+      try {
+        session.attachDisplay(host);
+        session.resizeToHost();
+        // Phone-width 1:1 would cramp a terminal — a 1024px remote is requested.
+        expect(clientInstances[0].sendSize).toHaveBeenCalledWith(1024, expect.any(Number));
+      } finally {
+        Object.defineProperty(globalThis, 'innerWidth', {
+          configurable: true,
+          value: innerOriginal,
+        });
+      }
+    });
+
+    it('display.onresize re-fits the canvas', () => {
+      const host = document.createElement('div');
+      Object.defineProperty(host, 'clientWidth', { value: 1024, configurable: true });
+      Object.defineProperty(host, 'clientHeight', { value: 768, configurable: true });
+      session.attachDisplay(host);
+      fakeDisplay.scale.mockClear();
+      fakeDisplay.onresize?.();
+      expect(fakeDisplay.scale).toHaveBeenCalled();
     });
   });
 

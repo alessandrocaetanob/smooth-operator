@@ -23,6 +23,9 @@ import {
   GuacamoleSessionManagerService,
   GuacamoleSession,
   Keysyms,
+  ZOOM_MIN,
+  ZOOM_MAX,
+  ZOOM_STEP,
 } from '../../services/guacamole.service';
 import { ConnectionsService, Connection } from '../../services/connections.service';
 import { Mascot, MascotState } from '../../shared/mascot/mascot';
@@ -469,11 +472,11 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
 
   // ── Display zoom ───────────────────────────────────────────────────────────
   zoomIn(): void {
-    this.applyZoom(this.zoom() + 0.25);
+    this.applyZoom(this.zoom() + ZOOM_STEP);
   }
 
   zoomOut(): void {
-    this.applyZoom(this.zoom() - 0.25);
+    this.applyZoom(this.zoom() - ZOOM_STEP);
   }
 
   /** Reset zoom back to fit-to-screen. */
@@ -482,7 +485,8 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private applyZoom(value: number): void {
-    const clamped = Math.min(3, Math.max(0.5, Math.round(value * 4) / 4));
+    const stepped = Math.round(value / ZOOM_STEP) * ZOOM_STEP;
+    const clamped = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, stepped));
     this.zoom.set(clamped);
     this.session()?.setZoom(clamped);
   }
@@ -571,12 +575,16 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
       session.typeText(text);
       return;
     }
-    // Modifier + character (e.g. Ctrl+C): code points 0x20–0x7e are their own keysym.
-    for (const ch of text) {
-      const code = ch.codePointAt(0);
-      if (code === undefined) continue;
+    // A one-shot modifier applies to the first character only (e.g. Ctrl+C);
+    // soft keyboards can deliver whole words via autocorrect/swipe, and the
+    // rest of those must be typed as plain text. `[...text]` keeps multi-byte
+    // code points intact.
+    const chars = [...text];
+    if (chars.length > 0) {
+      const code = chars[0].codePointAt(0) ?? 0;
       const keysym = code >= 0x20 && code <= 0x7e ? code : 0x01000000 | code;
       session.sendKeyCombo([...mods, keysym]);
+      if (chars.length > 1) session.typeText(chars.slice(1).join(''));
     }
     this.clearKbdModifiers();
   }
