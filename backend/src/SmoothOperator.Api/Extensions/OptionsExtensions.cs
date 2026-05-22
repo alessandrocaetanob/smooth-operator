@@ -44,6 +44,11 @@ public static class OptionsExtensions
             .ValidateDataAnnotations()
             .ValidateOnStart();
 
+        services.AddOptions<WebhookOptions>()
+            .BindConfiguration(WebhookOptions.SectionName)
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
         // BearerToken is intentionally optional — no ValidateOnStart() so dev environments
         // can run without configuring it. Production should always set Metrics__BearerToken.
         services.AddOptions<MetricsOptions>()

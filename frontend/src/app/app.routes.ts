@@ -137,6 +137,11 @@ export const routes: Routes = [
               import('./pages/settings/integrations/integrations').then((m) => m.Integrations),
           },
           {
+            path: 'webhooks',
+            loadComponent: () =>
+              import('./pages/settings/webhooks/webhooks').then((m) => m.WebhooksSettings),
+          },
+          {
             path: 'secret-providers',
             loadComponent: () =>
               import('./pages/settings/secret-providers/secret-providers').then(

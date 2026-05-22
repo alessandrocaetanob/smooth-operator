@@ -15,14 +15,16 @@ namespace SmoothOperator.Infrastructure.Services
         private readonly AppDbContext _context;
         private readonly IHttpContextAccessor _http;
         private readonly IAppMetrics _metrics;
+        private readonly IWebhookEnqueuer _webhookEnqueuer;
         private readonly ILogger<AuditService> _logger;
 
         public AuditService(AppDbContext context, IHttpContextAccessor http, IAppMetrics metrics,
-            ILogger<AuditService> logger)
+            IWebhookEnqueuer webhookEnqueuer, ILogger<AuditService> logger)
         {
             _context = context;
             _http = http;
             _metrics = metrics;
+            _webhookEnqueuer = webhookEnqueuer;
             _logger = logger;
         }
 
@@ -58,6 +60,20 @@ namespace SmoothOperator.Infrastructure.Services
             };
 
             _context.AuditLogs.Add(entry);
+
+            // Fan the event out to subscribed webhook endpoints as queued delivery
+            // rows. They are committed by the SaveChangesAsync below, in the same
+            // transaction as the audit log (transactional outbox). A fault here must
+            // never fail the audit write, so it is logged and swallowed.
+            try
+            {
+                await _webhookEnqueuer.EnqueueAsync(entry);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Webhook enqueue failed for audit action {Action}", action);
+            }
+
             await _context.SaveChangesAsync();
 
             _metrics.RecordAuditEvent(action);

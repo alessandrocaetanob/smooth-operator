@@ -1,0 +1,315 @@
+<div>
+  <div class="mb-6">
+    <h2 class="text-lg font-semibold text-on-surface">Webhooks</h2>
+    <p class="text-sm text-on-surface-variant mt-1 max-w-2xl">
+      Register external endpoints to receive an HMAC-signed POST whenever a subscribed audit event
+      occurs — feed a SIEM, post alerts, or trigger automation.
+    </p>
+  </div>
+
+  <!-- One-time signing secret -->
+  @if (revealedSecret(); as s) {
+    <div class="wh-secret mb-4">
+      <p class="font-semibold text-on-surface text-sm flex items-center gap-1.5">
+        <span class="material-symbols-outlined text-base text-primary" aria-hidden="true"
+          >vpn_key</span
+        >
+        Signing secret for “{{ s.name }}”
+      </p>
+      <p class="text-xs text-on-surface-variant mt-1 mb-2">
+        Copy this now — it is shown only once and cannot be retrieved later. Your receiver uses it
+        to verify the <code>X-SmoothOperator-Signature</code> header.
+      </p>
+      <div class="flex items-center gap-2">
+        <code class="wh-secret-code">{{ s.secret }}</code>
+        <button
+          type="button"
+          (click)="copySecret()"
+          class="wh-icon-btn"
+          title="Copy signing secret"
+          aria-label="Copy signing secret"
+        >
+          <span class="material-symbols-outlined" aria-hidden="true">content_copy</span>
+        </button>
+      </div>
+      <div class="flex justify-end mt-3">
+        <button type="button" (click)="dismissSecret()" class="btn-secondary">I've saved it</button>
+      </div>
+    </div>
+  }
+
+  @if (message()) {
+    <div class="feedback-banner feedback-success mb-4">
+      <span class="material-symbols-outlined text-base" aria-hidden="true">check_circle</span>
+      {{ message() }}
+    </div>
+  }
+  @if (error()) {
+    <div class="feedback-banner feedback-error mb-4">
+      <span class="material-symbols-outlined text-base" aria-hidden="true">error</span>
+      {{ error() }}
+    </div>
+  }
+
+  <!-- Toolbar -->
+  <div class="flex items-center justify-between gap-3 mb-4">
+    <p class="text-sm text-on-surface-variant">
+      {{ webhooks().length }} endpoint{{ webhooks().length === 1 ? '' : 's' }}
+    </p>
+    @if (!editorOpen()) {
+      <button type="button" (click)="openCreate()" class="btn-primary">
+        <span class="material-symbols-outlined text-sm" aria-hidden="true">add</span>
+        Add endpoint
+      </button>
+    }
+  </div>
+
+  <!-- Editor -->
+  @if (editorOpen()) {
+    <div class="settings-card mb-4">
+      <div class="settings-card-header">
+        <span class="material-symbols-outlined settings-card-icon" aria-hidden="true">webhook</span>
+        <h3 class="settings-card-title">{{ editorTitle() }}</h3>
+      </div>
+      <form (ngSubmit)="submitEditor()" class="settings-card-body space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <label class="settings-label" for="wh-name">Name</label>
+            <input
+              type="text"
+              [ngModel]="formName()"
+              (ngModelChange)="formName.set($event)"
+              name="name"
+              id="wh-name"
+              placeholder="e.g. SIEM ingestion"
+              required
+              class="w-full input-field"
+            />
+          </div>
+          <div>
+            <label class="settings-label" for="wh-url">Payload URL</label>
+            <input
+              type="url"
+              [ngModel]="formUrl()"
+              (ngModelChange)="formUrl.set($event)"
+              name="url"
+              id="wh-url"
+              placeholder="https://example.com/hooks/smooth-operator"
+              required
+              class="w-full input-field"
+            />
+            <p class="text-xs text-on-surface-variant mt-1">Must be an absolute HTTPS URL.</p>
+          </div>
+        </div>
+
+        <div>
+          <span class="settings-label">Events to deliver</span>
+          <button
+            type="button"
+            class="wh-event w-full"
+            [class.wh-event--on]="allEventsSelected()"
+            (click)="selectAllEvents()"
+          >
+            <span class="wh-event__check">
+              @if (allEventsSelected()) {
+                <span class="material-symbols-outlined" aria-hidden="true">check</span>
+              }
+            </span>
+            <span class="font-medium">All events</span>
+          </button>
+          <div class="wh-event-grid mt-2">
+            @for (cat of eventCategories; track cat.pattern) {
+              <button
+                type="button"
+                class="wh-event"
+                [class.wh-event--on]="isCategorySelected(cat.pattern)"
+                (click)="toggleCategory(cat.pattern)"
+              >
+                <span class="wh-event__check">
+                  @if (isCategorySelected(cat.pattern)) {
+                    <span class="material-symbols-outlined" aria-hidden="true">check</span>
+                  }
+                </span>
+                <span>{{ cat.label }}</span>
+                <code class="wh-event__code">{{ cat.pattern }}</code>
+              </button>
+            }
+          </div>
+        </div>
+
+        @if (editingId()) {
+          <label class="toggle-row">
+            <span class="relative inline-flex items-center">
+              <input
+                type="checkbox"
+                class="sr-only"
+                name="enabled"
+                [ngModel]="formEnabled()"
+                (ngModelChange)="formEnabled.set($event)"
+              />
+              <span class="toggle-track" [class.toggle-on]="formEnabled()">
+                <span class="toggle-thumb" [class.toggle-thumb-on]="formEnabled()"></span>
+              </span>
+            </span>
+            <span>Endpoint enabled</span>
+          </label>
+        }
+
+        <div class="flex justify-end gap-2">
+          <button type="button" (click)="closeEditor()" class="btn-secondary">Cancel</button>
+          <button type="submit" [disabled]="busy()" class="btn-primary">
+            <span class="material-symbols-outlined text-sm" aria-hidden="true">save</span>
+            {{ busy() ? 'Saving…' : 'Save endpoint' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  }
+
+  <!-- List -->
+  @if (loading()) {
+    <p class="text-sm text-on-surface-variant py-8 text-center">Loading webhooks…</p>
+  } @else if (webhooks().length === 0) {
+    <div class="status-banner status-warn">
+      <span class="material-symbols-outlined" aria-hidden="true">info</span>
+      <div>
+        <p class="font-medium">No webhook endpoints</p>
+        <p class="text-xs opacity-70">Add an endpoint to start delivering audit events.</p>
+      </div>
+    </div>
+  } @else {
+    <div class="space-y-3">
+      @for (w of webhooks(); track w.id; let i = $index) {
+        @let tone = statusTone(w);
+        <div
+          class="wh-card"
+          [class.wh-card--ok]="tone === 'ok'"
+          [class.wh-card--bad]="tone === 'bad'"
+          [class.wh-card--idle]="tone === 'idle'"
+          [style.animation-delay]="i * 55 + 'ms'"
+        >
+          <!-- Header: status + name + state, kebab on the right -->
+          <div class="wh-head">
+            <span
+              class="wh-dot"
+              [class.wh-dot--ok]="tone === 'ok'"
+              [class.wh-dot--bad]="tone === 'bad'"
+              [class.wh-dot--idle]="tone === 'idle'"
+            ></span>
+            <span class="wh-name truncate">{{ w.name }}</span>
+            <span
+              class="wh-state"
+              [class.wh-state--ok]="tone === 'ok'"
+              [class.wh-state--bad]="tone === 'bad'"
+              [class.wh-state--idle]="tone === 'idle'"
+              >{{ statusText(w) }}</span
+            >
+            <span class="flex-1"></span>
+            <button
+              type="button"
+              class="wh-kebab"
+              [class.wh-kebab--active]="openMenuId() === w.id"
+              (click)="toggleMenu(w.id)"
+              [attr.aria-label]="'Actions for ' + w.name"
+              aria-haspopup="menu"
+              [attr.aria-expanded]="openMenuId() === w.id"
+            >
+              <span class="material-symbols-outlined" aria-hidden="true">more_vert</span>
+            </button>
+          </div>
+
+          <!-- URL -->
+          <div class="wh-url-row">
+            <span class="wh-url" [title]="w.url">{{ w.url }}</span>
+            <button
+              type="button"
+              class="wh-icon-btn"
+              (click)="copyUrl(w)"
+              title="Copy endpoint URL"
+              [attr.aria-label]="'Copy URL for ' + w.name"
+            >
+              <span class="material-symbols-outlined" aria-hidden="true">content_copy</span>
+            </button>
+          </div>
+
+          <!-- Meta chips -->
+          <div class="wh-meta">
+            <span class="wh-chip">
+              <span class="material-symbols-outlined" aria-hidden="true">filter_alt</span>
+              {{ eventSummary(w.eventTypes) }}
+            </span>
+            <span class="wh-chip">
+              <span class="material-symbols-outlined" aria-hidden="true">schedule</span>
+              {{
+                w.lastDeliveryAt ? 'Last: ' + (w.lastDeliveryAt | date: 'short') : 'Never delivered'
+              }}
+            </span>
+            @if (w.lastResponseCode) {
+              <span class="wh-chip">
+                <span class="material-symbols-outlined" aria-hidden="true">swap_vert</span>
+                HTTP {{ w.lastResponseCode }}
+              </span>
+            }
+            @if (w.consecutiveFailures > 0) {
+              <span class="wh-chip wh-chip--bad">
+                <span class="material-symbols-outlined" aria-hidden="true">error</span>
+                {{ w.consecutiveFailures }} consecutive failure{{
+                  w.consecutiveFailures === 1 ? '' : 's'
+                }}
+              </span>
+            }
+          </div>
+
+          <!-- Footer: primary action -->
+          <div class="wh-foot">
+            <button
+              type="button"
+              class="btn-secondary"
+              (click)="sendTest(w)"
+              [disabled]="rowBusyId() === w.id"
+            >
+              <span class="material-symbols-outlined text-sm" aria-hidden="true">bolt</span>
+              {{ rowBusyId() === w.id ? 'Working…' : 'Send test' }}
+            </button>
+          </div>
+
+          <!-- Overflow menu -->
+          @if (openMenuId() === w.id) {
+            <button
+              type="button"
+              class="wh-backdrop"
+              (click)="closeMenu()"
+              aria-label="Close menu"
+            ></button>
+            <div class="wh-menu" role="menu">
+              <button type="button" class="wh-menu-item" role="menuitem" (click)="openEdit(w)">
+                <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+                Edit endpoint
+              </button>
+              <button type="button" class="wh-menu-item" role="menuitem" (click)="toggleEnabled(w)">
+                <span class="material-symbols-outlined" aria-hidden="true">{{
+                  w.enabled ? 'toggle_off' : 'toggle_on'
+                }}</span>
+                {{ w.enabled ? 'Disable' : 'Enable' }}
+              </button>
+              <button type="button" class="wh-menu-item" role="menuitem" (click)="requestRotate(w)">
+                <span class="material-symbols-outlined" aria-hidden="true">vpn_key</span>
+                Rotate secret
+              </button>
+              <div class="wh-menu-divider"></div>
+              <button
+                type="button"
+                class="wh-menu-item wh-menu-item--danger"
+                role="menuitem"
+                (click)="requestDelete(w)"
+              >
+                <span class="material-symbols-outlined" aria-hidden="true">delete</span>
+                Delete endpoint
+              </button>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>

@@ -27,6 +27,8 @@ namespace SmoothOperator.Infrastructure.Data
         public DbSet<MfaCredential> MfaCredentials { get; set; } = null!;
         public DbSet<MfaRecoveryCode> MfaRecoveryCodes { get; set; } = null!;
         public DbSet<ApiToken> ApiTokens { get; set; } = null!;
+        public DbSet<WebhookEndpoint> WebhookEndpoints { get; set; } = null!;
+        public DbSet<WebhookDelivery> WebhookDeliveries { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -159,6 +161,38 @@ namespace SmoothOperator.Infrastructure.Data
             modelBuilder.Entity<ApiToken>()
                 .Property(t => t.Name)
                 .HasMaxLength(100);
+
+            // WebhookEndpoint column lengths
+            modelBuilder.Entity<WebhookEndpoint>()
+                .Property(w => w.Name)
+                .HasMaxLength(100);
+
+            modelBuilder.Entity<WebhookEndpoint>()
+                .Property(w => w.Url)
+                .HasMaxLength(2048);
+
+            modelBuilder.Entity<WebhookEndpoint>()
+                .Property(w => w.EventTypes)
+                .HasMaxLength(1024);
+
+            modelBuilder.Entity<WebhookEndpoint>()
+                .Property(w => w.LastDeliveryStatus)
+                .HasMaxLength(16);
+
+            // WebhookDelivery -> WebhookEndpoint: cascade so queued deliveries die with their endpoint
+            modelBuilder.Entity<WebhookDelivery>()
+                .HasOne(d => d.Endpoint)
+                .WithMany(w => w.Deliveries)
+                .HasForeignKey(d => d.WebhookEndpointId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<WebhookDelivery>()
+                .Property(d => d.EventType)
+                .HasMaxLength(128);
+
+            // Drives the background worker's "due deliveries" query
+            modelBuilder.Entity<WebhookDelivery>()
+                .HasIndex(d => new { d.Status, d.NextAttemptAt });
         }
     }
 }
