@@ -17,55 +17,78 @@
     (ngSubmit)="search()"
     class="grid grid-cols-1 md:grid-cols-6 gap-3 mb-4 p-4 glass-card rounded-xl"
   >
-    <input
-      type="text"
-      placeholder="User (email/name)"
-      [ngModel]="user()"
-      (ngModelChange)="user.set($event)"
-      name="user"
-      class="input-field"
-    />
-    <input
-      type="text"
-      placeholder="Action (e.g. user.login)"
-      [ngModel]="action()"
-      (ngModelChange)="action.set($event)"
-      name="action"
-      class="input-field"
-    />
-    <input
-      type="text"
-      placeholder="Resource type"
-      [ngModel]="resourceType()"
-      (ngModelChange)="resourceType.set($event)"
-      name="resourceType"
-      class="input-field"
-    />
-    <input
-      type="date"
-      [ngModel]="from()"
-      (ngModelChange)="from.set($event)"
-      name="from"
-      class="input-field"
-    />
-    <input
-      type="date"
-      [ngModel]="to()"
-      (ngModelChange)="to.set($event)"
-      name="to"
-      class="input-field"
-    />
-    <select
-      [ngModel]="outcome()"
-      (ngModelChange)="outcome.set($event)"
-      name="outcome"
-      class="input-field"
-      aria-label="Filter by outcome"
-    >
-      <option value="">All outcomes</option>
-      <option value="success">Success</option>
-      <option value="failure">Failure</option>
-    </select>
+    <div>
+      <label class="field-label" for="filter-user">User</label>
+      <input
+        id="filter-user"
+        type="text"
+        placeholder="email or name"
+        [ngModel]="user()"
+        (ngModelChange)="user.set($event)"
+        name="user"
+        class="input-field w-full"
+      />
+    </div>
+    <div>
+      <label class="field-label" for="filter-action">Action</label>
+      <input
+        id="filter-action"
+        type="text"
+        placeholder="e.g. user.login"
+        [ngModel]="action()"
+        (ngModelChange)="action.set($event)"
+        name="action"
+        class="input-field w-full"
+      />
+    </div>
+    <div>
+      <label class="field-label" for="filter-resource">Resource type</label>
+      <input
+        id="filter-resource"
+        type="text"
+        placeholder="e.g. connection"
+        [ngModel]="resourceType()"
+        (ngModelChange)="resourceType.set($event)"
+        name="resourceType"
+        class="input-field w-full"
+      />
+    </div>
+    <div>
+      <label class="field-label" for="filter-from">From</label>
+      <input
+        id="filter-from"
+        type="date"
+        [ngModel]="from()"
+        (ngModelChange)="from.set($event)"
+        name="from"
+        class="input-field w-full"
+      />
+    </div>
+    <div>
+      <label class="field-label" for="filter-to">To</label>
+      <input
+        id="filter-to"
+        type="date"
+        [ngModel]="to()"
+        (ngModelChange)="to.set($event)"
+        name="to"
+        class="input-field w-full"
+      />
+    </div>
+    <div>
+      <label class="field-label" for="filter-outcome">Outcome</label>
+      <select
+        id="filter-outcome"
+        [ngModel]="outcome()"
+        (ngModelChange)="outcome.set($event)"
+        name="outcome"
+        class="input-field w-full"
+      >
+        <option value="">All outcomes</option>
+        <option value="success">Success</option>
+        <option value="failure">Failure</option>
+      </select>
+    </div>
     <div class="md:col-span-6 flex justify-end gap-2">
       <button type="button" (click)="reset()" class="btn-ghost">Reset</button>
       <button type="submit" class="btn-primary">
@@ -115,11 +138,11 @@
             </td>
             <td class="px-4 py-3">
               <span class="resource-type-badge">{{ l.resourceType }}</span>
-              <span class="ml-2 text-xs text-on-surface-variant/50 font-mono"
+              <span class="ml-2 text-xs text-on-surface-variant/70 font-mono"
                 >{{ l.resourceId | slice: 0 : 16 }}{{ l.resourceId.length > 16 ? '…' : '' }}</span
               >
             </td>
-            <td class="px-4 py-3 text-on-surface-variant/60 text-xs font-mono">
+            <td class="px-4 py-3 text-on-surface-variant/75 text-xs font-mono">
               {{ l.ipAddress }}
             </td>
             <td class="px-4 py-3">
@@ -135,7 +158,7 @@
           </tr>
         } @empty {
           <tr>
-            <td colspan="7" class="px-4 py-12 text-center text-on-surface-variant/40">
+            <td colspan="7" class="px-4 py-12 text-center text-on-surface-variant/60">
               <span class="material-symbols-outlined text-3xl mb-2 block" aria-hidden="true"
                 >receipt_long</span
               >
@@ -300,7 +323,7 @@
         <!-- Details JSON -->
         <div class="mt-4">
           <p
-            class="text-xs uppercase tracking-widest text-on-surface-variant/50 font-semibold mb-2"
+            class="text-xs uppercase tracking-widest text-on-surface-variant/75 font-semibold mb-2"
           >
             Details
           </p>

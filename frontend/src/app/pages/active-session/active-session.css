@@ -13,6 +13,8 @@
 
 :host {
   caret-color: transparent;
+  /* Guard against horizontal page scroll on narrow viewports. */
+  overflow-x: hidden;
 }
 
 /* But always allow the caret inside real form controls (modals, etc.). */
@@ -275,6 +277,75 @@
 
 .tool-btn:active {
   transform: scale(0.88);
+}
+
+/* Active/toggled tool button (e.g. on-screen keyboard engaged). */
+.tool-btn-active {
+  color: rgb(var(--color-on-primary-container));
+  background: rgb(var(--color-primary-container));
+  border-color: rgb(var(--color-primary) / 0.3);
+  box-shadow: 0 0 14px rgb(var(--color-primary) / 0.2);
+}
+
+/* ===== MOBILE SOFT KEYBOARD ===== */
+/* Off-screen input that summons the device keyboard. Kept focusable
+   (pointer-events:none only blocks taps, not programmatic focus());
+   font-size 16px stops iOS from zooming the page when it gains focus. */
+.mobile-kbd-input {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
+  font-size: 16px;
+}
+
+/* Special-key bar — docks above the on-screen keyboard. */
+.mobile-kbd-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  z-index: 60;
+  display: flex;
+  gap: 6px;
+  padding: 6px 8px;
+  background: rgb(var(--color-surface-container-lowest) / 0.98);
+  border-top: 1px solid rgb(var(--color-outline-variant) / 0.3);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  overflow-x: auto;
+}
+
+.kbd-key {
+  flex: 1 0 auto;
+  min-width: 44px;
+  padding: 9px 10px;
+  border-radius: 8px;
+  border: 1px solid rgb(var(--color-outline-variant) / 0.5);
+  background: rgb(var(--color-surface-container-high));
+  color: rgb(var(--color-on-surface));
+  font-size: 13px;
+  font-family: var(--font-mono);
+  cursor: pointer;
+  transition:
+    background 0.12s ease,
+    border-color 0.12s ease;
+}
+
+.kbd-key:active {
+  background: rgb(var(--color-primary) / 0.15);
+}
+
+/* One-shot modifier (Ctrl/Alt) currently armed. */
+.kbd-key-active {
+  background: rgb(var(--color-primary) / 0.2);
+  border-color: rgb(var(--color-primary) / 0.5);
+  color: rgb(var(--color-primary));
 }
 
 /* ===== KEY COMBO MODAL ===== */

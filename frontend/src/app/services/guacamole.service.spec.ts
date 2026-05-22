@@ -6,6 +6,8 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 // ── Mock guacamole-common-js so no real WebSocket / canvas wiring runs. ──
 const fakeDisplay = {
   getElement: vi.fn(() => document.createElement('div')),
+  getWidth: vi.fn(() => 1024),
+  getHeight: vi.fn(() => 768),
   scale: vi.fn(),
   onresize: null as null | (() => void),
 };
@@ -389,6 +391,48 @@ describe('GuacamoleSession', () => {
       session.attachDisplay(host);
       session.resizeToHost();
       expect(clientInstances[0].sendSize).toHaveBeenCalledTimes(2);
+    });
+
+    it('setZoom clamps the multiplier and re-scales the display', () => {
+      const host = document.createElement('div');
+      Object.defineProperty(host, 'clientWidth', { value: 1024, configurable: true });
+      Object.defineProperty(host, 'clientHeight', { value: 768, configurable: true });
+      session.attachDisplay(host);
+      session.setZoom(2);
+      expect(session.getZoom()).toBe(2);
+      // Display fits 1:1 (1024×768), so the canvas scale equals the zoom.
+      expect(fakeDisplay.scale).toHaveBeenLastCalledWith(2);
+      session.setZoom(99);
+      expect(session.getZoom()).toBe(3); // clamped to ZOOM_MAX
+    });
+
+    it('resizeToHost requests a desktop-class width on narrow viewports', () => {
+      const host = document.createElement('div');
+      Object.defineProperty(host, 'clientWidth', { value: 390, configurable: true });
+      Object.defineProperty(host, 'clientHeight', { value: 720, configurable: true });
+      const innerOriginal = globalThis.innerWidth;
+      Object.defineProperty(globalThis, 'innerWidth', { configurable: true, value: 390 });
+      try {
+        session.attachDisplay(host);
+        session.resizeToHost();
+        // Phone-width 1:1 would cramp a terminal — a 1024px remote is requested.
+        expect(clientInstances[0].sendSize).toHaveBeenCalledWith(1024, expect.any(Number));
+      } finally {
+        Object.defineProperty(globalThis, 'innerWidth', {
+          configurable: true,
+          value: innerOriginal,
+        });
+      }
+    });
+
+    it('display.onresize re-fits the canvas', () => {
+      const host = document.createElement('div');
+      Object.defineProperty(host, 'clientWidth', { value: 1024, configurable: true });
+      Object.defineProperty(host, 'clientHeight', { value: 768, configurable: true });
+      session.attachDisplay(host);
+      fakeDisplay.scale.mockClear();
+      fakeDisplay.onresize?.();
+      expect(fakeDisplay.scale).toHaveBeenCalled();
     });
   });
 

@@ -148,7 +148,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: rgb(var(--color-on-surface-variant) / 0.5);
+  color: rgb(var(--color-on-surface-variant) / 0.75);
 }
 
 .detail-meta-value {

@@ -23,6 +23,9 @@ import {
   GuacamoleSessionManagerService,
   GuacamoleSession,
   Keysyms,
+  ZOOM_MIN,
+  ZOOM_MAX,
+  ZOOM_STEP,
 } from '../../services/guacamole.service';
 import { ConnectionsService, Connection } from '../../services/connections.service';
 import { Mascot, MascotState } from '../../shared/mascot/mascot';
@@ -100,6 +103,7 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
   private readonly connections = inject(ConnectionsService);
 
   @ViewChild('display', { static: false }) displayRef?: ElementRef<HTMLDivElement>;
+  @ViewChild('hiddenKbd', { static: false }) hiddenKbdRef?: ElementRef<HTMLInputElement>;
 
   // Reactive route param — correctly handles navigating between session IDs.
   readonly connectionId = toSignal(this.route.paramMap.pipe(map((p) => p.get('id'))), {
@@ -153,6 +157,26 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
   readonly comboKey = signal<KeyOption>(COMBO_KEYS[0]);
   readonly clipboardDraft = signal('');
 
+  // ── Mobile keyboard ────────────────────────────────────────────────────────
+  // Touch devices have no physical keyboard, and Guacamole.Keyboard only listens
+  // for physical key events. A hidden input summons the phone's native soft
+  // keyboard for text; the special-key bar covers keys a soft keyboard lacks.
+  readonly keyboardActive = signal(false);
+  readonly kbdCtrl = signal(false);
+  readonly kbdAlt = signal(false);
+  /** Height of the on-screen keyboard, so the special-key bar sits just above it. */
+  readonly kbdInset = signal(0);
+  readonly specialKeys: KeyOption[] = [
+    { label: 'Esc', keysym: Keysyms.Escape },
+    { label: 'Tab', keysym: Keysyms.Tab },
+    { label: '←', keysym: Keysyms.ArrowLeft },
+    { label: '↑', keysym: Keysyms.ArrowUp },
+    { label: '↓', keysym: Keysyms.ArrowDown },
+    { label: '→', keysym: Keysyms.ArrowRight },
+  ];
+  private composing = false;
+  private viewportListener: (() => void) | null = null;
+
   // Protocol badge
   readonly protocol = computed(() => (this.connection()?.protocol ?? '').toUpperCase());
   readonly isSshConnection = computed(
@@ -170,6 +194,10 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
   // Toolbar auto-hide (fades after 3 s inactivity)
   readonly toolbarVisible = signal(true);
   readonly toolbarCollapsed = signal(false);
+
+  // Display zoom (1 = fit-to-screen). Adjusted via the toolbar zoom buttons.
+  readonly zoom = signal(1);
+  readonly zoomPercent = computed(() => `${Math.round(this.zoom() * 100)}%`);
 
   // Modal feedback
   readonly clipboardPushed = signal(false);
@@ -274,6 +302,10 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
         );
       });
     }
+    // Reflect any zoom already applied to this session (e.g. after re-opening
+    // a minimized session) so the toolbar state matches the canvas.
+    const existingZoom = this.session()?.getZoom();
+    if (existingZoom) this.zoom.set(existingZoom);
     this.onCanvasMouseMove();
   }
 
@@ -282,6 +314,7 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
     this.displayEffect?.destroy();
     this.displayEffect = null;
     if (this.toolbarHideTimer) clearTimeout(this.toolbarHideTimer);
+    this.detachViewportListener();
     const id = this.connectionId();
     if (!id) return;
     const session = this.sessionManager.get(id);
@@ -435,6 +468,160 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
 
   toggleToolbarCollapse(): void {
     this.toolbarCollapsed.update((v) => !v);
+  }
+
+  // ── Display zoom ───────────────────────────────────────────────────────────
+  zoomIn(): void {
+    this.applyZoom(this.zoom() + ZOOM_STEP);
+  }
+
+  zoomOut(): void {
+    this.applyZoom(this.zoom() - ZOOM_STEP);
+  }
+
+  /** Reset zoom back to fit-to-screen. */
+  zoomReset(): void {
+    this.applyZoom(1);
+  }
+
+  private applyZoom(value: number): void {
+    const stepped = Math.round(value / ZOOM_STEP) * ZOOM_STEP;
+    const clamped = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, stepped));
+    this.zoom.set(clamped);
+    this.session()?.setZoom(clamped);
+  }
+
+  // ── Mobile keyboard ────────────────────────────────────────────────────────
+  /** Show/hide the soft keyboard by focusing/blurring the hidden input. */
+  toggleMobileKeyboard(): void {
+    const next = !this.keyboardActive();
+    this.keyboardActive.set(next);
+    if (next) {
+      this.attachViewportListener();
+      // Focus synchronously inside the click gesture — iOS only opens the soft
+      // keyboard when focus() runs within the originating user gesture.
+      this.hiddenKbdRef?.nativeElement.focus();
+    } else {
+      this.clearKbdModifiers();
+      this.hiddenKbdRef?.nativeElement.blur();
+      this.detachViewportListener();
+    }
+  }
+
+  /** The hidden input lost focus (user dismissed the keyboard) — hide the bar. */
+  onKbdBlur(): void {
+    this.keyboardActive.set(false);
+    this.clearKbdModifiers();
+    this.detachViewportListener();
+  }
+
+  /** Translate native soft-keyboard edits into remote key events. */
+  onKbdBeforeInput(event: Event): void {
+    const ev = event as InputEvent;
+    const session = this.session();
+    if (!session) return;
+    switch (ev.inputType) {
+      case 'insertText':
+        if (this.composing) return; // committed text arrives via compositionend
+        if (ev.data) this.sendKbdText(ev.data);
+        break;
+      case 'insertLineBreak':
+      case 'insertParagraph':
+        this.pressSpecialKey(Keysyms.Return);
+        break;
+      case 'deleteContentBackward':
+        this.pressSpecialKey(Keysyms.Backspace);
+        break;
+      case 'deleteContentForward':
+        this.pressSpecialKey(Keysyms.Delete);
+        break;
+      default:
+        return; // composition / unsupported — leave the input untouched
+    }
+    // Keep the hidden input empty so it never accumulates state.
+    ev.preventDefault();
+  }
+
+  onKbdCompositionStart(): void {
+    this.composing = true;
+  }
+
+  onKbdCompositionEnd(event: Event): void {
+    this.composing = false;
+    const ev = event as CompositionEvent;
+    if (ev.data) this.sendKbdText(ev.data);
+    const el = this.hiddenKbdRef?.nativeElement;
+    if (el) el.value = '';
+  }
+
+  /** Send a special key (Esc/Tab/arrows), applying any one-shot modifiers. */
+  pressSpecialKey(keysym: number): void {
+    this.session()?.sendKeyCombo([...this.activeKbdMods(), keysym]);
+    this.clearKbdModifiers();
+    // Buttons keep focus off the input via pointerdown preventDefault; re-assert.
+    if (this.keyboardActive()) this.hiddenKbdRef?.nativeElement.focus();
+  }
+
+  toggleKbdModifier(name: 'ctrl' | 'alt'): void {
+    if (name === 'ctrl') this.kbdCtrl.update((v) => !v);
+    else this.kbdAlt.update((v) => !v);
+  }
+
+  private sendKbdText(text: string): void {
+    const session = this.session();
+    if (!session) return;
+    const mods = this.activeKbdMods();
+    if (mods.length === 0) {
+      session.typeText(text);
+      return;
+    }
+    // A one-shot modifier applies to the first character only (e.g. Ctrl+C);
+    // soft keyboards can deliver whole words via autocorrect/swipe, and the
+    // rest of those must be typed as plain text. `[...text]` keeps multi-byte
+    // code points intact.
+    const chars = [...text];
+    if (chars.length > 0) {
+      const code = chars[0].codePointAt(0) ?? 0;
+      const keysym = code >= 0x20 && code <= 0x7e ? code : 0x01000000 | code;
+      session.sendKeyCombo([...mods, keysym]);
+      if (chars.length > 1) session.typeText(chars.slice(1).join(''));
+    }
+    this.clearKbdModifiers();
+  }
+
+  private activeKbdMods(): number[] {
+    const mods: number[] = [];
+    if (this.kbdCtrl()) mods.push(Keysyms.ControlLeft);
+    if (this.kbdAlt()) mods.push(Keysyms.AltLeft);
+    return mods;
+  }
+
+  private clearKbdModifiers(): void {
+    this.kbdCtrl.set(false);
+    this.kbdAlt.set(false);
+  }
+
+  private attachViewportListener(): void {
+    const vv = globalThis.visualViewport;
+    if (!vv || this.viewportListener) return;
+    const update = () => {
+      const inset = Math.max(0, globalThis.innerHeight - vv.height - vv.offsetTop);
+      this.kbdInset.set(inset);
+    };
+    this.viewportListener = update;
+    vv.addEventListener('resize', update);
+    vv.addEventListener('scroll', update);
+    update();
+  }
+
+  private detachViewportListener(): void {
+    const vv = globalThis.visualViewport;
+    if (vv && this.viewportListener) {
+      vv.removeEventListener('resize', this.viewportListener);
+      vv.removeEventListener('scroll', this.viewportListener);
+    }
+    this.viewportListener = null;
+    this.kbdInset.set(0);
   }
 
   private loadSessionTerminalTheme(connectionSettings: string): void {

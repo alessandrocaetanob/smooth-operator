@@ -29,6 +29,21 @@ const CLIENT_STATE_LABEL: Record<number, GuacState> = {
   5: 'disconnected',
 };
 
+/**
+ * Remote width requested on narrow (phone) viewports. The canvas is then
+ * scaled down to fit, so terminals keep a usable column count.
+ */
+const TOUCH_BASE_WIDTH = 1024;
+
+/** Viewport width below which a session is treated as a phone. Mirrors the
+ *  Tailwind `md` breakpoint used by the responsive CSS/HTML. */
+export const NARROW_VIEWPORT_PX = 768;
+
+/** Display zoom bounds shared by the session service and the UI controls. */
+export const ZOOM_MIN = 0.5;
+export const ZOOM_MAX = 3;
+export const ZOOM_STEP = 0.25;
+
 const PROGRESS_BY_STATE: Record<GuacState, number> = {
   idle: 0,
   'requesting-ticket': 15,
@@ -103,6 +118,8 @@ export class GuacamoleSession {
   private connectPromise: Promise<void> | null = null;
   /** Last display size sent to guacd; guards against redundant `size` instructions. */
   private lastSentSize: { w: number; h: number } | null = null;
+  /** User zoom multiplier applied on top of the fit-to-screen scale. */
+  private userZoom = 1;
 
   private readonly _state = signal<GuacState>('idle');
   private readonly _logs = signal<GuacLogEntry[]>([]);
@@ -326,6 +343,11 @@ export class GuacamoleSession {
         };
     this.touch = touch;
 
+    // Re-fit the canvas whenever guacd reports a new remote resolution.
+    // Safe (unlike wiring onresize→sendSize): scale() performs no network I/O,
+    // so it cannot trigger the size-instruction feedback loop described below.
+    display.onresize = () => this.zone.run(() => this.applyFitScale());
+
     // Keyboard is bound to the document so the canvas need not be focused.
     // Skip events when the user is typing into a real input or a modal is open.
     const keyboard = new Guacamole.Keyboard(document);
@@ -466,20 +488,62 @@ export class GuacamoleSession {
 
   resizeToHost(): void {
     if (!this.client || !this.displayHost) return;
-    const w = Math.max(320, Math.floor(this.displayHost.clientWidth));
-    const h = Math.max(240, Math.floor(this.displayHost.clientHeight));
-    // Skip when the container size is unchanged — a stray 'resize' event with no
-    // real dimension change must not trigger a needless guacd round-trip.
-    if (this.lastSentSize?.w === w && this.lastSentSize?.h === h) return;
-    const display = this.client.getDisplay();
-    // Reset scale to 1 — CSS scaling causes blurry text in SSH terminals.
-    display.scale(1);
+    const cw = Math.max(320, Math.floor(this.displayHost.clientWidth));
+    const ch = Math.max(240, Math.floor(this.displayHost.clientHeight));
+    // On narrow (phone) viewports, request a desktop-class remote size and
+    // scale the canvas down to fit instead — a 1:1 request would cramp an SSH
+    // terminal to ~40 columns and clip wider output. The user can then zoom.
+    const narrow = globalThis.innerWidth > 0 && globalThis.innerWidth < NARROW_VIEWPORT_PX;
+    let w = cw;
+    let h = ch;
+    if (narrow && cw < TOUCH_BASE_WIDTH) {
+      w = TOUCH_BASE_WIDTH;
+      h = Math.max(240, Math.round(TOUCH_BASE_WIDTH * (ch / cw)));
+    }
+    // Skip the guacd round-trip when the size is unchanged — but still re-fit,
+    // since a zoom change or orientation flip needs a fresh scale.
+    if (this.lastSentSize?.w === w && this.lastSentSize?.h === h) {
+      this.applyFitScale();
+      return;
+    }
     try {
       this.client.sendSize(w, h);
       this.lastSentSize = { w, h };
     } catch {
       // sendSize fails before the connect handshake completes; safe to ignore.
     }
+    this.applyFitScale();
+  }
+
+  /** Set the user zoom multiplier (1 = fit-to-screen) and re-apply the scale. */
+  setZoom(zoom: number): void {
+    this.userZoom = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, zoom));
+    this.applyFitScale();
+  }
+
+  getZoom(): number {
+    return this.userZoom;
+  }
+
+  /**
+   * Scale the remote display so it fits the host container, then apply the
+   * user's zoom multiplier on top. RDP/VNC servers that ignore dynamic resize,
+   * and the desktop-class size we request on phones, are both fitted this way.
+   * An unzoomed near-1:1 fit is snapped to exactly 1 to keep terminal text crisp.
+   */
+  private applyFitScale(): void {
+    if (!this.client || !this.displayHost) return;
+    const display = this.client.getDisplay();
+    const dw = display.getWidth();
+    const dh = display.getHeight();
+    if (dw <= 0 || dh <= 0) return;
+    const hostW = this.displayHost.clientWidth;
+    const hostH = this.displayHost.clientHeight;
+    if (hostW <= 0 || hostH <= 0) return;
+    let fit = Math.min(hostW / dw, hostH / dh);
+    if (this.userZoom === 1 && fit > 0.92 && fit < 1.1) fit = 1;
+    const scale = Math.min(5, Math.max(0.1, fit * this.userZoom));
+    display.scale(scale);
   }
 
   sendKey(keysym: number, pressed: boolean): void {

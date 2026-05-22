@@ -4,7 +4,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { BehaviorSubject, of } from 'rxjs';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { signal } from '@angular/core';
+import { ElementRef, signal } from '@angular/core';
 
 import { ActiveSession } from './active-session';
 import { GuacamoleSessionManagerService, Keysyms } from '../../services/guacamole.service';
@@ -34,8 +34,12 @@ interface FakeSession {
   attachDisplay: ReturnType<typeof vi.fn>;
   detachDisplay: ReturnType<typeof vi.fn>;
   sendKeyCombo: ReturnType<typeof vi.fn>;
+  sendKey: ReturnType<typeof vi.fn>;
+  typeText: ReturnType<typeof vi.fn>;
   pasteToHost: ReturnType<typeof vi.fn>;
   captureScreenshot: ReturnType<typeof vi.fn>;
+  setZoom: ReturnType<typeof vi.fn>;
+  getZoom: ReturnType<typeof vi.fn>;
 }
 
 function makeFakeSession(overrides: Partial<FakeSession> = {}): FakeSession {
@@ -52,8 +56,12 @@ function makeFakeSession(overrides: Partial<FakeSession> = {}): FakeSession {
     attachDisplay: vi.fn(),
     detachDisplay: vi.fn(),
     sendKeyCombo: vi.fn(),
+    sendKey: vi.fn(),
+    typeText: vi.fn(),
     pasteToHost: vi.fn(),
     captureScreenshot: vi.fn(() => 'data:image/png;base64,abc'),
+    setZoom: vi.fn(),
+    getZoom: vi.fn(() => 1),
     ...overrides,
   };
 }
@@ -430,6 +438,205 @@ describe('ActiveSession', () => {
       const before = component.toolbarCollapsed();
       component.toggleToolbarCollapse();
       expect(component.toolbarCollapsed()).toBe(!before);
+    });
+  });
+
+  describe('display zoom', () => {
+    let session: FakeSession;
+    beforeEach(() => {
+      session = makeFakeSession();
+      session.state.set('connected');
+      sessionsMap.set(new Map([['c1', session]]));
+    });
+
+    it('zoomIn raises zoom by a step and pushes it to the session', () => {
+      component.zoomIn();
+      expect(component.zoom()).toBe(1.25);
+      expect(session.setZoom).toHaveBeenCalledWith(1.25);
+    });
+
+    it('zoomOut lowers zoom by a step', () => {
+      component.zoomOut();
+      expect(component.zoom()).toBe(0.75);
+    });
+
+    it('zoomReset returns zoom to fit (1)', () => {
+      component.zoomIn();
+      component.zoomReset();
+      expect(component.zoom()).toBe(1);
+      expect(session.setZoom).toHaveBeenLastCalledWith(1);
+    });
+
+    it('clamps zoom within bounds', () => {
+      for (let i = 0; i < 20; i++) component.zoomIn();
+      expect(component.zoom()).toBe(3);
+      for (let i = 0; i < 30; i++) component.zoomOut();
+      expect(component.zoom()).toBe(0.5);
+    });
+
+    it('zoomPercent reflects the current zoom', () => {
+      component.zoomReset();
+      expect(component.zoomPercent()).toBe('100%');
+      component.zoomIn();
+      expect(component.zoomPercent()).toBe('125%');
+    });
+
+    it('ngAfterViewInit adopts the zoom already applied to the session', () => {
+      vi.useFakeTimers();
+      session.getZoom.mockReturnValue(1.5);
+      component.ngAfterViewInit();
+      expect(component.zoom()).toBe(1.5);
+    });
+  });
+
+  describe('mobile keyboard', () => {
+    let session: FakeSession;
+    let input: HTMLInputElement;
+    beforeEach(() => {
+      session = makeFakeSession();
+      session.state.set('connected');
+      sessionsMap.set(new Map([['c1', session]]));
+      input = document.createElement('input');
+      document.body.appendChild(input);
+      component.hiddenKbdRef = new ElementRef(input);
+    });
+    afterEach(() => input.remove());
+
+    it('toggleMobileKeyboard opens then closes the keyboard', () => {
+      const focusSpy = vi.spyOn(input, 'focus');
+      const blurSpy = vi.spyOn(input, 'blur');
+      component.toggleMobileKeyboard();
+      expect(component.keyboardActive()).toBe(true);
+      expect(focusSpy).toHaveBeenCalled();
+      component.toggleMobileKeyboard();
+      expect(component.keyboardActive()).toBe(false);
+      expect(blurSpy).toHaveBeenCalled();
+    });
+
+    it('onKbdBlur deactivates the keyboard and clears modifiers', () => {
+      component.toggleMobileKeyboard();
+      component.kbdCtrl.set(true);
+      component.onKbdBlur();
+      expect(component.keyboardActive()).toBe(false);
+      expect(component.kbdCtrl()).toBe(false);
+    });
+
+    it('toggleKbdModifier flips ctrl and alt', () => {
+      component.toggleKbdModifier('ctrl');
+      expect(component.kbdCtrl()).toBe(true);
+      component.toggleKbdModifier('alt');
+      expect(component.kbdAlt()).toBe(true);
+    });
+
+    it('pressSpecialKey sends the key with active modifiers then clears them', () => {
+      component.kbdCtrl.set(true);
+      component.kbdAlt.set(true);
+      component.pressSpecialKey(Keysyms.Escape);
+      expect(session.sendKeyCombo).toHaveBeenCalledWith([
+        Keysyms.ControlLeft,
+        Keysyms.AltLeft,
+        Keysyms.Escape,
+      ]);
+      expect(component.kbdCtrl()).toBe(false);
+      expect(component.kbdAlt()).toBe(false);
+    });
+
+    it('pressSpecialKey re-focuses the input while the keyboard is open', () => {
+      component.toggleMobileKeyboard();
+      const focusSpy = vi.spyOn(input, 'focus');
+      component.pressSpecialKey(Keysyms.Tab);
+      expect(focusSpy).toHaveBeenCalled();
+    });
+
+    it('keyboard input is a no-op when there is no active session', () => {
+      sessionsMap.set(new Map());
+      const ev = new InputEvent('beforeinput', { inputType: 'insertText', data: 'x' });
+      const prevent = vi.spyOn(ev, 'preventDefault');
+      component.onKbdBeforeInput(ev);
+      component.onKbdCompositionEnd(new CompositionEvent('compositionend', { data: 'x' }));
+      expect(prevent).not.toHaveBeenCalled();
+      expect(session.typeText).not.toHaveBeenCalled();
+    });
+
+    it('onKbdBeforeInput types plain text through the session', () => {
+      const ev = new InputEvent('beforeinput', { inputType: 'insertText', data: 'hello' });
+      const prevent = vi.spyOn(ev, 'preventDefault');
+      component.onKbdBeforeInput(ev);
+      expect(session.typeText).toHaveBeenCalledWith('hello');
+      expect(prevent).toHaveBeenCalled();
+    });
+
+    it('onKbdBeforeInput applies a modifier to the first character only', () => {
+      component.kbdCtrl.set(true);
+      component.onKbdBeforeInput(
+        new InputEvent('beforeinput', { inputType: 'insertText', data: 'cat' }),
+      );
+      expect(session.sendKeyCombo).toHaveBeenCalledWith([Keysyms.ControlLeft, 'c'.codePointAt(0)]);
+      expect(session.typeText).toHaveBeenCalledWith('at');
+      expect(component.kbdCtrl()).toBe(false);
+    });
+
+    it('onKbdBeforeInput maps line breaks and deletes to special keys', () => {
+      component.onKbdBeforeInput(new InputEvent('beforeinput', { inputType: 'insertLineBreak' }));
+      expect(session.sendKeyCombo).toHaveBeenCalledWith([Keysyms.Return]);
+      component.onKbdBeforeInput(
+        new InputEvent('beforeinput', { inputType: 'deleteContentBackward' }),
+      );
+      expect(session.sendKeyCombo).toHaveBeenCalledWith([Keysyms.Backspace]);
+      component.onKbdBeforeInput(
+        new InputEvent('beforeinput', { inputType: 'deleteContentForward' }),
+      );
+      expect(session.sendKeyCombo).toHaveBeenCalledWith([Keysyms.Delete]);
+    });
+
+    it('onKbdBeforeInput ignores composition input types', () => {
+      const ev = new InputEvent('beforeinput', { inputType: 'insertCompositionText', data: 'x' });
+      const prevent = vi.spyOn(ev, 'preventDefault');
+      component.onKbdBeforeInput(ev);
+      expect(prevent).not.toHaveBeenCalled();
+      expect(session.typeText).not.toHaveBeenCalled();
+    });
+
+    it('composition commits text only on compositionend', () => {
+      component.onKbdCompositionStart();
+      component.onKbdBeforeInput(
+        new InputEvent('beforeinput', { inputType: 'insertText', data: 'ni' }),
+      );
+      expect(session.typeText).not.toHaveBeenCalled();
+      component.onKbdCompositionEnd(new CompositionEvent('compositionend', { data: 'にほん' }));
+      expect(session.typeText).toHaveBeenCalledWith('にほん');
+    });
+
+    it('tracks the on-screen keyboard inset while active', () => {
+      const listeners: Record<string, () => void> = {};
+      const fakeVv = {
+        height: 500,
+        offsetTop: 0,
+        addEventListener: vi.fn((t: string, cb: () => void) => {
+          listeners[t] = cb;
+        }),
+        removeEventListener: vi.fn(),
+      };
+      const vvOriginal = Object.getOwnPropertyDescriptor(globalThis, 'visualViewport');
+      const innerOriginal = globalThis.innerHeight;
+      Object.defineProperty(globalThis, 'visualViewport', { configurable: true, value: fakeVv });
+      Object.defineProperty(globalThis, 'innerHeight', { configurable: true, value: 800 });
+      try {
+        component.toggleMobileKeyboard();
+        expect(component.kbdInset()).toBe(300); // 800 - 500 - 0
+        expect(fakeVv.addEventListener).toHaveBeenCalled();
+        component.onKbdBlur();
+        expect(fakeVv.removeEventListener).toHaveBeenCalled();
+        expect(component.kbdInset()).toBe(0);
+      } finally {
+        if (vvOriginal) Object.defineProperty(globalThis, 'visualViewport', vvOriginal);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        else delete (globalThis as any).visualViewport;
+        Object.defineProperty(globalThis, 'innerHeight', {
+          configurable: true,
+          value: innerOriginal,
+        });
+      }
     });
   });
 });

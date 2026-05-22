@@ -84,7 +84,7 @@
 
 .guidance-tier-desc {
   font-size: 11px;
-  color: rgb(var(--color-on-surface-variant) / 0.5);
+  color: rgb(var(--color-on-surface-variant) / 0.75);
 }
 
 .guidance-divider {
