@@ -522,10 +522,20 @@ namespace SmoothOperator.Infrastructure.Services
             // Bidirectional proxy with proper instruction framing on the guacd→ws side.
             using var watchdogCts = new CancellationTokenSource();
             var receiveTask = ProxyGuacdToWebSocket(reader, req.WebSocket, onGuacError);
-            var sendTask = ProxyWebSocketToGuacd(req.WebSocket, networkStream, () => req.LastActivityAt = DateTime.UtcNow);
+            var sendTask = ProxyWebSocketToGuacd(req.WebSocket, networkStream, () =>
+            {
+                req.LastActivityAt = DateTime.UtcNow;
+                // Traces genuine user input that resets the idle clock (Debug — off by default).
+                _logger.LogDebug("Session {SessionId}: user activity detected — idle clock reset", req.SessionId);
+            });
             var watchdogTask = RunIdleAndMaxSessionWatchdogAsync(req, watchdogCts.Token);
 
-            await Task.WhenAny(receiveTask, sendTask, watchdogTask);
+            // Session liveness is defined by the relay tasks only. The watchdog is a
+            // supervisor: when a timeout fires it closes the WebSocket, which makes the
+            // relay tasks complete here. It must NOT be part of this WhenAny — when no
+            // timeout is configured the watchdog returns synchronously, so its task is
+            // already complete and the relay would be torn down the instant it starts.
+            await Task.WhenAny(receiveTask, sendTask);
             // Cancel the watchdog promptly so its Task.Delay loop exits cleanly even
             // when the relay finished first.
             await watchdogCts.CancelAsync();
@@ -568,7 +578,16 @@ namespace SmoothOperator.Infrastructure.Services
         private async Task RunIdleAndMaxSessionWatchdogAsync(GuacSessionRequest req, CancellationToken ct)
         {
             if (req.IdleTimeoutMinutes <= 0 && req.MaxSessionMinutes <= 0)
+            {
+                _logger.LogInformation(
+                    "Session {SessionId}: idle/max-session watchdog disabled — no timeout configured (idle={Idle}, max={Max})",
+                    req.SessionId, req.IdleTimeoutMinutes, req.MaxSessionMinutes);
                 return;
+            }
+
+            _logger.LogInformation(
+                "Session {SessionId}: idle/max-session watchdog started (idle={Idle}min, max={Max}min)",
+                req.SessionId, req.IdleTimeoutMinutes, req.MaxSessionMinutes);
 
             var pollInterval = TimeSpan.FromSeconds(15);
             while (!ct.IsCancellationRequested && req.WebSocket.State == WebSocketState.Open)
@@ -589,6 +608,14 @@ namespace SmoothOperator.Infrastructure.Services
                     now: now,
                     idleTimeoutMinutes: req.IdleTimeoutMinutes,
                     maxSessionMinutes: req.MaxSessionMinutes);
+
+                // Per-poll trace of the idle/session clocks (Debug — off by default).
+                _logger.LogDebug(
+                    "Session {SessionId}: watchdog poll — idle {IdleSeconds:F0}s (limit {IdleLimit}min), session {SessionSeconds:F0}s (limit {MaxLimit}min){Outcome}",
+                    req.SessionId,
+                    (now - req.LastActivityAt).TotalSeconds, req.IdleTimeoutMinutes,
+                    (now - req.SessionStartedAt).TotalSeconds, req.MaxSessionMinutes,
+                    reason is null ? string.Empty : $" -> closing: {reason}");
 
                 if (reason is null) continue;
 
@@ -630,7 +657,14 @@ namespace SmoothOperator.Infrastructure.Services
                         await req.WebSocket.CloseAsync(
                             WebSocketCloseStatus.PolicyViolation, reason, CancellationToken.None);
                     }
-                    catch { /* the relay tasks will see the close on next read */ }
+                    catch (Exception ex)
+                    {
+                        // The relay tasks still observe the close on their next read;
+                        // log so a failed close handshake is diagnosable.
+                        _logger.LogWarning(ex,
+                            "Session {SessionId}: watchdog CloseAsync threw while closing for {Reason}",
+                            req.SessionId, reason);
+                    }
                 }
                 return;
             }
@@ -1009,6 +1043,50 @@ namespace SmoothOperator.Infrastructure.Services
             return null;
         }
 
+        // Client-to-guacd instructions that represent genuine human interaction.
+        // Only these reset the idle-timeout clock. Everything else the Guacamole
+        // client emits on its own must NOT count as activity, or the idle timeout
+        // never fires. That excludes the sync heartbeat, the tunnel keep-alive nop
+        // and ping, stream ack instructions, and crucially the size instruction.
+        // The size instruction is display-geometry negotiation, not input: the
+        // client emits it on display init, on every browser-window resize, and
+        // for terminal protocols such as SSH (whose display quantizes to whole
+        // character cells) in a continuous feedback loop with guacd's own size
+        // replies, firing many times per second while the user does nothing.
+        private static readonly string[] UserActivityOpcodes = ["key", "mouse", "touch", "clipboard"];
+
+        /// <summary>
+        /// True when a client→guacd payload contains at least one user-input
+        /// instruction (see <see cref="UserActivityOpcodes"/>). A single payload
+        /// may carry several concatenated <c>LENGTH.opcode,…;</c> instructions.
+        /// </summary>
+        internal static bool ContainsUserActivity(byte[] payload)
+        {
+            var text = Encoding.UTF8.GetString(payload);
+            int i = 0;
+            while (i < text.Length)
+            {
+                int dot = text.IndexOf('.', i);
+                if (dot < 0) break;
+                if (!int.TryParse(text.AsSpan(i, dot - i), out var len) || len < 0) break;
+
+                int opStart = dot + 1;
+                if (opStart + len > text.Length) break;
+
+                var opcode = text.AsSpan(opStart, len);
+                foreach (var activity in UserActivityOpcodes)
+                {
+                    if (opcode.SequenceEqual(activity)) return true;
+                }
+
+                // Skip to the end of this instruction (the next ';') and continue.
+                int semicolon = text.IndexOf(';', opStart + len);
+                if (semicolon < 0) break;
+                i = semicolon + 1;
+            }
+            return false;
+        }
+
         private static async Task ProxyWebSocketToGuacd(WebSocket webSocket, NetworkStream guacdStream, Action onActivity)
         {
             var buffer = new byte[16 * 1024];
@@ -1028,7 +1106,9 @@ namespace SmoothOperator.Infrastructure.Services
                 if (payload.Length == 0) continue;
                 await guacdStream.WriteAsync(payload.AsMemory());
                 await guacdStream.FlushAsync();
-                onActivity();
+                // Only genuine user input resets the idle clock — keepalive
+                // traffic (sync/nop/ping) must not keep an idle session alive.
+                if (ContainsUserActivity(payload)) onActivity();
             }
         }
 
