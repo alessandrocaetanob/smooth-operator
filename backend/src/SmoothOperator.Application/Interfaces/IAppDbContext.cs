@@ -26,6 +26,8 @@ namespace SmoothOperator.Application.Interfaces
         DbSet<MfaCredential> MfaCredentials { get; }
         DbSet<MfaRecoveryCode> MfaRecoveryCodes { get; }
         DbSet<ApiToken> ApiTokens { get; }
+        DbSet<WebhookEndpoint> WebhookEndpoints { get; }
+        DbSet<WebhookDelivery> WebhookDeliveries { get; }
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     }
 }

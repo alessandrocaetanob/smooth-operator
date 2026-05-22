@@ -1,0 +1,310 @@
+<div>
+  <div class="mb-6">
+    <h2 class="text-lg font-semibold text-on-surface">Webhooks</h2>
+    <p class="text-sm text-on-surface-variant mt-1">
+      Register external endpoints to receive an HMAC-signed POST whenever a subscribed audit event
+      occurs. Use them to feed a SIEM, post alerts, or trigger automation.
+    </p>
+  </div>
+
+  <!-- One-time signing secret -->
+  @if (revealedSecret(); as s) {
+    <div class="settings-card mb-4 border-primary/40">
+      <div class="settings-card-body space-y-2">
+        <p class="font-semibold text-on-surface text-sm flex items-center gap-1.5">
+          <span class="material-symbols-outlined text-base text-primary">vpn_key</span>
+          Signing secret for “{{ s.name }}”
+        </p>
+        <p class="text-xs text-on-surface-variant">
+          Copy this now — it is shown only once and cannot be retrieved later. Your receiver uses it
+          to verify the <code>X-SmoothOperator-Signature</code> header.
+        </p>
+        <div class="flex items-center gap-2">
+          <code
+            class="flex-1 block bg-surface-container border border-outline-variant/40 px-2 py-1 rounded text-xs font-mono break-all"
+            >{{ s.secret }}</code
+          >
+          <button
+            type="button"
+            (click)="copySecret()"
+            title="Copy signing secret"
+            aria-label="Copy signing secret"
+            class="shrink-0 p-1.5 rounded hover:bg-on-surface/5 text-on-surface-variant hover:text-on-surface transition-colors"
+          >
+            <span class="material-symbols-outlined text-base">content_copy</span>
+          </button>
+        </div>
+        <div class="flex justify-end">
+          <button type="button" (click)="dismissSecret()" class="btn-secondary">
+            I've saved it
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (message()) {
+    <div class="feedback-banner feedback-success mb-4">
+      <span class="material-symbols-outlined text-base">check_circle</span>
+      {{ message() }}
+    </div>
+  }
+  @if (error()) {
+    <div class="feedback-banner feedback-error mb-4">
+      <span class="material-symbols-outlined text-base">error</span>
+      {{ error() }}
+    </div>
+  }
+
+  <!-- Toolbar -->
+  <div class="flex items-center justify-between mb-4">
+    <p class="text-sm text-on-surface-variant">
+      {{ webhooks().length }} endpoint{{ webhooks().length === 1 ? '' : 's' }}
+    </p>
+    @if (!editorOpen()) {
+      <button type="button" (click)="openCreate()" class="btn-primary">
+        <span class="material-symbols-outlined text-sm" aria-hidden="true">add</span>
+        Add endpoint
+      </button>
+    }
+  </div>
+
+  <!-- Editor -->
+  @if (editorOpen()) {
+    <div class="settings-card mb-4">
+      <div class="settings-card-header">
+        <span class="material-symbols-outlined settings-card-icon">webhook</span>
+        <h3 class="settings-card-title">{{ editorTitle() }}</h3>
+      </div>
+      <form (ngSubmit)="submitEditor()" class="settings-card-body space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <label class="settings-label" for="wh-name">Name</label>
+            <input
+              type="text"
+              [ngModel]="formName()"
+              (ngModelChange)="formName.set($event)"
+              name="name"
+              id="wh-name"
+              placeholder="e.g. SIEM ingestion"
+              required
+              class="w-full input-field"
+            />
+          </div>
+          <div>
+            <label class="settings-label" for="wh-url">Payload URL</label>
+            <input
+              type="url"
+              [ngModel]="formUrl()"
+              (ngModelChange)="formUrl.set($event)"
+              name="url"
+              id="wh-url"
+              placeholder="https://example.com/hooks/smooth-operator"
+              required
+              class="w-full input-field"
+            />
+            <p class="text-xs text-on-surface-variant mt-1">Must be an absolute HTTPS URL.</p>
+          </div>
+        </div>
+
+        <div>
+          <span class="settings-label">Events to deliver</span>
+          <div class="mt-1 space-y-1.5">
+            <label class="flex items-center gap-2 text-sm text-on-surface">
+              <input
+                type="checkbox"
+                name="allEvents"
+                [ngModel]="allEventsSelected()"
+                (ngModelChange)="selectAllEvents()"
+                [disabled]="allEventsSelected()"
+              />
+              <span class="font-medium">All events</span>
+            </label>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pl-6">
+              @for (cat of eventCategories; track cat.pattern) {
+                <label class="flex items-center gap-2 text-sm text-on-surface-variant">
+                  <input
+                    type="checkbox"
+                    [name]="'cat-' + cat.pattern"
+                    [ngModel]="isCategorySelected(cat.pattern)"
+                    (ngModelChange)="toggleCategory(cat.pattern)"
+                  />
+                  <span>{{ cat.label }}</span>
+                  <code class="text-xs opacity-60">{{ cat.pattern }}</code>
+                </label>
+              }
+            </div>
+          </div>
+        </div>
+
+        @if (editingId()) {
+          <label class="toggle-row">
+            <span class="relative inline-flex items-center">
+              <input
+                type="checkbox"
+                class="sr-only"
+                name="enabled"
+                [ngModel]="formEnabled()"
+                (ngModelChange)="formEnabled.set($event)"
+              />
+              <span class="toggle-track" [class.toggle-on]="formEnabled()">
+                <span class="toggle-thumb" [class.toggle-thumb-on]="formEnabled()"></span>
+              </span>
+            </span>
+            <span>Endpoint enabled</span>
+          </label>
+        }
+
+        <div class="flex justify-end gap-2">
+          <button type="button" (click)="closeEditor()" class="btn-secondary">Cancel</button>
+          <button type="submit" [disabled]="busy()" class="btn-primary">
+            <span class="material-symbols-outlined text-sm" aria-hidden="true">save</span>
+            {{ busy() ? 'Saving…' : 'Save endpoint' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  }
+
+  <!-- List -->
+  @if (loading()) {
+    <p class="text-sm text-on-surface-variant py-8 text-center">Loading webhooks…</p>
+  } @else if (webhooks().length === 0) {
+    <div class="status-banner status-warn">
+      <span class="material-symbols-outlined">info</span>
+      <div>
+        <p class="font-medium">No webhook endpoints</p>
+        <p class="text-xs opacity-70">Add an endpoint to start delivering audit events.</p>
+      </div>
+    </div>
+  } @else {
+    <div class="settings-card overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-surface-container border-b border-outline-variant/20">
+            <tr>
+              <th class="px-4 py-2 text-left text-xs font-semibold text-on-surface">Endpoint</th>
+              <th class="px-4 py-2 text-left text-xs font-semibold text-on-surface">Events</th>
+              <th class="px-4 py-2 text-left text-xs font-semibold text-on-surface">Status</th>
+              <th class="px-4 py-2 text-left text-xs font-semibold text-on-surface">
+                Last delivery
+              </th>
+              <th class="px-4 py-2 text-right text-xs font-semibold text-on-surface">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (w of webhooks(); track w.id) {
+              <tr class="border-b border-outline-variant/10 align-top">
+                <td class="px-4 py-3">
+                  <p class="font-medium text-on-surface">{{ w.name }}</p>
+                  <p class="text-xs text-on-surface-variant font-mono break-all">{{ w.url }}</p>
+                </td>
+                <td class="px-4 py-3 text-xs text-on-surface-variant">
+                  {{ eventSummary(w.eventTypes) }}
+                </td>
+                <td class="px-4 py-3">
+                  <span
+                    class="text-xs font-semibold px-2.5 py-1 rounded-full whitespace-nowrap"
+                    [class.bg-tertiary]="statusTone(w) === 'ok'"
+                    [class.text-on-tertiary]="statusTone(w) === 'ok'"
+                    [class.bg-error]="statusTone(w) === 'bad'"
+                    [class.text-on-error]="statusTone(w) === 'bad'"
+                    [class.bg-surface-container-highest]="statusTone(w) === 'idle'"
+                    [class.text-on-surface-variant]="statusTone(w) === 'idle'"
+                    >{{ statusText(w) }}</span
+                  >
+                  @if (w.lastResponseCode) {
+                    <span class="block text-xs text-on-surface-variant mt-1"
+                      >HTTP {{ w.lastResponseCode }}</span
+                    >
+                  }
+                </td>
+                <td class="px-4 py-3 text-xs text-on-surface-variant">
+                  {{ w.lastDeliveryAt ? (w.lastDeliveryAt | date: 'short') : '—' }}
+                </td>
+                <td class="px-4 py-3">
+                  <div class="flex items-center justify-end gap-1.5 flex-wrap">
+                    @if (confirmingDeleteId() === w.id) {
+                      <span class="text-xs text-on-surface-variant">Delete?</span>
+                      <button
+                        type="button"
+                        (click)="confirmingDeleteId.set(null)"
+                        class="btn-secondary"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        (click)="doDelete(w.id)"
+                        [disabled]="rowBusyId() === w.id"
+                        class="btn-danger"
+                      >
+                        Confirm
+                      </button>
+                    } @else if (confirmingRotateId() === w.id) {
+                      <span class="text-xs text-on-surface-variant">Rotate secret?</span>
+                      <button
+                        type="button"
+                        (click)="confirmingRotateId.set(null)"
+                        class="btn-secondary"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        (click)="doRotate(w.id)"
+                        [disabled]="rowBusyId() === w.id"
+                        class="btn-primary"
+                      >
+                        Confirm
+                      </button>
+                    } @else {
+                      <button
+                        type="button"
+                        (click)="sendTest(w)"
+                        [disabled]="rowBusyId() === w.id"
+                        class="btn-secondary"
+                        title="Send a test event"
+                      >
+                        <span class="material-symbols-outlined text-sm" aria-hidden="true"
+                          >bolt</span
+                        >
+                        Test
+                      </button>
+                      <button
+                        type="button"
+                        (click)="toggleEnabled(w)"
+                        [disabled]="rowBusyId() === w.id"
+                        class="btn-secondary"
+                      >
+                        {{ w.enabled ? 'Disable' : 'Enable' }}
+                      </button>
+                      <button type="button" (click)="openEdit(w)" class="btn-secondary">
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        (click)="confirmingRotateId.set(w.id)"
+                        class="btn-secondary"
+                        title="Generate a new signing secret"
+                      >
+                        Rotate
+                      </button>
+                      <button
+                        type="button"
+                        (click)="confirmingDeleteId.set(w.id)"
+                        class="btn-danger"
+                      >
+                        Delete
+                      </button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+</div>

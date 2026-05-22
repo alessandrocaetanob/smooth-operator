@@ -1,5 +1,6 @@
 using SmoothOperator.Application.Interfaces;
 using SmoothOperator.Application.Interfaces.Sso;
+using SmoothOperator.Application.Options;
 using SmoothOperator.Infrastructure.Data;
 using SmoothOperator.Infrastructure.Services;
 using SmoothOperator.Infrastructure.Services.SecretProviders;
@@ -7,6 +8,7 @@ using SmoothOperator.Infrastructure.Services.Sso;
 using Azure.Identity;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using StackExchange.Redis;
 using System.Security.Cryptography.X509Certificates;
 
@@ -42,6 +44,8 @@ public static class ApplicationServicesExtensions
         services.AddSingleton<IAppMetrics, AppMetrics>();
         services.AddHttpContextAccessor();
         services.AddScoped<IAuditService, AuditService>();
+        services.AddScoped<IWebhookEnqueuer, WebhookEnqueuer>();
+        services.AddHostedService<WebhookDeliveryService>();
         services.AddScoped<IInviteService, InviteService>();
         services.AddScoped<IEmailService, EmailService>();
         services.AddScoped<IAccessControlService, AccessControlService>();
@@ -57,6 +61,14 @@ public static class ApplicationServicesExtensions
         services.AddScoped<ISsoConnectionTester, SsoConnectionTester>();
         services.AddScoped<SsoUrlHelper>();
         services.AddHttpClient();
+
+        // Named client for outbound webhook delivery (see WebhookDeliveryService).
+        services.AddHttpClient("webhooks", (sp, client) =>
+        {
+            var webhookOptions = sp.GetRequiredService<IOptions<WebhookOptions>>().Value;
+            client.Timeout = TimeSpan.FromSeconds(webhookOptions.HttpTimeoutSeconds);
+            client.DefaultRequestHeaders.UserAgent.ParseAdd("SmoothOperator-Webhook/1.0");
+        });
 
         // Secret provider factory (transient — each call creates a live SDK client for that provider config)
         services.AddTransient<ISecretProviderFactory, SecretProviderFactory>();
