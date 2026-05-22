@@ -8,19 +8,24 @@ import {
   WebhookSecret,
   WebhooksService,
 } from '../../../services/webhooks.service';
+import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
 
 interface EventCategory {
   pattern: string;
   label: string;
 }
 
+type StatusTone = 'ok' | 'bad' | 'idle';
+
 @Component({
   selector: 'app-webhooks-settings',
   imports: [FormsModule, DatePipe],
   templateUrl: './webhooks.html',
+  styleUrl: './webhooks.css',
 })
 export class WebhooksSettings implements OnInit {
   private readonly svc = inject(WebhooksService);
+  private readonly confirm = inject(ConfirmDialogService);
 
   readonly webhooks = this.svc.list;
   readonly loading = signal(false);
@@ -42,9 +47,9 @@ export class WebhooksSettings implements OnInit {
   readonly selectedEvents = signal<string[]>(['*']);
 
   // --- Per-row transient state ---
-  readonly confirmingDeleteId = signal<string | null>(null);
-  readonly confirmingRotateId = signal<string | null>(null);
   readonly rowBusyId = signal<string | null>(null);
+  /** Endpoint id whose overflow menu is open. */
+  readonly openMenuId = signal<string | null>(null);
 
   readonly eventCategories: EventCategory[] = [
     { pattern: 'user.*', label: 'Users & authentication' },
@@ -75,6 +80,16 @@ export class WebhooksSettings implements OnInit {
     });
   }
 
+  // --- Overflow menu ---
+
+  toggleMenu(id: string): void {
+    this.openMenuId.update((current) => (current === id ? null : id));
+  }
+
+  closeMenu(): void {
+    this.openMenuId.set(null);
+  }
+
   // --- Editor ---
 
   openCreate(): void {
@@ -88,6 +103,7 @@ export class WebhooksSettings implements OnInit {
   }
 
   openEdit(w: Webhook): void {
+    this.closeMenu();
     this.editingId.set(w.id);
     this.formName.set(w.name);
     this.formUrl.set(w.url);
@@ -152,6 +168,7 @@ export class WebhooksSettings implements OnInit {
   // --- Row actions ---
 
   toggleEnabled(w: Webhook): void {
+    this.closeMenu();
     if (this.rowBusyId()) return;
     this.rowBusyId.set(w.id);
     this.clearFeedback();
@@ -190,8 +207,28 @@ export class WebhooksSettings implements OnInit {
     });
   }
 
-  doDelete(id: string): void {
-    this.confirmingDeleteId.set(null);
+  async requestDelete(w: Webhook): Promise<void> {
+    this.closeMenu();
+    const confirmed = await this.confirm.ask({
+      title: 'Delete webhook endpoint?',
+      message: `"${w.name}" will be removed and stop receiving events. This cannot be undone.`,
+      confirmLabel: 'Delete',
+      tone: 'danger',
+    });
+    if (confirmed) this.doDelete(w.id);
+  }
+
+  async requestRotate(w: Webhook): Promise<void> {
+    this.closeMenu();
+    const confirmed = await this.confirm.ask({
+      title: 'Rotate signing secret?',
+      message: `The current secret for "${w.name}" stops working immediately — update your receiver with the new secret right away.`,
+      confirmLabel: 'Rotate secret',
+    });
+    if (confirmed) this.doRotate(w.id);
+  }
+
+  private doDelete(id: string): void {
     this.rowBusyId.set(id);
     this.clearFeedback();
     this.svc.remove(id).subscribe({
@@ -207,8 +244,7 @@ export class WebhooksSettings implements OnInit {
     });
   }
 
-  doRotate(id: string): void {
-    this.confirmingRotateId.set(null);
+  private doRotate(id: string): void {
     this.rowBusyId.set(id);
     this.clearFeedback();
     this.svc.rotateSecret(id).subscribe({
@@ -239,6 +275,13 @@ export class WebhooksSettings implements OnInit {
     this.revealedSecret.set(null);
   }
 
+  copyUrl(w: Webhook): void {
+    navigator.clipboard?.writeText(w.url).then(
+      () => this.message.set('Endpoint URL copied to clipboard.'),
+      () => this.error.set('Could not copy to clipboard.'),
+    );
+  }
+
   // --- Display helpers ---
 
   eventSummary(eventTypes: string): string {
@@ -256,11 +299,9 @@ export class WebhooksSettings implements OnInit {
     return `Failing (${w.consecutiveFailures})`;
   }
 
-  statusTone(w: Webhook): 'ok' | 'warn' | 'bad' | 'idle' {
-    if (!w.enabled) return 'idle';
-    if (!w.lastDeliveryStatus) return 'idle';
-    if (w.lastDeliveryStatus === 'success') return 'ok';
-    return 'bad';
+  statusTone(w: Webhook): StatusTone {
+    if (!w.enabled || !w.lastDeliveryStatus) return 'idle';
+    return w.lastDeliveryStatus === 'success' ? 'ok' : 'bad';
   }
 
   private parseEventTypes(raw: string): string[] {
