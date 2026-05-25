@@ -251,7 +251,7 @@
                   [checked]="isGroupSelected(group.id)"
                   (change)="toggleGroup(group.id, $any($event.target).checked)"
                 />
-                <span>{{ group.name }}</span>
+                <span class="truncate">{{ group.name }}</span>
               </label>
             }
             @if (
@@ -273,7 +273,7 @@
                   [checked]="isGroupSelected(group.id)"
                   (change)="toggleGroup(group.id, $any($event.target).checked)"
                 />
-                <span>{{ group.name }}</span>
+                <span class="truncate">{{ group.name }}</span>
               </label>
             }
             @if (
