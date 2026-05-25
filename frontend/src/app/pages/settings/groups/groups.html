@@ -136,10 +136,10 @@
       (keydown.enter)="closeMembers()"
       (keydown.escape)="closeMembers()"
     >
-      <dialog
-        open
+      <div
+        role="dialog"
         tabindex="-1"
-        class="w-full max-w-lg glass-panel rounded-lg p-5"
+        class="w-full max-w-lg glass-panel rounded-lg p-5 max-h-[85vh] overflow-y-auto"
         (click)="$event.stopPropagation()"
         (keydown.enter)="$event.stopPropagation()"
         aria-labelledby="group-members-title"
@@ -151,7 +151,14 @@
         >
           Members — {{ group.name }}
         </h3>
-        <p class="text-xs text-on-surface-variant mt-1">Select users to include in this group.</p>
+        <div class="flex items-center justify-between mt-1 mb-3">
+          <p class="text-xs text-on-surface-variant">Select users to include in this group.</p>
+          @if (selectedMemberIds().length > 0) {
+            <span class="text-[11px] font-medium text-primary">
+              {{ selectedMemberIds().length }} selected
+            </span>
+          }
+        </div>
 
         <input
           type="text"
@@ -159,24 +166,53 @@
           [ngModel]="memberSearch()"
           (ngModelChange)="memberSearch.set($event)"
           name="memberSearch"
-          class="mt-3 w-full input-field"
+          class="w-full input-field"
         />
 
-        <div class="mt-3 max-h-64 overflow-y-auto space-y-2">
-          @for (user of filteredUsers(); track trackUser($index, user)) {
-            <label class="flex items-center gap-3 text-sm text-on-surface cursor-pointer">
+        <div class="mt-2 max-h-64 overflow-y-auto">
+          @for (user of filteredSelectedMembers(); track trackUser($index, user)) {
+            <label
+              class="flex items-center gap-3 text-sm text-on-surface cursor-pointer border-l-2 border-primary/50 bg-primary/10 rounded-r-md px-3 py-2 mb-0.5"
+            >
               <input
                 type="checkbox"
                 [checked]="isMemberSelected(user.id)"
                 (change)="toggleMember(user.id, $any($event.target).checked)"
               />
-              <span>
+              <span class="truncate">
                 {{ user.name || user.email }}
-                <span class="text-outline text-xs ml-1">{{ user.email }}</span>
+                @if (user.name) {
+                  <span class="text-outline text-xs ml-1">{{ user.email }}</span>
+                }
               </span>
             </label>
-          } @empty {
-            <div class="text-xs text-outline">No users available.</div>
+          }
+          @if (filteredSelectedMembers().length > 0 && filteredUnselectedMembers().length > 0) {
+            <div class="flex items-center gap-2 my-2">
+              <div class="h-px flex-1 bg-white/10"></div>
+              <span class="text-[10px] text-outline uppercase tracking-wider">available</span>
+              <div class="h-px flex-1 bg-white/10"></div>
+            </div>
+          }
+          @for (user of filteredUnselectedMembers(); track trackUser($index, user)) {
+            <label
+              class="flex items-center gap-3 text-sm text-on-surface cursor-pointer px-3 py-2 mb-0.5 rounded-md hover:bg-white/5"
+            >
+              <input
+                type="checkbox"
+                [checked]="isMemberSelected(user.id)"
+                (change)="toggleMember(user.id, $any($event.target).checked)"
+              />
+              <span class="truncate">
+                {{ user.name || user.email }}
+                @if (user.name) {
+                  <span class="text-outline text-xs ml-1">{{ user.email }}</span>
+                }
+              </span>
+            </label>
+          }
+          @if (filteredSelectedMembers().length === 0 && filteredUnselectedMembers().length === 0) {
+            <div class="text-xs text-outline py-2 px-2">No users available.</div>
           }
         </div>
 
@@ -191,7 +227,7 @@
             {{ membersBusy() ? 'Saving…' : 'Save members' }}
           </button>
         </div>
-      </dialog>
+      </div>
     </div>
   }
 </div>

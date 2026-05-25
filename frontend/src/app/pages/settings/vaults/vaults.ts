@@ -55,6 +55,19 @@ export class SettingsVaults implements OnInit {
     return this.groups().filter((g) => g.name.toLowerCase().includes(term));
   });
 
+  readonly filteredSelectedAssignUsers = computed(() =>
+    this.filteredAssignUsers().filter((u) => this.selectedUserIdSet().has(u.id)),
+  );
+  readonly filteredUnselectedAssignUsers = computed(() =>
+    this.filteredAssignUsers().filter((u) => !this.selectedUserIdSet().has(u.id)),
+  );
+  readonly filteredSelectedAssignGroups = computed(() =>
+    this.filteredAssignGroups().filter((g) => this.selectedGroupIdSet().has(g.id)),
+  );
+  readonly filteredUnselectedAssignGroups = computed(() =>
+    this.filteredAssignGroups().filter((g) => !this.selectedGroupIdSet().has(g.id)),
+  );
+
   ngOnInit(): void {
     this.refresh();
   }
