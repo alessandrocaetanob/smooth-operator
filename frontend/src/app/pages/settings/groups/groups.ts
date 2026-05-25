@@ -44,6 +44,13 @@ export class SettingsGroups implements OnInit {
     );
   });
 
+  readonly filteredSelectedMembers = computed(() =>
+    this.filteredUsers().filter((u) => this.selectedMemberIdSet().has(u.id)),
+  );
+  readonly filteredUnselectedMembers = computed(() =>
+    this.filteredUsers().filter((u) => !this.selectedMemberIdSet().has(u.id)),
+  );
+
   ngOnInit(): void {
     this.refresh();
   }

@@ -277,6 +277,34 @@ describe('SettingsVaults', () => {
       expect(component.filteredAssignGroups().map((g) => g.id)).toEqual(['g1']);
     });
 
+    it('filteredSelectedAssignUsers returns selected users matching search', () => {
+      component.selectedUserIds.set(['u1']);
+      expect(component.filteredSelectedAssignUsers().map((u) => u.id)).toEqual(['u1']);
+      component.userAssignSearch.set('bob');
+      expect(component.filteredSelectedAssignUsers().map((u) => u.id)).toEqual([]);
+    });
+
+    it('filteredUnselectedAssignUsers returns non-selected users matching search', () => {
+      component.selectedUserIds.set(['u1']);
+      expect(component.filteredUnselectedAssignUsers().map((u) => u.id)).toEqual(['u2']);
+      component.userAssignSearch.set('alice');
+      expect(component.filteredUnselectedAssignUsers().map((u) => u.id)).toEqual([]);
+    });
+
+    it('filteredSelectedAssignGroups returns selected groups matching search', () => {
+      component.selectedGroupIds.set(['g1']);
+      expect(component.filteredSelectedAssignGroups().map((g) => g.id)).toEqual(['g1']);
+      component.groupAssignSearch.set('xyz');
+      expect(component.filteredSelectedAssignGroups().map((g) => g.id)).toEqual([]);
+    });
+
+    it('filteredUnselectedAssignGroups returns non-selected groups matching search', () => {
+      component.selectedGroupIds.set([]);
+      expect(component.filteredUnselectedAssignGroups().map((g) => g.id)).toEqual(['g1']);
+      component.selectedGroupIds.set(['g1']);
+      expect(component.filteredUnselectedAssignGroups().map((g) => g.id)).toEqual([]);
+    });
+
     it('trackBy helpers return ids', () => {
       expect(component.trackVault(0, vault)).toBe('v1');
       expect(component.trackUser(0, { id: 'u1' } as AppUser)).toBe('u1');

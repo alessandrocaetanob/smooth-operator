@@ -271,6 +271,20 @@ describe('SettingsGroups', () => {
       expect(component.filteredUsers().map((u) => u.id)).toEqual(['u2']);
     });
 
+    it('filteredSelectedMembers returns selected users matching search', () => {
+      component.selectedMemberIds.set(['u1']);
+      expect(component.filteredSelectedMembers().map((u) => u.id)).toEqual(['u1']);
+      component.memberSearch.set('bob');
+      expect(component.filteredSelectedMembers().map((u) => u.id)).toEqual([]);
+    });
+
+    it('filteredUnselectedMembers returns non-selected users matching search', () => {
+      component.selectedMemberIds.set(['u1']);
+      expect(component.filteredUnselectedMembers().map((u) => u.id)).toEqual(['u2']);
+      component.memberSearch.set('alice');
+      expect(component.filteredUnselectedMembers().map((u) => u.id)).toEqual([]);
+    });
+
     it('trackGroup / trackUser return id', () => {
       expect(component.trackGroup(0, group)).toBe('g1');
       expect(component.trackUser(0, { id: 'u1' } as AppUser)).toBe('u1');
