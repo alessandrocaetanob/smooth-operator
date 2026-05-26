@@ -209,7 +209,9 @@ public sealed class RecordingStorageFactoryTests
     public async Task CreateFor_WhenStorageTypeProvided_OverridesPersistedType()
     {
         // Persisted Local, but CreateFor(S3) re-resolves through the same builder with
-        // the override applied to a copy of the settings row.
+        // the override applied to a copy of the settings row. S3Region MUST be set —
+        // otherwise the AWS SDK falls back to IMDS lookup (169.254.169.254) and hangs
+        // ~16s on a CI box with no instance metadata service.
         var (provider, db, _) = BuildScope();
         db.RecordingStorageSettings.Add(new RecordingStorageSettings
         {
@@ -217,6 +219,7 @@ public sealed class RecordingStorageFactoryTests
             StorageType = RecordingStorageType.Local,
             LocalPath = "/tmp/local",
             S3Bucket = "bucket",
+            S3Region = "us-east-1",
             S3AccessKeyId = "AKIA",
             EncryptedS3SecretAccessKey = "enc:s",
             RetentionDays = 7,
