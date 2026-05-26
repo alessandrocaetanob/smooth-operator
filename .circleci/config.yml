@@ -51,9 +51,19 @@ jobs:
               /p:AnalysisLevel=latest
       - run:
           name: Run tests with coverage
-          no_output_timeout: 20m
+          # 30m gives ~10m headroom over the previous tight 20m ceiling. The Api.Tests
+          # integration suite — WebApplicationFactory + EF Core InMemory SQLite, ~450
+          # tests — runs under coverlet instrumentation here, which is roughly 5x slower
+          # than the bare local run.
+          no_output_timeout: 30m
           command: |
-            dotnet test smooth-operator.sln \
+            # `-m:1` forces MSBuild to run test projects sequentially (default is one
+            # worker per CPU, i.e. 2 on the medium executor). When projects run in
+            # parallel each project's stdout is buffered until it completes — Api.Tests
+            # is the slowest, and once the four lighter projects finished, no output
+            # reached CircleCI for the rest of Api.Tests's run, tripping
+            # no_output_timeout even though tests were progressing.
+            dotnet test smooth-operator.sln -m:1 \
               --configuration Release \
               --no-build \
               --verbosity normal \
