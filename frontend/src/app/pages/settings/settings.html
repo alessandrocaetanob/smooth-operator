@@ -101,6 +101,15 @@
       Webhooks
     </a>
     <a
+      routerLink="recording"
+      routerLinkActive="text-primary border-primary"
+      [routerLinkActiveOptions]="{ exact: false }"
+      class="settings-tab flex items-center gap-2 whitespace-nowrap px-4 py-2 text-sm font-medium text-on-surface-variant border-b-2 border-transparent hover:text-on-surface transition-colors"
+    >
+      <span class="material-symbols-outlined text-base">videocam</span>
+      Recording
+    </a>
+    <a
       routerLink="secret-providers"
       routerLinkActive="text-primary border-primary"
       [routerLinkActiveOptions]="{ exact: false }"

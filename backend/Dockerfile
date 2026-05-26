@@ -60,6 +60,15 @@ COPY --from=publish /app/publish .
 # named volume (dp_keys) inherits correct ownership on first mount.
 RUN mkdir -p /data/protection-keys && chown "$APP_UID:$APP_UID" /data/protection-keys
 
+# Pre-create the recording directories with world-writable permission so the
+# named volumes (recordings_temp / recordings_data) inherit a mode that lets
+# BOTH this container (app uid 1654) AND the guacd container (uid 1000) write
+# to the shared mount. Paths are kept un-nested — a /var/recordings/temp nested
+# inside the /var/recordings mount would shadow the Dockerfile-created subdir
+# and start the inner volume empty, defeating the chmod.
+RUN mkdir -p /var/recordings-temp /var/recordings \
+    && chmod 0777 /var/recordings-temp /var/recordings
+
 # Run as the pre-created non-root user from the .NET base image (uid 1654)
 USER $APP_UID
 

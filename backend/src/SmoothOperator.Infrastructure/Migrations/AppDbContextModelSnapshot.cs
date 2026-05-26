@@ -214,6 +214,12 @@ namespace SmoothOperator.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<bool?>("RecordingIncludeKeys")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("RecordingOverride")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Settings")
                         .IsRequired()
                         .HasColumnType("text");
@@ -241,6 +247,15 @@ namespace SmoothOperator.Infrastructure.Migrations
 
                     b.Property<Guid?>("ParentGroupId")
                         .HasColumnType("uuid");
+
+                    b.Property<bool>("RecordingEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("RecordingIncludeKeys")
+                        .HasColumnType("boolean");
+
+                    b.Property<int?>("RecordingRetentionDays")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -442,6 +457,126 @@ namespace SmoothOperator.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Permissions");
+                });
+
+            modelBuilder.Entity("SmoothOperator.Domain.Models.Recording", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ConnectionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("DurationSeconds")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("EndedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasColumnType("text");
+
+                    b.Property<long?>("FileSizeBytes")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("IncludeKeys")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("SessionId")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTime>("StartedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("StorageKey")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<int>("StorageType")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SessionId")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("ConnectionId", "StartedAt");
+
+                    b.HasIndex("Status", "EndedAt");
+
+                    b.ToTable("Recordings");
+                });
+
+            modelBuilder.Entity("SmoothOperator.Domain.Models.RecordingStorageSettings", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AzureAccountName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("AzureBlobEndpoint")
+                        .HasColumnType("text");
+
+                    b.Property<string>("AzureContainerName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("AzurePathPrefix")
+                        .HasColumnType("text");
+
+                    b.Property<string>("EncryptedAzureAccountKey")
+                        .HasColumnType("text");
+
+                    b.Property<string>("EncryptedS3SecretAccessKey")
+                        .HasColumnType("text");
+
+                    b.Property<string>("LocalPath")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("RetentionDays")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("S3AccessKeyId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("S3Bucket")
+                        .HasColumnType("text");
+
+                    b.Property<string>("S3Endpoint")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("S3ForcePathStyle")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("S3PathPrefix")
+                        .HasColumnType("text");
+
+                    b.Property<string>("S3Region")
+                        .HasColumnType("text");
+
+                    b.Property<int>("StorageType")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("RecordingStorageSettings");
                 });
 
             modelBuilder.Entity("SmoothOperator.Domain.Models.Role", b =>
@@ -992,6 +1127,24 @@ namespace SmoothOperator.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("MfaCredential");
+                });
+
+            modelBuilder.Entity("SmoothOperator.Domain.Models.Recording", b =>
+                {
+                    b.HasOne("SmoothOperator.Domain.Models.Connection", "Connection")
+                        .WithMany()
+                        .HasForeignKey("ConnectionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SmoothOperator.Domain.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Connection");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("SmoothOperator.Domain.Models.UserGroup", b =>

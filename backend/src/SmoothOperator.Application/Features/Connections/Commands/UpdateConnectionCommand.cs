@@ -52,6 +52,8 @@ namespace SmoothOperator.Application.Features.Connections.Commands
             connection.CredentialId = request.Dto.CredentialId;
             connection.ConnectionGroupId = request.Dto.ConnectionGroupId;
             connection.Settings = request.Dto.Settings;
+            connection.RecordingOverride = request.Dto.RecordingOverride;
+            connection.RecordingIncludeKeys = request.Dto.RecordingIncludeKeys;
 
             _context.ConnectionTags.RemoveRange(connection.Tags);
             connection.Tags = request.Dto.Tags

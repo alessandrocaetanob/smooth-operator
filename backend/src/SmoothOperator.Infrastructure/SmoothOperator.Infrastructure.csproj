@@ -62,6 +62,11 @@
     <!-- Azure Key Vault integration -->
     <PackageReference Include="Azure.Security.KeyVault.Secrets" Version="4.11.0" />
     <PackageReference Include="Azure.Identity" Version="1.21.0" />
+
+    <!-- Session recording storage backends (v1.0.2) -->
+    <PackageReference Include="Azure.Storage.Blobs" Version="12.27.0" />
+    <!-- AWSSDK.S3 4.0.23+ pulls AWSSDK.Core >= 4.0.0.32, which patches GHSA-9cvc-h2w8-phrp -->
+    <PackageReference Include="AWSSDK.S3" Version="4.0.23.4" />
   </ItemGroup>
 
 </Project>

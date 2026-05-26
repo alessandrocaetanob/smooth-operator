@@ -93,6 +93,22 @@
                     Assign
                   </button>
                   <button
+                    (click)="openRecording(vault)"
+                    class="px-2 py-1 text-xs rounded"
+                    [class.text-tertiary]="vault.recordingEnabled"
+                    [class.text-on-surface-variant]="!vault.recordingEnabled"
+                    [class.hover:bg-tertiary]="vault.recordingEnabled"
+                    [class.hover:bg-on-surface]="!vault.recordingEnabled"
+                    [title]="
+                      vault.recordingEnabled
+                        ? 'Sessions in this vault are being recorded'
+                        : 'Recording is off for this vault'
+                    "
+                  >
+                    <span class="material-symbols-outlined text-base align-middle">videocam</span>
+                    {{ vault.recordingEnabled ? 'Recording on' : 'Recording' }}
+                  </button>
+                  <button
                     (click)="startEdit(vault)"
                     class="px-2 py-1 text-xs text-primary hover:bg-primary/10 rounded"
                   >
@@ -295,6 +311,119 @@
           class="btn-primary"
         >
           {{ assignBusy() ? 'Saving…' : 'Save assignments' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (recordingModalVault(); as vault) {
+  <div
+    class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 md:pl-[calc(1rem+var(--sidebar-width))]"
+    tabindex="-1"
+    (click)="closeRecording()"
+    (keydown.escape)="closeRecording()"
+  >
+    <div
+      class="glass-card rounded-lg w-full max-w-md p-5"
+      role="dialog"
+      tabindex="0"
+      (click)="$event.stopPropagation()"
+      (keydown)="$event.stopPropagation()"
+    >
+      <div class="flex items-center justify-between mb-3">
+        <div>
+          <h3 class="text-base font-semibold text-on-surface">Recording: {{ vault.name }}</h3>
+          <p class="text-xs text-on-surface-variant mt-0.5">
+            Default for every connection in this vault. Each connection can override.
+          </p>
+        </div>
+        <button (click)="closeRecording()" class="btn-ghost-icon" aria-label="Close">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <div class="space-y-4">
+        <!-- Record sessions toggle -->
+        <div>
+          <label class="toggle-row">
+            <span class="relative inline-flex items-center">
+              <input
+                type="checkbox"
+                class="sr-only"
+                [ngModel]="recordingEnabledForm()"
+                (ngModelChange)="recordingEnabledForm.set($event)"
+                name="recEnabled"
+              />
+              <span class="toggle-track" [class.toggle-on]="recordingEnabledForm()">
+                <span class="toggle-thumb" [class.toggle-thumb-on]="recordingEnabledForm()"></span>
+              </span>
+            </span>
+            <span class="font-medium text-on-surface">Record sessions in this vault</span>
+          </label>
+          <p class="text-xs text-on-surface-variant mt-1 ml-[54px]">
+            When on, every connection inside this vault is recorded by default. Individual
+            connections can opt out.
+          </p>
+        </div>
+
+        <!-- Capture keystrokes toggle -->
+        <div [class.opacity-50]="!recordingEnabledForm()">
+          <label class="toggle-row">
+            <span class="relative inline-flex items-center">
+              <input
+                type="checkbox"
+                class="sr-only"
+                [disabled]="!recordingEnabledForm()"
+                [ngModel]="recordingIncludeKeysForm()"
+                (ngModelChange)="recordingIncludeKeysForm.set($event)"
+                name="recIncludeKeys"
+              />
+              <span class="toggle-track" [class.toggle-on]="recordingIncludeKeysForm()">
+                <span
+                  class="toggle-thumb"
+                  [class.toggle-thumb-on]="recordingIncludeKeysForm()"
+                ></span>
+              </span>
+            </span>
+            <span class="font-medium text-on-surface">Also capture keystrokes</span>
+          </label>
+          <p class="text-xs text-on-surface-variant mt-1 ml-[54px]">
+            Off by default. Captured keystrokes can include passwords typed at login prompts — only
+            enable when required for compliance or forensics.
+          </p>
+        </div>
+
+        <!-- Retention override -->
+        <div>
+          <label class="settings-label" for="recRetention">Retention override (days)</label>
+          <input
+            id="recRetention"
+            type="number"
+            min="0"
+            max="3650"
+            [ngModel]="recordingRetentionDaysForm()"
+            (ngModelChange)="recordingRetentionDaysForm.set($event)"
+            name="recRetention"
+            placeholder="Use global default"
+            class="w-full input-field"
+          />
+          <p class="text-xs text-on-surface-variant mt-1">
+            Leave blank to inherit the global retention. Enter <code>0</code> to keep recordings
+            from this vault forever.
+          </p>
+        </div>
+      </div>
+
+      <div class="mt-5 flex justify-end gap-2">
+        <button type="button" (click)="closeRecording()" class="btn-ghost">Cancel</button>
+        <button
+          type="button"
+          (click)="saveRecording()"
+          [disabled]="recordingBusy()"
+          class="btn-primary"
+        >
+          {{ recordingBusy() ? 'Saving…' : 'Save' }}
         </button>
       </div>
     </div>

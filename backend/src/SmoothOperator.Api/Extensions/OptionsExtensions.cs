@@ -54,6 +54,10 @@ public static class OptionsExtensions
         services.AddOptions<MetricsOptions>()
             .BindConfiguration(MetricsOptions.SectionName);
 
+        // Recording paths — no validation since defaults are valid and the feature ships off-by-default.
+        services.AddOptions<RecordingOptions>()
+            .BindConfiguration(RecordingOptions.SectionName);
+
         return services;
     }
 }

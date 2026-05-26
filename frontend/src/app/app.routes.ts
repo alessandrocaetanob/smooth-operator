@@ -148,7 +148,17 @@ export const routes: Routes = [
                 (m) => m.SecretProviders,
               ),
           },
+          {
+            path: 'recording',
+            loadComponent: () =>
+              import('./pages/settings/recording/recording').then((m) => m.RecordingSettingsPage),
+          },
         ],
+      },
+      {
+        path: 'recordings',
+        loadComponent: () => import('./pages/recordings/recordings').then((m) => m.RecordingsPage),
+        canActivate: [authGuard],
       },
       { path: 'administration', redirectTo: 'settings/users', pathMatch: 'full' },
       { path: 'audit-logs', redirectTo: 'auditing/logs', pathMatch: 'full' },

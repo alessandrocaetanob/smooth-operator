@@ -126,6 +126,24 @@
       @if (canAccessSettings()) {
         <li>
           <a
+            routerLink="/recordings"
+            (click)="closeMobileNav()"
+            routerLinkActive="nav-link-active"
+            [routerLinkActiveOptions]="{ exact: false }"
+            class="nav-link"
+            [class.nav-link--icon-only]="collapsed()"
+            [attr.title]="collapsed() ? 'Recordings' : null"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">videocam</span>
+            @if (!collapsed()) {
+              <span>Recordings</span>
+            }
+          </a>
+        </li>
+      }
+      @if (canAccessSettings()) {
+        <li>
+          <a
             routerLink="/monitoring"
             (click)="closeMobileNav()"
             routerLinkActive="nav-link-active"

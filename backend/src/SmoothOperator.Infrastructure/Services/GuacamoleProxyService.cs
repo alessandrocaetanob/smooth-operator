@@ -35,6 +35,7 @@ namespace SmoothOperator.Infrastructure.Services
         private readonly IConnectionMultiplexer _redis;
         private readonly IAppMetrics _metrics;
         private readonly ISecretProviderFactory _secretProviderFactory;
+        private readonly RecordingOptions _recordingOptions;
 
         private static readonly TimeSpan TicketTtl = TimeSpan.FromSeconds(30);
 
@@ -45,7 +46,8 @@ namespace SmoothOperator.Infrastructure.Services
             IEncryptionService encryptionService,
             IConnectionMultiplexer redis,
             IAppMetrics metrics,
-            ISecretProviderFactory secretProviderFactory)
+            ISecretProviderFactory secretProviderFactory,
+            IOptions<RecordingOptions> recordingOptions)
         {
             _logger = logger;
             _guacdHost = guacdOptions.Value.Host;
@@ -55,6 +57,7 @@ namespace SmoothOperator.Infrastructure.Services
             _redis = redis;
             _metrics = metrics;
             _secretProviderFactory = secretProviderFactory;
+            _recordingOptions = recordingOptions.Value;
         }
 
         // ---- Ticket lifecycle (REST issue / WS consume) ------------------------------
@@ -256,6 +259,13 @@ namespace SmoothOperator.Infrastructure.Services
 
             /// <summary>0 = unlimited.</summary>
             public int MaxSessionMinutes { get; set; }
+
+            /// <summary>
+            /// Set during handshake when the session is being recorded. Drives the
+            /// post-session upload trigger and the audit-log enrichment on session-end.
+            /// </summary>
+            public Guid? RecordingId { get; set; }
+            public string? RecordingTempPath { get; set; }
         }
 
         private static Task<User?> LoadAuthorizedUserAsync(AppDbContext dbContext, Guid userId) =>
@@ -266,6 +276,7 @@ namespace SmoothOperator.Infrastructure.Services
                 .Include(c => c.Host)
                 .Include(c => c.Credential).ThenInclude(cr => cr!.SecretProvider)
                 .Include(c => c.Users)
+                .Include(c => c.ConnectionGroup)
                 .FirstOrDefaultAsync(c => c.Id == connectionId);
 
         private async Task HandleMissingConnectionAsync(
@@ -380,6 +391,11 @@ namespace SmoothOperator.Infrastructure.Services
                 using var networkStream = tcpClient.GetStream();
                 var reader = new GuacInstructionReader(networkStream);
 
+                // Decide if this session is being recorded (vault default + per-connection override).
+                // When yes: creates a Recording row, sets req.RecordingId/RecordingTempPath, and
+                // returns the recording-* params that guacd needs in its handshake.
+                var handshakeOverrides = await PrepareRecordingAsync(req);
+
                 await PerformGuacamoleHandshakeAsync(
                     networkStream,
                     reader,
@@ -387,7 +403,7 @@ namespace SmoothOperator.Infrastructure.Services
                     req.DbContext,
                     req.User,
                     req.IpAddress,
-                    req.SettingsOverrides);
+                    handshakeOverrides);
 
                 _metrics.RecordConnectionStarted();
                 sessionMetricRecorded = true;
@@ -423,7 +439,15 @@ namespace SmoothOperator.Infrastructure.Services
 
                 if (connectionSuccessful)
                 {
-                    await LogConnectionEndedAsync(req.DbContext, req.User.Id, req.Connection.Id, req.IpAddress, req.SessionId);
+                    await LogConnectionEndedAsync(req.DbContext, req.User.Id, req.Connection.Id, req.IpAddress, req.SessionId, req.RecordingId);
+                }
+
+                if (req.RecordingId.HasValue && !string.IsNullOrEmpty(req.RecordingTempPath))
+                {
+                    // Fire-and-forget upload on a background scope — DbContext on req is
+                    // request-scoped and may be disposed soon. The upload service owns
+                    // its own scope and updates Recording.Status accordingly.
+                    await TriggerRecordingUploadAsync(req.RecordingId.Value, req.RecordingTempPath);
                 }
 
                 if (sessionMetricRecorded)
@@ -433,6 +457,148 @@ namespace SmoothOperator.Infrastructure.Services
 
                 await CloseGuacSessionAsync(req.WebSocket, failureReason);
                 tcpClient.Close();
+            }
+        }
+
+        // ---- Session-recording wiring -----------------------------------------------
+
+        /// <summary>
+        /// If the resolved Connection (or its parent Vault) has recording enabled, create
+        /// a <c>Recording</c> row and return the handshake overrides with the recording-*
+        /// Guacamole params merged in. Otherwise returns the caller's overrides unchanged.
+        /// </summary>
+        private async Task<IDictionary<string, string>?> PrepareRecordingAsync(GuacSessionRequest req)
+        {
+            var (enabled, includeKeys) = ResolveRecordingEffectiveFlags(req.Connection);
+            _logger.LogInformation(
+                "Recording evaluated for session {SessionId} (connection {ConnectionId}): vault={VaultEnabled}, override={Override}, effective={Enabled}, includeKeys={IncludeKeys}",
+                req.SessionId,
+                req.Connection.Id,
+                req.Connection.ConnectionGroup?.RecordingEnabled ?? false,
+                req.Connection.RecordingOverride,
+                enabled,
+                includeKeys);
+
+            if (!enabled) return req.SettingsOverrides;
+
+            var tempDir = _recordingOptions.LocalPath;
+            // The shared docker volume must be writable by BOTH this container (app uid)
+            // AND the guacd container (uid 1000). Permissions are set at image-build time
+            // in the backend Dockerfile (mkdir + chmod 0777) so the named volume inherits
+            // a world-writable mode on first creation. cap_drop:[ALL] strips CAP_FOWNER,
+            // so we cannot chmod it from .NET at runtime — recreate the volume
+            // (`docker compose down -v`) if you see "permission denied" here.
+            try
+            {
+                Directory.CreateDirectory(tempDir);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,
+                    "Recording enabled but temp dir '{TempDir}' is not writable; session will proceed UNRECORDED. Recreate the recordings_temp volume to pick up the Dockerfile permissions.",
+                    tempDir);
+                await WriteRecordingDisabledAuditAsync(req, "temp_dir_unwritable", ex.Message);
+                return req.SettingsOverrides;
+            }
+
+            var fileName = $"{req.SessionId}.guac";
+            var tempPath = Path.Combine(tempDir, fileName);
+            var storageKey = $"{req.SessionStartedAt:yyyy}/{req.SessionStartedAt:MM}/{req.Connection.Id}/{fileName}";
+
+            var recording = new Domain.Models.Recording
+            {
+                Id = Guid.NewGuid(),
+                SessionId = req.SessionId,
+                ConnectionId = req.Connection.Id,
+                UserId = req.User.Id,
+                StartedAt = req.SessionStartedAt,
+                StorageKey = storageKey,
+                StorageType = Domain.Enums.RecordingStorageType.Local, // settled when upload finalises
+                IncludeKeys = includeKeys,
+                Status = Domain.Enums.RecordingStatus.Recording,
+            };
+            req.DbContext.Recordings.Add(recording);
+
+            req.DbContext.AuditLogs.Add(new AuditLog
+            {
+                Id = Guid.NewGuid(),
+                UserId = req.User.Id,
+                Action = "recording.started",
+                ResourceType = "Recording",
+                ResourceId = recording.Id.ToString(),
+                Details = JsonSerializer.Serialize(new
+                {
+                    sessionId = req.SessionId,
+                    connectionId = req.Connection.Id,
+                    storageKey,
+                    includeKeys,
+                }),
+                IpAddress = req.IpAddress,
+            });
+            await req.DbContext.SaveChangesAsync();
+
+            req.RecordingId = recording.Id;
+            req.RecordingTempPath = tempPath;
+
+            // Merge recording-* params into a fresh dict so we don't mutate the caller's overrides.
+            var overrides = req.SettingsOverrides == null
+                ? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+                : new Dictionary<string, string>(req.SettingsOverrides, StringComparer.OrdinalIgnoreCase);
+            overrides["recording-path"] = tempDir;
+            overrides["recording-name"] = fileName;
+            overrides["create-recording-path"] = "true";
+            overrides["recording-include-keys"] = includeKeys ? "true" : "false";
+            return overrides;
+        }
+
+        private static (bool Enabled, bool IncludeKeys) ResolveRecordingEffectiveFlags(Connection connection)
+        {
+            var vault = connection.ConnectionGroup;
+            var vaultEnabled = vault?.RecordingEnabled ?? false;
+            var enabled = connection.RecordingOverride switch
+            {
+                Domain.Enums.RecordingOverride.ForceOn => true,
+                Domain.Enums.RecordingOverride.ForceOff => false,
+                _ => vaultEnabled,
+            };
+            var includeKeys = connection.RecordingIncludeKeys ?? vault?.RecordingIncludeKeys ?? false;
+            return (enabled, includeKeys);
+        }
+
+        private async Task WriteRecordingDisabledAuditAsync(GuacSessionRequest req, string reason, string detail)
+        {
+            try
+            {
+                req.DbContext.AuditLogs.Add(new AuditLog
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = req.User.Id,
+                    Action = "recording.skipped",
+                    ResourceType = ResourceTypeConnection,
+                    ResourceId = req.Connection.Id.ToString(),
+                    Details = JsonSerializer.Serialize(new { sessionId = req.SessionId, reason, detail }),
+                    IpAddress = req.IpAddress,
+                    Outcome = "failure",
+                });
+                await req.DbContext.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to write recording.skipped audit log for session {SessionId}", req.SessionId);
+            }
+        }
+
+        private async Task TriggerRecordingUploadAsync(Guid recordingId, string tempPath)
+        {
+            try
+            {
+                using var scope = _scopeFactory.CreateScope();
+                var uploader = scope.ServiceProvider.GetRequiredService<IRecordingUploadService>();
+                await uploader.UploadAndFinaliseAsync(recordingId, tempPath, CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Recording upload trigger failed for recording {RecordingId}", recordingId);
             }
         }
 
@@ -675,7 +841,10 @@ namespace SmoothOperator.Infrastructure.Services
         // [LoggerMessage] partial methods: no params-array allocation or value-type
         // boxing at the call site, with a built-in IsEnabled gate (clears CA1873).
 
-        [LoggerMessage(Level = LogLevel.Debug,
+        // Trace, not Debug — fires on every user input (key/mouse/touch/clipboard),
+        // so a single interactive session emits hundreds per second. Lift to Debug
+        // only when diagnosing the idle watchdog itself.
+        [LoggerMessage(Level = LogLevel.Trace,
             Message = "Session {SessionId}: user activity detected — idle clock reset")]
         partial void LogUserActivityDetected(string sessionId);
 
@@ -687,7 +856,8 @@ namespace SmoothOperator.Infrastructure.Services
             Message = "Session {SessionId}: idle/max-session watchdog started (idle={Idle}min, max={Max}min)")]
         partial void LogWatchdogStarted(string sessionId, int idle, int max);
 
-        [LoggerMessage(Level = LogLevel.Debug,
+        // Trace, not Debug — fires every 15 s per session for every active connection.
+        [LoggerMessage(Level = LogLevel.Trace,
             Message = "Session {SessionId}: watchdog poll — idle {IdleSeconds:F0}s (limit {IdleLimit}min), session {SessionSeconds:F0}s (limit {MaxLimit}min){Outcome}")]
         partial void LogWatchdogPoll(
             string sessionId, double idleSeconds, int idleLimit,
@@ -714,9 +884,13 @@ namespace SmoothOperator.Infrastructure.Services
         }
 
         private static async Task LogConnectionEndedAsync(
-            AppDbContext dbContext, Guid userId, Guid connectionId, string ipAddress, string sessionId)
+            AppDbContext dbContext, Guid userId, Guid connectionId, string ipAddress, string sessionId, Guid? recordingId)
         {
             var endTime = DateTime.UtcNow;
+            object details = recordingId.HasValue
+                ? new { sessionId, endTime = endTime.ToString("O"), recordingId = recordingId.Value }
+                : (object)new { sessionId, endTime = endTime.ToString("O") };
+
             dbContext.AuditLogs.Add(new AuditLog
             {
                 Id = Guid.NewGuid(),
@@ -724,7 +898,7 @@ namespace SmoothOperator.Infrastructure.Services
                 Action = "connection.ended",
                 ResourceType = ResourceTypeConnection,
                 ResourceId = connectionId.ToString(),
-                Details = $"{{\"sessionId\":\"{sessionId}\",\"endTime\":\"{endTime:O}\"}}",
+                Details = JsonSerializer.Serialize(details),
                 IpAddress = ipAddress
             });
             await dbContext.SaveChangesAsync();

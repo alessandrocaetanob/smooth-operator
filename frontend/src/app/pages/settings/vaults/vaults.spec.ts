@@ -146,7 +146,10 @@ describe('SettingsVaults', () => {
     it('saveEdit renames', () => {
       component.editingName.set('renamed');
       component.saveEdit(vault);
-      expect(vaultsSvc.update).toHaveBeenCalledWith('v1', { name: 'renamed' });
+      expect(vaultsSvc.update).toHaveBeenCalledWith(
+        'v1',
+        expect.objectContaining({ name: 'renamed' }),
+      );
       expect(toast.success).toHaveBeenCalled();
     });
 

@@ -38,6 +38,9 @@ interface FormState {
   settings: string;
   newHostAddress: string;
   tags: string[];
+  recordingOverride: 'Inherit' | 'ForceOn' | 'ForceOff';
+  // 'inherit' | 'true' | 'false' — rendered as a select; mapped to nullable bool on save
+  recordingIncludeKeys: 'inherit' | 'true' | 'false';
 }
 
 interface TermColorScheme {
@@ -74,6 +77,8 @@ const EMPTY_FORM: FormState = {
   settings: '',
   newHostAddress: '',
   tags: [],
+  recordingOverride: 'Inherit',
+  recordingIncludeKeys: 'inherit',
 };
 
 /** Simple deterministic color bucket for tag chips */
@@ -239,6 +244,13 @@ export class Connections implements OnInit {
       settings: Object.keys(settingsObj).length ? JSON.stringify(settingsObj, null, 2) : '{}',
       newHostAddress: '',
       tags: [...(c.tags ?? [])],
+      recordingOverride: c.recordingOverride ?? 'Inherit',
+      recordingIncludeKeys:
+        c.recordingIncludeKeys === true
+          ? 'true'
+          : c.recordingIncludeKeys === false
+            ? 'false'
+            : 'inherit',
     });
     this.showDrawer.set(true);
   }
@@ -360,6 +372,13 @@ export class Connections implements OnInit {
             credentialId: f.credentialId || null,
             settings: settingsJson,
             tags: f.tags,
+            recordingOverride: f.recordingOverride,
+            recordingIncludeKeys:
+              f.recordingIncludeKeys === 'true'
+                ? true
+                : f.recordingIncludeKeys === 'false'
+                  ? false
+                  : null,
           };
 
           return f.id

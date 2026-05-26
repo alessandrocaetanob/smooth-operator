@@ -52,6 +52,8 @@ namespace SmoothOperator.Application.Features.Connections.Queries
             CredentialId = c.CredentialId,
             ConnectionGroupId = c.ConnectionGroupId,
             Settings = c.Settings,
+            RecordingOverride = c.RecordingOverride,
+            RecordingIncludeKeys = c.RecordingIncludeKeys,
             Tags = c.Tags.Select(t => t.Tag).ToList(),
             Host = c.Host == null ? null : new HostDto
             {
@@ -62,7 +64,10 @@ namespace SmoothOperator.Application.Features.Connections.Queries
             ConnectionGroup = c.ConnectionGroup == null ? null : new ConnectionGroupDto
             {
                 Id = c.ConnectionGroup.Id,
-                Name = c.ConnectionGroup.Name
+                Name = c.ConnectionGroup.Name,
+                RecordingEnabled = c.ConnectionGroup.RecordingEnabled,
+                RecordingIncludeKeys = c.ConnectionGroup.RecordingIncludeKeys,
+                RecordingRetentionDays = c.ConnectionGroup.RecordingRetentionDays,
             }
         };
     }

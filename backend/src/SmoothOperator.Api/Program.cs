@@ -21,7 +21,14 @@ builder.Services.AddApplicationForwardedHeaders();
 builder.Services.AddApplicationHealthChecks(builder.Configuration);
 builder.Services.AddApplicationDataProtection(builder.Configuration);
 builder.Services.AddApplicationCors(builder.Configuration, builder.Environment);
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        // Accept and emit enum members as strings (e.g. "Inherit", not 0). Lets the
+        // Angular frontend use semantic names in request payloads + responses.
+        options.JsonSerializerOptions.Converters.Add(
+            new System.Text.Json.Serialization.JsonStringEnumConverter());
+    });
 builder.Services.AddApplicationResponseCompression();
 builder.Services.AddApplicationOutputCache(builder.Configuration);
 builder.Services.AddApplicationLayer();

@@ -43,19 +43,25 @@ namespace SmoothOperator.Application.Features.ConnectionGroups.Commands
             {
                 Id = Guid.NewGuid(),
                 Name = name,
-                ParentGroupId = request.Dto.ParentGroupId
+                ParentGroupId = request.Dto.ParentGroupId,
+                RecordingEnabled = request.Dto.RecordingEnabled,
+                RecordingIncludeKeys = request.Dto.RecordingIncludeKeys,
+                RecordingRetentionDays = request.Dto.RecordingRetentionDays,
             };
 
             _context.ConnectionGroups.Add(vault);
             await _context.SaveChangesAsync(cancellationToken);
             await _audit.WriteAsync("vault.created", "ConnectionGroup", vault.Id.ToString(),
-                new { vault.Name, vault.ParentGroupId });
+                new { vault.Name, vault.ParentGroupId, vault.RecordingEnabled });
 
             return new ConnectionGroupDto
             {
                 Id = vault.Id,
                 Name = vault.Name,
-                ParentGroupId = vault.ParentGroupId
+                ParentGroupId = vault.ParentGroupId,
+                RecordingEnabled = vault.RecordingEnabled,
+                RecordingIncludeKeys = vault.RecordingIncludeKeys,
+                RecordingRetentionDays = vault.RecordingRetentionDays,
             };
         }
 

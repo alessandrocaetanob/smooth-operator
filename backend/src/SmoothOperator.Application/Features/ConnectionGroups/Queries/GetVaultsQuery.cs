@@ -38,7 +38,10 @@ namespace SmoothOperator.Application.Features.ConnectionGroups.Queries
                     Name = v.Name,
                     ParentGroupId = v.ParentGroupId,
                     UserCount = v.Users.Count,
-                    GroupCount = v.Groups.Count
+                    GroupCount = v.Groups.Count,
+                    RecordingEnabled = v.RecordingEnabled,
+                    RecordingIncludeKeys = v.RecordingIncludeKeys,
+                    RecordingRetentionDays = v.RecordingRetentionDays,
                 })
                 .ToListAsync(cancellationToken);
         }
