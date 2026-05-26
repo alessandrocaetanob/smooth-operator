@@ -34,7 +34,7 @@ namespace SmoothOperator.Infrastructure.Services.Recording
             _prefix = NormalisePrefix(pathPrefix);
         }
 
-        private static IAmazonS3 BuildClient(S3StorageConfig config)
+        private static AmazonS3Client BuildClient(S3StorageConfig config)
         {
             var s3Config = new AmazonS3Config();
             if (!string.IsNullOrWhiteSpace(config.Endpoint))

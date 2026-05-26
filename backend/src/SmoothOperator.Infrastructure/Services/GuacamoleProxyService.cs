@@ -460,98 +460,140 @@ namespace SmoothOperator.Infrastructure.Services
         // ---- Session-recording wiring -----------------------------------------------
 
         /// <summary>
+        /// Outcome of the recording handshake step: which Recording row was created (if any),
+        /// where the temp file will live, and the merged Guacamole handshake overrides.
+        /// </summary>
+        internal sealed record RecordingHandshakeResult(
+            Guid? RecordingId,
+            string? TempPath,
+            IDictionary<string, string>? SettingsOverrides);
+
+        /// <summary>
         /// If the resolved Connection (or its parent Vault) has recording enabled, create
         /// a <c>Recording</c> row and return the handshake overrides with the recording-*
         /// Guacamole params merged in. Otherwise returns the caller's overrides unchanged.
         /// </summary>
         private async Task<IDictionary<string, string>?> PrepareRecordingAsync(GuacSessionRequest req)
         {
-            var (enabled, includeKeys) = ResolveRecordingEffectiveFlags(req.Connection);
-            if (_logger.IsEnabled(LogLevel.Information))
+            var result = await PrepareRecordingCoreAsync(
+                req.Connection,
+                req.User.Id,
+                req.SessionId,
+                req.SessionStartedAt,
+                req.IpAddress,
+                req.SettingsOverrides,
+                req.DbContext,
+                _recordingOptions,
+                _logger);
+
+            if (result.RecordingId.HasValue)
             {
-                _logger.LogInformation(
+                req.RecordingId = result.RecordingId;
+                req.RecordingTempPath = result.TempPath;
+            }
+            return result.SettingsOverrides;
+        }
+
+        /// <summary>
+        /// Pure-input variant of <see cref="PrepareRecordingAsync"/> with no WebSocket/Redis
+        /// dependencies — used by unit tests so the recording decision tree can be exercised
+        /// without standing up the full session pipeline.
+        /// </summary>
+        // The shared docker volume must be writable by BOTH this container (app uid)
+        // AND the guacd container (uid 1000). Permissions are set at image-build time
+        // in the backend Dockerfile (mkdir + chmod 0777) so the named volume inherits
+        // a world-writable mode on first creation. cap_drop:[ALL] strips CAP_FOWNER,
+        // so we cannot chmod it from .NET at runtime — recreate the volume
+        // (`docker compose down -v`) if you see "permission denied" here.
+        internal static async Task<RecordingHandshakeResult> PrepareRecordingCoreAsync(
+            Connection connection,
+            Guid userId,
+            string sessionId,
+            DateTime sessionStartedAt,
+            string ipAddress,
+            IDictionary<string, string>? settingsOverrides,
+            AppDbContext db,
+            RecordingOptions recordingOptions,
+            ILogger logger,
+            CancellationToken cancellationToken = default)
+        {
+            var (enabled, includeKeys) = ResolveRecordingEffectiveFlags(connection);
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(
                     "Recording evaluated for session {SessionId} (connection {ConnectionId}): vault={VaultEnabled}, override={Override}, effective={Enabled}, includeKeys={IncludeKeys}",
-                    req.SessionId,
-                    req.Connection.Id,
-                    req.Connection.ConnectionGroup?.RecordingEnabled ?? false,
-                    req.Connection.RecordingOverride,
+                    sessionId,
+                    connection.Id,
+                    connection.ConnectionGroup?.RecordingEnabled ?? false,
+                    connection.RecordingOverride,
                     enabled,
                     includeKeys);
             }
 
-            if (!enabled) return req.SettingsOverrides;
+            if (!enabled) return new RecordingHandshakeResult(null, null, settingsOverrides);
 
-            var tempDir = _recordingOptions.LocalPath;
-            // The shared docker volume must be writable by BOTH this container (app uid)
-            // AND the guacd container (uid 1000). Permissions are set at image-build time
-            // in the backend Dockerfile (mkdir + chmod 0777) so the named volume inherits
-            // a world-writable mode on first creation. cap_drop:[ALL] strips CAP_FOWNER,
-            // so we cannot chmod it from .NET at runtime — recreate the volume
-            // (`docker compose down -v`) if you see "permission denied" here.
+            var tempDir = recordingOptions.LocalPath;
             try
             {
                 Directory.CreateDirectory(tempDir);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex,
+                logger.LogError(ex,
                     "Recording enabled but temp dir '{TempDir}' is not writable; session will proceed UNRECORDED. Recreate the recordings_temp volume to pick up the Dockerfile permissions.",
                     tempDir);
-                await WriteRecordingDisabledAuditAsync(req, "temp_dir_unwritable", ex.Message);
-                return req.SettingsOverrides;
+                await WriteRecordingSkippedAuditCoreAsync(db, userId, connection.Id, sessionId, ipAddress, "temp_dir_unwritable", ex.Message, logger, cancellationToken);
+                return new RecordingHandshakeResult(null, null, settingsOverrides);
             }
 
-            var fileName = $"{req.SessionId}.guac";
+            var fileName = $"{sessionId}.guac";
             var tempPath = Path.Combine(tempDir, fileName);
-            var storageKey = $"{req.SessionStartedAt:yyyy}/{req.SessionStartedAt:MM}/{req.Connection.Id}/{fileName}";
+            var storageKey = $"{sessionStartedAt:yyyy}/{sessionStartedAt:MM}/{connection.Id}/{fileName}";
 
             var recording = new Domain.Models.Recording
             {
                 Id = Guid.NewGuid(),
-                SessionId = req.SessionId,
-                ConnectionId = req.Connection.Id,
-                UserId = req.User.Id,
-                StartedAt = req.SessionStartedAt,
+                SessionId = sessionId,
+                ConnectionId = connection.Id,
+                UserId = userId,
+                StartedAt = sessionStartedAt,
                 StorageKey = storageKey,
                 StorageType = Domain.Enums.RecordingStorageType.Local, // settled when upload finalises
                 IncludeKeys = includeKeys,
                 Status = Domain.Enums.RecordingStatus.Recording,
             };
-            req.DbContext.Recordings.Add(recording);
+            db.Recordings.Add(recording);
 
-            req.DbContext.AuditLogs.Add(new AuditLog
+            db.AuditLogs.Add(new AuditLog
             {
                 Id = Guid.NewGuid(),
-                UserId = req.User.Id,
+                UserId = userId,
                 Action = "recording.started",
                 ResourceType = "Recording",
                 ResourceId = recording.Id.ToString(),
                 Details = JsonSerializer.Serialize(new
                 {
-                    sessionId = req.SessionId,
-                    connectionId = req.Connection.Id,
+                    sessionId,
+                    connectionId = connection.Id,
                     storageKey,
                     includeKeys,
                 }),
-                IpAddress = req.IpAddress,
+                IpAddress = ipAddress,
             });
-            await req.DbContext.SaveChangesAsync();
-
-            req.RecordingId = recording.Id;
-            req.RecordingTempPath = tempPath;
+            await db.SaveChangesAsync(cancellationToken);
 
             // Merge recording-* params into a fresh dict so we don't mutate the caller's overrides.
-            var overrides = req.SettingsOverrides == null
+            var overrides = settingsOverrides == null
                 ? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-                : new Dictionary<string, string>(req.SettingsOverrides, StringComparer.OrdinalIgnoreCase);
+                : new Dictionary<string, string>(settingsOverrides, StringComparer.OrdinalIgnoreCase);
             overrides["recording-path"] = tempDir;
             overrides["recording-name"] = fileName;
             overrides["create-recording-path"] = "true";
             overrides["recording-include-keys"] = includeKeys ? "true" : "false";
-            return overrides;
+            return new RecordingHandshakeResult(recording.Id, tempPath, overrides);
         }
 
-        private static (bool Enabled, bool IncludeKeys) ResolveRecordingEffectiveFlags(Connection connection)
+        internal static (bool Enabled, bool IncludeKeys) ResolveRecordingEffectiveFlags(Connection connection)
         {
             var vault = connection.ConnectionGroup;
             var vaultEnabled = vault?.RecordingEnabled ?? false;
@@ -565,26 +607,35 @@ namespace SmoothOperator.Infrastructure.Services
             return (enabled, includeKeys);
         }
 
-        private async Task WriteRecordingDisabledAuditAsync(GuacSessionRequest req, string reason, string detail)
+        internal static async Task WriteRecordingSkippedAuditCoreAsync(
+            AppDbContext db,
+            Guid userId,
+            Guid connectionId,
+            string sessionId,
+            string ipAddress,
+            string reason,
+            string detail,
+            ILogger logger,
+            CancellationToken cancellationToken = default)
         {
             try
             {
-                req.DbContext.AuditLogs.Add(new AuditLog
+                db.AuditLogs.Add(new AuditLog
                 {
                     Id = Guid.NewGuid(),
-                    UserId = req.User.Id,
+                    UserId = userId,
                     Action = "recording.skipped",
                     ResourceType = ResourceTypeConnection,
-                    ResourceId = req.Connection.Id.ToString(),
-                    Details = JsonSerializer.Serialize(new { sessionId = req.SessionId, reason, detail }),
-                    IpAddress = req.IpAddress,
+                    ResourceId = connectionId.ToString(),
+                    Details = JsonSerializer.Serialize(new { sessionId, reason, detail }),
+                    IpAddress = ipAddress,
                     Outcome = "failure",
                 });
-                await req.DbContext.SaveChangesAsync();
+                await db.SaveChangesAsync(cancellationToken);
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Failed to write recording.skipped audit log for session {SessionId}", req.SessionId);
+                logger.LogWarning(ex, "Failed to write recording.skipped audit log for session {SessionId}", sessionId);
             }
         }
 
