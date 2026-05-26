@@ -200,10 +200,10 @@ export class RecordingPlayerComponent implements OnDestroy {
   private displayEl: any = null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private session: any = null;
-  private positionTimer: number | null = null;
+  private positionTimer: ReturnType<typeof setInterval> | null = null;
   private recorder: MediaRecorder | null = null;
   private recordedChunks: Blob[] = [];
-  private exportPollTimer: number | null = null;
+  private exportPollTimer: ReturnType<typeof setInterval> | null = null;
   private compositeCanvas: HTMLCanvasElement | null = null;
   private compositeCtx: CanvasRenderingContext2D | null = null;
   private compositeRaf: number | null = null;
