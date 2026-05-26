@@ -79,6 +79,92 @@ public class RecordingStorageSettingsControllerIntegrationTests
     }
 
     [Fact]
+    public async Task Put_RejectsS3WithoutBucket()
+    {
+        var adminId = Guid.NewGuid();
+        await using var factory = new TestWebApplicationFactory(db =>
+        {
+            var admin = new User { Id = adminId, Email = "a@x", Name = "a", IsActive = true, CreatedAt = DateTime.UtcNow };
+            AttachRoles(db, admin, AppRoles.Admin);
+            db.Users.Add(admin);
+        });
+        var client = AsUser(factory, adminId, AppRoles.Admin);
+
+        var put = await client.PutAsJsonAsync("/api/settings/recording-storage", new UpdateRecordingStorageSettingsRequest
+        {
+            StorageType = RecordingStorageType.S3,
+            // S3Bucket intentionally omitted.
+            S3AccessKeyId = "AKIAEXAMPLE",
+            S3SecretAccessKey = "secret",
+        });
+
+        Assert.Equal(HttpStatusCode.BadRequest, put.StatusCode);
+        var body = await put.Content.ReadAsStringAsync();
+        Assert.Contains("S3Bucket", body);
+    }
+
+    [Fact]
+    public async Task Put_RejectsAzureBlobWithoutAccountAndContainer()
+    {
+        var adminId = Guid.NewGuid();
+        await using var factory = new TestWebApplicationFactory(db =>
+        {
+            var admin = new User { Id = adminId, Email = "a@x", Name = "a", IsActive = true, CreatedAt = DateTime.UtcNow };
+            AttachRoles(db, admin, AppRoles.Admin);
+            db.Users.Add(admin);
+        });
+        var client = AsUser(factory, adminId, AppRoles.Admin);
+
+        var put = await client.PutAsJsonAsync("/api/settings/recording-storage", new UpdateRecordingStorageSettingsRequest
+        {
+            StorageType = RecordingStorageType.AzureBlob,
+            // AzureAccountName + AzureContainerName intentionally omitted.
+        });
+
+        Assert.Equal(HttpStatusCode.BadRequest, put.StatusCode);
+        var body = await put.Content.ReadAsStringAsync();
+        Assert.Contains("AzureAccountName", body);
+        Assert.Contains("AzureContainerName", body);
+    }
+
+    [Fact]
+    public async Task Put_AzureBlobRoundTrip_HidesAccountKey()
+    {
+        var adminId = Guid.NewGuid();
+        await using var factory = new TestWebApplicationFactory(db =>
+        {
+            var admin = new User { Id = adminId, Email = "a@x", Name = "a", IsActive = true, CreatedAt = DateTime.UtcNow };
+            AttachRoles(db, admin, AppRoles.Admin);
+            db.Users.Add(admin);
+        });
+        var client = AsUser(factory, adminId, AppRoles.Admin);
+
+        var put = await client.PutAsJsonAsync("/api/settings/recording-storage", new UpdateRecordingStorageSettingsRequest
+        {
+            StorageType = RecordingStorageType.AzureBlob,
+            AzureAccountName = "myaccount",
+            AzureContainerName = "recordings",
+            AzureAccountKey = "verysecret",
+            RetentionDays = 7,
+        });
+        Assert.Equal(HttpStatusCode.OK, put.StatusCode);
+
+        var afterGet = await client.GetFromJsonAsync<RecordingStorageSettingsDto>(
+            "/api/settings/recording-storage", TestJson.Options);
+        Assert.NotNull(afterGet);
+        Assert.Equal(RecordingStorageType.AzureBlob, afterGet!.StorageType);
+        Assert.Equal("myaccount", afterGet.AzureAccountName);
+        Assert.True(afterGet.HasAzureAccountKey);
+        Assert.Equal(7, afterGet.RetentionDays);
+
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var row = db.RecordingStorageSettings.Single();
+        Assert.False(string.IsNullOrEmpty(row.EncryptedAzureAccountKey));
+        Assert.DoesNotContain("verysecret", row.EncryptedAzureAccountKey);
+    }
+
+    [Fact]
     public async Task NonAdmin_CannotAccessSettings()
     {
         var userId = Guid.NewGuid();

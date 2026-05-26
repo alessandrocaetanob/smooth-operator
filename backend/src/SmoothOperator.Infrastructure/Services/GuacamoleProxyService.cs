@@ -43,20 +43,17 @@ namespace SmoothOperator.Infrastructure.Services
             ILogger<GuacamoleProxyService> logger,
             IOptions<GuacdOptions> guacdOptions,
             IServiceScopeFactory scopeFactory,
-            IEncryptionService encryptionService,
-            IConnectionMultiplexer redis,
-            IAppMetrics metrics,
-            ISecretProviderFactory secretProviderFactory,
-            IOptions<RecordingOptions> recordingOptions)
+            IOptions<RecordingOptions> recordingOptions,
+            GuacamoleProxyDependencies dependencies)
         {
             _logger = logger;
             _guacdHost = guacdOptions.Value.Host;
             _guacdPort = guacdOptions.Value.Port;
             _scopeFactory = scopeFactory;
-            _encryptionService = encryptionService;
-            _redis = redis;
-            _metrics = metrics;
-            _secretProviderFactory = secretProviderFactory;
+            _encryptionService = dependencies.Encryption;
+            _redis = dependencies.Redis;
+            _metrics = dependencies.Metrics;
+            _secretProviderFactory = dependencies.SecretProviderFactory;
             _recordingOptions = recordingOptions.Value;
         }
 
@@ -444,10 +441,10 @@ namespace SmoothOperator.Infrastructure.Services
 
                 if (req.RecordingId.HasValue && !string.IsNullOrEmpty(req.RecordingTempPath))
                 {
-                    // Fire-and-forget upload on a background scope — DbContext on req is
-                    // request-scoped and may be disposed soon. The upload service owns
-                    // its own scope and updates Recording.Status accordingly.
-                    await TriggerRecordingUploadAsync(req.RecordingId.Value, req.RecordingTempPath);
+                    // True fire-and-forget — uploads can run hundreds of megabytes and we
+                    // don't want session teardown / WebSocket close to wait on cloud I/O.
+                    // The upload service owns its own scope and updates Recording.Status.
+                    _ = Task.Run(() => TriggerRecordingUploadAsync(req.RecordingId.Value, req.RecordingTempPath));
                 }
 
                 if (sessionMetricRecorded)
@@ -470,14 +467,17 @@ namespace SmoothOperator.Infrastructure.Services
         private async Task<IDictionary<string, string>?> PrepareRecordingAsync(GuacSessionRequest req)
         {
             var (enabled, includeKeys) = ResolveRecordingEffectiveFlags(req.Connection);
-            _logger.LogInformation(
-                "Recording evaluated for session {SessionId} (connection {ConnectionId}): vault={VaultEnabled}, override={Override}, effective={Enabled}, includeKeys={IncludeKeys}",
-                req.SessionId,
-                req.Connection.Id,
-                req.Connection.ConnectionGroup?.RecordingEnabled ?? false,
-                req.Connection.RecordingOverride,
-                enabled,
-                includeKeys);
+            if (_logger.IsEnabled(LogLevel.Information))
+            {
+                _logger.LogInformation(
+                    "Recording evaluated for session {SessionId} (connection {ConnectionId}): vault={VaultEnabled}, override={Override}, effective={Enabled}, includeKeys={IncludeKeys}",
+                    req.SessionId,
+                    req.Connection.Id,
+                    req.Connection.ConnectionGroup?.RecordingEnabled ?? false,
+                    req.Connection.RecordingOverride,
+                    enabled,
+                    includeKeys);
+            }
 
             if (!enabled) return req.SettingsOverrides;
 

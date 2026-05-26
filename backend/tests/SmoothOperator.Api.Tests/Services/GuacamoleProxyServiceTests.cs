@@ -51,12 +51,15 @@ public class GuacamoleProxyServiceTests
             _loggerMock.Object,
             _options,
             _scopeFactoryMock.Object,
-            _encryptionServiceMock.Object,
-            _redisMock.Object,
-            _metricsMock.Object,
-            _secretProviderFactoryMock.Object,
-            _recordingOptions);
+            _recordingOptions,
+            BuildDependencies());
     }
+
+    private GuacamoleProxyDependencies BuildDependencies() => new(
+        _encryptionServiceMock.Object,
+        _redisMock.Object,
+        _metricsMock.Object,
+        _secretProviderFactoryMock.Object);
 
     [Fact]
     public async Task IssueTicketAsync_PersistsTicketToRedisAndWritesAuditLog()
@@ -287,11 +290,8 @@ public class GuacamoleProxyServiceTests
             _loggerMock.Object,
             Options.Create(new GuacdOptions { Host = "invalid.invalid", Port = 4822 }),
             _scopeFactoryMock.Object,
-            _encryptionServiceMock.Object,
-            _redisMock.Object,
-            _metricsMock.Object,
-            _secretProviderFactoryMock.Object,
-            _recordingOptions);
+            _recordingOptions,
+            BuildDependencies());
 
         using var scope = _scopeFactoryMock.Object.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -502,11 +502,8 @@ public class GuacamoleProxyServiceTests
             _loggerMock.Object,
             Options.Create(new GuacdOptions { Host = "127.0.0.1", Port = guacdPort }),
             _scopeFactoryMock.Object,
-            _encryptionServiceMock.Object,
-            _redisMock.Object,
-            _metricsMock.Object,
-            _secretProviderFactoryMock.Object,
-            _recordingOptions);
+            _recordingOptions,
+            BuildDependencies());
 
         using var scope = _scopeFactoryMock.Object.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -582,12 +579,15 @@ public class GuacamoleProxyServiceInternalTests
             _loggerMock.Object,
             _options,
             _scopeFactoryMock.Object,
-            _encryptionServiceMock.Object,
-            _redisMock.Object,
-            _metricsMock.Object,
-            _secretProviderFactoryMock.Object,
-            _recordingOptions);
+            _recordingOptions,
+            BuildDependencies());
     }
+
+    private GuacamoleProxyDependencies BuildDependencies() => new(
+        _encryptionServiceMock.Object,
+        _redisMock.Object,
+        _metricsMock.Object,
+        _secretProviderFactoryMock.Object);
 
     private Task<string> InvokeResolveDecryptedSecretAsync(Credential credential)
     {

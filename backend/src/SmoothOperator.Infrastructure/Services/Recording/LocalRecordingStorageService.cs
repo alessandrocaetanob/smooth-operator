@@ -77,11 +77,18 @@ namespace SmoothOperator.Infrastructure.Services.Recording
 
         private string ResolvePath(string storageKey)
         {
-            // Normalize forward-slash keys to platform separators; reject path traversal.
+            // Reject traversal and leading separators that would make Path.Combine
+            // ignore _basePath (treating storageKey as absolute).
             if (storageKey.Contains("..", StringComparison.Ordinal))
                 throw new ArgumentException("Storage key must not contain '..'", nameof(storageKey));
-            var relative = storageKey.Replace('/', Path.DirectorySeparatorChar);
-            return Path.Combine(_basePath, relative);
+            var relative = storageKey
+                .Replace('/', Path.DirectorySeparatorChar)
+                .TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            var combined = Path.GetFullPath(Path.Combine(_basePath, relative));
+            var baseFull = Path.GetFullPath(_basePath);
+            if (!combined.StartsWith(baseFull, StringComparison.OrdinalIgnoreCase))
+                throw new ArgumentException("Storage key resolves outside of base path", nameof(storageKey));
+            return combined;
         }
     }
 }

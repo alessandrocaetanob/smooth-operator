@@ -41,6 +41,7 @@ public static class ApplicationServicesExtensions
                 configuration.GetConnectionString("Redis") ?? "localhost:6379"));
 
         services.AddSingleton<IEncryptionService, EncryptionService>();
+        services.AddSingleton<GuacamoleProxyDependencies>();
         services.AddSingleton<GuacamoleProxyService>();
         services.AddSingleton<IAppMetrics, AppMetrics>();
         services.AddHttpContextAccessor();

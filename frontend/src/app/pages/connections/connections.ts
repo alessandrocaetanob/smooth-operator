@@ -245,12 +245,7 @@ export class Connections implements OnInit {
       newHostAddress: '',
       tags: [...(c.tags ?? [])],
       recordingOverride: c.recordingOverride ?? 'Inherit',
-      recordingIncludeKeys:
-        c.recordingIncludeKeys === true
-          ? 'true'
-          : c.recordingIncludeKeys === false
-            ? 'false'
-            : 'inherit',
+      recordingIncludeKeys: Connections.includeKeysToFormValue(c.recordingIncludeKeys),
     });
     this.showDrawer.set(true);
   }
@@ -373,12 +368,7 @@ export class Connections implements OnInit {
             settings: settingsJson,
             tags: f.tags,
             recordingOverride: f.recordingOverride,
-            recordingIncludeKeys:
-              f.recordingIncludeKeys === 'true'
-                ? true
-                : f.recordingIncludeKeys === 'false'
-                  ? false
-                  : null,
+            recordingIncludeKeys: Connections.includeKeysFromFormValue(f.recordingIncludeKeys),
           };
 
           return f.id
@@ -470,5 +460,19 @@ export class Connections implements OnInit {
   private toMessage(err: unknown): string | null {
     const e = err as { error?: { message?: string; Message?: string }; message?: string };
     return e?.error?.message ?? e?.error?.Message ?? e?.message ?? null;
+  }
+
+  private static includeKeysToFormValue(
+    value: boolean | null | undefined,
+  ): 'true' | 'false' | 'inherit' {
+    if (value === true) return 'true';
+    if (value === false) return 'false';
+    return 'inherit';
+  }
+
+  private static includeKeysFromFormValue(value: string): boolean | null {
+    if (value === 'true') return true;
+    if (value === 'false') return false;
+    return null;
   }
 }

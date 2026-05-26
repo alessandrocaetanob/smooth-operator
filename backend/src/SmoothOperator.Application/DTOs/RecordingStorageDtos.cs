@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using SmoothOperator.Domain.Enums;
 
@@ -34,7 +35,7 @@ namespace SmoothOperator.Application.DTOs
         public DateTime? UpdatedAt { get; set; }
     }
 
-    public class UpdateRecordingStorageSettingsRequest
+    public class UpdateRecordingStorageSettingsRequest : IValidatableObject
     {
         public RecordingStorageType StorageType { get; set; } = RecordingStorageType.Local;
 
@@ -80,6 +81,26 @@ namespace SmoothOperator.Application.DTOs
 
         [Range(0, 3650)]
         public int RetentionDays { get; set; } = 90;
+
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            switch (StorageType)
+            {
+                case RecordingStorageType.S3:
+                    if (string.IsNullOrWhiteSpace(S3Bucket))
+                        yield return new ValidationResult("S3 Bucket is required when storage type is S3.", new[] { nameof(S3Bucket) });
+                    if (string.IsNullOrWhiteSpace(S3AccessKeyId))
+                        yield return new ValidationResult("S3 Access Key ID is required when storage type is S3.", new[] { nameof(S3AccessKeyId) });
+                    break;
+
+                case RecordingStorageType.AzureBlob:
+                    if (string.IsNullOrWhiteSpace(AzureAccountName))
+                        yield return new ValidationResult("Azure Account Name is required when storage type is Azure Blob.", new[] { nameof(AzureAccountName) });
+                    if (string.IsNullOrWhiteSpace(AzureContainerName))
+                        yield return new ValidationResult("Azure Container Name is required when storage type is Azure Blob.", new[] { nameof(AzureContainerName) });
+                    break;
+            }
+        }
     }
 
     public class RecordingStorageTestResult

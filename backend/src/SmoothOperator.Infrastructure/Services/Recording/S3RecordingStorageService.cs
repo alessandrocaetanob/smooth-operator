@@ -17,7 +17,7 @@ namespace SmoothOperator.Infrastructure.Services.Recording
     /// </summary>
     public sealed class S3RecordingStorageService : IRecordingStorageService, IDisposable
     {
-        private readonly IAmazonS3 _client;
+        private readonly AmazonS3Client _client;
         private readonly string _bucket;
         private readonly string? _prefix;
         private bool _disposed;

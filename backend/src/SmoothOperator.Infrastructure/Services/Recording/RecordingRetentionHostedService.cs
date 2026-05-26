@@ -62,16 +62,25 @@ namespace SmoothOperator.Infrastructure.Services.Recording
 
             var settings = await db.RecordingStorageSettings.AsNoTracking().FirstOrDefaultAsync(ct);
             var defaultRetention = settings?.RetentionDays ?? 0;
+            var now = DateTime.UtcNow;
 
+            // Push the per-row retention check into SQL — loading every Available recording
+            // into memory just to filter is unbounded as the table grows.
+            // EF translates DateTime.AddDays(int) for both Npgsql and SQLite providers.
             var candidates = await db.Recordings
-                .Where(r => r.Status == RecordingStatus.Available && r.EndedAt != null)
+                .Where(r => r.Status == RecordingStatus.Available
+                    && r.EndedAt != null
+                    && r.Connection != null
+                    && r.Connection.ConnectionGroup != null
+                    && (r.Connection.ConnectionGroup.RecordingRetentionDays ?? defaultRetention) > 0
+                    && r.EndedAt!.Value.AddDays(
+                        r.Connection.ConnectionGroup.RecordingRetentionDays ?? defaultRetention) < now)
                 .Include(r => r.Connection!).ThenInclude(c => c.ConnectionGroup)
                 .ToListAsync(ct);
 
             if (candidates.Count == 0) return;
 
             var storage = await factory.CreateAsync(ct);
-            var now = DateTime.UtcNow;
             int deleted = 0;
 
             foreach (var rec in candidates)
@@ -79,9 +88,6 @@ namespace SmoothOperator.Infrastructure.Services.Recording
                 if (ct.IsCancellationRequested) break;
 
                 var retention = rec.Connection?.ConnectionGroup?.RecordingRetentionDays ?? defaultRetention;
-                if (retention <= 0) continue; // keep forever
-                if (!rec.EndedAt.HasValue) continue;
-                if (now - rec.EndedAt.Value < TimeSpan.FromDays(retention)) continue;
 
                 try
                 {
@@ -92,7 +98,7 @@ namespace SmoothOperator.Infrastructure.Services.Recording
                     {
                         rec.SessionId,
                         rec.ConnectionId,
-                        ageDays = (int)(now - rec.EndedAt.Value).TotalDays,
+                        ageDays = (int)(now - rec.EndedAt!.Value).TotalDays,
                         retention,
                     });
                     deleted++;

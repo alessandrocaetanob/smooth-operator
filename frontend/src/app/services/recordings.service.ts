@@ -102,14 +102,9 @@ export class RecordingsService {
       startedAt: pickOr(raw, '', 'startedAt', 'StartedAt'),
       endedAt: pickOr(raw, null as string | null, 'endedAt', 'EndedAt'),
       durationSeconds: pickOr(raw, null as number | null, 'durationSeconds', 'DurationSeconds'),
-      storageType: pickOr<RecordingStorageType>(
-        raw,
-        'Local' as RecordingStorageType,
-        'storageType',
-        'StorageType',
-      ),
+      storageType: pickOr<RecordingStorageType>(raw, 'Local', 'storageType', 'StorageType'),
       fileSizeBytes: pickOr(raw, null as number | null, 'fileSizeBytes', 'FileSizeBytes'),
-      status: pickOr<RecordingStatus>(raw, 'Available' as RecordingStatus, 'status', 'Status'),
+      status: pickOr<RecordingStatus>(raw, 'Available', 'status', 'Status'),
       errorMessage: pickOr(raw, null as string | null, 'errorMessage', 'ErrorMessage'),
       includeKeys: pickOr(raw, false, 'includeKeys', 'IncludeKeys'),
     };

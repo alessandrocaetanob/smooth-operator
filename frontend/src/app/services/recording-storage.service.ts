@@ -77,12 +77,7 @@ export class RecordingStorageService {
   private normalize(raw: RawRecord): RecordingStorageSettings {
     return {
       configured: pickOr(raw, false, 'configured', 'Configured'),
-      storageType: pickOr<RecordingStorageType>(
-        raw,
-        'Local' as RecordingStorageType,
-        'storageType',
-        'StorageType',
-      ),
+      storageType: pickOr<RecordingStorageType>(raw, 'Local', 'storageType', 'StorageType'),
       localPath: pickOr(raw, '/var/recordings', 'localPath', 'LocalPath'),
       s3Bucket: pickOr(raw, null as string | null, 's3Bucket', 'S3Bucket'),
       s3Region: pickOr(raw, null as string | null, 's3Region', 'S3Region'),

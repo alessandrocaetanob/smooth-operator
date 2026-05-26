@@ -197,9 +197,9 @@ export class RecordingPlayerComponent implements OnDestroy {
 
   private hostEl: HTMLDivElement | null = null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private displayEl: any | null = null;
+  private displayEl: any = null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private session: any | null = null;
+  private session: any = null;
   private positionTimer: number | null = null;
   private recorder: MediaRecorder | null = null;
   private recordedChunks: Blob[] = [];
@@ -385,14 +385,14 @@ export class RecordingPlayerComponent implements OnDestroy {
     const tick = () => {
       if (!this.exporting()) return;
       this.compositeFrame();
-      this.compositeRaf = window.requestAnimationFrame(tick);
+      this.compositeRaf = globalThis.requestAnimationFrame(tick);
     };
-    this.compositeRaf = window.requestAnimationFrame(tick);
+    this.compositeRaf = globalThis.requestAnimationFrame(tick);
   }
 
   private stopCompositeLoop(): void {
     if (this.compositeRaf != null) {
-      window.cancelAnimationFrame(this.compositeRaf);
+      globalThis.cancelAnimationFrame(this.compositeRaf);
       this.compositeRaf = null;
     }
   }
@@ -409,9 +409,9 @@ export class RecordingPlayerComponent implements OnDestroy {
     // inline styles (Guacamole positions each layer absolutely).
     const layers = root.querySelectorAll('canvas');
     layers.forEach((layer) => {
-      const parent = layer.parentElement as HTMLElement | null;
-      const x = parent ? parseFloat(parent.style.left || '0') || 0 : 0;
-      const y = parent ? parseFloat(parent.style.top || '0') || 0 : 0;
+      const parent = layer.parentElement;
+      const x = parent ? Number.parseFloat(parent.style.left || '0') || 0 : 0;
+      const y = parent ? Number.parseFloat(parent.style.top || '0') || 0 : 0;
       try {
         ctx.drawImage(layer, x, y);
       } catch {
@@ -432,7 +432,7 @@ export class RecordingPlayerComponent implements OnDestroy {
 
   private startExportPolling(): void {
     this.stopExportPolling();
-    this.exportPollTimer = window.setInterval(() => {
+    this.exportPollTimer = globalThis.setInterval(() => {
       if (!this.exporting() || !this.recorder) return;
       // Stop once the player has reached the recording's end.
       if (this.duration() > 0 && this.position() >= this.duration()) {
@@ -447,7 +447,7 @@ export class RecordingPlayerComponent implements OnDestroy {
 
   private stopExportPolling(): void {
     if (this.exportPollTimer != null) {
-      window.clearInterval(this.exportPollTimer);
+      globalThis.clearInterval(this.exportPollTimer);
       this.exportPollTimer = null;
     }
   }
@@ -476,7 +476,7 @@ export class RecordingPlayerComponent implements OnDestroy {
 
   private cleanup(): void {
     if (this.positionTimer != null) {
-      window.clearInterval(this.positionTimer);
+      globalThis.clearInterval(this.positionTimer);
       this.positionTimer = null;
     }
     try {
@@ -496,7 +496,7 @@ export class RecordingPlayerComponent implements OnDestroy {
   }
 
   private clearHost(host: HTMLDivElement): void {
-    while (host.firstChild) host.removeChild(host.firstChild);
+    while (host.firstChild) host.firstChild.remove();
   }
 
   private loadAndAttach(id: string): void {
@@ -547,7 +547,7 @@ export class RecordingPlayerComponent implements OnDestroy {
       session.onpause = () => this.playing.set(false);
       session.onplay = () => this.playing.set(true);
 
-      this.positionTimer = window.setInterval(() => {
+      this.positionTimer = globalThis.setInterval(() => {
         if (this.playing()) {
           this.position.update((p) => Math.min(p + 250, this.duration()));
         }

@@ -24,18 +24,20 @@ namespace SmoothOperator.Api.Controllers
         /// </summary>
         [HttpGet]
         public async Task<ActionResult<RecordingsListDto>> List(
-            [FromQuery] Guid? userId,
-            [FromQuery] Guid? connectionId,
-            [FromQuery] Guid? vaultId,
-            [FromQuery] DateTime? from,
-            [FromQuery] DateTime? to,
-            [FromQuery] RecordingStatus? status,
-            [FromQuery] int page = 1,
-            [FromQuery] int pageSize = 25,
-            CancellationToken cancellationToken = default)
+            [FromQuery] RecordingsListFilter filter,
+            CancellationToken cancellationToken)
         {
             var result = await _mediator.Send(
-                new GetRecordingsQuery(User, userId, connectionId, vaultId, from, to, status, page, pageSize),
+                new GetRecordingsQuery(
+                    User,
+                    filter.UserId,
+                    filter.ConnectionId,
+                    filter.VaultId,
+                    filter.From,
+                    filter.To,
+                    filter.Status,
+                    filter.Page,
+                    filter.PageSize),
                 cancellationToken);
             return Ok(result);
         }

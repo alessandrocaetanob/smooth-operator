@@ -33,6 +33,22 @@ namespace SmoothOperator.Application.DTOs
         public int Total { get; set; }
         public int Page { get; set; }
         public int PageSize { get; set; }
-        public List<RecordingDto> Items { get; set; } = new();
+        public List<RecordingDto> Items { get; set; } = [];
+    }
+
+    /// <summary>
+    /// Query-string filter for <c>GET /api/recordings</c>. Bundled into a single
+    /// model-bound parameter so the controller action stays under S107's 7-arg limit.
+    /// </summary>
+    public class RecordingsListFilter
+    {
+        public Guid? UserId { get; set; }
+        public Guid? ConnectionId { get; set; }
+        public Guid? VaultId { get; set; }
+        public DateTime? From { get; set; }
+        public DateTime? To { get; set; }
+        public RecordingStatus? Status { get; set; }
+        public int Page { get; set; } = 1;
+        public int PageSize { get; set; } = 25;
     }
 }
