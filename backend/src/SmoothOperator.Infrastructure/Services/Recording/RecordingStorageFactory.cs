@@ -23,7 +23,7 @@ namespace SmoothOperator.Infrastructure.Services.Recording
         private readonly IServiceProvider _services;
         private readonly IEncryptionService _encryption;
         private readonly RecordingOptions _options;
-        private readonly List<IDisposable> _disposables = new();
+        private readonly List<IDisposable> _disposables = [];
 
         public RecordingStorageFactory(
             IServiceProvider services,

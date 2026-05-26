@@ -314,4 +314,91 @@ describe('SettingsVaults', () => {
       expect(component.trackGroup(0, { id: 'g1' } as UserGroup)).toBe('g1');
     });
   });
+
+  describe('recording modal', () => {
+    const recordingVault: Vault = {
+      id: 'v1',
+      name: 'prod',
+      recordingEnabled: true,
+      recordingIncludeKeys: true,
+      recordingRetentionDays: 14,
+    } as Vault;
+
+    it('openRecording hydrates form signals from the vault', () => {
+      component.openRecording(recordingVault);
+      expect(component.recordingModalVault()).toBe(recordingVault);
+      expect(component.recordingEnabledForm()).toBe(true);
+      expect(component.recordingIncludeKeysForm()).toBe(true);
+      expect(component.recordingRetentionDaysForm()).toBe(14);
+    });
+
+    it('openRecording defaults unset fields to false/null', () => {
+      component.openRecording({ id: 'v1', name: 'prod' } as Vault);
+      expect(component.recordingEnabledForm()).toBe(false);
+      expect(component.recordingIncludeKeysForm()).toBe(false);
+      expect(component.recordingRetentionDaysForm()).toBeNull();
+    });
+
+    it('closeRecording clears modal state and busy flag', () => {
+      component.openRecording(recordingVault);
+      component.recordingBusy.set(true);
+      component.closeRecording();
+      expect(component.recordingModalVault()).toBeNull();
+      expect(component.recordingBusy()).toBe(false);
+    });
+
+    it('saveRecording no-ops without a modal', () => {
+      component.saveRecording();
+      expect(vaultsSvc.update).not.toHaveBeenCalled();
+    });
+
+    it('saveRecording no-ops when busy', () => {
+      component.openRecording(recordingVault);
+      component.recordingBusy.set(true);
+      component.saveRecording();
+      expect(vaultsSvc.update).not.toHaveBeenCalled();
+    });
+
+    it('saveRecording persists settings and closes on success', () => {
+      component.openRecording(recordingVault);
+      component.recordingEnabledForm.set(false);
+      component.recordingIncludeKeysForm.set(true);
+      component.recordingRetentionDaysForm.set(30);
+
+      component.saveRecording();
+
+      expect(vaultsSvc.update).toHaveBeenCalledWith(
+        'v1',
+        expect.objectContaining({
+          name: 'prod',
+          recordingEnabled: false,
+          recordingIncludeKeys: true,
+          recordingRetentionDays: 30,
+        }),
+      );
+      expect(toast.success).toHaveBeenCalled();
+      expect(component.recordingModalVault()).toBeNull();
+      expect(component.recordingBusy()).toBe(false);
+    });
+
+    it('saveRecording surfaces server error', () => {
+      vaultsSvc.update.mockReturnValueOnce(throwError(() => ({ message: 'denied' })));
+      component.openRecording(recordingVault);
+      component.saveRecording();
+
+      expect(component.errorMessage()).toBe('denied');
+      expect(toast.error).toHaveBeenCalled();
+      // Modal stays open so the admin can retry.
+      expect(component.recordingModalVault()).toBe(recordingVault);
+      expect(component.recordingBusy()).toBe(false);
+    });
+
+    it('saveRecording falls back to default error message', () => {
+      vaultsSvc.update.mockReturnValueOnce(throwError(() => ({})));
+      component.openRecording(recordingVault);
+      component.saveRecording();
+
+      expect(component.errorMessage()).toBe('Failed to save recording settings.');
+    });
+  });
 });

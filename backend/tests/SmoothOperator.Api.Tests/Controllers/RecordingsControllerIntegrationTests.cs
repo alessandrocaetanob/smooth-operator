@@ -342,6 +342,175 @@ public class RecordingsControllerIntegrationTests
     };
 
     [Fact]
+    public async Task List_FiltersByUserId()
+    {
+        var adminId = Guid.NewGuid();
+        var otherId = Guid.NewGuid();
+        var hostId = Guid.NewGuid();
+        var connId = Guid.NewGuid();
+
+        await using var factory = new TestWebApplicationFactory(db =>
+        {
+            var admin = new User { Id = adminId, Email = "a@x", Name = "a", IsActive = true, CreatedAt = DateTime.UtcNow };
+            AttachRoles(db, admin, AppRoles.Admin);
+            db.Users.Add(admin);
+            db.Users.Add(new User { Id = otherId, Email = "o@x", Name = "o", IsActive = true, CreatedAt = DateTime.UtcNow });
+
+            db.Hosts.Add(new SmoothOperator.Domain.Models.Host { Id = hostId, Name = "h", Address = "127.0.0.1" });
+            db.Connections.Add(new Connection { Id = connId, Name = "c", Protocol = "rdp", HostId = hostId });
+
+            db.Recordings.AddRange(
+                NewRecording(adminId, connId, RecordingStatus.Available, "admin-rec"),
+                NewRecording(otherId, connId, RecordingStatus.Available, "other-rec"));
+        });
+
+        var client = AsUser(factory, adminId, AppRoles.Admin);
+        var byUser = await client.GetFromJsonAsync<RecordingsListDto>(
+            $"/api/recordings?userId={otherId}", TestJson.Options);
+
+        Assert.NotNull(byUser);
+        Assert.Equal(1, byUser!.Total);
+        Assert.Equal(otherId, byUser.Items[0].UserId);
+    }
+
+    [Fact]
+    public async Task List_FiltersByVaultId()
+    {
+        var adminId = Guid.NewGuid();
+        var vaultA = Guid.NewGuid();
+        var vaultB = Guid.NewGuid();
+        var hostId = Guid.NewGuid();
+        var connA = Guid.NewGuid();
+        var connB = Guid.NewGuid();
+
+        await using var factory = new TestWebApplicationFactory(db =>
+        {
+            var admin = new User { Id = adminId, Email = "a@x", Name = "a", IsActive = true, CreatedAt = DateTime.UtcNow };
+            AttachRoles(db, admin, AppRoles.Admin);
+            db.Users.Add(admin);
+
+            db.ConnectionGroups.Add(new ConnectionGroup { Id = vaultA, Name = "vault-a" });
+            db.ConnectionGroups.Add(new ConnectionGroup { Id = vaultB, Name = "vault-b" });
+
+            db.Hosts.Add(new SmoothOperator.Domain.Models.Host { Id = hostId, Name = "h", Address = "127.0.0.1" });
+            db.Connections.Add(new Connection { Id = connA, Name = "ca", Protocol = "rdp", HostId = hostId, ConnectionGroupId = vaultA });
+            db.Connections.Add(new Connection { Id = connB, Name = "cb", Protocol = "rdp", HostId = hostId, ConnectionGroupId = vaultB });
+
+            db.Recordings.AddRange(
+                NewRecording(adminId, connA, RecordingStatus.Available, "a"),
+                NewRecording(adminId, connB, RecordingStatus.Available, "b"));
+        });
+
+        var client = AsUser(factory, adminId, AppRoles.Admin);
+        var byVault = await client.GetFromJsonAsync<RecordingsListDto>(
+            $"/api/recordings?vaultId={vaultA}", TestJson.Options);
+
+        Assert.NotNull(byVault);
+        Assert.Equal(1, byVault!.Total);
+        Assert.Equal(vaultA, byVault.Items[0].VaultId);
+    }
+
+    [Fact]
+    public async Task List_FiltersByDateRange()
+    {
+        var adminId = Guid.NewGuid();
+        var hostId = Guid.NewGuid();
+        var connId = Guid.NewGuid();
+        var now = DateTime.UtcNow;
+
+        await using var factory = new TestWebApplicationFactory(db =>
+        {
+            var admin = new User { Id = adminId, Email = "a@x", Name = "a", IsActive = true, CreatedAt = DateTime.UtcNow };
+            AttachRoles(db, admin, AppRoles.Admin);
+            db.Users.Add(admin);
+
+            db.Hosts.Add(new SmoothOperator.Domain.Models.Host { Id = hostId, Name = "h", Address = "127.0.0.1" });
+            db.Connections.Add(new Connection { Id = connId, Name = "c", Protocol = "rdp", HostId = hostId });
+
+            db.Recordings.Add(new Recording
+            {
+                Id = Guid.NewGuid(),
+                SessionId = "old",
+                ConnectionId = connId,
+                UserId = adminId,
+                StartedAt = now.AddDays(-10),
+                EndedAt = now.AddDays(-10).AddMinutes(5),
+                Status = RecordingStatus.Available,
+                StorageKey = "old.guac",
+                StorageType = RecordingStorageType.Local,
+            });
+            db.Recordings.Add(new Recording
+            {
+                Id = Guid.NewGuid(),
+                SessionId = "recent",
+                ConnectionId = connId,
+                UserId = adminId,
+                StartedAt = now.AddHours(-1),
+                EndedAt = now,
+                Status = RecordingStatus.Available,
+                StorageKey = "recent.guac",
+                StorageType = RecordingStorageType.Local,
+            });
+        });
+
+        var client = AsUser(factory, adminId, AppRoles.Admin);
+        var from = now.AddDays(-1).ToString("o");
+        var to = now.AddDays(1).ToString("o");
+
+        var inWindow = await client.GetFromJsonAsync<RecordingsListDto>(
+            $"/api/recordings?from={Uri.EscapeDataString(from)}&to={Uri.EscapeDataString(to)}",
+            TestJson.Options);
+
+        Assert.NotNull(inWindow);
+        Assert.Equal(1, inWindow!.Total);
+        Assert.Equal("recent", inWindow.Items[0].SessionId);
+    }
+
+    [Fact]
+    public async Task List_RespectsPagination()
+    {
+        var adminId = Guid.NewGuid();
+        var hostId = Guid.NewGuid();
+        var connId = Guid.NewGuid();
+
+        await using var factory = new TestWebApplicationFactory(db =>
+        {
+            var admin = new User { Id = adminId, Email = "a@x", Name = "a", IsActive = true, CreatedAt = DateTime.UtcNow };
+            AttachRoles(db, admin, AppRoles.Admin);
+            db.Users.Add(admin);
+
+            db.Hosts.Add(new SmoothOperator.Domain.Models.Host { Id = hostId, Name = "h", Address = "127.0.0.1" });
+            db.Connections.Add(new Connection { Id = connId, Name = "c", Protocol = "rdp", HostId = hostId });
+
+            for (int i = 0; i < 5; i++)
+            {
+                db.Recordings.Add(NewRecording(adminId, connId, RecordingStatus.Available, $"rec-{i}"));
+            }
+        });
+
+        var client = AsUser(factory, adminId, AppRoles.Admin);
+
+        var page1 = await client.GetFromJsonAsync<RecordingsListDto>(
+            "/api/recordings?page=1&pageSize=2", TestJson.Options);
+        Assert.NotNull(page1);
+        Assert.Equal(5, page1!.Total);
+        Assert.Equal(2, page1.Items.Count);
+        Assert.Equal(1, page1.Page);
+        Assert.Equal(2, page1.PageSize);
+
+        var page2 = await client.GetFromJsonAsync<RecordingsListDto>(
+            "/api/recordings?page=2&pageSize=2", TestJson.Options);
+        Assert.NotNull(page2);
+        Assert.Equal(2, page2!.Items.Count);
+        Assert.Equal(2, page2.Page);
+
+        var page3 = await client.GetFromJsonAsync<RecordingsListDto>(
+            "/api/recordings?page=3&pageSize=2", TestJson.Options);
+        Assert.NotNull(page3);
+        Assert.Single(page3!.Items);
+    }
+
+    [Fact]
     public async Task Delete_RequiresOwnerOrAdmin()
     {
         var userId = Guid.NewGuid();
@@ -389,8 +558,8 @@ internal sealed class FakeRecordingStorageFactory : IRecordingStorageFactory
 internal sealed class FakeRecordingStorageService : IRecordingStorageService
 {
     private readonly byte[] _payload;
-    public List<string> DeletedKeys { get; } = new();
-    public List<string> UploadedKeys { get; } = new();
+    public List<string> DeletedKeys { get; } = [];
+    public List<string> UploadedKeys { get; } = [];
 
     public FakeRecordingStorageService(string payload) => _payload = Encoding.UTF8.GetBytes(payload);
 

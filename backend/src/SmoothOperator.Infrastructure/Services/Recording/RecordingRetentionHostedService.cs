@@ -109,7 +109,7 @@ namespace SmoothOperator.Infrastructure.Services.Recording
                 }
             }
 
-            if (deleted > 0)
+            if (deleted > 0 && _logger.IsEnabled(LogLevel.Information))
                 _logger.LogInformation("Recording retention sweep removed {Count} expired recordings", deleted);
         }
     }

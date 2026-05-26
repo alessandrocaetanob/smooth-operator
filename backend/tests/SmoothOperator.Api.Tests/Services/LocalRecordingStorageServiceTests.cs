@@ -104,6 +104,36 @@ public sealed class LocalRecordingStorageServiceTests : IDisposable
         Assert.Null(result);
     }
 
+    [Fact]
+    public async Task TestConnectionAsync_OnUnwritablePath_ReturnsError()
+    {
+        // Point at a path *inside* an existing file — Directory.CreateDirectory throws
+        // IOException because the parent isn't a directory. Portable across Linux + Windows.
+        var blockingFile = Path.Combine(_baseDir, "blocker");
+        await File.WriteAllTextAsync(blockingFile, "x");
+        var bogusBase = Path.Combine(blockingFile, "subdir");
+
+        var sut = new LocalRecordingStorageService(bogusBase);
+        var result = await sut.TestConnectionAsync(CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.Contains("not writable", result);
+    }
+
+    [Fact]
+    public async Task UploadAsync_RejectsAbsoluteEscape()
+    {
+        // After leading-separator trim, the path '/etc/passwd' becomes 'etc/passwd' relative
+        // to _baseDir. Any key that resolves outside _baseDir must throw.
+        var sut = new LocalRecordingStorageService(_baseDir);
+        var src = Path.Combine(_baseDir, "src.guac");
+        await File.WriteAllTextAsync(src, "x");
+
+        // Force a key that, after normalisation, contains a traversal segment outside the base.
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            sut.UploadAsync(src, "../../../../../../../tmp/escaped.guac", CancellationToken.None));
+    }
+
     [Theory]
     [InlineData("../escape.guac")]
     [InlineData("nested/../../escape.guac")]

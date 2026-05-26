@@ -20,6 +20,17 @@ namespace SmoothOperator.Infrastructure.Services.Recording
         private readonly string? _prefix;
 
         public AzureBlobRecordingStorageService(AzureBlobStorageConfig config)
+            : this(BuildContainerClient(config), config.PathPrefix)
+        {
+        }
+
+        internal AzureBlobRecordingStorageService(BlobContainerClient container, string? pathPrefix)
+        {
+            _container = container;
+            _prefix = NormalisePrefix(pathPrefix);
+        }
+
+        private static BlobContainerClient BuildContainerClient(AzureBlobStorageConfig config)
         {
             var serviceUri = string.IsNullOrWhiteSpace(config.BlobEndpoint)
                 ? new Uri($"https://{config.AccountName}.blob.core.windows.net")
@@ -27,8 +38,7 @@ namespace SmoothOperator.Infrastructure.Services.Recording
 
             var credential = new StorageSharedKeyCredential(config.AccountName, config.AccountKey);
             var serviceClient = new BlobServiceClient(serviceUri, credential);
-            _container = serviceClient.GetBlobContainerClient(config.ContainerName);
-            _prefix = NormalisePrefix(config.PathPrefix);
+            return serviceClient.GetBlobContainerClient(config.ContainerName);
         }
 
         public RecordingStorageType StorageType => RecordingStorageType.AzureBlob;

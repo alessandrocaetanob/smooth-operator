@@ -1,8 +1,12 @@
+using System.IO;
 using System.Net;
 using System.Net.Http.Json;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using SmoothOperator.Api.Tests.Infrastructure;
 using SmoothOperator.Application.DTOs;
+using SmoothOperator.Application.Interfaces;
 using SmoothOperator.Domain.Enums;
 using SmoothOperator.Domain.Models;
 using SmoothOperator.Infrastructure.Data;
@@ -165,6 +169,76 @@ public class RecordingStorageSettingsControllerIntegrationTests
     }
 
     [Fact]
+    public async Task Test_ReturnsOk_WhenStorageConnectionSucceeds()
+    {
+        var adminId = Guid.NewGuid();
+        var storage = new TestableStorageService(error: null);
+        await using var factory = new TestWebApplicationFactory(
+            db =>
+            {
+                var admin = new User { Id = adminId, Email = "a@x", Name = "a", IsActive = true, CreatedAt = DateTime.UtcNow };
+                AttachRoles(db, admin, AppRoles.Admin);
+                db.Users.Add(admin);
+                // The test endpoint requires settings to exist (factory pulls them from DB).
+                db.RecordingStorageSettings.Add(new Domain.Models.RecordingStorageSettings
+                {
+                    Id = Guid.NewGuid(),
+                    StorageType = RecordingStorageType.Local,
+                    LocalPath = Path.GetTempPath(),
+                    RetentionDays = 90,
+                });
+            },
+            overrideServices: services =>
+            {
+                services.RemoveAll<Application.Interfaces.IRecordingStorageFactory>();
+                services.AddSingleton<Application.Interfaces.IRecordingStorageFactory>(
+                    new FakeRecordingStorageFactory(storage));
+            });
+        var client = AsUser(factory, adminId, AppRoles.Admin);
+
+        var res = await client.PostAsync("/api/settings/recording-storage/test", content: null);
+        Assert.Equal(HttpStatusCode.OK, res.StatusCode);
+        var body = await res.Content.ReadFromJsonAsync<RecordingStorageTestResult>(TestJson.Options);
+        Assert.NotNull(body);
+        Assert.True(body!.Success);
+        Assert.Null(body.Error);
+    }
+
+    [Fact]
+    public async Task Test_Returns502_WhenStorageConnectionFails()
+    {
+        var adminId = Guid.NewGuid();
+        var storage = new TestableStorageService(error: "S3: bucket missing");
+        await using var factory = new TestWebApplicationFactory(
+            db =>
+            {
+                var admin = new User { Id = adminId, Email = "a@x", Name = "a", IsActive = true, CreatedAt = DateTime.UtcNow };
+                AttachRoles(db, admin, AppRoles.Admin);
+                db.Users.Add(admin);
+                db.RecordingStorageSettings.Add(new Domain.Models.RecordingStorageSettings
+                {
+                    Id = Guid.NewGuid(),
+                    StorageType = RecordingStorageType.Local,
+                    LocalPath = Path.GetTempPath(),
+                });
+            },
+            overrideServices: services =>
+            {
+                services.RemoveAll<Application.Interfaces.IRecordingStorageFactory>();
+                services.AddSingleton<Application.Interfaces.IRecordingStorageFactory>(
+                    new FakeRecordingStorageFactory(storage));
+            });
+        var client = AsUser(factory, adminId, AppRoles.Admin);
+
+        var res = await client.PostAsync("/api/settings/recording-storage/test", content: null);
+        Assert.Equal(HttpStatusCode.BadGateway, res.StatusCode);
+        var body = await res.Content.ReadFromJsonAsync<RecordingStorageTestResult>(TestJson.Options);
+        Assert.NotNull(body);
+        Assert.False(body!.Success);
+        Assert.Equal("S3: bucket missing", body.Error);
+    }
+
+    [Fact]
     public async Task NonAdmin_CannotAccessSettings()
     {
         var userId = Guid.NewGuid();
@@ -190,4 +264,17 @@ public class RecordingStorageSettingsControllerIntegrationTests
         }
         return null;
     }
+}
+
+internal sealed class TestableStorageService : IRecordingStorageService
+{
+    private readonly string? _error;
+    public TestableStorageService(string? error) => _error = error;
+    public RecordingStorageType StorageType => RecordingStorageType.Local;
+    public Task<RecordingUploadResult> UploadAsync(string localFilePath, string storageKey, CancellationToken cancellationToken)
+        => Task.FromResult(new RecordingUploadResult(storageKey, 0));
+    public Task<Stream> OpenReadAsync(string storageKey, CancellationToken cancellationToken)
+        => Task.FromResult<Stream>(new MemoryStream());
+    public Task DeleteAsync(string storageKey, CancellationToken cancellationToken) => Task.CompletedTask;
+    public Task<string?> TestConnectionAsync(CancellationToken cancellationToken) => Task.FromResult(_error);
 }

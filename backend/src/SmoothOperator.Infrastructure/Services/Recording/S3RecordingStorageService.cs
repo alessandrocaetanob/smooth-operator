@@ -17,16 +17,25 @@ namespace SmoothOperator.Infrastructure.Services.Recording
     /// </summary>
     public sealed class S3RecordingStorageService : IRecordingStorageService, IDisposable
     {
-        private readonly AmazonS3Client _client;
+        private readonly IAmazonS3 _client;
         private readonly string _bucket;
         private readonly string? _prefix;
         private bool _disposed;
 
         public S3RecordingStorageService(S3StorageConfig config)
+            : this(BuildClient(config), config.Bucket, config.PathPrefix)
         {
-            _bucket = config.Bucket;
-            _prefix = NormalisePrefix(config.PathPrefix);
+        }
 
+        internal S3RecordingStorageService(IAmazonS3 client, string bucket, string? pathPrefix)
+        {
+            _client = client;
+            _bucket = bucket;
+            _prefix = NormalisePrefix(pathPrefix);
+        }
+
+        private static IAmazonS3 BuildClient(S3StorageConfig config)
+        {
             var s3Config = new AmazonS3Config();
             if (!string.IsNullOrWhiteSpace(config.Endpoint))
                 s3Config.ServiceURL = config.Endpoint;
@@ -36,7 +45,7 @@ namespace SmoothOperator.Infrastructure.Services.Recording
             s3Config.ForcePathStyle = config.ForcePathStyle;
 
             var creds = new BasicAWSCredentials(config.AccessKeyId, config.SecretAccessKey);
-            _client = new AmazonS3Client(creds, s3Config);
+            return new AmazonS3Client(creds, s3Config);
         }
 
         public RecordingStorageType StorageType => RecordingStorageType.S3;

@@ -152,6 +152,74 @@ public sealed class RecordingRetentionHostedServiceTests
     }
 
     [Fact]
+    public async Task SweepOnce_WhenStorageDeleteThrows_KeepsRecordingAvailableAndContinues()
+    {
+        var (provider, db, storage, audit) = BuildScope();
+        var vaultId = Guid.NewGuid();
+        var hostId = Guid.NewGuid();
+        var connectionId = Guid.NewGuid();
+
+        db.RecordingStorageSettings.Add(new RecordingStorageSettings
+        {
+            Id = Guid.NewGuid(),
+            StorageType = RecordingStorageType.Local,
+            RetentionDays = 1,
+        });
+        db.ConnectionGroups.Add(new ConnectionGroup { Id = vaultId, Name = "v" });
+        db.Hosts.Add(new SmoothOperator.Domain.Models.Host { Id = hostId, Name = "h", Address = "127.0.0.1" });
+        db.Connections.Add(new Connection { Id = connectionId, Name = "c", Protocol = "rdp", HostId = hostId, ConnectionGroupId = vaultId });
+
+        var failingId = Guid.NewGuid();
+        var workingId = Guid.NewGuid();
+        db.Recordings.Add(new Recording
+        {
+            Id = failingId,
+            SessionId = "fail",
+            ConnectionId = connectionId,
+            UserId = Guid.NewGuid(),
+            StartedAt = DateTime.UtcNow.AddDays(-5),
+            EndedAt = DateTime.UtcNow.AddDays(-3),
+            Status = RecordingStatus.Available,
+            StorageKey = "fail.guac",
+            StorageType = RecordingStorageType.Local,
+        });
+        db.Recordings.Add(new Recording
+        {
+            Id = workingId,
+            SessionId = "ok",
+            ConnectionId = connectionId,
+            UserId = Guid.NewGuid(),
+            StartedAt = DateTime.UtcNow.AddDays(-5),
+            EndedAt = DateTime.UtcNow.AddDays(-3),
+            Status = RecordingStatus.Available,
+            StorageKey = "ok.guac",
+            StorageType = RecordingStorageType.Local,
+        });
+        await db.SaveChangesAsync();
+
+        storage.Setup(s => s.DeleteAsync("fail.guac", It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("storage down"));
+        storage.Setup(s => s.DeleteAsync("ok.guac", It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        await InvokeSweepAsync(provider);
+
+        var failing = await db.Recordings.AsNoTracking().FirstAsync(r => r.Id == failingId);
+        var working = await db.Recordings.AsNoTracking().FirstAsync(r => r.Id == workingId);
+
+        Assert.Equal(RecordingStatus.Available, failing.Status);
+        Assert.Equal(RecordingStatus.Deleted, working.Status);
+
+        audit.Verify(a => a.WriteAsync(
+            "recording.retention_deleted",
+            "Recording",
+            workingId.ToString(),
+            It.IsAny<object>(),
+            It.IsAny<string>()),
+            Times.Once);
+    }
+
+    [Fact]
     public async Task SweepOnce_WithNoSettingsAndZeroDefault_KeepsEverything()
     {
         var (provider, db, storage, _) = BuildScope();

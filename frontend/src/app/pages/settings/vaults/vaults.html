@@ -324,12 +324,12 @@
     (click)="closeRecording()"
     (keydown.escape)="closeRecording()"
   >
-    <dialog
-      open
+    <div
+      role="dialog"
       class="glass-card rounded-lg w-full max-w-md p-5"
       aria-modal="true"
       aria-labelledby="recording-modal-title"
-      tabindex="0"
+      tabindex="-1"
       (click)="$event.stopPropagation()"
       (keydown)="$event.stopPropagation()"
     >
@@ -430,6 +430,6 @@
           {{ recordingBusy() ? 'Saving…' : 'Save' }}
         </button>
       </div>
-    </dialog>
+    </div>
   </div>
 }
