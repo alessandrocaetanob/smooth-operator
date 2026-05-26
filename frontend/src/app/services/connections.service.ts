@@ -11,6 +11,9 @@ export interface ConnectionHostRef {
 
 export type ConnectionProtocol = 'rdp' | 'ssh' | 'vnc';
 
+/** Per-connection override of the parent vault's recording flag. */
+export type RecordingOverride = 'Inherit' | 'ForceOn' | 'ForceOff';
+
 export interface Connection {
   id: string;
   name: string;
@@ -21,6 +24,8 @@ export interface Connection {
   settings: string;
   tags: string[];
   host?: ConnectionHostRef | null;
+  recordingOverride?: RecordingOverride;
+  recordingIncludeKeys?: boolean | null;
 }
 
 export interface CreateConnectionPayload {
@@ -31,6 +36,8 @@ export interface CreateConnectionPayload {
   connectionGroupId?: string | null;
   settings?: string;
   tags?: string[];
+  recordingOverride?: RecordingOverride;
+  recordingIncludeKeys?: boolean | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -142,6 +149,14 @@ export class ConnectionsService {
             address: pickOr(host, '', 'address', 'Address'),
           }
         : null,
+      recordingOverride: pickOr<RecordingOverride>(
+        raw,
+        'Inherit',
+        'recordingOverride',
+        'RecordingOverride',
+      ),
+      recordingIncludeKeys:
+        pick<boolean>(raw, 'recordingIncludeKeys', 'RecordingIncludeKeys') ?? null,
     };
   }
 }

@@ -9,11 +9,17 @@ export interface Vault {
   parentGroupId?: string | null;
   userCount?: number | null;
   groupCount?: number | null;
+  recordingEnabled?: boolean;
+  recordingIncludeKeys?: boolean;
+  recordingRetentionDays?: number | null;
 }
 
 export interface SaveVaultPayload {
   name: string;
   parentGroupId?: string | null;
+  recordingEnabled?: boolean;
+  recordingIncludeKeys?: boolean;
+  recordingRetentionDays?: number | null;
 }
 
 export interface VaultAssignments {
@@ -62,6 +68,10 @@ export class VaultsService {
       parentGroupId: pick<string>(raw, 'parentGroupId', 'ParentGroupId') ?? null,
       userCount: pick<number>(raw, 'userCount', 'UserCount') ?? null,
       groupCount: pick<number>(raw, 'groupCount', 'GroupCount') ?? null,
+      recordingEnabled: pickOr(raw, false, 'recordingEnabled', 'RecordingEnabled'),
+      recordingIncludeKeys: pickOr(raw, false, 'recordingIncludeKeys', 'RecordingIncludeKeys'),
+      recordingRetentionDays:
+        pick<number>(raw, 'recordingRetentionDays', 'RecordingRetentionDays') ?? null,
     };
   }
 }

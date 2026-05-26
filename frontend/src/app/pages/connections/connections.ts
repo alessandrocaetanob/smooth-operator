@@ -38,6 +38,9 @@ interface FormState {
   settings: string;
   newHostAddress: string;
   tags: string[];
+  recordingOverride: 'Inherit' | 'ForceOn' | 'ForceOff';
+  // 'inherit' | 'true' | 'false' — rendered as a select; mapped to nullable bool on save
+  recordingIncludeKeys: 'inherit' | 'true' | 'false';
 }
 
 interface TermColorScheme {
@@ -74,6 +77,8 @@ const EMPTY_FORM: FormState = {
   settings: '',
   newHostAddress: '',
   tags: [],
+  recordingOverride: 'Inherit',
+  recordingIncludeKeys: 'inherit',
 };
 
 /** Simple deterministic color bucket for tag chips */
@@ -239,6 +244,8 @@ export class Connections implements OnInit {
       settings: Object.keys(settingsObj).length ? JSON.stringify(settingsObj, null, 2) : '{}',
       newHostAddress: '',
       tags: [...(c.tags ?? [])],
+      recordingOverride: c.recordingOverride ?? 'Inherit',
+      recordingIncludeKeys: Connections.includeKeysToFormValue(c.recordingIncludeKeys),
     });
     this.showDrawer.set(true);
   }
@@ -360,6 +367,8 @@ export class Connections implements OnInit {
             credentialId: f.credentialId || null,
             settings: settingsJson,
             tags: f.tags,
+            recordingOverride: f.recordingOverride,
+            recordingIncludeKeys: Connections.includeKeysFromFormValue(f.recordingIncludeKeys),
           };
 
           return f.id
@@ -451,5 +460,19 @@ export class Connections implements OnInit {
   private toMessage(err: unknown): string | null {
     const e = err as { error?: { message?: string; Message?: string }; message?: string };
     return e?.error?.message ?? e?.error?.Message ?? e?.message ?? null;
+  }
+
+  private static includeKeysToFormValue(
+    value: boolean | null | undefined,
+  ): 'true' | 'false' | 'inherit' {
+    if (value === true) return 'true';
+    if (value === false) return 'false';
+    return 'inherit';
+  }
+
+  private static includeKeysFromFormValue(value: string): boolean | null {
+    if (value === 'true') return true;
+    if (value === 'false') return false;
+    return null;
   }
 }

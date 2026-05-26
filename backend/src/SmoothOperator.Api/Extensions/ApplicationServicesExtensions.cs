@@ -3,6 +3,7 @@ using SmoothOperator.Application.Interfaces.Sso;
 using SmoothOperator.Application.Options;
 using SmoothOperator.Infrastructure.Data;
 using SmoothOperator.Infrastructure.Services;
+using SmoothOperator.Infrastructure.Services.Recording;
 using SmoothOperator.Infrastructure.Services.SecretProviders;
 using SmoothOperator.Infrastructure.Services.Sso;
 using Azure.Identity;
@@ -40,6 +41,7 @@ public static class ApplicationServicesExtensions
                 configuration.GetConnectionString("Redis") ?? "localhost:6379"));
 
         services.AddSingleton<IEncryptionService, EncryptionService>();
+        services.AddSingleton<GuacamoleProxyDependencies>();
         services.AddSingleton<GuacamoleProxyService>();
         services.AddSingleton<IAppMetrics, AppMetrics>();
         services.AddHttpContextAccessor();
@@ -74,6 +76,11 @@ public static class ApplicationServicesExtensions
 
         // Secret provider factory (transient — each call creates a live SDK client for that provider config)
         services.AddTransient<ISecretProviderFactory, SecretProviderFactory>();
+
+        // Session recording (v1.0.2). Factory is scoped — it opens its own DB scope per call.
+        services.AddScoped<IRecordingStorageFactory, RecordingStorageFactory>();
+        services.AddScoped<IRecordingUploadService, RecordingUploadService>();
+        services.AddHostedService<RecordingRetentionHostedService>();
 
         return services;
     }

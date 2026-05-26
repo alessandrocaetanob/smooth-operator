@@ -28,6 +28,8 @@ namespace SmoothOperator.Application.Interfaces
         DbSet<ApiToken> ApiTokens { get; }
         DbSet<WebhookEndpoint> WebhookEndpoints { get; }
         DbSet<WebhookDelivery> WebhookDeliveries { get; }
+        DbSet<Recording> Recordings { get; }
+        DbSet<RecordingStorageSettings> RecordingStorageSettings { get; }
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     }
 }

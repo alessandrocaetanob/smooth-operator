@@ -1,0 +1,402 @@
+<div>
+  <div class="mb-6">
+    <h2 class="text-lg font-semibold text-on-surface">Session recording storage</h2>
+    <p class="text-sm text-on-surface-variant mt-1">
+      Where the system writes captured session recordings. Vault- and connection-level "record this
+      session" toggles are configured on each vault / connection; this page controls the destination
+      backend (local volume, S3-compatible, or Azure Blob).
+    </p>
+  </div>
+
+  <!-- Status banner -->
+  @if (current()?.configured) {
+    <div class="status-banner status-ok mb-6">
+      <span class="material-symbols-outlined">check_circle</span>
+      <div>
+        <p class="font-medium">Recording storage configured</p>
+        <p class="text-xs opacity-70">
+          Backend: <strong>{{ current()?.storageType }}</strong> — retention
+          {{ current()?.retentionDays === 0 ? 'unlimited' : current()?.retentionDays + ' days' }}.
+        </p>
+      </div>
+    </div>
+  } @else {
+    <div class="status-banner status-warn mb-6">
+      <span class="material-symbols-outlined">warning</span>
+      <div>
+        <p class="font-medium">Using built-in local storage</p>
+        <p class="text-xs opacity-70">
+          Recordings are written to the
+          <code>recordings_data</code> docker volume by default. Configure S3 or Azure below for
+          durable off-host storage.
+        </p>
+      </div>
+    </div>
+  }
+
+  @if (message()) {
+    <div class="feedback-banner feedback-success mb-4">
+      <span class="material-symbols-outlined text-base">check_circle</span>
+      {{ message() }}
+    </div>
+  }
+  @if (error()) {
+    <div class="feedback-banner feedback-error mb-4">
+      <span class="material-symbols-outlined text-base">error</span>
+      {{ error() }}
+    </div>
+  }
+
+  <form (ngSubmit)="save()" class="space-y-4">
+    <!-- Card: Storage backend -->
+    <div class="settings-card">
+      <div class="settings-card-header">
+        <span class="material-symbols-outlined settings-card-icon">cloud</span>
+        <h3 class="settings-card-title">Storage backend</h3>
+      </div>
+      <div class="settings-card-body">
+        <label class="settings-label" for="storageType">Backend</label>
+        <select
+          id="storageType"
+          [ngModel]="storageType()"
+          (ngModelChange)="storageType.set($event)"
+          name="storageType"
+          class="w-full input-field"
+        >
+          <option value="Local">Local volume — default, zero config</option>
+          <option value="S3">S3-compatible (AWS S3, MinIO, R2, Backblaze)</option>
+          <option value="AzureBlob">Azure Blob Storage</option>
+        </select>
+        <p class="text-xs text-on-surface-variant mt-2">
+          Local is the simplest option — recordings stay on the
+          <code>recordings_data</code> volume. Switch to S3 or Azure when you need durable off-host
+          storage, replication, or lifecycle management.
+        </p>
+      </div>
+    </div>
+
+    <!-- Card: Retention policy -->
+    <div class="settings-card">
+      <div class="settings-card-header">
+        <span class="material-symbols-outlined settings-card-icon">schedule</span>
+        <h3 class="settings-card-title">Retention policy</h3>
+      </div>
+      <div class="settings-card-body">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div>
+            <label class="settings-label" for="retentionDays">Retention (days)</label>
+            <input
+              id="retentionDays"
+              type="number"
+              min="0"
+              max="3650"
+              [ngModel]="retentionDays()"
+              (ngModelChange)="retentionDays.set($event)"
+              name="retentionDays"
+              class="w-full input-field"
+            />
+          </div>
+          <div class="md:col-span-2 flex items-end">
+            <p class="text-xs text-on-surface-variant pb-2">
+              Recordings older than this are deleted by the daily sweep.
+              <strong>0</strong> keeps recordings forever. Per-vault overrides take precedence over
+              this default.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card: Local storage (conditional) -->
+    @if (storageType() === 'Local') {
+      <div class="settings-card">
+        <div class="settings-card-header">
+          <span class="material-symbols-outlined settings-card-icon">folder</span>
+          <h3 class="settings-card-title">Local storage</h3>
+        </div>
+        <div class="settings-card-body">
+          <label class="settings-label" for="localPath">Path</label>
+          <input
+            id="localPath"
+            type="text"
+            [ngModel]="localPath()"
+            (ngModelChange)="localPath.set($event)"
+            name="localPath"
+            placeholder="/var/recordings"
+            class="w-full input-field"
+          />
+          <p class="text-xs text-on-surface-variant mt-2">
+            Must be writable by the backend process. In Docker the
+            <code>recordings_data</code> volume mounts at <code>/var/recordings</code>; on a
+            bare-metal install point this at any directory the backend service can create files in.
+            Use <strong>Test connection</strong> below to verify.
+          </p>
+        </div>
+      </div>
+    }
+
+    <!-- Card: S3 configuration (conditional) -->
+    @if (storageType() === 'S3') {
+      <div class="settings-card">
+        <div class="settings-card-header">
+          <span class="material-symbols-outlined settings-card-icon">cloud_upload</span>
+          <h3 class="settings-card-title">S3 configuration</h3>
+        </div>
+        <div class="settings-card-body">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+            <div>
+              <label class="settings-label" for="s3Bucket">Bucket</label>
+              <input
+                id="s3Bucket"
+                type="text"
+                [ngModel]="s3Bucket()"
+                (ngModelChange)="s3Bucket.set($event)"
+                name="s3Bucket"
+                placeholder="my-recordings"
+                class="w-full input-field"
+              />
+            </div>
+            <div>
+              <label class="settings-label" for="s3Region">Region</label>
+              <input
+                id="s3Region"
+                type="text"
+                [ngModel]="s3Region()"
+                (ngModelChange)="s3Region.set($event)"
+                name="s3Region"
+                placeholder="us-east-1"
+                class="w-full input-field"
+              />
+            </div>
+            <div>
+              <label class="settings-label" for="s3Endpoint">
+                Endpoint
+                <span class="settings-label-hint">(optional, for MinIO / R2)</span>
+              </label>
+              <input
+                id="s3Endpoint"
+                type="text"
+                [ngModel]="s3Endpoint()"
+                (ngModelChange)="s3Endpoint.set($event)"
+                name="s3Endpoint"
+                placeholder="https://minio.local:9000"
+                class="w-full input-field"
+              />
+            </div>
+            <div>
+              <label class="settings-label" for="s3PathPrefix">
+                Path prefix <span class="settings-label-hint">(optional)</span>
+              </label>
+              <input
+                id="s3PathPrefix"
+                type="text"
+                [ngModel]="s3PathPrefix()"
+                (ngModelChange)="s3PathPrefix.set($event)"
+                name="s3PathPrefix"
+                placeholder="prod/recordings"
+                class="w-full input-field"
+              />
+            </div>
+            <div>
+              <label class="settings-label" for="s3AccessKeyId">Access key ID</label>
+              <input
+                id="s3AccessKeyId"
+                type="text"
+                [ngModel]="s3AccessKeyId()"
+                (ngModelChange)="s3AccessKeyId.set($event)"
+                name="s3AccessKeyId"
+                placeholder="AKIA..."
+                class="w-full input-field"
+              />
+            </div>
+            <div>
+              <label class="settings-label" for="s3Secret">
+                Secret access key
+                @if (current()?.hasS3SecretAccessKey) {
+                  <span class="settings-label-hint">(leave blank to keep)</span>
+                }
+              </label>
+              <input
+                id="s3Secret"
+                type="password"
+                [ngModel]="s3SecretAccessKey()"
+                (ngModelChange)="s3SecretAccessKey.set($event)"
+                name="s3Secret"
+                [placeholder]="current()?.hasS3SecretAccessKey ? '••••••••' : 'secret'"
+                [disabled]="clearS3Secret()"
+                class="w-full input-field disabled:opacity-50"
+              />
+              @if (current()?.hasS3SecretAccessKey) {
+                <label
+                  class="flex items-center gap-2 text-xs text-on-surface-variant mt-2 cursor-pointer"
+                >
+                  <input
+                    type="checkbox"
+                    [ngModel]="clearS3Secret()"
+                    (ngModelChange)="clearS3Secret.set($event)"
+                    name="clearS3Secret"
+                    class="accent-error"
+                  />
+                  Clear stored secret
+                </label>
+              }
+            </div>
+          </div>
+          <label class="toggle-row">
+            <span class="relative inline-flex items-center">
+              <input
+                type="checkbox"
+                class="sr-only"
+                [ngModel]="s3ForcePathStyle()"
+                (ngModelChange)="s3ForcePathStyle.set($event)"
+                name="s3ForcePathStyle"
+              />
+              <span class="toggle-track" [class.toggle-on]="s3ForcePathStyle()">
+                <span class="toggle-thumb" [class.toggle-thumb-on]="s3ForcePathStyle()"></span>
+              </span>
+            </span>
+            <span>Force path-style addressing</span>
+            <span class="toggle-hint">Required by MinIO and some self-hosted S3 servers</span>
+          </label>
+        </div>
+      </div>
+    }
+
+    <!-- Card: Azure Blob configuration (conditional) -->
+    @if (storageType() === 'AzureBlob') {
+      <div class="settings-card">
+        <div class="settings-card-header">
+          <span class="material-symbols-outlined settings-card-icon">apps</span>
+          <h3 class="settings-card-title">Azure Blob configuration</h3>
+        </div>
+        <div class="settings-card-body">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label class="settings-label" for="azAccount">Storage account name</label>
+              <input
+                id="azAccount"
+                type="text"
+                [ngModel]="azureAccountName()"
+                (ngModelChange)="azureAccountName.set($event)"
+                name="azAccount"
+                placeholder="myaccount"
+                class="w-full input-field"
+              />
+            </div>
+            <div>
+              <label class="settings-label" for="azContainer">Container</label>
+              <input
+                id="azContainer"
+                type="text"
+                [ngModel]="azureContainerName()"
+                (ngModelChange)="azureContainerName.set($event)"
+                name="azContainer"
+                placeholder="recordings"
+                class="w-full input-field"
+              />
+            </div>
+            <div class="md:col-span-2">
+              <label class="settings-label" for="azKey">
+                Account key
+                @if (current()?.hasAzureAccountKey) {
+                  <span class="settings-label-hint">(leave blank to keep)</span>
+                }
+              </label>
+              <input
+                id="azKey"
+                type="password"
+                [ngModel]="azureAccountKey()"
+                (ngModelChange)="azureAccountKey.set($event)"
+                name="azKey"
+                [placeholder]="current()?.hasAzureAccountKey ? '••••••••' : 'account key'"
+                [disabled]="clearAzureKey()"
+                class="w-full input-field disabled:opacity-50"
+              />
+              @if (current()?.hasAzureAccountKey) {
+                <label
+                  class="flex items-center gap-2 text-xs text-on-surface-variant mt-2 cursor-pointer"
+                >
+                  <input
+                    type="checkbox"
+                    [ngModel]="clearAzureKey()"
+                    (ngModelChange)="clearAzureKey.set($event)"
+                    name="clearAzureKey"
+                    class="accent-error"
+                  />
+                  Clear stored key
+                </label>
+              }
+            </div>
+            <div>
+              <label class="settings-label" for="azEndpoint">
+                Blob endpoint <span class="settings-label-hint">(optional, for Azurite)</span>
+              </label>
+              <input
+                id="azEndpoint"
+                type="text"
+                [ngModel]="azureBlobEndpoint()"
+                (ngModelChange)="azureBlobEndpoint.set($event)"
+                name="azEndpoint"
+                placeholder="https://myaccount.blob.core.windows.net"
+                class="w-full input-field"
+              />
+            </div>
+            <div>
+              <label class="settings-label" for="azPrefix">
+                Path prefix <span class="settings-label-hint">(optional)</span>
+              </label>
+              <input
+                id="azPrefix"
+                type="text"
+                [ngModel]="azurePathPrefix()"
+                (ngModelChange)="azurePathPrefix.set($event)"
+                name="azPrefix"
+                placeholder="prod/recordings"
+                class="w-full input-field"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    <div class="flex justify-end">
+      <button type="submit" [disabled]="busy()" class="btn-primary">
+        @if (busy()) {
+          <span class="material-symbols-outlined animate-spin text-base">progress_activity</span>
+        } @else {
+          <span class="material-symbols-outlined text-sm" aria-hidden="true">save</span>
+        }
+        {{ busy() ? 'Saving…' : 'Save recording settings' }}
+      </button>
+    </div>
+  </form>
+
+  <!-- Test connection (separate card, matches Email's test-email card) -->
+  <div class="settings-card mt-6">
+    <div class="settings-card-header">
+      <span class="material-symbols-outlined settings-card-icon">network_check</span>
+      <h3 class="settings-card-title">Test connection</h3>
+    </div>
+    <div class="settings-card-body">
+      <p class="text-xs text-on-surface-variant mb-3">
+        Verifies the backend can write a tiny probe file to the storage target using the currently
+        saved settings. Run this after saving a new configuration to confirm credentials, network
+        access, and permissions before relying on it for real sessions.
+      </p>
+      <button
+        type="button"
+        class="btn-secondary"
+        [disabled]="testBusy()"
+        (click)="testConnection()"
+      >
+        @if (testBusy()) {
+          <span class="material-symbols-outlined animate-spin text-base">progress_activity</span>
+        } @else {
+          <span class="material-symbols-outlined text-sm" aria-hidden="true">network_check</span>
+        }
+        {{ testBusy() ? 'Testing…' : 'Test connection' }}
+      </button>
+    </div>
+  </div>
+</div>

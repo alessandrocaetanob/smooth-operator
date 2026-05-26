@@ -446,6 +446,8 @@ describe('Connections', () => {
         settings: '',
         newHostAddress: '',
         tags: [],
+        recordingOverride: 'Inherit',
+        recordingIncludeKeys: 'inherit',
       });
       component.save();
       expect(connections.create).toHaveBeenCalledWith(
@@ -466,6 +468,8 @@ describe('Connections', () => {
         settings: '',
         newHostAddress: '',
         tags: ['prod'],
+        recordingOverride: 'Inherit',
+        recordingIncludeKeys: 'inherit',
       });
       component.save();
       expect(connections.update).toHaveBeenCalledWith(
@@ -492,6 +496,8 @@ describe('Connections', () => {
         settings: '{"port":22}',
         newHostAddress: '',
         tags: [],
+        recordingOverride: 'Inherit',
+        recordingIncludeKeys: 'inherit',
       });
       component.termColorScheme.set('solarized-dark');
       component.termFontName.set('Consolas');
@@ -520,6 +526,8 @@ describe('Connections', () => {
         settings: '',
         newHostAddress: '10.0.0.99',
         tags: [],
+        recordingOverride: 'Inherit',
+        recordingIncludeKeys: 'inherit',
       });
       component.save();
 
@@ -540,6 +548,8 @@ describe('Connections', () => {
         settings: '',
         newHostAddress: '10.0.0.99',
         tags: [],
+        recordingOverride: 'Inherit',
+        recordingIncludeKeys: 'inherit',
       });
       component.save();
 
@@ -562,6 +572,8 @@ describe('Connections', () => {
         settings: '',
         newHostAddress: '',
         tags: [],
+        recordingOverride: 'Inherit',
+        recordingIncludeKeys: 'inherit',
       });
       component.save();
       expect(component.errorMessage()).toBe('duplicate name');
@@ -581,6 +593,8 @@ describe('Connections', () => {
         settings: '',
         newHostAddress: '',
         tags: [],
+        recordingOverride: 'Inherit',
+        recordingIncludeKeys: 'inherit',
       });
       component.save();
       expect(component.errorMessage()).toBe('Save failed.');

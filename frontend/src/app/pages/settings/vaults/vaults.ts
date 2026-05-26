@@ -34,6 +34,13 @@ export class SettingsVaults implements OnInit {
   readonly assignModalVault = signal<Vault | null>(null);
   readonly selectedUserIds = signal<string[]>([]);
   readonly selectedGroupIds = signal<string[]>([]);
+
+  // Recording configuration modal — one open at a time.
+  readonly recordingModalVault = signal<Vault | null>(null);
+  readonly recordingEnabledForm = signal(false);
+  readonly recordingIncludeKeysForm = signal(false);
+  readonly recordingRetentionDaysForm = signal<number | null>(null);
+  readonly recordingBusy = signal(false);
   // Performance optimization: O(1) lookup sets for template bindings inside loops to prevent O(N*M) change detection cycles
   readonly selectedUserIdSet = computed(() => new Set(this.selectedUserIds()));
   readonly selectedGroupIdSet = computed(() => new Set(this.selectedGroupIds()));
@@ -128,20 +135,28 @@ export class SettingsVaults implements OnInit {
     if (!name) return;
     this.vaultBusy.set(true);
     this.errorMessage.set(null);
-    this.vaultsSvc.update(vault.id, { name }).subscribe({
-      next: () => {
-        this.vaultBusy.set(false);
-        this.cancelEdit();
-        this.toastSvc.success(`Vault renamed to "${name}".`);
-        this.refresh();
-      },
-      error: (err) => {
-        this.vaultBusy.set(false);
-        const msg = this.toMessage(err) || 'Failed to rename vault.';
-        this.errorMessage.set(msg);
-        this.toastSvc.error(msg);
-      },
-    });
+    this.vaultsSvc
+      .update(vault.id, {
+        name,
+        // Preserve any existing recording config — the rename row doesn't expose those fields.
+        recordingEnabled: vault.recordingEnabled ?? false,
+        recordingIncludeKeys: vault.recordingIncludeKeys ?? false,
+        recordingRetentionDays: vault.recordingRetentionDays ?? null,
+      })
+      .subscribe({
+        next: () => {
+          this.vaultBusy.set(false);
+          this.cancelEdit();
+          this.toastSvc.success(`Vault renamed to "${name}".`);
+          this.refresh();
+        },
+        error: (err) => {
+          this.vaultBusy.set(false);
+          const msg = this.toMessage(err) || 'Failed to rename vault.';
+          this.errorMessage.set(msg);
+          this.toastSvc.error(msg);
+        },
+      });
   }
 
   async deleteVault(vault: Vault): Promise<void> {
@@ -186,6 +201,47 @@ export class SettingsVaults implements OnInit {
     this.selectedUserIds.set([]);
     this.selectedGroupIds.set([]);
     this.assignBusy.set(false);
+  }
+
+  openRecording(vault: Vault): void {
+    this.recordingModalVault.set(vault);
+    this.recordingEnabledForm.set(vault.recordingEnabled ?? false);
+    this.recordingIncludeKeysForm.set(vault.recordingIncludeKeys ?? false);
+    this.recordingRetentionDaysForm.set(vault.recordingRetentionDays ?? null);
+  }
+
+  closeRecording(): void {
+    this.recordingModalVault.set(null);
+    this.recordingBusy.set(false);
+  }
+
+  saveRecording(): void {
+    const vault = this.recordingModalVault();
+    if (!vault || this.recordingBusy()) return;
+    this.recordingBusy.set(true);
+    this.errorMessage.set(null);
+    this.vaultsSvc
+      .update(vault.id, {
+        name: vault.name,
+        parentGroupId: vault.parentGroupId ?? null,
+        recordingEnabled: this.recordingEnabledForm(),
+        recordingIncludeKeys: this.recordingIncludeKeysForm(),
+        recordingRetentionDays: this.recordingRetentionDaysForm(),
+      })
+      .subscribe({
+        next: () => {
+          this.recordingBusy.set(false);
+          this.toastSvc.success(`Recording settings saved for "${vault.name}".`);
+          this.closeRecording();
+          this.refresh();
+        },
+        error: (err) => {
+          this.recordingBusy.set(false);
+          const msg = this.toMessage(err) || 'Failed to save recording settings.';
+          this.errorMessage.set(msg);
+          this.toastSvc.error(msg);
+        },
+      });
   }
 
   toggleUser(id: string, checked: boolean): void {

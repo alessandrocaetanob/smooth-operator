@@ -52,10 +52,13 @@ namespace SmoothOperator.Application.Features.ConnectionGroups.Commands
 
             vault.Name = name;
             vault.ParentGroupId = request.Dto.ParentGroupId;
+            vault.RecordingEnabled = request.Dto.RecordingEnabled;
+            vault.RecordingIncludeKeys = request.Dto.RecordingIncludeKeys;
+            vault.RecordingRetentionDays = request.Dto.RecordingRetentionDays;
 
             await _context.SaveChangesAsync(cancellationToken);
             await _audit.WriteAsync("vault.updated", "ConnectionGroup", request.Id.ToString(),
-                new { vault.Name, vault.ParentGroupId });
+                new { vault.Name, vault.ParentGroupId, vault.RecordingEnabled });
 
             return true;
         }

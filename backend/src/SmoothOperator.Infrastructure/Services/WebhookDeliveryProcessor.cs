@@ -63,9 +63,14 @@ namespace SmoothOperator.Infrastructure.Services
                 return 0;
 
             // Decrypt each endpoint's secret at most once per batch.
-            var decryptedByEndpoint = new ConcurrentDictionary<Guid, string?>();
+            // Use Lazy<T> wrapper because ConcurrentDictionary.GetOrAdd's value factory
+            // can run more than once under contention — wrapping in Lazy guarantees
+            // single-execution semantics for the underlying Decrypt call.
+            var decryptedByEndpoint = new ConcurrentDictionary<Guid, Lazy<string?>>();
             string? ResolveSecret(WebhookEndpoint endpoint) =>
-                decryptedByEndpoint.GetOrAdd(endpoint.Id, _ => TryDecrypt(endpoint.EncryptedSecret));
+                decryptedByEndpoint.GetOrAdd(endpoint.Id,
+                    _ => new Lazy<string?>(() => TryDecrypt(endpoint.EncryptedSecret), LazyThreadSafetyMode.ExecutionAndPublication))
+                    .Value;
 
             var results = new ConcurrentDictionary<Guid, AttemptResult>();
 

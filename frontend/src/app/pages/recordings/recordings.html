@@ -1,0 +1,164 @@
+<div class="page-shell">
+  <div class="mb-6 flex items-start justify-between gap-4 flex-wrap">
+    <div>
+      <h1 class="text-2xl font-bold text-on-surface tracking-tight">Recordings</h1>
+      <p class="text-sm text-on-surface-variant mt-1">
+        Browse captured session recordings. Playback opens an in-browser viewer for the raw
+        <code>.guac</code> file.
+      </p>
+    </div>
+  </div>
+
+  <!-- Filter bar -->
+  <div class="glass-card rounded-lg p-3 mb-4">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+      <div>
+        <label class="text-xs text-on-surface-variant" for="fStatus">Status</label>
+        <select
+          id="fStatus"
+          [ngModel]="filterStatus()"
+          (ngModelChange)="filterStatus.set($event)"
+          name="fStatus"
+          class="select-field w-full"
+        >
+          <option value="">All</option>
+          <option value="Available">Available</option>
+          <option value="Recording">Recording</option>
+          <option value="Uploading">Uploading</option>
+          <option value="Failed">Failed</option>
+          <option value="Deleted">Deleted</option>
+        </select>
+      </div>
+      <div>
+        <label class="text-xs text-on-surface-variant" for="fFrom">From</label>
+        <input
+          id="fFrom"
+          type="datetime-local"
+          [ngModel]="filterFrom()"
+          (ngModelChange)="filterFrom.set($event)"
+          name="fFrom"
+          class="input-field w-full"
+        />
+      </div>
+      <div>
+        <label class="text-xs text-on-surface-variant" for="fTo">To</label>
+        <input
+          id="fTo"
+          type="datetime-local"
+          [ngModel]="filterTo()"
+          (ngModelChange)="filterTo.set($event)"
+          name="fTo"
+          class="input-field w-full"
+        />
+      </div>
+      <div class="flex items-end gap-2">
+        <button class="btn-primary flex-1" (click)="applyFilters()">Apply</button>
+        <button class="btn-ghost" (click)="clearFilters()">Clear</button>
+      </div>
+    </div>
+  </div>
+
+  @if (error()) {
+    <div class="feedback-banner feedback-error mb-4">
+      <span class="material-symbols-outlined text-base">error</span>
+      {{ error() }}
+    </div>
+  }
+
+  <!-- List -->
+  <div class="glass-card rounded-lg overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead class="bg-white/5 text-[11px] uppercase tracking-widest text-on-surface-variant">
+        <tr>
+          <th class="text-left px-4 py-3 font-medium">Connection</th>
+          <th class="text-left px-4 py-3 font-medium">User</th>
+          <th class="text-left px-4 py-3 font-medium">Started</th>
+          <th class="text-left px-4 py-3 font-medium">Duration</th>
+          <th class="text-left px-4 py-3 font-medium">Size</th>
+          <th class="text-left px-4 py-3 font-medium">Status</th>
+          <th class="text-right px-4 py-3 font-medium">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (r of items(); track r.id) {
+          <tr class="border-t border-white/5 hover:bg-white/5">
+            <td class="px-4 py-3">
+              <div class="font-medium text-on-surface">{{ r.connectionName }}</div>
+              <div class="text-xs text-on-surface-variant">
+                {{ r.protocol }} · {{ r.vaultName ?? '(no vault)' }}
+              </div>
+            </td>
+            <td class="px-4 py-3 text-on-surface-variant">{{ r.userEmail ?? '—' }}</td>
+            <td class="px-4 py-3 text-on-surface-variant">{{ r.startedAt | date: 'short' }}</td>
+            <td class="px-4 py-3 text-on-surface-variant">
+              {{ formatDuration(r.durationSeconds) }}
+            </td>
+            <td class="px-4 py-3 text-on-surface-variant">{{ formatBytes(r.fileSizeBytes) }}</td>
+            <td class="px-4 py-3">
+              <span [class]="'text-xs font-medium ' + statusClass(r.status)">{{ r.status }}</span>
+              @if (r.includeKeys) {
+                <span
+                  class="ml-2 inline-block text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                  title="Includes captured keystrokes"
+                >
+                  keys
+                </span>
+              }
+              @if (r.status === 'Failed' && r.errorMessage) {
+                <div class="text-[11px] text-error mt-1">{{ r.errorMessage }}</div>
+              }
+            </td>
+            <td class="px-4 py-3">
+              <div class="flex items-center justify-end gap-2">
+                <button
+                  (click)="open(r)"
+                  [disabled]="r.status !== 'Available'"
+                  class="px-2 py-1 text-xs text-primary hover:bg-primary/10 rounded disabled:opacity-40"
+                  title="Play in browser"
+                >
+                  Play
+                </button>
+                <button
+                  (click)="download(r)"
+                  [disabled]="r.status !== 'Available'"
+                  class="px-2 py-1 text-xs text-primary hover:bg-primary/10 rounded disabled:opacity-40"
+                  title="Download .guac file"
+                >
+                  Download
+                </button>
+                @if (isOwnerOrAdmin()) {
+                  <button
+                    (click)="remove(r)"
+                    class="px-2 py-1 text-xs text-error hover:bg-error/10 rounded"
+                  >
+                    Delete
+                  </button>
+                }
+              </div>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="7" class="px-4 py-8 text-center text-on-surface-variant">
+              {{ loading() ? 'Loading…' : 'No recordings match these filters.' }}
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <div class="mt-4 flex items-center justify-between text-xs text-on-surface-variant">
+    <span>{{ total() }} total · page {{ page() }} of {{ pageCount() }}</span>
+    <div class="flex gap-2">
+      <button class="btn-ghost" [disabled]="page() <= 1" (click)="prevPage()">Previous</button>
+      <button class="btn-ghost" [disabled]="page() >= pageCount()" (click)="nextPage()">
+        Next
+      </button>
+    </div>
+  </div>
+</div>
+
+@if (playerOpenFor(); as r) {
+  <app-recording-player [recording]="r" (closed)="closePlayer()"></app-recording-player>
+}

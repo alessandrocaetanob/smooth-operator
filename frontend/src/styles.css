@@ -748,3 +748,66 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* ============================================================
+   GLOBAL TOGGLE SWITCH
+   Used across settings pages and any modal that needs an
+   iOS-style boolean toggle. Promoted from per-page CSS so
+   it's reusable from component templates whose own CSS has
+   no scope into shared partials.
+   ============================================================ */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+  font-size: 13px;
+  color: rgb(var(--color-on-surface-variant));
+  transition: color 0.15s ease;
+}
+
+.toggle-row:hover {
+  color: rgb(var(--color-on-surface));
+}
+
+.toggle-track {
+  width: 44px;
+  height: 24px;
+  border-radius: 12px;
+  border: 1px solid rgb(var(--color-outline-variant) / 0.5);
+  background: rgb(var(--color-surface-container-highest));
+  transition: all 0.2s ease;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.toggle-track.toggle-on {
+  background: rgb(var(--color-primary) / 0.75);
+  border-color: rgb(var(--color-primary) / 0.5);
+  box-shadow: 0 0 12px rgb(var(--color-primary) / 0.25);
+}
+
+.toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgb(var(--color-on-surface-variant) / 0.5);
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.toggle-thumb.toggle-thumb-on {
+  left: 22px;
+  background: white;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+.toggle-hint {
+  font-size: 11px;
+  color: rgb(var(--color-outline) / 0.7);
+  margin-left: auto;
+}

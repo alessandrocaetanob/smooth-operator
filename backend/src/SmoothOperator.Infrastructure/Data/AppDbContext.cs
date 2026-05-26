@@ -29,6 +29,8 @@ namespace SmoothOperator.Infrastructure.Data
         public DbSet<ApiToken> ApiTokens { get; set; } = null!;
         public DbSet<WebhookEndpoint> WebhookEndpoints { get; set; } = null!;
         public DbSet<WebhookDelivery> WebhookDeliveries { get; set; } = null!;
+        public DbSet<Recording> Recordings { get; set; } = null!;
+        public DbSet<RecordingStorageSettings> RecordingStorageSettings { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -193,6 +195,40 @@ namespace SmoothOperator.Infrastructure.Data
             // Drives the background worker's "due deliveries" query
             modelBuilder.Entity<WebhookDelivery>()
                 .HasIndex(d => new { d.Status, d.NextAttemptAt });
+
+            // Session recordings — one row per session attempt
+            modelBuilder.Entity<Recording>()
+                .HasOne(r => r.Connection)
+                .WithMany()
+                .HasForeignKey(r => r.ConnectionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Recording>()
+                .HasOne(r => r.User)
+                .WithMany()
+                .HasForeignKey(r => r.UserId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .IsRequired(false);
+
+            modelBuilder.Entity<Recording>()
+                .Property(r => r.SessionId)
+                .HasMaxLength(64);
+
+            modelBuilder.Entity<Recording>()
+                .Property(r => r.StorageKey)
+                .HasMaxLength(512);
+
+            modelBuilder.Entity<Recording>()
+                .HasIndex(r => r.SessionId)
+                .IsUnique();
+
+            // List view: filter by connection + sort by StartedAt desc
+            modelBuilder.Entity<Recording>()
+                .HasIndex(r => new { r.ConnectionId, r.StartedAt });
+
+            // Retention sweep: WHERE Status = Available AND EndedAt < cutoff
+            modelBuilder.Entity<Recording>()
+                .HasIndex(r => new { r.Status, r.EndedAt });
         }
     }
 }

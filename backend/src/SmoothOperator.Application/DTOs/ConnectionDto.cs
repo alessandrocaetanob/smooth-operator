@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel.DataAnnotations;
+using SmoothOperator.Domain.Enums;
 
 namespace SmoothOperator.Application.DTOs
 {
@@ -22,6 +23,9 @@ namespace SmoothOperator.Application.DTOs
         public Guid? ConnectionGroupId { get; set; }
         public string Settings { get; set; } = "{}";
         public List<string> Tags { get; set; } = [];
+
+        public RecordingOverride RecordingOverride { get; set; } = RecordingOverride.Inherit;
+        public bool? RecordingIncludeKeys { get; set; }
 
         // Navigation properties (optional for responses)
         public HostDto? Host { get; set; }
@@ -48,6 +52,9 @@ namespace SmoothOperator.Application.DTOs
         public string Settings { get; set; } = "{}";
 
         public List<string> Tags { get; set; } = [];
+
+        public RecordingOverride RecordingOverride { get; set; } = RecordingOverride.Inherit;
+        public bool? RecordingIncludeKeys { get; set; }
     }
 
     public class HostDto
@@ -75,6 +82,12 @@ namespace SmoothOperator.Application.DTOs
         public Guid? ParentGroupId { get; set; }
         public int? UserCount { get; set; }
         public int? GroupCount { get; set; }
+
+        public bool RecordingEnabled { get; set; }
+        public bool RecordingIncludeKeys { get; set; }
+
+        [Range(0, 3650)]
+        public int? RecordingRetentionDays { get; set; }
     }
 
     public class CreateConnectionGroupDto
@@ -84,6 +97,12 @@ namespace SmoothOperator.Application.DTOs
         public string Name { get; set; } = string.Empty;
 
         public Guid? ParentGroupId { get; set; }
+
+        public bool RecordingEnabled { get; set; }
+        public bool RecordingIncludeKeys { get; set; }
+
+        [Range(0, 3650)]
+        public int? RecordingRetentionDays { get; set; }
     }
 
     public class CredentialDto

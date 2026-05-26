@@ -32,6 +32,7 @@ public class GuacamoleProxyServiceTests
     private readonly Mock<IServiceScope> _scopeMock = new();
     private readonly Mock<IServiceProvider> _serviceProviderMock = new();
     private readonly IOptions<GuacdOptions> _options = Options.Create(new GuacdOptions { Host = "localhost", Port = 4822 });
+    private readonly IOptions<RecordingOptions> _recordingOptions = Options.Create(new RecordingOptions());
     private readonly GuacamoleProxyService _service;
 
     public GuacamoleProxyServiceTests()
@@ -50,11 +51,15 @@ public class GuacamoleProxyServiceTests
             _loggerMock.Object,
             _options,
             _scopeFactoryMock.Object,
-            _encryptionServiceMock.Object,
-            _redisMock.Object,
-            _metricsMock.Object,
-            _secretProviderFactoryMock.Object);
+            _recordingOptions,
+            BuildDependencies());
     }
+
+    private GuacamoleProxyDependencies BuildDependencies() => new(
+        _encryptionServiceMock.Object,
+        _redisMock.Object,
+        _metricsMock.Object,
+        _secretProviderFactoryMock.Object);
 
     [Fact]
     public async Task IssueTicketAsync_PersistsTicketToRedisAndWritesAuditLog()
@@ -285,10 +290,8 @@ public class GuacamoleProxyServiceTests
             _loggerMock.Object,
             Options.Create(new GuacdOptions { Host = "invalid.invalid", Port = 4822 }),
             _scopeFactoryMock.Object,
-            _encryptionServiceMock.Object,
-            _redisMock.Object,
-            _metricsMock.Object,
-            _secretProviderFactoryMock.Object);
+            _recordingOptions,
+            BuildDependencies());
 
         using var scope = _scopeFactoryMock.Object.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -499,10 +502,8 @@ public class GuacamoleProxyServiceTests
             _loggerMock.Object,
             Options.Create(new GuacdOptions { Host = "127.0.0.1", Port = guacdPort }),
             _scopeFactoryMock.Object,
-            _encryptionServiceMock.Object,
-            _redisMock.Object,
-            _metricsMock.Object,
-            _secretProviderFactoryMock.Object);
+            _recordingOptions,
+            BuildDependencies());
 
         using var scope = _scopeFactoryMock.Object.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -559,6 +560,7 @@ public class GuacamoleProxyServiceInternalTests
     private readonly Mock<ISecretProviderFactory> _secretProviderFactoryMock = new();
     private readonly Mock<IServiceScopeFactory> _scopeFactoryMock = new();
     private readonly IOptions<GuacdOptions> _options = Options.Create(new GuacdOptions { Host = "localhost", Port = 4822 });
+    private readonly IOptions<RecordingOptions> _recordingOptions = Options.Create(new RecordingOptions());
     private readonly GuacamoleProxyService _service;
     private readonly AppDbContext _dbContext;
 
@@ -577,11 +579,15 @@ public class GuacamoleProxyServiceInternalTests
             _loggerMock.Object,
             _options,
             _scopeFactoryMock.Object,
-            _encryptionServiceMock.Object,
-            _redisMock.Object,
-            _metricsMock.Object,
-            _secretProviderFactoryMock.Object);
+            _recordingOptions,
+            BuildDependencies());
     }
+
+    private GuacamoleProxyDependencies BuildDependencies() => new(
+        _encryptionServiceMock.Object,
+        _redisMock.Object,
+        _metricsMock.Object,
+        _secretProviderFactoryMock.Object);
 
     private Task<string> InvokeResolveDecryptedSecretAsync(Credential credential)
     {

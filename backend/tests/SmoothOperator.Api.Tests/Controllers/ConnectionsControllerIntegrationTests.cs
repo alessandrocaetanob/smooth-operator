@@ -61,7 +61,7 @@ public class ConnectionsControllerIntegrationTests
 
         var createRes = await client.PostAsJsonAsync("/api/connections", createReq);
         Assert.Equal(HttpStatusCode.Created, createRes.StatusCode);
-        var created = await createRes.Content.ReadFromJsonAsync<ConnectionDto>();
+        var created = await createRes.Content.ReadFromJsonAsync<ConnectionDto>(TestJson.Options);
         Assert.NotNull(created);
         Assert.Equal("Web Server", created.Name);
         var connId = created.Id;
@@ -69,14 +69,14 @@ public class ConnectionsControllerIntegrationTests
         // 2. Get All
         var getAllRes = await client.GetAsync("/api/connections");
         Assert.Equal(HttpStatusCode.OK, getAllRes.StatusCode);
-        var list = await getAllRes.Content.ReadFromJsonAsync<List<ConnectionDto>>();
+        var list = await getAllRes.Content.ReadFromJsonAsync<List<ConnectionDto>>(TestJson.Options);
         Assert.NotNull(list);
         Assert.Contains(list, c => c.Id == connId);
 
         // 3. Get Single
         var getOneRes = await client.GetAsync($"/api/connections/{connId}");
         Assert.Equal(HttpStatusCode.OK, getOneRes.StatusCode);
-        var one = await getOneRes.Content.ReadFromJsonAsync<ConnectionDto>();
+        var one = await getOneRes.Content.ReadFromJsonAsync<ConnectionDto>(TestJson.Options);
         Assert.NotNull(one);
         Assert.Equal("Web Server", one.Name);
 
@@ -94,7 +94,7 @@ public class ConnectionsControllerIntegrationTests
         Assert.Equal(HttpStatusCode.NoContent, updateRes.StatusCode);
 
         // Verify update
-        var getUpdated = await client.GetFromJsonAsync<ConnectionDto>($"/api/connections/{connId}");
+        var getUpdated = await client.GetFromJsonAsync<ConnectionDto>($"/api/connections/{connId}", TestJson.Options);
         Assert.NotNull(getUpdated);
         Assert.Equal("Web Server Updated", getUpdated.Name);
         Assert.Contains("web2", getUpdated.Tags);

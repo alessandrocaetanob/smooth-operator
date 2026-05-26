@@ -39,9 +39,14 @@ class FakeClipboardStream {
 }
 
 vi.mock('guacamole-common-js', () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const ClientCtor = vi.fn(function (this: any) {
-    const inst: FakeClient = {
+  // Use plain factory functions that *return* the populated instance instead of
+  // mutating `this`. Under Node 22 + Vitest 4.x on CircleCI, `vi.fn(function(this){…})`
+  // mock wrappers occasionally swap out the constructed object so `this` mutations
+  // never reach the caller — every method then comes back as `undefined`
+  // ("client.connect is not a function"). JS `new` always honours an object
+  // return value from the constructor, so this pattern is environment-stable.
+  function ClientCtor(): FakeClient {
+    const self: FakeClient = {
       onstatechange: null,
       onerror: null,
       onname: null,
@@ -54,46 +59,51 @@ vi.mock('guacamole-common-js', () => {
       disconnect: vi.fn(),
       createClipboardStream: vi.fn(() => new FakeClipboardStream()),
     };
-    Object.assign(this, inst);
-    clientInstances.push(this);
-  });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const TunnelCtor = vi.fn(function (this: any) {
-    const inst: FakeTunnel = {
+    clientInstances.push(self);
+    return self;
+  }
+  function TunnelCtor(): FakeTunnel {
+    const self: FakeTunnel = {
       onstatechange: null,
       onerror: null,
     };
-    Object.assign(this, inst);
-    tunnelInstances.push(this);
-  });
+    tunnelInstances.push(self);
+    return self;
+  }
+  function KeyboardCtor() {
+    return {
+      onkeydown: null as null | ((sym: number) => void),
+      onkeyup: null as null | ((sym: number) => void),
+      reset: vi.fn(),
+    };
+  }
+  function MouseCtor() {
+    return {
+      onmousedown: null as null | ((s: unknown) => void),
+      onmouseup: null as null | ((s: unknown) => void),
+      onmousemove: null as null | ((s: unknown) => void),
+    };
+  }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const KeyboardCtor = vi.fn(function (this: any) {
-    this.onkeydown = null;
-    this.onkeyup = null;
-    this.reset = vi.fn();
-  });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const MouseCtor = vi.fn(function (this: any) {
-    this.onmousedown = null;
-    this.onmouseup = null;
-    this.onmousemove = null;
-  });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (MouseCtor as any).Touchscreen = vi.fn(function (this: any) {
-    this.onmousedown = null;
-    this.onmouseup = null;
-    this.onmousemove = null;
-  });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const StringReaderCtor = vi.fn(function (this: any) {
-    this.ontext = null;
-    this.onend = null;
-  });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const StringWriterCtor = vi.fn(function (this: any) {
-    this.sendText = vi.fn();
-    this.sendEnd = vi.fn();
-  });
+  (MouseCtor as any).Touchscreen = function TouchscreenCtor() {
+    return {
+      onmousedown: null as null | ((s: unknown) => void),
+      onmouseup: null as null | ((s: unknown) => void),
+      onmousemove: null as null | ((s: unknown) => void),
+    };
+  };
+  function StringReaderCtor() {
+    return {
+      ontext: null as null | ((text: string) => void),
+      onend: null as null | (() => void),
+    };
+  }
+  function StringWriterCtor() {
+    return {
+      sendText: vi.fn(),
+      sendEnd: vi.fn(),
+    };
+  }
 
   const Tunnel = { State: { OPEN: 1, UNSTABLE: 2, CLOSED: 3 } };
 

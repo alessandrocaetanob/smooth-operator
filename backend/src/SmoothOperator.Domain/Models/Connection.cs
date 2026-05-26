@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using SmoothOperator.Domain.Enums;
 
 namespace SmoothOperator.Domain.Models
 {
@@ -27,5 +28,15 @@ namespace SmoothOperator.Domain.Models
 
         // JSON string to store arbitrary protocol-specific settings (like domain, security mode, ignore-cert, etc.)
         public string Settings { get; set; } = "{}";
+
+        /// <summary>
+        /// Override the parent vault's recording flag. <c>Inherit</c> (default) defers to
+        /// <see cref="ConnectionGroup.RecordingEnabled"/>; otherwise <c>ForceOn</c>/<c>ForceOff</c>
+        /// wins regardless of the vault setting.
+        /// </summary>
+        public RecordingOverride RecordingOverride { get; set; } = RecordingOverride.Inherit;
+
+        /// <summary>Per-connection include-keystrokes override; <c>null</c> = inherit from vault.</summary>
+        public bool? RecordingIncludeKeys { get; set; }
     }
 }

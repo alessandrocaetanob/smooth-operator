@@ -36,8 +36,17 @@ services:
       - "5000:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
+      # Session recording temp workspace (shared with guacd) and Local-storage destination.
+      # Paths are deliberately siblings (not nested) so the inner named volume isn't
+      # shadowed by the outer one — that would defeat the Dockerfile permission setup.
+      - Recording__LocalPath=/var/recordings-temp
+      - Recording__DefaultStoragePath=/var/recordings
     volumes:
       - dp_keys:/data/protection-keys
+      # In-progress .guac files written by guacd, read+uploaded by the backend after session-end.
+      - recordings_temp:/var/recordings-temp
+      # Default destination for the Local storage backend (admins can switch to S3/Azure in settings).
+      - recordings_data:/var/recordings
     depends_on:
       postgres:
         condition: service_healthy
@@ -142,6 +151,15 @@ services:
   guacd:
     image: guacamole/guacd:1.6.0
     restart: unless-stopped
+    # Run guacd as the same UID as the backend (1654, from the .NET aspnet:10.0-alpine
+    # base image's APP_UID). guacd opens the recording file with mode 0600 (owner-only),
+    # so unless both processes share the UID the backend can't read the .guac file back
+    # to ship it to S3/Azure/local storage.
+    user: "1654:1654"
+    volumes:
+      # Shared with the backend so the backend can ship the .guac files written
+      # here to S3/Azure/local-permanent after the session ends.
+      - recordings_temp:/var/recordings-temp
     networks:
       - smooth-operator-net
     deploy:
@@ -262,6 +280,8 @@ volumes:
   sonarqube_logs:
   sonarqube_extensions:
   dp_keys:
+  recordings_temp:
+  recordings_data:
 
 networks:
   smooth-operator-net:

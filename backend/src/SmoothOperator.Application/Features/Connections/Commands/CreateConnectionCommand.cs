@@ -45,6 +45,8 @@ namespace SmoothOperator.Application.Features.Connections.Commands
                 CredentialId = request.Dto.CredentialId,
                 ConnectionGroupId = request.Dto.ConnectionGroupId,
                 Settings = request.Dto.Settings,
+                RecordingOverride = request.Dto.RecordingOverride,
+                RecordingIncludeKeys = request.Dto.RecordingIncludeKeys,
                 Tags = request.Dto.Tags
                     .Where(t => !string.IsNullOrWhiteSpace(t))
                     .Distinct(StringComparer.OrdinalIgnoreCase)
@@ -66,6 +68,8 @@ namespace SmoothOperator.Application.Features.Connections.Commands
                 CredentialId = connection.CredentialId,
                 ConnectionGroupId = connection.ConnectionGroupId,
                 Settings = connection.Settings,
+                RecordingOverride = connection.RecordingOverride,
+                RecordingIncludeKeys = connection.RecordingIncludeKeys,
                 Tags = connection.Tags.Select(t => t.Tag).ToList()
             };
         }
