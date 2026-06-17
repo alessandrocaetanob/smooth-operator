@@ -81,7 +81,6 @@ frontend/npm_output.log
 *.db
 
 # Local tooling metadata
-.contextstream/
 .claude/
 *.lscache
 
