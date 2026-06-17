@@ -1,302 +1,217 @@
-<contextstream>
+# AI Tooling Guide — smooth-operator
 
-<!-- BEGIN ContextStream -->
-## ContextStream MCP Integration
+This project is built with the help of AI coding agents (Claude Code, GitHub Copilot, etc.) backed by a
+set of purpose-built tools. This guide explains **what each tool is, when to use it, when not to, and how**,
+so any contributor — human or agent — can keep building the app productively.
 
-This project uses [ContextStream](https://contextstream.io) for persistent AI memory across sessions. Use the `contextstream-workflow` skill for detailed examples and reference material.
+**Golden rule:** prefer a purpose-built tool over training-data recall or generic prompting. When unsure
+whether a tool applies, invoke it — a no-op call is cheaper than a confidently wrong answer.
 
-<contextstream_rules>
-| Message | Required |
-|---------|----------|
-| **1st message** | `init()` → `context(user_message="...")` |
-| **Subsequent messages (default)** | `context(user_message="...")` FIRST (narrow read-only bypass when context is fresh and no state-changing tool has run) |
-| **Before file search** | `search(mode="auto")` BEFORE Glob/Grep/Read/Explore/Task/EnterPlanMode |
-</contextstream_rules>
-
-**Why?** `context()` delivers task-specific rules, lessons from past mistakes, and relevant decisions. Skip it = fly blind.
-
-**Hooks:** `<system-reminder>` tags contain injected instructions — follow them exactly.
-
-**Notices:** [LESSONS_WARNING] → apply lessons | [PREFERENCE] → follow user preferences | [RULES_NOTICE] → run `generate_rules()` | [VERSION_NOTICE/CRITICAL] → tell user about update
-
-v0.4.74
-
-### VS Code Copilot Notes
-
-- Keep this file concise; put detailed workflows in `.github/skills/contextstream-workflow/SKILL.md`
-- Use ContextStream plans/tasks as the persistent record of work
-- Before code discovery, use `search(mode="auto", query="...")`
-
-Full docs: https://contextstream.io/docs/mcp/tools
-
-
----
-## ⚠️ IMPORTANT: No Hooks Available ⚠️
-
-**This editor does NOT have hooks to enforce ContextStream behavior.**
-You MUST follow these rules manually - there is no automatic enforcement.
+> **History:** ContextStream (memory/search) was **retired on 2026-06-17**; the canonical knowledge base
+> is now the Obsidian vault (see [Project knowledge & memory](#project-knowledge--memory)). Do not call
+> `init`/`context`/`search` ContextStream tools — they are no longer configured.
 
 ---
 
-## 🚀 SESSION START PROTOCOL
+## Tool selection order
 
-**On EVERY new session, you MUST:**
+Use this as the default decision flow:
 
-1. **Call `init(folder_path="<project_path>")`** FIRST
-   - This triggers project indexing
-   - Check response for `indexing_status`
-   - If `"started"` or `"refreshing"`: wait before searching
-
-2. **Generate a unique session_id** (e.g., `"session-" + timestamp` or a UUID)
-   - Use this SAME session_id for ALL context() calls in this conversation
-   - This groups all turns together in the transcript
-
-3. **Call `context(user_message="<first_message>", save_exchange=true, session_id="<your-session-id>")`**
-   - Gets task-specific rules, lessons, and preferences
-   - Check for [LESSONS_WARNING] - past mistakes to avoid
-   - Check for [PREFERENCE] - user preferences to follow
-   - Check for [RULES_NOTICE] - update rules if needed
-   - **save_exchange=true** saves each conversation turn for later retrieval
-
-4. **Default behavior:** call `context(...)` first on each message. Narrow bypass is allowed only for immediate read-only ContextStream calls when previous context is still fresh and no state-changing tool has run.
-
----
-
-## 💾 AUTOMATIC TRANSCRIPT SAVING (CRITICAL)
-
-**This editor does NOT have hooks to auto-save transcripts.**
-You MUST save each conversation turn manually:
-
-### On MOST messages (including the first):
-```
-context(user_message="<user's message>", save_exchange=true, session_id="<session-id>")
-```
-
-### Why save_exchange matters:
-- Transcripts enable searching past conversations
-- Allows context restoration after compaction
-- Provides conversation history for debugging
-- Required for the Transcripts page in the dashboard
-
-### Session ID Guidelines:
-- Generate ONCE at the start of the conversation
-- Use a unique identifier: `"session-" + Date.now()` or a UUID
-- Keep the SAME session_id for ALL context() calls in this session
-- Different sessions = different transcripts
-
----
-
-## 📁 FILE INDEXING (CRITICAL)
-
-**There is NO automatic file indexing in this editor.**
-You MUST manage indexing manually:
-
-### After Creating/Editing Files:
-```
-project(action="index")  # Re-index entire project
-```
-
-### For Single File Updates:
-```
-project(action="ingest_local", path="<file_path>")
-```
-
-### Signs You Need to Re-index:
-- Search doesn't find code you just wrote
-- Search returns old versions of functions
-- New files don't appear in search results
-
-### Best Practice:
-After completing a feature or making multiple file changes, ALWAYS run:
-```
-project(action="index")
+```mermaid
+flowchart TD
+    Q[Question or task] --> A{About THIS repo's code?}
+    A -- "structure / symbols / edits" --> Serena
+    A -- "past decisions / gotchas" --> Memory[Obsidian vault + MEMORY.md]
+    A -- No --> B{External library / framework / API?}
+    B -- Yes --> Context7
+    B -- No --> C{Quality / coverage / security of our code?}
+    C -- Yes --> SonarQube
+    C -- No --> D{PRs / issues / releases?}
+    D -- "code host" --> GitHub
+    D -- "issue tracker" --> Linear
+    D -- No --> E{Live web info or a specific URL?}
+    E -- Yes --> Web[WebSearch / WebFetch]
+    E -- "how to approach the work" --> Superpowers
 ```
 
 ---
 
-## 🔍 SEARCH-FIRST (No PreToolUse Hook)
+## Serena — semantic code navigation & editing
 
-**There is NO hook to block local tools (Glob/Grep/Read/Explore/Task/EnterPlanMode).** You MUST self-enforce:
+**What:** A language-server-backed MCP that understands the codebase by *symbol*, not text — definitions,
+references, call sites, structure, and safe rename/replace. MCP prefix: `mcp__plugin_serena_serena__*`.
 
-### Before ANY Search, Check Index Status:
-```
-project(action="index_status")
-```
+**When to use:**
+- Finding where a symbol is defined or every place it's used (`find_symbol`, `find_referencing_symbols`).
+- Getting an overview of a file/class before editing (`get_symbols_overview`).
+- Surgical edits: replace a method body, insert before/after a symbol, rename across the project
+  (`replace_symbol_body`, `insert_after_symbol`, `rename_symbol`).
+- Any time structure matters more than raw text — prefer this over plain Grep for code questions.
 
-This tells you:
-- `indexed`: true/false - is project indexed?
-- `last_indexed_at`: timestamp - when was it last indexed?
-- `file_count`: number - how many files indexed?
+**When NOT to use:** non-code text search, reading a known file top-to-bottom (just read it), or
+external-library questions (use Context7).
 
-### Search Protocol:
-
-**IF project is indexed and fresh:**
-```
-search(mode="auto", query="what you're looking for")
-```
-→ Use this instead of Explore/Task/EnterPlanMode for file discovery.
-
-**IF project is NOT indexed or very stale (>7 days):**
-→ Wait up to ~20s for background refresh, retry `search(mode="auto", ...)`, then allow local tools only after the grace window
-→ OR run `project(action="index")` first, then search
-
-**IF ContextStream search still returns 0 results or errors after retry/window:**
-→ Use local tools (Glob/Grep/Read) as fallback
-
-### Choose Search Mode Intelligently:
-- `auto` (recommended): query-aware mode selection
-- `hybrid`: mixed semantic + keyword retrieval for broad discovery
-- `semantic`: conceptual questions ("how does X work?")
-- `keyword`: exact text / quoted string
-- `pattern`: glob or regex (`*.ts`, `foo\s+bar`)
-- `refactor`: symbol usage / rename-safe lookup
-- `exhaustive`: all occurrences / complete match coverage
-- `team`: cross-project team search
-
-### Output Format Hints:
-- Use `output_format="paths"` for file listings and rename targets
-- Use `output_format="count"` for "how many" queries
-
-### Two-Phase Search Pattern (for precision):
-- Pass 1 (discovery): `search(mode="auto", query="<concept + module>", output_format="paths", limit=10)`
-- Pass 2 (precision): use one of:
-  - exact text/symbol: `search(mode="keyword", query="\"exact_text\"", include_content=true)`
-  - symbol usage: `search(mode="refactor", query="SymbolName", output_format="paths")`
-  - all occurrences: `search(mode="exhaustive", query="symbol_or_text")`
-- Then use local Read/Grep only on paths returned by ContextStream.
-
-### When Local Tools Are OK:
-✅ Stale/not-indexed grace window has elapsed (~20s default, configurable)
-✅ ContextStream search still returns 0 results after retry
-✅ ContextStream returns errors
-✅ User explicitly requests local tools
-
-### When to Use ContextStream Search:
-✅ Project is indexed and fresh
-✅ Looking for code by meaning/concept
-✅ Need semantic understanding
+**How:** Call `initial_instructions` first to load Serena's manual, then navigate symbol-first. It works
+across the .NET solution (`backend/`) and the Angular app (`frontend/`).
 
 ---
 
-## 💾 CONTEXT COMPACTION (No PreCompact Hook)
+## Context7 — library & framework documentation
 
-**There is NO automatic state saving before compaction.**
-You MUST save state manually when the conversation gets long:
+**What:** Version-accurate, up-to-date docs for third-party libraries and frameworks, pulled on demand.
+MCP prefix: `mcp__plugin_context7_context7__*`.
 
-### When to Save State:
-- After completing a major task
-- Before the conversation might be compacted
-- If `context()` returns `context_pressure.level: "high"`
+**When to use** — before guessing or trial-and-error, whenever you need real API signatures, config
+options, or migration details for an external dependency: **.NET 10, EF Core, MediatR, Mapster, ASP.NET,
+FluentValidation, Duende.IdentityModel, ITfoxtec SAML2, Angular 21, RxJS, Tailwind, guacamole-common-js,
+Otp.NET, Fido2NetLib**, etc. *Use it even when you think you know the answer* — your training data may be stale.
 
-### How to Save State:
-```
-session(action="capture", event_type="session_snapshot",
-  title="Session checkpoint",
-  content="{ \"summary\": \"what we did\", \"active_files\": [...], \"next_steps\": [...] }")
-```
+**When NOT to use:** questions about this repo's own code (use Serena), refactors, business-logic
+debugging, code review, or pure language constructs.
 
-### After Compaction (if context seems lost):
-```
-init(folder_path="...", is_post_compact=true)
-```
-This restores the most recent snapshot.
+**How:**
+1. `resolve-library-id(libraryName="<official name>", query="<what you need>")` — skip if you already have a `/org/project` ID.
+2. `query-docs(libraryId="/org/project", query="<specific question>")`.
+3. If results are thin, retry once with `researchMode: true`. Max ~3 calls per question.
+
+Skill reference: `.github/skills/context7/SKILL.md`.
 
 ---
 
-## 📋 PLANS & TASKS (No EnterPlanMode)
+## Web search — WebSearch & WebFetch (general web, any URL)
 
-**Always use ContextStream for planning:**
+**What:** General-purpose web access, distinct from Context7's curated library docs. These built-in tools
+cover live/current information and arbitrary URLs.
 
-```
-session(action="capture_plan", title="...", steps=[...])
-memory(action="create_task", title="...", plan_id="...")
-```
+- **WebSearch** — general web search; returns titles + URLs. Good for recent CVEs, GitHub issue threads,
+  release notes, error messages, blog posts, community patterns, "as of <now>" questions.
+- **WebFetch** — fetch a **specific URL**, convert to markdown, and answer a prompt against it. Use when
+  you already have a link (docs page, changelog, advisory, Stack Overflow answer). Fails on
+  authenticated/private URLs — use an authenticated MCP (GitHub, etc.) for those.
 
-❌ DO NOT use built-in plan mode (`EnterPlanMode`) or `Task(subagent_type="Explore")` for file-by-file scans.
-✅ For planning discovery, use `search(mode="auto", query="...", output_format="paths")` then read only narrowed files.
+**When to use:** anything beyond the model's cutoff or outside library docs — security advisories,
+dependency CVEs (qs/uuid/ws-style alerts), upstream Guacamole/Docker/CircleCI issues, or reading a page
+the user linked.
 
----
+**When NOT to use:** API/usage details for a known library (Context7 is more precise) or this repo's code (Serena).
+Always **cite the source URL** when a web result drives the answer.
 
-## 🔄 VERSION UPDATES (Check Periodically)
-
-**This editor does NOT have hooks to check for updates automatically.**
-You should check for updates using `help(action="version")` periodically (e.g., at session start).
-
-### If the response includes [VERSION_NOTICE] or [VERSION_CRITICAL]:
-
-**Tell the user** about the available update in a helpful, non-annoying way:
-- Frame it as "new features and improvements available"
-- Provide the update commands (user can choose their preferred method)
-- Don't nag repeatedly - mention once, then only if user asks
-
-### Update Commands (provide all options):
-
-**macOS/Linux:**
-```bash
-curl -fsSL https://contextstream.io/scripts/setup.sh | bash
-```
-
-**Windows (PowerShell):**
-```powershell
-irm https://contextstream.io/scripts/setup.ps1 | iex
-```
-
-**npm (requires Node.js 18+):**
-```bash
-npm install -g @contextstream/mcp-server@latest
-```
-
-After updating, user should restart their AI tool.
-
----
-<!-- END ContextStream -->
-</contextstream>
-
-## 🔎 EXTERNAL KNOWLEDGE: Context7 + Tavily
-
-Use these two tools to answer questions that go beyond this repository's code.
-
-### Tool Selection Order
-
-1. **ContextStream `search()`** — this repo's code and docs
-2. **Context7** — third-party library/framework documentation
-3. **Tavily** — live web, recent CVEs, GitHub issues, news
-4. **`web_fetch`** — fallback for a single known URL
+> **Optional — Tavily MCP:** Tavily (`tavily_search`, `tavily_extract`, `tavily_research`, `tavily_crawl`)
+> was part of the earlier tool stack and is **not currently connected**. WebSearch/WebFetch cover the same
+> needs. If you want Tavily's deep multi-source research or structured site crawl back, re-add it as an MCP
+> server (`claude mcp add tavily …` with a Tavily API key) and prefer it for heavy research; otherwise the
+> built-in tools are the default.
 
 ---
 
-### Context7 — Library & Framework Docs
+## SonarQube — code quality, coverage & security
 
-Use Context7 **before guessing or trial-and-error** when you need accurate API signatures, configuration options, or usage examples for any external dependency (Angular, .NET, EF Core, Tailwind, JWT libs, etc.).
+**What:** Static analysis and quality-gate intelligence. This repo runs **SonarCloud** in CI
+(project key `alessandrocaetanob_smooth-operator`) with an **80% new-code coverage** quality gate that
+blocks PRs. Available as the `mcp__sonarqube__*` MCP **and** the `sonarqube:*` skills.
 
-**Workflow:**
-1. Resolve the library ID (skip if user gave `/org/project` directly):
-   ```
-   context7-resolve-library-id(libraryName="<official name>", query="<what you need>")
-   ```
-2. Query the docs:
-   ```
-   context7-query-docs(libraryId="/org/project", query="<specific question>")
-   ```
-3. If thin, retry once with `researchMode: true`. Max 3 calls per question.
+**When to use:**
+- Before opening or merging a PR — check the gate status and new issues.
+- Diagnosing why CI's Sonar step failed (coverage drop, new code smells, security hotspots, duplications).
+- Finding low-coverage files and the exact uncovered lines to target tests.
 
-Full reference: `.github/skills/context7/SKILL.md`
+**When NOT to use:** as a general linter for tiny local edits (use `dotnet format` / ESLint / Prettier),
+or for logic bugs unrelated to quality metrics.
+
+**How — MCP tools:**
+- `get_project_quality_gate_status` — pass/fail + each condition.
+- `search_sonar_issues_in_projects` — issues by project/branch/PR.
+- `search_files_by_coverage` / `get_file_coverage_details` — coverage gaps and uncovered lines.
+- `search_security_hotspots`, `get_duplications`, `get_component_measures`.
+
+**How — skills:** `/sonarqube:sonar-quality-gate`, `sonar-coverage`, `sonar-list-issues`,
+`sonar-fix-issue`, `sonar-duplication`, `sonar-dependency-risks`.
+
+> Known tension: the 80% gate is fragile; high-effort frontend components (e.g. the recording player) are
+> deliberately excluded rather than exhaustively unit-tested. New complex frontend code can re-trigger gate
+> failures — check coverage early.
 
 ---
 
-### Tavily — Live Web Search
+## GitHub — PRs, issues, releases, remote code
 
-Use Tavily for current information beyond the training cutoff: recent CVEs, GitHub issues, error messages, release notes, community patterns.
+**What:** Interaction with the GitHub repo (`alessandrocaetanob/smooth-operator`). MCP prefix:
+`mcp__plugin_github_github__*`; the `gh` CLI is also available for local git/PR operations.
 
-**Pick the right tool:**
+**When to use:** open/read/update PRs and reviews, read/triage issues and Dependabot alerts, inspect
+commits/branches/tags, cut or read releases, search code across the remote, request a Copilot review.
 
-| Tool | Use when |
-|------|----------|
-| `tavily-tavily_search` | General web search (default first choice) |
-| `tavily-tavily_extract` | Fetch full content from a specific URL |
-| `tavily-tavily_research` | Deep multi-source research (rate-limited, use sparingly) |
-| `tavily-tavily_crawl` | Structured crawl of a docs site |
+**When NOT to use:** local-only git work (use `git`/`gh` in the shell), or issue/project *planning* if you
+track that in Linear.
 
-**Always cite source URLs** in your response when Tavily provides the answer.
+**How — common tools:** `pull_request_read`, `list_pull_requests`, `create_pull_request`,
+`pull_request_review_write`, `issue_read`, `issue_write`, `list_releases`, `get_latest_release`,
+`search_code`, `search_issues`, `merge_pull_request`. Prefer `gh pr create` for opening PRs from a local branch.
 
-Full reference: `.github/skills/tavily/SKILL.md`
+> Repo workflow: branch from `master`, run Prettier (frontend) + `dotnet format` before committing, and
+> remember commits on this machine need `git commit --no-gpg-sign` (1Password GPG agent). See `CLAUDE.md`.
+
+---
+
+## Linear — issue & project tracking
+
+**What:** The issue tracker / project planning tool, when work is tracked there. MCP prefix:
+`mcp__claude_ai_Linear__*`.
+
+**When to use:** find or update issues, cycles, projects, and milestones; turn a discussion into a tracked
+issue; check what's assigned or in the current cycle; attach a PR/diff to an issue.
+
+**When NOT to use:** code-host operations (GitHub) or durable engineering knowledge (that lives in the
+Obsidian vault, not Linear).
+
+**How — common tools:** `list_issues`, `get_issue`, `save_issue` (create/update), `list_projects`,
+`get_project`, `list_cycles`, `create_issue_label`, `save_comment`. Pass markdown content with real
+newlines (no escaped `\n`).
+
+---
+
+## Superpowers — the workflow spine
+
+**What:** A library of process skills that govern *how* to approach work, invoked via the Skill tool
+(e.g. `superpowers:brainstorming`). They encode discipline that produces better results than ad-hoc prompting.
+
+**When to use — match the skill to the moment:**
+- `brainstorming` — **before** any new feature/behavior, to nail intent and design first.
+- `writing-plans` / `executing-plans` — turn a spec into a step-by-step plan, then execute with checkpoints.
+- `test-driven-development` — before writing implementation code for a feature or bugfix.
+- `systematic-debugging` — at the first sign of a bug, test failure, or unexpected behavior (before guessing fixes).
+- `requesting-code-review` / `receiving-code-review` — when finishing a chunk or before merging.
+- `verification-before-completion` — before claiming something works; run the checks and show evidence.
+- `using-git-worktrees`, `subagent-driven-development`, `dispatching-parallel-agents` — for isolated or parallel work.
+
+**When NOT to use:** trivial one-line edits or purely conversational answers. Don't over-ceremony a typo fix.
+
+**How:** invoke the relevant skill via the Skill tool before starting; if it has a checklist, follow it.
+Process skills come first, implementation skills (below) second.
+
+---
+
+## frontend-design — distinctive Angular UI
+
+**What:** A skill for intentional visual design when building or substantially restyling UI
+(`Skill(frontend-design)`). The Angular SPA in `frontend/` is the usual target.
+
+**When to use:** new pages/components or meaningful restyles where design quality matters (the project has a
+standing preference to route UI work through this skill rather than ad-hoc styling).
+
+**When NOT to use:** tiny tweaks (a single class change, copy edit, or bugfix).
+
+---
+
+## Project knowledge & memory
+
+The **Obsidian vault** `H:\Obsidian\SmoothOperator` is the canonical, browsable knowledge base — plans,
+design decisions, diagrams, gotchas, and lessons (start at `Home.md`). For AI agents, a slim native
+`MEMORY.md` auto-loads each session and links into the vault.
+
+- **Read** durable context from the vault before re-deriving it.
+- **Save** new durable knowledge as a vault note (`Memory/`, `Plans/`, …) and add a one-line pointer to `MEMORY.md`.
+- The repo's **`CLAUDE.md`** holds build/test commands, architecture, testing conventions, and Known Gotchas — read it first.
+
+> This `.github/copilot-instructions.md` and the vault's `Reference/Tooling-Guide.md` are mirrors — keep
+> them in sync when the toolset changes.

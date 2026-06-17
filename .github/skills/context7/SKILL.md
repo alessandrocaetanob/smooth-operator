@@ -16,7 +16,7 @@ Use Context7 to get precise, version-aware documentation and code examples for a
 - You're unsure whether a behavior changed between versions
 - You're about to guess at an API you're not 100% certain about
 
-**Do NOT use Context7 for questions about this repository's own code** — use ContextStream `search()` for that.
+**Do NOT use Context7 for questions about this repository's own code** — use Serena (symbol-level code navigation) for that.
 
 ## Workflow
 
@@ -86,10 +86,10 @@ context7-query-docs(
 
 ## Tool Selection Order
 
-1. **ContextStream `search()`** — for this repo's code
+1. **Serena** — for this repo's code (symbols, references, structure)
 2. **Context7** — for third-party library/framework docs ← this skill
-3. **Tavily** — for live web, recent CVEs, GitHub issues, news
-4. **`web_fetch`** — for fetching a specific known URL
+3. **GitHub** — for PRs, issues, releases, remote code search
+4. **`web_fetch` / WebSearch** — for a specific URL or live web info
 
 ## Anti-Patterns
 

@@ -117,6 +117,24 @@ Migrations are applied automatically on startup (`ApplyPendingMigrationsAsync` i
 - Write endpoints must call `EvictByTagAsync` for their output-cache tags so subsequent GET assertions in the same test see fresh data.
 - `SmoothOperator.ArchitectureTests` uses NetArchTest to enforce layer boundaries — violations fail CI.
 
+## Tooling & Workflow
+
+Prefer purpose-built tools over training-data recall. When unsure whether one applies, invoke it — a no-op call is cheaper than a wrong answer.
+
+- **Serena** (`mcp__plugin_serena_serena__*`) — semantic code navigation/editing in this large solution. Call `initial_instructions` first, then `find_symbol`, `find_referencing_symbols`, `get_symbols_overview`, `replace_symbol_body`. Prefer over raw Grep when you care about symbols/structure.
+- **Context7** (`mcp__plugin_context7_context7__*`) — version-accurate docs for external libraries (.NET 10, EF Core, MediatR, Mapster, ASP.NET, Angular 21, Tailwind, RxJS, Guacamole, JWT). `resolve-library-id` → `query-docs`; use even when you think you know the answer. Skip for refactors, business-logic debugging, code review, pure language constructs.
+- **SonarQube** (`mcp__sonarqube__*` + the `sonarqube:*` skills) — quality gate, coverage gaps, duplications, security hotspots. CI runs SonarCloud at an **80% new-code** gate; check it before opening/merging PRs.
+- **GitHub** (`mcp__plugin_github_github__*`, plus `gh` CLI for local git) — PRs, reviews, issues, releases, commit/branch lookups.
+- **Linear** (`mcp__claude_ai_Linear__*`) — issue/project tracking when work is tracked there.
+- **Web search** — `WebSearch` (general/live web: CVEs, advisories, upstream issues) and `WebFetch` (fetch a specific URL → markdown). Use these, not Context7, for non-library/current info; cite source URLs. (Tavily MCP is optional and not currently connected.)
+- **Superpowers skills** — the workflow spine: `brainstorming` before any feature, `test-driven-development`, `systematic-debugging`, `writing-plans`/`executing-plans`, `requesting-code-review`, `verification-before-completion`. Use `frontend-design` when building/restyling Angular UI.
+
+Full per-tool reference (what/when/when-not/how) for contributors: `.github/copilot-instructions.md` (mirrored in the vault's `Reference/Tooling-Guide.md`).
+
+### Project memory
+
+The Obsidian vault `H:\Obsidian\SmoothOperator` is the **canonical** knowledge base — plans, design decisions, diagrams, gotchas, and lessons live there (start at `Home.md`). Claude's slim native `MEMORY.md` auto-loads each session and links into the vault. When saving durable knowledge: write the full note into the vault (`Memory/`, `Plans/`, etc.) and add a one-line pointer to the native `MEMORY.md`. (ContextStream was retired 2026-06-17; do not reintroduce `init`/`context`/`search` MCP calls.)
+
 ## Known Gotchas
 
 - **Prettier is CI-enforced** — always run `npx prettier --write .` in `frontend/` before committing any TypeScript, HTML, CSS, SCSS, or JSON change.
