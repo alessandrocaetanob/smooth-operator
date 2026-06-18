@@ -24,159 +24,383 @@
   [attr.aria-modal]="mobileNavOpen() ? 'true' : null"
 >
   <div class="sidebar-body flex-1 overflow-y-auto py-3">
-    <ul class="space-y-1 px-2">
-      <li>
-        <a
-          routerLink="/my-access"
-          (click)="closeMobileNav()"
-          routerLinkActive="nav-link-active"
-          class="nav-link"
-          [class.nav-link--icon-only]="collapsed()"
-          [attr.title]="collapsed() ? 'My Access' : null"
-        >
-          <span class="material-symbols-outlined" aria-hidden="true">verified_user</span>
-          @if (!collapsed()) {
-            <span>My Access</span>
-          }
-        </a>
-      </li>
-      <li>
-        <a
-          routerLink="/vault"
-          (click)="closeMobileNav()"
-          routerLinkActive="nav-link-active"
-          [routerLinkActiveOptions]="{ exact: false }"
-          class="nav-link"
-          [class.nav-link--icon-only]="collapsed()"
-          [attr.title]="collapsed() ? 'My Vaults' : null"
-        >
-          <span class="material-symbols-outlined" aria-hidden="true">dashboard</span>
-          @if (!collapsed()) {
-            <span>My Vaults</span>
-          }
-        </a>
-      </li>
-      @if (canManageConnections()) {
+    @if (isSettings()) {
+      <ul class="space-y-0.5 px-2">
+        @if (!collapsed()) {
+          <li class="settings-nav-group-label">People &amp; Access</li>
+        }
         <li>
           <a
-            routerLink="/connections"
+            routerLink="/settings/users"
             (click)="closeMobileNav()"
             routerLinkActive="nav-link-active"
+            [routerLinkActiveOptions]="{ exact: false }"
+            [ariaCurrentWhenActive]="'page'"
             class="nav-link"
             [class.nav-link--icon-only]="collapsed()"
-            [attr.title]="collapsed() ? 'Connections' : null"
+            [attr.title]="collapsed() ? 'Users' : null"
           >
-            <span class="material-symbols-outlined" aria-hidden="true">hub</span>
+            <span class="material-symbols-outlined" aria-hidden="true">group</span>
             @if (!collapsed()) {
-              <span>Connections</span>
+              <span>Users</span>
             }
           </a>
         </li>
         <li>
           <a
-            routerLink="/hosts"
+            routerLink="/settings/groups"
             (click)="closeMobileNav()"
             routerLinkActive="nav-link-active"
+            [routerLinkActiveOptions]="{ exact: false }"
+            [ariaCurrentWhenActive]="'page'"
             class="nav-link"
             [class.nav-link--icon-only]="collapsed()"
-            [attr.title]="collapsed() ? 'Known Hosts' : null"
+            [attr.title]="collapsed() ? 'Groups' : null"
           >
-            <span class="material-symbols-outlined" aria-hidden="true">dns</span>
+            <span class="material-symbols-outlined" aria-hidden="true">workspaces</span>
             @if (!collapsed()) {
-              <span>Known Hosts</span>
+              <span>Groups</span>
             }
           </a>
         </li>
-      }
-      @if (canViewCredentials()) {
         <li>
           <a
-            routerLink="/credentials"
+            routerLink="/settings/roles"
             (click)="closeMobileNav()"
             routerLinkActive="nav-link-active"
+            [routerLinkActiveOptions]="{ exact: false }"
+            [ariaCurrentWhenActive]="'page'"
             class="nav-link"
             [class.nav-link--icon-only]="collapsed()"
-            [attr.title]="collapsed() ? 'Credentials' : null"
+            [attr.title]="collapsed() ? 'Roles' : null"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">verified_user</span>
+            @if (!collapsed()) {
+              <span>Roles</span>
+            }
+          </a>
+        </li>
+
+        @if (!collapsed()) {
+          <li class="settings-nav-group-label">Infrastructure</li>
+        }
+        <li>
+          <a
+            routerLink="/settings/vaults"
+            (click)="closeMobileNav()"
+            routerLinkActive="nav-link-active"
+            [routerLinkActiveOptions]="{ exact: false }"
+            [ariaCurrentWhenActive]="'page'"
+            class="nav-link"
+            [class.nav-link--icon-only]="collapsed()"
+            [attr.title]="collapsed() ? 'Vaults' : null"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">lock</span>
+            @if (!collapsed()) {
+              <span>Vaults</span>
+            }
+          </a>
+        </li>
+        <li>
+          <a
+            routerLink="/settings/secret-providers"
+            (click)="closeMobileNav()"
+            routerLinkActive="nav-link-active"
+            [routerLinkActiveOptions]="{ exact: false }"
+            [ariaCurrentWhenActive]="'page'"
+            class="nav-link"
+            [class.nav-link--icon-only]="collapsed()"
+            [attr.title]="collapsed() ? 'Key Vault' : null"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">lock_open</span>
+            @if (!collapsed()) {
+              <span>Key Vault</span>
+            }
+          </a>
+        </li>
+
+        @if (!collapsed()) {
+          <li class="settings-nav-group-label">Security</li>
+        }
+        <li>
+          <a
+            routerLink="/settings/sso"
+            (click)="closeMobileNav()"
+            routerLinkActive="nav-link-active"
+            [routerLinkActiveOptions]="{ exact: false }"
+            [ariaCurrentWhenActive]="'page'"
+            class="nav-link"
+            [class.nav-link--icon-only]="collapsed()"
+            [attr.title]="collapsed() ? 'SSO' : null"
           >
             <span class="material-symbols-outlined" aria-hidden="true">key</span>
             @if (!collapsed()) {
-              <span>Credentials</span>
+              <span>SSO</span>
             }
           </a>
         </li>
-      }
-      @if (canAccessSettings()) {
         <li>
           <a
-            routerLink="/auditing"
+            routerLink="/settings/sessions"
             (click)="closeMobileNav()"
             routerLinkActive="nav-link-active"
             [routerLinkActiveOptions]="{ exact: false }"
+            [ariaCurrentWhenActive]="'page'"
             class="nav-link"
             [class.nav-link--icon-only]="collapsed()"
-            [attr.title]="collapsed() ? 'Audit Logs' : null"
+            [attr.title]="collapsed() ? 'Sessions' : null"
           >
-            <span class="material-symbols-outlined" aria-hidden="true">receipt_long</span>
+            <span class="material-symbols-outlined" aria-hidden="true">timer</span>
             @if (!collapsed()) {
-              <span>Audit Logs</span>
+              <span>Sessions</span>
             }
           </a>
         </li>
-      }
-      @if (canAccessSettings()) {
         <li>
           <a
-            routerLink="/recordings"
+            routerLink="/settings/retention"
             (click)="closeMobileNav()"
             routerLinkActive="nav-link-active"
             [routerLinkActiveOptions]="{ exact: false }"
+            [ariaCurrentWhenActive]="'page'"
             class="nav-link"
             [class.nav-link--icon-only]="collapsed()"
-            [attr.title]="collapsed() ? 'Recordings' : null"
+            [attr.title]="collapsed() ? 'Retention' : null"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">schedule</span>
+            @if (!collapsed()) {
+              <span>Retention</span>
+            }
+          </a>
+        </li>
+        <li>
+          <a
+            routerLink="/settings/recording"
+            (click)="closeMobileNav()"
+            routerLinkActive="nav-link-active"
+            [routerLinkActiveOptions]="{ exact: false }"
+            [ariaCurrentWhenActive]="'page'"
+            class="nav-link"
+            [class.nav-link--icon-only]="collapsed()"
+            [attr.title]="collapsed() ? 'Recording' : null"
           >
             <span class="material-symbols-outlined" aria-hidden="true">videocam</span>
             @if (!collapsed()) {
-              <span>Recordings</span>
+              <span>Recording</span>
             }
           </a>
         </li>
-      }
-      @if (canAccessSettings()) {
+
+        @if (!collapsed()) {
+          <li class="settings-nav-group-label">System</li>
+        }
         <li>
           <a
-            routerLink="/monitoring"
+            routerLink="/settings/email"
+            (click)="closeMobileNav()"
+            routerLinkActive="nav-link-active"
+            [routerLinkActiveOptions]="{ exact: false }"
+            [ariaCurrentWhenActive]="'page'"
+            class="nav-link"
+            [class.nav-link--icon-only]="collapsed()"
+            [attr.title]="collapsed() ? 'Email' : null"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">mail</span>
+            @if (!collapsed()) {
+              <span>Email</span>
+            }
+          </a>
+        </li>
+        <li>
+          <a
+            routerLink="/settings/integrations"
+            (click)="closeMobileNav()"
+            routerLinkActive="nav-link-active"
+            [routerLinkActiveOptions]="{ exact: false }"
+            [ariaCurrentWhenActive]="'page'"
+            class="nav-link"
+            [class.nav-link--icon-only]="collapsed()"
+            [attr.title]="collapsed() ? 'Integrations' : null"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">hub</span>
+            @if (!collapsed()) {
+              <span>Integrations</span>
+            }
+          </a>
+        </li>
+        <li>
+          <a
+            routerLink="/settings/webhooks"
+            (click)="closeMobileNav()"
+            routerLinkActive="nav-link-active"
+            [routerLinkActiveOptions]="{ exact: false }"
+            [ariaCurrentWhenActive]="'page'"
+            class="nav-link"
+            [class.nav-link--icon-only]="collapsed()"
+            [attr.title]="collapsed() ? 'Webhooks' : null"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">webhook</span>
+            @if (!collapsed()) {
+              <span>Webhooks</span>
+            }
+          </a>
+        </li>
+      </ul>
+    } @else {
+      <ul class="space-y-1 px-2">
+        <li>
+          <a
+            routerLink="/my-access"
+            (click)="closeMobileNav()"
+            routerLinkActive="nav-link-active"
+            class="nav-link"
+            [class.nav-link--icon-only]="collapsed()"
+            [attr.title]="collapsed() ? 'My Access' : null"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">verified_user</span>
+            @if (!collapsed()) {
+              <span>My Access</span>
+            }
+          </a>
+        </li>
+        <li>
+          <a
+            routerLink="/vault"
             (click)="closeMobileNav()"
             routerLinkActive="nav-link-active"
             [routerLinkActiveOptions]="{ exact: false }"
             class="nav-link"
             [class.nav-link--icon-only]="collapsed()"
-            [attr.title]="collapsed() ? 'Monitoring' : null"
+            [attr.title]="collapsed() ? 'My Vaults' : null"
           >
-            <span class="material-symbols-outlined" aria-hidden="true">monitoring</span>
+            <span class="material-symbols-outlined" aria-hidden="true">dashboard</span>
             @if (!collapsed()) {
-              <span>Monitoring</span>
+              <span>My Vaults</span>
             }
           </a>
         </li>
-      }
-      @if (canAccessSettings()) {
-        <li>
-          <a
-            routerLink="/settings"
-            (click)="closeMobileNav()"
-            routerLinkActive="nav-link-active"
-            class="nav-link"
-            [class.nav-link--icon-only]="collapsed()"
-            [attr.title]="collapsed() ? 'Settings' : null"
-          >
-            <span class="material-symbols-outlined" aria-hidden="true">settings</span>
-            @if (!collapsed()) {
-              <span>Settings</span>
-            }
-          </a>
-        </li>
-      }
-    </ul>
+        @if (canManageConnections()) {
+          <li>
+            <a
+              routerLink="/connections"
+              (click)="closeMobileNav()"
+              routerLinkActive="nav-link-active"
+              class="nav-link"
+              [class.nav-link--icon-only]="collapsed()"
+              [attr.title]="collapsed() ? 'Connections' : null"
+            >
+              <span class="material-symbols-outlined" aria-hidden="true">hub</span>
+              @if (!collapsed()) {
+                <span>Connections</span>
+              }
+            </a>
+          </li>
+          <li>
+            <a
+              routerLink="/hosts"
+              (click)="closeMobileNav()"
+              routerLinkActive="nav-link-active"
+              class="nav-link"
+              [class.nav-link--icon-only]="collapsed()"
+              [attr.title]="collapsed() ? 'Known Hosts' : null"
+            >
+              <span class="material-symbols-outlined" aria-hidden="true">dns</span>
+              @if (!collapsed()) {
+                <span>Known Hosts</span>
+              }
+            </a>
+          </li>
+        }
+        @if (canViewCredentials()) {
+          <li>
+            <a
+              routerLink="/credentials"
+              (click)="closeMobileNav()"
+              routerLinkActive="nav-link-active"
+              class="nav-link"
+              [class.nav-link--icon-only]="collapsed()"
+              [attr.title]="collapsed() ? 'Credentials' : null"
+            >
+              <span class="material-symbols-outlined" aria-hidden="true">key</span>
+              @if (!collapsed()) {
+                <span>Credentials</span>
+              }
+            </a>
+          </li>
+        }
+        @if (canAccessSettings()) {
+          <li>
+            <a
+              routerLink="/auditing"
+              (click)="closeMobileNav()"
+              routerLinkActive="nav-link-active"
+              [routerLinkActiveOptions]="{ exact: false }"
+              class="nav-link"
+              [class.nav-link--icon-only]="collapsed()"
+              [attr.title]="collapsed() ? 'Audit Logs' : null"
+            >
+              <span class="material-symbols-outlined" aria-hidden="true">receipt_long</span>
+              @if (!collapsed()) {
+                <span>Audit Logs</span>
+              }
+            </a>
+          </li>
+        }
+        @if (canAccessSettings()) {
+          <li>
+            <a
+              routerLink="/recordings"
+              (click)="closeMobileNav()"
+              routerLinkActive="nav-link-active"
+              [routerLinkActiveOptions]="{ exact: false }"
+              class="nav-link"
+              [class.nav-link--icon-only]="collapsed()"
+              [attr.title]="collapsed() ? 'Recordings' : null"
+            >
+              <span class="material-symbols-outlined" aria-hidden="true">videocam</span>
+              @if (!collapsed()) {
+                <span>Recordings</span>
+              }
+            </a>
+          </li>
+        }
+        @if (canAccessSettings()) {
+          <li>
+            <a
+              routerLink="/monitoring"
+              (click)="closeMobileNav()"
+              routerLinkActive="nav-link-active"
+              [routerLinkActiveOptions]="{ exact: false }"
+              class="nav-link"
+              [class.nav-link--icon-only]="collapsed()"
+              [attr.title]="collapsed() ? 'Monitoring' : null"
+            >
+              <span class="material-symbols-outlined" aria-hidden="true">monitoring</span>
+              @if (!collapsed()) {
+                <span>Monitoring</span>
+              }
+            </a>
+          </li>
+        }
+        @if (canAccessSettings()) {
+          <li>
+            <a
+              routerLink="/settings"
+              (click)="closeMobileNav()"
+              routerLinkActive="nav-link-active"
+              class="nav-link"
+              [class.nav-link--icon-only]="collapsed()"
+              [attr.title]="collapsed() ? 'Settings' : null"
+            >
+              <span class="material-symbols-outlined" aria-hidden="true">settings</span>
+              @if (!collapsed()) {
+                <span>Settings</span>
+              }
+            </a>
+          </li>
+        }
+      </ul>
+    }
   </div>
 
   <div class="sidebar-divider p-2">

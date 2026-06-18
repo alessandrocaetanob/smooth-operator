@@ -90,3 +90,6 @@ JULES.md
 # Editor / IDE local config (may contain secrets)
 .cursor/
 .vscode/settings.json
+
+# Brainstorming companion workspace
+.superpowers/

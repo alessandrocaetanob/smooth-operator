@@ -127,3 +127,13 @@
     transform: none;
   }
 }
+
+.settings-nav-group-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgb(var(--color-on-surface-variant) / 0.5);
+  padding: 10px 12px 3px;
+  list-style: none;
+}
