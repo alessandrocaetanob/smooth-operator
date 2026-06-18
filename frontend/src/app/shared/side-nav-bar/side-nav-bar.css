@@ -128,6 +128,28 @@
   }
 }
 
+.settings-nav .nav-link span:not(.material-symbols-outlined) {
+  text-transform: none;
+  letter-spacing: 0.01em;
+  font-size: 0.8125rem;
+}
+
+.settings-nav-back-btn {
+  color: rgb(var(--color-primary) / 0.7);
+}
+
+.settings-nav-back-btn:hover {
+  color: rgb(var(--color-primary));
+  background-color: rgb(var(--color-primary) / 0.08) !important;
+}
+
+.settings-nav-divider {
+  height: 1px;
+  background: rgb(var(--color-outline-variant) / 0.25);
+  margin: 6px 4px 8px;
+  list-style: none;
+}
+
 .settings-nav-group-label {
   font-size: 9px;
   font-weight: 700;

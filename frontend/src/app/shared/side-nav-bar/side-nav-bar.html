@@ -25,7 +25,22 @@
 >
   <div class="sidebar-body flex-1 overflow-y-auto py-3">
     @if (isSettings()) {
-      <ul class="space-y-0.5 px-2">
+      <ul class="space-y-0.5 px-2 settings-nav">
+        <li>
+          <a
+            routerLink="/vault"
+            (click)="closeMobileNav()"
+            class="nav-link settings-nav-back-btn"
+            [class.nav-link--icon-only]="collapsed()"
+            [attr.title]="collapsed() ? 'Back to app' : null"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+            @if (!collapsed()) {
+              <span>Back to app</span>
+            }
+          </a>
+        </li>
+        <li class="settings-nav-divider" role="separator"></li>
         @if (!collapsed()) {
           <li class="settings-nav-group-label">People &amp; Access</li>
         }
