@@ -1,5 +1,7 @@
-import { Component, inject } from '@angular/core';
-import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { Component, computed, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { filter, map } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 import { LayoutService } from '../../services/layout.service';
 import { RuntimeConfigService } from '../../core/config/runtime-config.service';
@@ -22,6 +24,15 @@ export class SideNavBar {
   readonly canAccessSettings = this.auth.canAccessSettings;
   readonly collapsed = this.layout.collapsed;
   readonly mobileNavOpen = this.layout.mobileNavOpen;
+
+  private readonly currentUrl = toSignal(
+    this.router.events.pipe(
+      filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+      map((e) => e.urlAfterRedirects),
+    ),
+    { initialValue: this.router.url },
+  );
+  readonly isSettings = computed(() => this.currentUrl().startsWith('/settings'));
 
   get helpUrl(): string {
     return this.runtimeConfig.config.helpUrl;
