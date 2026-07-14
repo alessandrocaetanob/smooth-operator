@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideTranslateService, TranslateService } from '@ngx-translate/core';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { of, throwError } from 'rxjs';
 
@@ -21,11 +22,27 @@ describe('SsoFinalize', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
+        provideTranslateService(),
         { provide: AuthService, useValue: auth },
         { provide: Router, useValue: router },
         { provide: ActivatedRoute, useValue: { snapshot: { fragment } } },
       ],
     });
+
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', {
+      pages: {
+        ssoFinalize: {
+          errorTitle: 'Sign-in failed',
+          backToSignIn: 'Back to sign-in',
+          completingTitle: 'Completing sign-in…',
+          validatingSession: 'Validating your single sign-on session.',
+          authFailedFallback: 'Authentication failed. Please try logging in again.',
+        },
+      },
+    });
+    translate.use('en');
+
     const fixture = TestBed.createComponent(SsoFinalize);
     return fixture.componentInstance;
   }

@@ -10,6 +10,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ConfirmDialogService } from './confirm-dialog.service';
 import { fadeIn, scaleIn } from '../animations';
 import { Mascot } from '../mascot/mascot';
@@ -17,17 +18,22 @@ import { Mascot } from '../mascot/mascot';
 @Component({
   selector: 'app-confirm-dialog',
   standalone: true,
-  imports: [Mascot],
+  imports: [Mascot, TranslatePipe],
   templateUrl: './confirm-dialog.html',
   animations: [fadeIn, scaleIn],
 })
 export class ConfirmDialog implements AfterViewInit, OnDestroy {
   private readonly svc = inject(ConfirmDialogService);
+  private readonly translate = inject(TranslateService);
   readonly active = this.svc.active;
 
   readonly tone = computed(() => this.active()?.tone ?? 'default');
-  readonly confirmLabel = computed(() => this.active()?.confirmLabel ?? 'Confirm');
-  readonly cancelLabel = computed(() => this.active()?.cancelLabel ?? 'Cancel');
+  readonly confirmLabel = computed(
+    () => this.active()?.confirmLabel ?? this.translate.instant('common.actions.confirm'),
+  );
+  readonly cancelLabel = computed(
+    () => this.active()?.cancelLabel ?? this.translate.instant('common.actions.cancel'),
+  );
 
   /** Countdown state for danger dialogs (3 s lock) */
   readonly isCountingDown = signal(false);

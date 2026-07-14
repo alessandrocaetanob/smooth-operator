@@ -1,17 +1,19 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { SmtpSettings, SmtpSettingsService } from '../../../services/smtp-settings.service';
 import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-email-settings',
-  imports: [FormsModule],
+  imports: [FormsModule, TranslatePipe],
   templateUrl: './email.html',
   styleUrl: './email.css',
 })
 export class Email implements OnInit {
   private readonly smtp = inject(SmtpSettingsService);
   private readonly auth = inject(AuthService);
+  private readonly translate = inject(TranslateService);
 
   readonly current = this.smtp.current;
   readonly loading = signal(false);
@@ -45,7 +47,9 @@ export class Email implements OnInit {
       },
       error: (err) => {
         this.loading.set(false);
-        this.error.set(this.toMessage(err) || 'Failed to load SMTP settings.');
+        this.error.set(
+          this.toMessage(err) || this.translate.instant('pages.settingsEmail.errors.loadFailed'),
+        );
       },
     });
   }
@@ -96,11 +100,13 @@ export class Email implements OnInit {
         next: (s) => {
           this.busy.set(false);
           this.applyToForm(s);
-          this.message.set('SMTP settings saved.');
+          this.message.set(this.translate.instant('pages.settingsEmail.messages.saved'));
         },
         error: (err) => {
           this.busy.set(false);
-          this.error.set(this.toMessage(err) || 'Failed to save SMTP settings.');
+          this.error.set(
+            this.toMessage(err) || this.translate.instant('pages.settingsEmail.errors.saveFailed'),
+          );
         },
       });
   }
@@ -109,7 +115,7 @@ export class Email implements OnInit {
     if (this.testBusy()) return;
     const to = this.testTo().trim();
     if (!to) {
-      this.error.set('Enter a recipient address.');
+      this.error.set(this.translate.instant('pages.settingsEmail.errors.recipientRequired'));
       return;
     }
     this.testBusy.set(true);
@@ -118,11 +124,13 @@ export class Email implements OnInit {
     this.smtp.test(to).subscribe({
       next: () => {
         this.testBusy.set(false);
-        this.message.set(`Test email sent to ${to}.`);
+        this.message.set(this.translate.instant('pages.settingsEmail.messages.testSent', { to }));
       },
       error: (err) => {
         this.testBusy.set(false);
-        this.error.set(this.toMessage(err) || 'Test failed.');
+        this.error.set(
+          this.toMessage(err) || this.translate.instant('pages.settingsEmail.errors.testFailed'),
+        );
       },
     });
   }

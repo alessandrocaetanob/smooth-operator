@@ -1,20 +1,22 @@
 <div class="page-shell">
   <div class="mb-6 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
     <div class="min-w-0">
-      <h1 class="text-2xl font-bold text-on-surface tracking-tight">My Vaults</h1>
+      <h1 class="text-2xl font-bold text-on-surface tracking-tight">
+        {{ 'nav.sidebar.myVaults' | translate }}
+      </h1>
       <p class="mt-1 text-sm text-on-surface-variant">
-        Select a connection to initiate a secure tunnel.
+        {{ 'pages.vault.subtitle' | translate }}
       </p>
     </div>
     <div class="flex flex-wrap items-center gap-2 sm:shrink-0 sm:mt-1">
       <button type="button" class="btn-ghost" (click)="refresh()">
         <span class="material-symbols-outlined text-base" aria-hidden="true">refresh</span>
-        Refresh
+        {{ 'pages.vault.refresh' | translate }}
       </button>
       @if (canManageConnections()) {
         <a routerLink="/connections" class="btn-primary">
           <span class="material-symbols-outlined text-base" aria-hidden="true">add</span>
-          Manage
+          {{ 'pages.vault.manage' | translate }}
         </a>
       }
     </div>
@@ -25,18 +27,22 @@
       class="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-on-surface-variant"
     >
       <span class="material-symbols-outlined text-[16px]" aria-hidden="true">filter_alt</span>
-      Filter by vault
+      {{ 'pages.vault.filterByVault' | translate }}
     </div>
 
     <div class="mb-3 sm:hidden">
-      <label for="vaultFilterSelect" class="sr-only">Select vault</label>
+      <label for="vaultFilterSelect" class="sr-only">{{
+        'pages.vault.selectVaultLabel' | translate
+      }}</label>
       <select
         id="vaultFilterSelect"
         class="select-field w-full"
         [ngModel]="selectedVaultId() || ''"
         (ngModelChange)="selectVault($event || null)"
       >
-        <option value="">All Connections ({{ list().length }})</option>
+        <option value="">
+          {{ 'pages.vault.allConnectionsWithCount' | translate: { count: list().length } }}
+        </option>
         @for (v of vaultsMap() | keyvalue; track v.key) {
           <option [value]="v.key">
             {{ v.value }} ({{ vaultConnectionCounts().get(v.key) || 0 }})
@@ -55,7 +61,7 @@
         [class.border-outline-variant/30]="selectedVaultId()"
       >
         <span class="material-symbols-outlined text-[16px]" aria-hidden="true">all_inbox</span>
-        All Connections
+        {{ 'pages.vault.allConnections' | translate }}
         <span class="opacity-70">{{ list().length }}</span>
       </button>
       @for (v of vaultsMap() | keyvalue; track v.key) {
@@ -78,19 +84,26 @@
   @if (loading() && list().length === 0) {
     <div class="flex h-full flex-col items-center justify-center py-16" aria-live="polite">
       <app-mascot [state]="'loading'"></app-mascot>
-      <span class="sr-only">Loading vault connections…</span>
+      <span class="sr-only">{{ 'pages.vault.loadingConnections' | translate }}</span>
     </div>
   } @else if (!hasConnections() || filteredConnections().length === 0) {
     <div
       class="glass-card m-2 flex h-full max-h-[60vh] flex-col items-center justify-center rounded-2xl border-2 border-dashed border-outline-variant/30 px-6 py-12"
     >
       <app-mascot [state]="'idle'"></app-mascot>
-      <h2 class="mb-2 mt-4 text-lg font-semibold text-on-surface">No connections here</h2>
+      <h2 class="mb-2 mt-4 text-lg font-semibold text-on-surface">
+        {{ 'pages.vault.emptyTitle' | translate }}
+      </h2>
       <p class="mb-6 max-w-sm text-center text-sm text-on-surface-variant">
-        {{ selectedVaultId() ? 'This vault is empty.' : "You don't have any connections yet." }}
+        {{
+          (selectedVaultId() ? 'pages.vault.emptyVaultMessage' : 'pages.vault.emptyAllMessage')
+            | translate
+        }}
       </p>
       @if (canManageConnections()) {
-        <a routerLink="/connections" class="btn-primary">Create Connection</a>
+        <a routerLink="/connections" class="btn-primary">{{
+          'pages.vault.createConnection' | translate
+        }}</a>
       }
     </div>
   } @else {
@@ -127,11 +140,12 @@
                 [class.bg-on-surface-variant]="reachability(c.id) === 'unknown'"
                 [class.opacity-30]="reachability(c.id) === 'unknown'"
                 [title]="
-                  reachability(c.id) === 'up'
-                    ? 'Host reachable'
+                  (reachability(c.id) === 'up'
+                    ? 'pages.vault.reachability.up'
                     : reachability(c.id) === 'down'
-                      ? 'Host unreachable'
-                      : 'Checking…'
+                      ? 'pages.vault.reachability.down'
+                      : 'pages.vault.reachability.checking'
+                  ) | translate
                 "
               ></span>
             </div>
@@ -172,17 +186,17 @@
               <span
                 class="flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-primary opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100"
               >
-                Connect
+                {{ 'pages.vault.connect' | translate }}
                 <span class="material-symbols-outlined text-[12px]" aria-hidden="true"
                   >arrow_forward</span
                 >
               </span>
               <button
                 type="button"
-                title="Download connection file"
+                [title]="'pages.vault.downloadFile' | translate"
                 (click)="downloadFile(c, $event)"
                 class="rounded p-0.5 opacity-100 transition-opacity hover:bg-on-surface/10 focus:outline-none focus:ring-1 focus:ring-primary md:opacity-0 md:group-hover:opacity-100"
-                aria-label="Download connection file"
+                [attr.aria-label]="'pages.vault.downloadFile' | translate"
               >
                 <span
                   class="material-symbols-outlined text-[14px] text-on-surface-variant"

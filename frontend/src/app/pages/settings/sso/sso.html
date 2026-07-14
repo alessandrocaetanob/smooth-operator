@@ -1,9 +1,10 @@
 <div>
   <div class="mb-6">
-    <h2 class="text-lg font-semibold text-on-surface">Single Sign-On</h2>
+    <h2 class="text-lg font-semibold text-on-surface">
+      {{ 'pages.settingsSso.title' | translate }}
+    </h2>
     <p class="text-sm text-on-surface-variant mt-1">
-      Configure a single OIDC or SAML 2.0 identity provider. Local username/password login always
-      stays available as a fallback.
+      {{ 'pages.settingsSso.subtitle' | translate }}
     </p>
   </div>
 
@@ -21,7 +22,11 @@
           <div class="flex-1 min-w-0">
             <p class="font-semibold text-on-surface text-sm">{{ current()?.name }}</p>
             <p class="text-xs text-on-surface-variant mt-0.5">
-              {{ current()?.type === 'Oidc' ? 'OpenID Connect (OIDC)' : 'SAML 2.0' }}
+              {{
+                current()?.type === 'Oidc'
+                  ? ('pages.settingsSso.common.oidcTypeLabel' | translate)
+                  : ('pages.settingsSso.common.samlTypeLabel' | translate)
+              }}
             </p>
           </div>
           <span
@@ -30,7 +35,11 @@
             [class.text-on-tertiary]="current()?.isEnabled"
             [class.bg-surface-container-highest]="!current()?.isEnabled"
             [class.text-on-surface-variant]="!current()?.isEnabled"
-            >{{ current()?.isEnabled ? 'Enabled' : 'Disabled' }}</span
+            >{{
+              current()?.isEnabled
+                ? ('pages.settingsSso.status.enabledBadge' | translate)
+                : ('pages.settingsSso.status.disabledBadge' | translate)
+            }}</span
           >
         </div>
       </div>
@@ -50,13 +59,23 @@
             <span class="material-symbols-outlined text-sm" aria-hidden="true">{{
               current()?.isEnabled ? 'pause' : 'play_arrow'
             }}</span>
-            {{ toggleBusy() ? '…' : current()?.isEnabled ? 'Disable' : 'Enable' }}
+            {{
+              toggleBusy()
+                ? '…'
+                : current()?.isEnabled
+                  ? ('pages.settingsSso.actions.disable' | translate)
+                  : ('pages.settingsSso.actions.enable' | translate)
+            }}
           </button>
 
           <!-- Test -->
           <button type="button" (click)="runTest()" [disabled]="testBusy()" class="btn-secondary">
             <span class="material-symbols-outlined text-sm" aria-hidden="true">network_check</span>
-            {{ testBusy() ? 'Testing…' : 'Test connection' }}
+            {{
+              testBusy()
+                ? ('pages.settingsSso.actions.testing' | translate)
+                : ('pages.settingsSso.actions.testConnection' | translate)
+            }}
           </button>
 
           <!-- Spacer -->
@@ -64,18 +83,24 @@
 
           <!-- Delete — inline confirmation -->
           @if (confirmingDelete()) {
-            <span class="text-xs text-on-surface-variant mr-1">Delete provider?</span>
+            <span class="text-xs text-on-surface-variant mr-1">{{
+              'pages.settingsSso.actions.deleteConfirmQuestion' | translate
+            }}</span>
             <button type="button" (click)="confirmingDelete.set(false)" class="btn-secondary">
-              Cancel
+              {{ 'common.actions.cancel' | translate }}
             </button>
             <button type="button" (click)="remove()" [disabled]="deleteBusy()" class="btn-danger">
               <span class="material-symbols-outlined text-sm" aria-hidden="true">delete</span>
-              {{ deleteBusy() ? 'Deleting…' : 'Confirm delete' }}
+              {{
+                deleteBusy()
+                  ? ('pages.settingsSso.actions.deleting' | translate)
+                  : ('pages.settingsSso.actions.confirmDelete' | translate)
+              }}
             </button>
           } @else {
             <button type="button" (click)="confirmingDelete.set(true)" class="btn-danger">
               <span class="material-symbols-outlined text-sm" aria-hidden="true">delete</span>
-              Delete
+              {{ 'common.actions.delete' | translate }}
             </button>
           }
         </div>
@@ -106,8 +131,8 @@
     <div class="status-banner status-warn mb-4">
       <span class="material-symbols-outlined">info</span>
       <div>
-        <p class="font-medium">No SSO provider configured</p>
-        <p class="text-xs opacity-70">Choose a protocol below and fill in the IdP details.</p>
+        <p class="font-medium">{{ 'pages.settingsSso.emptyState.title' | translate }}</p>
+        <p class="text-xs opacity-70">{{ 'pages.settingsSso.emptyState.hint' | translate }}</p>
       </div>
     </div>
   }
@@ -130,12 +155,16 @@
     <div class="settings-card">
       <div class="settings-card-header">
         <span class="material-symbols-outlined settings-card-icon">tune</span>
-        <h3 class="settings-card-title">Protocol</h3>
+        <h3 class="settings-card-title">
+          {{ 'pages.settingsSso.protocol.cardTitle' | translate }}
+        </h3>
       </div>
       <div class="settings-card-body">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
           <div>
-            <label class="settings-label" for="sso-type">Protocol</label>
+            <label class="settings-label" for="sso-type">{{
+              'pages.settingsSso.protocol.label' | translate
+            }}</label>
             <select
               [ngModel]="type()"
               (ngModelChange)="type.set($event)"
@@ -144,29 +173,43 @@
               class="w-full input-field"
               [disabled]="hasProvider()"
             >
-              <option value="Oidc">OpenID Connect (OIDC)</option>
-              <option value="Saml">SAML 2.0</option>
+              <option value="Oidc">
+                {{ 'pages.settingsSso.common.oidcTypeLabel' | translate }}
+              </option>
+              <option value="Saml">
+                {{ 'pages.settingsSso.common.samlTypeLabel' | translate }}
+              </option>
             </select>
             @if (hasProvider()) {
               <p class="text-xs text-on-surface-variant mt-1">
-                Delete the current provider to switch protocols.
+                {{ 'pages.settingsSso.protocol.switchHint' | translate }}
               </p>
             }
           </div>
           <div>
-            <label class="settings-label" for="sso-name">Display name</label>
+            <label class="settings-label" for="sso-name">{{
+              'pages.settingsSso.protocol.nameLabel' | translate
+            }}</label>
             <input
               type="text"
               [ngModel]="name()"
               (ngModelChange)="name.set($event)"
               name="name"
               id="sso-name"
-              placeholder="e.g. Corporate SSO"
+              [attr.placeholder]="'pages.settingsSso.protocol.namePlaceholder' | translate"
               required
               class="w-full input-field"
             />
             <p class="text-xs text-on-surface-variant mt-1">
-              Shown on the sign-in button (e.g. “Sign in with {{ name() || 'Corporate SSO' }}”).
+              {{
+                'pages.settingsSso.protocol.nameHint'
+                  | translate
+                    : {
+                        name:
+                          name() ||
+                          ('pages.settingsSso.protocol.defaultNamePlaceholder' | translate),
+                      }
+              }}
             </p>
           </div>
         </div>
@@ -178,18 +221,19 @@
       <div class="settings-card">
         <div class="settings-card-header">
           <span class="material-symbols-outlined settings-card-icon">key</span>
-          <h3 class="settings-card-title">OIDC provider</h3>
+          <h3 class="settings-card-title">{{ 'pages.settingsSso.oidc.cardTitle' | translate }}</h3>
         </div>
         <div class="settings-card-body space-y-3">
           <!-- IdP registration info -->
           <div class="rounded-lg border border-primary/20 bg-primary/5 p-3 text-sm space-y-2">
             <p class="font-medium text-on-surface flex items-center gap-1.5">
               <span class="material-symbols-outlined text-base text-primary">info</span>
-              Register this app in your identity provider
+              {{ 'pages.settingsSso.common.registerTitle' | translate }}
             </p>
             <p class="text-xs text-on-surface-variant">
-              When creating the app / client in your IdP (Entra ID, Okta, Keycloak, etc.), add the
-              following as an allowed <strong>Redirect URI</strong>:
+              {{ 'pages.settingsSso.oidc.registerHintPrefix' | translate }}
+              <strong>{{ 'pages.settingsSso.common.redirectUriTerm' | translate }}</strong
+              >{{ 'pages.settingsSso.oidc.registerHintSuffix' | translate }}
             </p>
             <div class="flex items-center gap-2">
               <code
@@ -199,38 +243,42 @@
               <button
                 type="button"
                 (click)="copyCallbackUrl()"
-                title="Copy redirect URI"
-                aria-label="Copy redirect URI"
+                [title]="'pages.settingsSso.oidc.copyRedirectUriAction' | translate"
+                [attr.aria-label]="'pages.settingsSso.oidc.copyRedirectUriAction' | translate"
                 class="shrink-0 p-1.5 rounded hover:bg-on-surface/5 text-on-surface-variant hover:text-on-surface transition-colors"
               >
                 <span class="material-symbols-outlined text-base">content_copy</span>
               </button>
             </div>
             <p class="text-xs text-on-surface-variant">
-              For <strong>Entra ID</strong>: App registrations → your app → Authentication → Add
-              platform → Web → paste the URL above.
+              {{ 'pages.settingsSso.oidc.entraHintPrefix' | translate }}
+              <strong>Entra ID</strong>{{ 'pages.settingsSso.oidc.entraHintSuffix' | translate }}
             </p>
           </div>
           <div>
-            <label class="settings-label" for="sso-oidc-authority">Authority (issuer)</label>
+            <label class="settings-label" for="sso-oidc-authority">{{
+              'pages.settingsSso.oidc.authorityLabel' | translate
+            }}</label>
             <input
               type="url"
               [ngModel]="oidcAuthority()"
               (ngModelChange)="oidcAuthority.set($event)"
               name="oidcAuthority"
               id="sso-oidc-authority"
-              placeholder="https://login.example.com/realms/my-realm"
+              [attr.placeholder]="'pages.settingsSso.oidc.authorityPlaceholder' | translate"
               required
               class="w-full input-field"
             />
             <p class="text-xs text-on-surface-variant mt-1">
-              The base URL of the IdP. Discovery is fetched from
+              {{ 'pages.settingsSso.oidc.authorityHintPrefix' | translate }}
               <code>&lt;authority&gt;/.well-known/openid-configuration</code>.
             </p>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <label class="settings-label" for="sso-oidc-client-id">Client ID</label>
+              <label class="settings-label" for="sso-oidc-client-id">{{
+                'pages.settingsSso.oidc.clientIdLabel' | translate
+              }}</label>
               <input
                 type="text"
                 [ngModel]="oidcClientId()"
@@ -243,9 +291,11 @@
             </div>
             <div>
               <label class="settings-label" for="sso-oidc-client-secret">
-                Client secret
+                {{ 'pages.settingsSso.oidc.clientSecretLabel' | translate }}
                 @if (current()?.oidc?.hasClientSecret) {
-                  <span class="settings-label-hint">(leave blank to keep)</span>
+                  <span class="settings-label-hint">{{
+                    'pages.settingsSso.common.leaveBlankToKeep' | translate
+                  }}</span>
                 }
               </label>
               <input
@@ -254,58 +304,70 @@
                 (ngModelChange)="oidcClientSecret.set($event)"
                 name="oidcClientSecret"
                 id="sso-oidc-client-secret"
-                [placeholder]="current()?.oidc?.hasClientSecret ? '••••••••' : 'Required'"
+                [attr.placeholder]="
+                  current()?.oidc?.hasClientSecret
+                    ? '••••••••'
+                    : ('pages.settingsSso.oidc.clientSecretPlaceholderRequired' | translate)
+                "
                 [required]="!current()?.oidc?.hasClientSecret"
                 class="w-full input-field"
               />
             </div>
           </div>
           <div>
-            <label class="settings-label" for="sso-oidc-scopes">Scopes</label>
+            <label class="settings-label" for="sso-oidc-scopes">{{
+              'pages.settingsSso.oidc.scopesLabel' | translate
+            }}</label>
             <input
               type="text"
               [ngModel]="oidcScopes()"
               (ngModelChange)="oidcScopes.set($event)"
               name="oidcScopes"
               id="sso-oidc-scopes"
-              placeholder="openid profile email"
+              [attr.placeholder]="'pages.settingsSso.oidc.scopesPlaceholder' | translate"
               class="w-full input-field"
             />
           </div>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
-              <label class="settings-label" for="sso-oidc-subject-claim">Subject claim</label>
+              <label class="settings-label" for="sso-oidc-subject-claim">{{
+                'pages.settingsSso.oidc.subjectClaimLabel' | translate
+              }}</label>
               <input
                 type="text"
                 [ngModel]="oidcSubjectClaim()"
                 (ngModelChange)="oidcSubjectClaim.set($event)"
                 name="oidcSubjectClaim"
                 id="sso-oidc-subject-claim"
-                placeholder="sub"
+                [attr.placeholder]="'pages.settingsSso.oidc.subjectClaimPlaceholder' | translate"
                 class="w-full input-field"
               />
             </div>
             <div>
-              <label class="settings-label" for="sso-oidc-email-claim">Email claim</label>
+              <label class="settings-label" for="sso-oidc-email-claim">{{
+                'pages.settingsSso.oidc.emailClaimLabel' | translate
+              }}</label>
               <input
                 type="text"
                 [ngModel]="oidcEmailClaim()"
                 (ngModelChange)="oidcEmailClaim.set($event)"
                 name="oidcEmailClaim"
                 id="sso-oidc-email-claim"
-                placeholder="email"
+                [attr.placeholder]="'pages.settingsSso.oidc.emailClaimPlaceholder' | translate"
                 class="w-full input-field"
               />
             </div>
             <div>
-              <label class="settings-label" for="sso-oidc-name-claim">Name claim</label>
+              <label class="settings-label" for="sso-oidc-name-claim">{{
+                'pages.settingsSso.oidc.nameClaimLabel' | translate
+              }}</label>
               <input
                 type="text"
                 [ngModel]="oidcNameClaim()"
                 (ngModelChange)="oidcNameClaim.set($event)"
                 name="oidcNameClaim"
                 id="sso-oidc-name-claim"
-                placeholder="name"
+                [attr.placeholder]="'pages.settingsSso.oidc.nameClaimPlaceholder' | translate"
                 class="w-full input-field"
               />
             </div>
@@ -319,22 +381,22 @@
       <div class="settings-card">
         <div class="settings-card-header">
           <span class="material-symbols-outlined settings-card-icon">shield_lock</span>
-          <h3 class="settings-card-title">SAML 2.0 provider</h3>
+          <h3 class="settings-card-title">{{ 'pages.settingsSso.saml.cardTitle' | translate }}</h3>
         </div>
         <div class="settings-card-body space-y-3">
           <!-- IdP registration info -->
           <div class="rounded-lg border border-primary/20 bg-primary/5 p-3 text-sm space-y-2">
             <p class="font-medium text-on-surface flex items-center gap-1.5">
               <span class="material-symbols-outlined text-base text-primary">info</span>
-              Register this app in your identity provider
+              {{ 'pages.settingsSso.common.registerTitle' | translate }}
             </p>
             <p class="text-xs text-on-surface-variant">
-              When configuring the SP (service provider) in your IdP, use these URLs:
+              {{ 'pages.settingsSso.saml.registerHint' | translate }}
             </p>
             <div class="space-y-1.5">
               <div>
                 <p class="text-xs font-medium text-on-surface-variant mb-1">
-                  ACS URL (Assertion Consumer Service)
+                  {{ 'pages.settingsSso.saml.acsUrlLabel' | translate }}
                 </p>
                 <div class="flex items-center gap-2">
                   <code
@@ -344,8 +406,8 @@
                   <button
                     type="button"
                     (click)="copyAcsUrl()"
-                    title="Copy ACS URL"
-                    aria-label="Copy ACS URL"
+                    [title]="'pages.settingsSso.saml.copyAcsUrlAction' | translate"
+                    [attr.aria-label]="'pages.settingsSso.saml.copyAcsUrlAction' | translate"
                     class="shrink-0 p-1.5 rounded hover:bg-on-surface/5 text-on-surface-variant hover:text-on-surface transition-colors"
                   >
                     <span class="material-symbols-outlined text-base">content_copy</span>
@@ -353,7 +415,9 @@
                 </div>
               </div>
               <div>
-                <p class="text-xs font-medium text-on-surface-variant mb-1">SP Metadata URL</p>
+                <p class="text-xs font-medium text-on-surface-variant mb-1">
+                  {{ 'pages.settingsSso.saml.spMetadataUrlLabel' | translate }}
+                </p>
                 <div class="flex items-center gap-2">
                   <code
                     class="flex-1 block bg-surface-container border border-outline-variant/40 px-2 py-1 rounded text-xs font-mono break-all"
@@ -362,8 +426,8 @@
                   <button
                     type="button"
                     (click)="copyMetadataUrl()"
-                    title="Copy metadata URL"
-                    aria-label="Copy metadata URL"
+                    [title]="'pages.settingsSso.saml.copyMetadataUrlAction' | translate"
+                    [attr.aria-label]="'pages.settingsSso.saml.copyMetadataUrlAction' | translate"
                     class="shrink-0 p-1.5 rounded hover:bg-on-surface/5 text-on-surface-variant hover:text-on-surface transition-colors"
                   >
                     <span class="material-symbols-outlined text-base">content_copy</span>
@@ -372,26 +436,31 @@
               </div>
             </div>
             <p class="text-xs text-on-surface-variant">
-              Most IdPs can auto-import SP settings from the metadata URL. Use the ACS URL as the
-              <strong>Reply URL</strong> when importing manually.
+              {{ 'pages.settingsSso.saml.autoImportHintPrefix' | translate }}
+              <strong>{{ 'pages.settingsSso.common.replyUrlTerm' | translate }}</strong>
+              {{ 'pages.settingsSso.saml.autoImportHintSuffix' | translate }}
             </p>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <label class="settings-label" for="sso-saml-sp-entity-id">SP entity ID</label>
+              <label class="settings-label" for="sso-saml-sp-entity-id">{{
+                'pages.settingsSso.saml.spEntityIdLabel' | translate
+              }}</label>
               <input
                 type="text"
                 [ngModel]="samlSpEntityId()"
                 (ngModelChange)="samlSpEntityId.set($event)"
                 name="samlSpEntityId"
                 id="sso-saml-sp-entity-id"
-                placeholder="urn:smooth-operator"
+                [attr.placeholder]="'pages.settingsSso.saml.spEntityIdPlaceholder' | translate"
                 required
                 class="w-full input-field"
               />
             </div>
             <div>
-              <label class="settings-label" for="sso-saml-idp-entity-id">IdP entity ID</label>
+              <label class="settings-label" for="sso-saml-idp-entity-id">{{
+                'pages.settingsSso.saml.idpEntityIdLabel' | translate
+              }}</label>
               <input
                 type="text"
                 [ngModel]="samlIdpEntityId()"
@@ -404,53 +473,57 @@
             </div>
           </div>
           <div>
-            <label class="settings-label" for="sso-saml-idp-sso-url">IdP SSO URL</label>
+            <label class="settings-label" for="sso-saml-idp-sso-url">{{
+              'pages.settingsSso.saml.idpSsoUrlLabel' | translate
+            }}</label>
             <input
               type="url"
               [ngModel]="samlIdpSsoUrl()"
               (ngModelChange)="samlIdpSsoUrl.set($event)"
               name="samlIdpSsoUrl"
               id="sso-saml-idp-sso-url"
-              placeholder="https://idp.example.com/saml/sso"
+              [attr.placeholder]="'pages.settingsSso.saml.idpSsoUrlPlaceholder' | translate"
               required
               class="w-full input-field"
             />
           </div>
           <div>
-            <label class="settings-label" for="sso-saml-idp-cert"
-              >IdP signing certificate (PEM)</label
-            >
+            <label class="settings-label" for="sso-saml-idp-cert">{{
+              'pages.settingsSso.saml.idpCertLabel' | translate
+            }}</label>
             <textarea
               [ngModel]="samlIdpCertificate()"
               (ngModelChange)="samlIdpCertificate.set($event)"
               name="samlIdpCertificate"
               id="sso-saml-idp-cert"
               rows="6"
-              placeholder="-----BEGIN CERTIFICATE-----&#10;…&#10;-----END CERTIFICATE-----"
+              [attr.placeholder]="'pages.settingsSso.saml.certPlaceholder' | translate"
               required
               class="w-full input-field font-mono text-xs"
             ></textarea>
           </div>
           <div>
-            <label class="settings-label" for="sso-saml-sp-cert"
-              >SP signing certificate (PEM)</label
-            >
+            <label class="settings-label" for="sso-saml-sp-cert">{{
+              'pages.settingsSso.saml.spCertLabel' | translate
+            }}</label>
             <textarea
               [ngModel]="samlSpCertificate()"
               (ngModelChange)="samlSpCertificate.set($event)"
               name="samlSpCertificate"
               id="sso-saml-sp-cert"
               rows="6"
-              placeholder="-----BEGIN CERTIFICATE-----&#10;…&#10;-----END CERTIFICATE-----"
+              [attr.placeholder]="'pages.settingsSso.saml.certPlaceholder' | translate"
               required
               class="w-full input-field font-mono text-xs"
             ></textarea>
           </div>
           <div>
             <label class="settings-label" for="sso-saml-sp-key">
-              SP private key (PEM)
+              {{ 'pages.settingsSso.saml.spKeyLabel' | translate }}
               @if (current()?.saml?.hasSpPrivateKey) {
-                <span class="settings-label-hint">(leave blank to keep)</span>
+                <span class="settings-label-hint">{{
+                  'pages.settingsSso.common.leaveBlankToKeep' | translate
+                }}</span>
               }
             </label>
             <textarea
@@ -459,17 +532,19 @@
               name="samlSpPrivateKey"
               id="sso-saml-sp-key"
               rows="5"
-              [placeholder]="
+              [attr.placeholder]="
                 current()?.saml?.hasSpPrivateKey
-                  ? '•••••••• (already stored)'
-                  : '-----BEGIN PRIVATE KEY-----…'
+                  ? ('pages.settingsSso.saml.spKeyPlaceholderStored' | translate)
+                  : ('pages.settingsSso.saml.spKeyPlaceholderNew' | translate)
               "
               class="w-full input-field font-mono text-xs"
             ></textarea>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
-              <label class="settings-label" for="sso-saml-nameid-format">NameID format</label>
+              <label class="settings-label" for="sso-saml-nameid-format">{{
+                'pages.settingsSso.saml.nameIdFormatLabel' | translate
+              }}</label>
               <input
                 type="text"
                 [ngModel]="samlNameIdFormat()"
@@ -480,26 +555,30 @@
               />
             </div>
             <div>
-              <label class="settings-label" for="sso-saml-attr-email">Email attribute</label>
+              <label class="settings-label" for="sso-saml-attr-email">{{
+                'pages.settingsSso.saml.attrEmailLabel' | translate
+              }}</label>
               <input
                 type="text"
                 [ngModel]="samlAttributeEmail()"
                 (ngModelChange)="samlAttributeEmail.set($event)"
                 name="samlAttributeEmail"
                 id="sso-saml-attr-email"
-                placeholder="email"
+                [attr.placeholder]="'pages.settingsSso.saml.attrEmailPlaceholder' | translate"
                 class="w-full input-field"
               />
             </div>
             <div>
-              <label class="settings-label" for="sso-saml-attr-name">Name attribute</label>
+              <label class="settings-label" for="sso-saml-attr-name">{{
+                'pages.settingsSso.saml.attrNameLabel' | translate
+              }}</label>
               <input
                 type="text"
                 [ngModel]="samlAttributeName()"
                 (ngModelChange)="samlAttributeName.set($event)"
                 name="samlAttributeName"
                 id="sso-saml-attr-name"
-                placeholder="name"
+                [attr.placeholder]="'pages.settingsSso.saml.attrNamePlaceholder' | translate"
                 class="w-full input-field"
               />
             </div>
@@ -521,7 +600,7 @@
                   ></span>
                 </span>
               </span>
-              <span>Require signed assertions</span>
+              <span>{{ 'pages.settingsSso.saml.requireSignedAssertions' | translate }}</span>
             </label>
             <label class="toggle-row">
               <span class="relative inline-flex items-center">
@@ -539,11 +618,13 @@
                   ></span>
                 </span>
               </span>
-              <span>Require signed responses</span>
+              <span>{{ 'pages.settingsSso.saml.requireSignedResponses' | translate }}</span>
             </label>
           </div>
           <div class="border-t border-outline-variant/20 pt-3">
-            <label class="settings-label" for="sso-saml-metadata-url">SP metadata URL</label>
+            <label class="settings-label" for="sso-saml-metadata-url">{{
+              'pages.settingsSso.saml.metadataUrlSectionLabel' | translate
+            }}</label>
             <div class="flex gap-2">
               <input
                 type="text"
@@ -556,11 +637,11 @@
                 <span class="material-symbols-outlined text-sm" aria-hidden="true"
                   >content_copy</span
                 >
-                Copy
+                {{ 'pages.settingsSso.common.copy' | translate }}
               </button>
             </div>
             <p class="text-xs text-on-surface-variant mt-1">
-              Provide this URL to your IdP administrator to register the SP.
+              {{ 'pages.settingsSso.saml.metadataUrlHint' | translate }}
             </p>
           </div>
         </div>
@@ -570,7 +651,11 @@
     <div class="flex justify-end">
       <button type="submit" [disabled]="busy()" class="btn-primary">
         <span class="material-symbols-outlined text-sm" aria-hidden="true">save</span>
-        {{ busy() ? 'Saving…' : 'Save SSO settings' }}
+        {{
+          busy()
+            ? ('pages.settingsSso.actions.saving' | translate)
+            : ('pages.settingsSso.actions.save' | translate)
+        }}
       </button>
     </div>
   </form>

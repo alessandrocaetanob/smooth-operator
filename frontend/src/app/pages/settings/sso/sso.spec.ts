@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideTranslateService, TranslateService } from '@ngx-translate/core';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { signal } from '@angular/core';
 import { of, throwError } from 'rxjs';
@@ -8,6 +9,37 @@ import { of, throwError } from 'rxjs';
 import { SsoSettings } from './sso';
 import { SsoProviderView, SsoSettingsService } from '../../../services/sso-settings.service';
 import { AuthService } from '../../../services/auth.service';
+
+const EN_TRANSLATIONS = {
+  common: {
+    actions: {
+      cancel: 'Cancel',
+      delete: 'Delete',
+    },
+  },
+  pages: {
+    settingsSso: {
+      status: {
+        notConfigured: 'Not configured',
+      },
+      messages: {
+        loadError: 'Failed to load SSO settings.',
+        saveSuccess: 'SSO configuration saved.',
+        saveError: 'Failed to save SSO settings.',
+        toggleOnSuccess: 'SSO enabled.',
+        toggleOffSuccess: 'SSO disabled.',
+        toggleError: 'Failed to toggle SSO.',
+        deleteSuccess: 'SSO provider deleted.',
+        deleteError: 'Failed to delete SSO provider.',
+        testError: 'SSO test failed.',
+        copyMetadataSuccess: 'Metadata URL copied to clipboard.',
+        copyCallbackSuccess: 'Redirect URI copied to clipboard.',
+        copyAcsSuccess: 'ACS URL copied to clipboard.',
+        copyError: 'Could not copy to clipboard.',
+      },
+    },
+  },
+};
 
 describe('SsoSettings', () => {
   let component: SsoSettings;
@@ -48,10 +80,15 @@ describe('SsoSettings', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
+        provideTranslateService(),
         { provide: SsoSettingsService, useValue: svc },
         { provide: AuthService, useValue: auth },
       ],
     }).compileComponents();
+
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', EN_TRANSLATIONS);
+    translate.use('en');
 
     fixture = TestBed.createComponent(SsoSettings);
     component = fixture.componentInstance;

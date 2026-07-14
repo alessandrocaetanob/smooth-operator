@@ -26,6 +26,7 @@ import {
   Legend,
   Filler,
 } from 'chart.js';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { TimeseriesBucket, TopEvent, OutcomeBreakdown } from '../../services/metrics.service';
 
 Chart.register(
@@ -73,7 +74,7 @@ const GRID_COLOR = 'rgba(156, 163, 175, 0.1)';
 @Component({
   selector: 'app-monitoring-charts',
   standalone: true,
-  imports: [],
+  imports: [TranslatePipe],
   templateUrl: './monitoring-charts.component.html',
   styleUrl: './monitoring-charts.component.css',
 })
@@ -89,6 +90,7 @@ export class MonitoringChartsComponent implements AfterViewInit, OnDestroy {
   private readonly eventTimeseriesChartRef?: ElementRef<HTMLCanvasElement>;
 
   private readonly injector = inject(Injector);
+  private readonly translate = inject(TranslateService);
   private charts: Record<string, Chart> = {};
   private viewInitialized = false;
 
@@ -233,7 +235,7 @@ export class MonitoringChartsComponent implements AfterViewInit, OnDestroy {
             labels,
             datasets: [
               {
-                label: 'Success',
+                label: this.translate.instant('pages.monitoring.charts.datasets.success'),
                 data: successData,
                 borderColor: 'rgba(34,197,94,0.9)',
                 backgroundColor: 'rgba(34,197,94,0.15)',
@@ -241,7 +243,7 @@ export class MonitoringChartsComponent implements AfterViewInit, OnDestroy {
                 tension: 0.4,
               },
               {
-                label: 'Failure',
+                label: this.translate.instant('pages.monitoring.charts.datasets.failure'),
                 data: failureData,
                 borderColor: 'rgba(239,68,68,0.9)',
                 backgroundColor: 'rgba(239,68,68,0.15)',
@@ -274,7 +276,7 @@ export class MonitoringChartsComponent implements AfterViewInit, OnDestroy {
             labels,
             datasets: [
               {
-                label: 'Started',
+                label: this.translate.instant('pages.monitoring.charts.datasets.started'),
                 data: startedData,
                 borderColor: 'rgba(99,102,241,0.9)',
                 backgroundColor: 'rgba(99,102,241,0.15)',
@@ -282,7 +284,7 @@ export class MonitoringChartsComponent implements AfterViewInit, OnDestroy {
                 tension: 0.4,
               },
               {
-                label: 'Ended',
+                label: this.translate.instant('pages.monitoring.charts.datasets.ended'),
                 data: endedData,
                 borderColor: 'rgba(156,163,175,0.7)',
                 backgroundColor: 'rgba(156,163,175,0.1)',
@@ -314,7 +316,7 @@ export class MonitoringChartsComponent implements AfterViewInit, OnDestroy {
             labels,
             datasets: [
               {
-                label: 'Count',
+                label: this.translate.instant('pages.monitoring.charts.datasets.count'),
                 data,
                 backgroundColor: 'rgba(99,102,241,0.7)',
                 borderRadius: 4,
@@ -355,7 +357,10 @@ export class MonitoringChartsComponent implements AfterViewInit, OnDestroy {
         new Chart(ctx, {
           type: 'doughnut',
           data: {
-            labels: ['Success', 'Failure'],
+            labels: [
+              this.translate.instant('pages.monitoring.charts.datasets.success'),
+              this.translate.instant('pages.monitoring.charts.datasets.failure'),
+            ],
             datasets: [
               {
                 data,

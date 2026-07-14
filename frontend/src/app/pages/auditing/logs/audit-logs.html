@@ -1,14 +1,16 @@
 <div class="page-shell">
   <div class="flex items-center justify-between mb-6">
     <div>
-      <h1 class="text-2xl font-bold text-on-surface tracking-tight">Audit Logs</h1>
+      <h1 class="text-2xl font-bold text-on-surface tracking-tight">
+        {{ 'pages.auditing.title' | translate }}
+      </h1>
       <p class="text-sm text-on-surface-variant mt-1">
-        Every authentication and resource change is recorded.
+        {{ 'pages.auditing.subtitle' | translate }}
       </p>
     </div>
     <button (click)="exportCsv()" class="btn-ghost">
       <span class="material-symbols-outlined text-base" aria-hidden="true">download</span>
-      Export CSV
+      {{ 'pages.auditing.exportCsv' | translate }}
     </button>
   </div>
 
@@ -18,11 +20,13 @@
     class="grid grid-cols-1 md:grid-cols-6 gap-3 mb-4 p-4 glass-card rounded-xl"
   >
     <div>
-      <label class="field-label" for="filter-user">User</label>
+      <label class="field-label" for="filter-user">{{
+        'pages.auditing.filters.userLabel' | translate
+      }}</label>
       <input
         id="filter-user"
         type="text"
-        placeholder="email or name"
+        [attr.placeholder]="'pages.auditing.filters.userPlaceholder' | translate"
         [ngModel]="user()"
         (ngModelChange)="user.set($event)"
         name="user"
@@ -30,11 +34,13 @@
       />
     </div>
     <div>
-      <label class="field-label" for="filter-action">Action</label>
+      <label class="field-label" for="filter-action">{{
+        'pages.auditing.filters.actionLabel' | translate
+      }}</label>
       <input
         id="filter-action"
         type="text"
-        placeholder="e.g. user.login"
+        [attr.placeholder]="'pages.auditing.filters.actionPlaceholder' | translate"
         [ngModel]="action()"
         (ngModelChange)="action.set($event)"
         name="action"
@@ -42,11 +48,13 @@
       />
     </div>
     <div>
-      <label class="field-label" for="filter-resource">Resource type</label>
+      <label class="field-label" for="filter-resource">{{
+        'pages.auditing.filters.resourceTypeLabel' | translate
+      }}</label>
       <input
         id="filter-resource"
         type="text"
-        placeholder="e.g. connection"
+        [attr.placeholder]="'pages.auditing.filters.resourceTypePlaceholder' | translate"
         [ngModel]="resourceType()"
         (ngModelChange)="resourceType.set($event)"
         name="resourceType"
@@ -54,7 +62,9 @@
       />
     </div>
     <div>
-      <label class="field-label" for="filter-from">From</label>
+      <label class="field-label" for="filter-from">{{
+        'pages.auditing.filters.fromLabel' | translate
+      }}</label>
       <input
         id="filter-from"
         type="date"
@@ -65,7 +75,9 @@
       />
     </div>
     <div>
-      <label class="field-label" for="filter-to">To</label>
+      <label class="field-label" for="filter-to">{{
+        'pages.auditing.filters.toLabel' | translate
+      }}</label>
       <input
         id="filter-to"
         type="date"
@@ -76,7 +88,9 @@
       />
     </div>
     <div>
-      <label class="field-label" for="filter-outcome">Outcome</label>
+      <label class="field-label" for="filter-outcome">{{
+        'pages.auditing.filters.outcomeLabel' | translate
+      }}</label>
       <select
         id="filter-outcome"
         [ngModel]="outcome()"
@@ -84,16 +98,18 @@
         name="outcome"
         class="input-field w-full"
       >
-        <option value="">All outcomes</option>
-        <option value="success">Success</option>
-        <option value="failure">Failure</option>
+        <option value="">{{ 'pages.auditing.filters.allOutcomes' | translate }}</option>
+        <option value="success">{{ 'pages.auditing.filters.outcomeSuccess' | translate }}</option>
+        <option value="failure">{{ 'pages.auditing.filters.outcomeFailure' | translate }}</option>
       </select>
     </div>
     <div class="md:col-span-6 flex justify-end gap-2">
-      <button type="button" (click)="reset()" class="btn-ghost">Reset</button>
+      <button type="button" (click)="reset()" class="btn-ghost">
+        {{ 'pages.auditing.filters.reset' | translate }}
+      </button>
       <button type="submit" class="btn-primary">
         <span class="material-symbols-outlined text-sm" aria-hidden="true">search</span>
-        Search
+        {{ 'common.actions.search' | translate }}
       </button>
     </div>
   </form>
@@ -105,12 +121,24 @@
         class="text-[11px] uppercase tracking-widest text-on-surface-variant border-b border-outline-variant/15"
       >
         <tr>
-          <th class="text-left px-4 py-3 font-semibold">Timestamp</th>
-          <th class="text-left px-4 py-3 font-semibold">User</th>
-          <th class="text-left px-4 py-3 font-semibold">Action</th>
-          <th class="text-left px-4 py-3 font-semibold">Resource</th>
-          <th class="text-left px-4 py-3 font-semibold">IP</th>
-          <th class="text-left px-4 py-3 font-semibold">Outcome</th>
+          <th class="text-left px-4 py-3 font-semibold">
+            {{ 'pages.auditing.table.timestamp' | translate }}
+          </th>
+          <th class="text-left px-4 py-3 font-semibold">
+            {{ 'pages.auditing.table.user' | translate }}
+          </th>
+          <th class="text-left px-4 py-3 font-semibold">
+            {{ 'pages.auditing.table.action' | translate }}
+          </th>
+          <th class="text-left px-4 py-3 font-semibold">
+            {{ 'pages.auditing.table.resource' | translate }}
+          </th>
+          <th class="text-left px-4 py-3 font-semibold">
+            {{ 'pages.auditing.table.ip' | translate }}
+          </th>
+          <th class="text-left px-4 py-3 font-semibold">
+            {{ 'pages.auditing.table.outcome' | translate }}
+          </th>
           <th class="w-10"></th>
         </tr>
       </thead>
@@ -123,9 +151,7 @@
             (keydown.space)="$event.preventDefault(); selectEntry(l)"
             [class.log-row-selected]="selectedEntry()?.id === l.id"
             tabindex="0"
-            [attr.aria-label]="
-              'View details for ' + l.action + ' by ' + (l.userEmail || l.userId || 'unknown')
-            "
+            [attr.aria-label]="rowAriaLabel(l)"
           >
             <td class="px-4 py-3 text-on-surface-variant/70 whitespace-nowrap font-mono text-xs">
               {{ l.timestamp | date: 'M/d/yy, h:mm a' }}
@@ -162,7 +188,10 @@
               <span class="material-symbols-outlined text-3xl mb-2 block" aria-hidden="true"
                 >receipt_long</span
               >
-              {{ loading() ? 'Loading…' : 'No log entries match the current filters.' }}
+              {{
+                (loading() ? 'pages.auditing.table.loading' : 'pages.auditing.table.empty')
+                  | translate
+              }}
             </td>
           </tr>
         }
@@ -174,17 +203,24 @@
   <div class="flex items-center justify-between mt-4 text-xs text-on-surface-variant">
     <div class="flex items-center gap-3">
       <span>
-        Page {{ result().page }} of {{ result().totalPages || 1 }} —
-        {{ result().totalItems }} entries
+        {{
+          'pages.auditing.pagination.summary'
+            | translate
+              : {
+                  page: result().page,
+                  totalPages: result().totalPages || 1,
+                  totalItems: result().totalItems,
+                }
+        }}
       </span>
       <label class="flex items-center gap-2">
-        <span class="text-outline">Rows:</span>
+        <span class="text-outline">{{ 'pages.auditing.pagination.rows' | translate }}</span>
         <select
           [ngModel]="pageSize()"
           (ngModelChange)="onPageSizeChange($event)"
           name="pageSize"
           class="bg-surface-container border border-outline-variant/40 rounded px-2 py-1 text-xs text-on-surface focus:border-primary outline-none"
-          aria-label="Rows per page"
+          [attr.aria-label]="'pages.auditing.pagination.rowsPerPage' | translate"
         >
           <option [ngValue]="25">25</option>
           <option [ngValue]="50">50</option>
@@ -199,7 +235,7 @@
         (click)="goToPage(1)"
         [disabled]="result().page <= 1"
         class="px-3 py-1.5 rounded-lg border border-outline-variant/30 hover:bg-surface-container disabled:opacity-30 transition-colors"
-        aria-label="First page"
+        [attr.aria-label]="'pages.auditing.pagination.firstPage' | translate"
       >
         «
       </button>
@@ -209,7 +245,7 @@
         [disabled]="result().page <= 1"
         class="px-3 py-1.5 rounded-lg border border-outline-variant/30 hover:bg-surface-container disabled:opacity-30 transition-colors"
       >
-        Prev
+        {{ 'pages.auditing.pagination.prev' | translate }}
       </button>
       <button
         type="button"
@@ -217,14 +253,14 @@
         [disabled]="result().page >= result().totalPages"
         class="px-3 py-1.5 rounded-lg border border-outline-variant/30 hover:bg-surface-container disabled:opacity-30 transition-colors"
       >
-        Next
+        {{ 'pages.auditing.pagination.next' | translate }}
       </button>
       <button
         type="button"
         (click)="goToPage(result().totalPages || 1)"
         [disabled]="result().page >= result().totalPages"
         class="px-3 py-1.5 rounded-lg border border-outline-variant/30 hover:bg-surface-container disabled:opacity-30 transition-colors"
-        aria-label="Last page"
+        [attr.aria-label]="'pages.auditing.pagination.lastPage' | translate"
       >
         »
       </button>
@@ -237,7 +273,7 @@
       type="button"
       class="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 cursor-default"
       (click)="closeDetail()"
-      aria-label="Close detail panel"
+      [attr.aria-label]="'pages.auditing.detail.closePanel' | translate"
     ></button>
     <dialog
       open
@@ -250,7 +286,9 @@
       <!-- Panel header -->
       <div class="detail-panel-header">
         <div class="flex items-center gap-3">
-          <h2 id="detail-panel-title" class="sr-only">Audit Log Detail</h2>
+          <h2 id="detail-panel-title" class="sr-only">
+            {{ 'pages.auditing.detail.title' | translate }}
+          </h2>
           <span class="action-badge {{ actionCategory(selectedEntry()!.action) }} text-sm">{{
             selectedEntry()!.action
           }}</span>
@@ -260,7 +298,7 @@
           type="button"
           (click)="closeDetail()"
           class="btn-ghost !px-2 !py-1"
-          aria-label="Close detail panel"
+          [attr.aria-label]="'pages.auditing.detail.closePanel' | translate"
         >
           <span class="material-symbols-outlined text-base" aria-hidden="true">close</span>
         </button>
@@ -271,35 +309,43 @@
         <!-- Meta grid -->
         <div class="detail-meta-grid">
           <div class="detail-meta-item">
-            <span class="detail-meta-label">Timestamp</span>
+            <span class="detail-meta-label">{{
+              'pages.auditing.detail.timestamp' | translate
+            }}</span>
             <span class="detail-meta-value font-mono text-xs">{{
               selectedEntry()!.timestamp | date: 'medium'
             }}</span>
           </div>
           <div class="detail-meta-item">
-            <span class="detail-meta-label">User</span>
+            <span class="detail-meta-label">{{ 'pages.auditing.detail.user' | translate }}</span>
             <span class="detail-meta-value">{{
               selectedEntry()!.userEmail || selectedEntry()!.userId || '—'
             }}</span>
           </div>
           <div class="detail-meta-item">
-            <span class="detail-meta-label">IP Address</span>
+            <span class="detail-meta-label">{{
+              'pages.auditing.detail.ipAddress' | translate
+            }}</span>
             <span class="detail-meta-value font-mono">{{ selectedEntry()!.ipAddress || '—' }}</span>
           </div>
           <div class="detail-meta-item">
-            <span class="detail-meta-label">Resource type</span>
+            <span class="detail-meta-label">{{
+              'pages.auditing.detail.resourceType' | translate
+            }}</span>
             <span class="detail-meta-value">
               <span class="resource-type-badge">{{ selectedEntry()!.resourceType }}</span>
             </span>
           </div>
           <div class="detail-meta-item md:col-span-2">
-            <span class="detail-meta-label">Resource ID</span>
+            <span class="detail-meta-label">{{
+              'pages.auditing.detail.resourceId' | translate
+            }}</span>
             <span class="detail-meta-value font-mono text-xs break-all">{{
               selectedEntry()!.resourceId || '—'
             }}</span>
           </div>
           <div class="detail-meta-item">
-            <span class="detail-meta-label">Outcome</span>
+            <span class="detail-meta-label">{{ 'pages.auditing.detail.outcome' | translate }}</span>
             <span class="detail-meta-value">
               <span class="outcome-badge {{ outcomeBadgeClass(selectedEntry()!.outcome) }}">{{
                 selectedEntry()!.outcome
@@ -307,13 +353,17 @@
             </span>
           </div>
           <div class="detail-meta-item md:col-span-2">
-            <span class="detail-meta-label">Correlation ID</span>
+            <span class="detail-meta-label">{{
+              'pages.auditing.detail.correlationId' | translate
+            }}</span>
             <span class="detail-meta-value font-mono text-xs break-all select-all">{{
               selectedEntry()!.correlationId || '—'
             }}</span>
           </div>
           <div class="detail-meta-item md:col-span-2">
-            <span class="detail-meta-label">User Agent</span>
+            <span class="detail-meta-label">{{
+              'pages.auditing.detail.userAgent' | translate
+            }}</span>
             <span class="detail-meta-value font-mono text-xs break-all">{{
               selectedEntry()!.userAgent || '—'
             }}</span>
@@ -325,7 +375,7 @@
           <p
             class="text-xs uppercase tracking-widest text-on-surface-variant/75 font-semibold mb-2"
           >
-            Details
+            {{ 'pages.auditing.detail.details' | translate }}
           </p>
           <pre class="detail-json">{{ formattedDetails(selectedEntry()!.details) }}</pre>
         </div>

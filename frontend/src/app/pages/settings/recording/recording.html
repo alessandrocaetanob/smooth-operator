@@ -1,10 +1,10 @@
 <div>
   <div class="mb-6">
-    <h2 class="text-lg font-semibold text-on-surface">Session recording storage</h2>
+    <h2 class="text-lg font-semibold text-on-surface">
+      {{ 'pages.settingsRecording.title' | translate }}
+    </h2>
     <p class="text-sm text-on-surface-variant mt-1">
-      Where the system writes captured session recordings. Vault- and connection-level "record this
-      session" toggles are configured on each vault / connection; this page controls the destination
-      backend (local volume, S3-compatible, or Azure Blob).
+      {{ 'pages.settingsRecording.description' | translate }}
     </p>
   </div>
 
@@ -13,10 +13,20 @@
     <div class="status-banner status-ok mb-6">
       <span class="material-symbols-outlined">check_circle</span>
       <div>
-        <p class="font-medium">Recording storage configured</p>
+        <p class="font-medium">
+          {{ 'pages.settingsRecording.status.configuredTitle' | translate }}
+        </p>
         <p class="text-xs opacity-70">
-          Backend: <strong>{{ current()?.storageType }}</strong> — retention
-          {{ current()?.retentionDays === 0 ? 'unlimited' : current()?.retentionDays + ' days' }}.
+          {{ 'pages.settingsRecording.status.backendPrefix' | translate }}
+          <strong>{{ current()?.storageType }}</strong>
+          @if (current()?.retentionDays === 0) {
+            {{ 'pages.settingsRecording.status.retentionUnlimited' | translate }}
+          } @else {
+            {{
+              'pages.settingsRecording.status.retentionDays'
+                | translate: { days: current()?.retentionDays }
+            }}
+          }
         </p>
       </div>
     </div>
@@ -24,11 +34,13 @@
     <div class="status-banner status-warn mb-6">
       <span class="material-symbols-outlined">warning</span>
       <div>
-        <p class="font-medium">Using built-in local storage</p>
+        <p class="font-medium">
+          {{ 'pages.settingsRecording.status.notConfiguredTitle' | translate }}
+        </p>
         <p class="text-xs opacity-70">
-          Recordings are written to the
-          <code>recordings_data</code> docker volume by default. Configure S3 or Azure below for
-          durable off-host storage.
+          {{ 'pages.settingsRecording.status.notConfiguredHintPrefix' | translate }}
+          <code>recordings_data</code>
+          {{ 'pages.settingsRecording.status.notConfiguredHintSuffix' | translate }}
         </p>
       </div>
     </div>
@@ -52,10 +64,14 @@
     <div class="settings-card">
       <div class="settings-card-header">
         <span class="material-symbols-outlined settings-card-icon">cloud</span>
-        <h3 class="settings-card-title">Storage backend</h3>
+        <h3 class="settings-card-title">
+          {{ 'pages.settingsRecording.storageBackend.title' | translate }}
+        </h3>
       </div>
       <div class="settings-card-body">
-        <label class="settings-label" for="storageType">Backend</label>
+        <label class="settings-label" for="storageType">{{
+          'pages.settingsRecording.storageBackend.backendLabel' | translate
+        }}</label>
         <select
           id="storageType"
           [ngModel]="storageType()"
@@ -63,14 +79,20 @@
           name="storageType"
           class="w-full input-field"
         >
-          <option value="Local">Local volume — default, zero config</option>
-          <option value="S3">S3-compatible (AWS S3, MinIO, R2, Backblaze)</option>
-          <option value="AzureBlob">Azure Blob Storage</option>
+          <option value="Local">
+            {{ 'pages.settingsRecording.storageBackend.optionLocal' | translate }}
+          </option>
+          <option value="S3">
+            {{ 'pages.settingsRecording.storageBackend.optionS3' | translate }}
+          </option>
+          <option value="AzureBlob">
+            {{ 'pages.settingsRecording.storageBackend.optionAzure' | translate }}
+          </option>
         </select>
         <p class="text-xs text-on-surface-variant mt-2">
-          Local is the simplest option — recordings stay on the
-          <code>recordings_data</code> volume. Switch to S3 or Azure when you need durable off-host
-          storage, replication, or lifecycle management.
+          {{ 'pages.settingsRecording.storageBackend.hintPrefix' | translate }}
+          <code>recordings_data</code>
+          {{ 'pages.settingsRecording.storageBackend.hintSuffix' | translate }}
         </p>
       </div>
     </div>
@@ -79,12 +101,16 @@
     <div class="settings-card">
       <div class="settings-card-header">
         <span class="material-symbols-outlined settings-card-icon">schedule</span>
-        <h3 class="settings-card-title">Retention policy</h3>
+        <h3 class="settings-card-title">
+          {{ 'pages.settingsRecording.retentionPolicy.title' | translate }}
+        </h3>
       </div>
       <div class="settings-card-body">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div>
-            <label class="settings-label" for="retentionDays">Retention (days)</label>
+            <label class="settings-label" for="retentionDays">{{
+              'pages.settingsRecording.retentionPolicy.daysLabel' | translate
+            }}</label>
             <input
               id="retentionDays"
               type="number"
@@ -98,9 +124,9 @@
           </div>
           <div class="md:col-span-2 flex items-end">
             <p class="text-xs text-on-surface-variant pb-2">
-              Recordings older than this are deleted by the daily sweep.
-              <strong>0</strong> keeps recordings forever. Per-vault overrides take precedence over
-              this default.
+              {{ 'pages.settingsRecording.retentionPolicy.hintPrefix' | translate }}
+              <strong>0</strong>
+              {{ 'pages.settingsRecording.retentionPolicy.hintSuffix' | translate }}
             </p>
           </div>
         </div>
@@ -112,10 +138,14 @@
       <div class="settings-card">
         <div class="settings-card-header">
           <span class="material-symbols-outlined settings-card-icon">folder</span>
-          <h3 class="settings-card-title">Local storage</h3>
+          <h3 class="settings-card-title">
+            {{ 'pages.settingsRecording.localStorage.title' | translate }}
+          </h3>
         </div>
         <div class="settings-card-body">
-          <label class="settings-label" for="localPath">Path</label>
+          <label class="settings-label" for="localPath">{{
+            'pages.settingsRecording.localStorage.pathLabel' | translate
+          }}</label>
           <input
             id="localPath"
             type="text"
@@ -126,10 +156,13 @@
             class="w-full input-field"
           />
           <p class="text-xs text-on-surface-variant mt-2">
-            Must be writable by the backend process. In Docker the
-            <code>recordings_data</code> volume mounts at <code>/var/recordings</code>; on a
-            bare-metal install point this at any directory the backend service can create files in.
-            Use <strong>Test connection</strong> below to verify.
+            {{ 'pages.settingsRecording.localStorage.hintPart1' | translate }}
+            <code>recordings_data</code>
+            {{ 'pages.settingsRecording.localStorage.hintPart2' | translate }}
+            <code>/var/recordings</code
+            >{{ 'pages.settingsRecording.localStorage.hintPart3' | translate }}
+            <strong>{{ 'pages.settingsRecording.testConnection.button' | translate }}</strong>
+            {{ 'pages.settingsRecording.localStorage.hintPart4' | translate }}
           </p>
         </div>
       </div>
@@ -140,12 +173,16 @@
       <div class="settings-card">
         <div class="settings-card-header">
           <span class="material-symbols-outlined settings-card-icon">cloud_upload</span>
-          <h3 class="settings-card-title">S3 configuration</h3>
+          <h3 class="settings-card-title">
+            {{ 'pages.settingsRecording.s3.title' | translate }}
+          </h3>
         </div>
         <div class="settings-card-body">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
             <div>
-              <label class="settings-label" for="s3Bucket">Bucket</label>
+              <label class="settings-label" for="s3Bucket">{{
+                'pages.settingsRecording.s3.bucketLabel' | translate
+              }}</label>
               <input
                 id="s3Bucket"
                 type="text"
@@ -157,7 +194,9 @@
               />
             </div>
             <div>
-              <label class="settings-label" for="s3Region">Region</label>
+              <label class="settings-label" for="s3Region">{{
+                'pages.settingsRecording.s3.regionLabel' | translate
+              }}</label>
               <input
                 id="s3Region"
                 type="text"
@@ -170,8 +209,10 @@
             </div>
             <div>
               <label class="settings-label" for="s3Endpoint">
-                Endpoint
-                <span class="settings-label-hint">(optional, for MinIO / R2)</span>
+                {{ 'pages.settingsRecording.s3.endpointLabel' | translate }}
+                <span class="settings-label-hint">{{
+                  'pages.settingsRecording.s3.endpointHint' | translate
+                }}</span>
               </label>
               <input
                 id="s3Endpoint"
@@ -185,7 +226,10 @@
             </div>
             <div>
               <label class="settings-label" for="s3PathPrefix">
-                Path prefix <span class="settings-label-hint">(optional)</span>
+                {{ 'pages.settingsRecording.s3.pathPrefixLabel' | translate }}
+                <span class="settings-label-hint">{{
+                  'pages.settingsRecording.s3.pathPrefixHint' | translate
+                }}</span>
               </label>
               <input
                 id="s3PathPrefix"
@@ -198,7 +242,9 @@
               />
             </div>
             <div>
-              <label class="settings-label" for="s3AccessKeyId">Access key ID</label>
+              <label class="settings-label" for="s3AccessKeyId">{{
+                'pages.settingsRecording.s3.accessKeyLabel' | translate
+              }}</label>
               <input
                 id="s3AccessKeyId"
                 type="text"
@@ -211,9 +257,11 @@
             </div>
             <div>
               <label class="settings-label" for="s3Secret">
-                Secret access key
+                {{ 'pages.settingsRecording.s3.secretLabel' | translate }}
                 @if (current()?.hasS3SecretAccessKey) {
-                  <span class="settings-label-hint">(leave blank to keep)</span>
+                  <span class="settings-label-hint">{{
+                    'pages.settingsRecording.s3.secretLeaveBlankHint' | translate
+                  }}</span>
                 }
               </label>
               <input
@@ -222,7 +270,11 @@
                 [ngModel]="s3SecretAccessKey()"
                 (ngModelChange)="s3SecretAccessKey.set($event)"
                 name="s3Secret"
-                [placeholder]="current()?.hasS3SecretAccessKey ? '••••••••' : 'secret'"
+                [placeholder]="
+                  current()?.hasS3SecretAccessKey
+                    ? '••••••••'
+                    : ('pages.settingsRecording.s3.secretPlaceholder' | translate)
+                "
                 [disabled]="clearS3Secret()"
                 class="w-full input-field disabled:opacity-50"
               />
@@ -237,7 +289,7 @@
                     name="clearS3Secret"
                     class="accent-error"
                   />
-                  Clear stored secret
+                  {{ 'pages.settingsRecording.s3.clearSecretLabel' | translate }}
                 </label>
               }
             </div>
@@ -255,8 +307,10 @@
                 <span class="toggle-thumb" [class.toggle-thumb-on]="s3ForcePathStyle()"></span>
               </span>
             </span>
-            <span>Force path-style addressing</span>
-            <span class="toggle-hint">Required by MinIO and some self-hosted S3 servers</span>
+            <span>{{ 'pages.settingsRecording.s3.forcePathStyleLabel' | translate }}</span>
+            <span class="toggle-hint">{{
+              'pages.settingsRecording.s3.forcePathStyleHint' | translate
+            }}</span>
           </label>
         </div>
       </div>
@@ -267,12 +321,16 @@
       <div class="settings-card">
         <div class="settings-card-header">
           <span class="material-symbols-outlined settings-card-icon">apps</span>
-          <h3 class="settings-card-title">Azure Blob configuration</h3>
+          <h3 class="settings-card-title">
+            {{ 'pages.settingsRecording.azure.title' | translate }}
+          </h3>
         </div>
         <div class="settings-card-body">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <label class="settings-label" for="azAccount">Storage account name</label>
+              <label class="settings-label" for="azAccount">{{
+                'pages.settingsRecording.azure.accountNameLabel' | translate
+              }}</label>
               <input
                 id="azAccount"
                 type="text"
@@ -284,7 +342,9 @@
               />
             </div>
             <div>
-              <label class="settings-label" for="azContainer">Container</label>
+              <label class="settings-label" for="azContainer">{{
+                'pages.settingsRecording.azure.containerLabel' | translate
+              }}</label>
               <input
                 id="azContainer"
                 type="text"
@@ -297,9 +357,11 @@
             </div>
             <div class="md:col-span-2">
               <label class="settings-label" for="azKey">
-                Account key
+                {{ 'pages.settingsRecording.azure.keyLabel' | translate }}
                 @if (current()?.hasAzureAccountKey) {
-                  <span class="settings-label-hint">(leave blank to keep)</span>
+                  <span class="settings-label-hint">{{
+                    'pages.settingsRecording.azure.keyLeaveBlankHint' | translate
+                  }}</span>
                 }
               </label>
               <input
@@ -308,7 +370,11 @@
                 [ngModel]="azureAccountKey()"
                 (ngModelChange)="azureAccountKey.set($event)"
                 name="azKey"
-                [placeholder]="current()?.hasAzureAccountKey ? '••••••••' : 'account key'"
+                [placeholder]="
+                  current()?.hasAzureAccountKey
+                    ? '••••••••'
+                    : ('pages.settingsRecording.azure.keyPlaceholder' | translate)
+                "
                 [disabled]="clearAzureKey()"
                 class="w-full input-field disabled:opacity-50"
               />
@@ -323,13 +389,16 @@
                     name="clearAzureKey"
                     class="accent-error"
                   />
-                  Clear stored key
+                  {{ 'pages.settingsRecording.azure.clearKeyLabel' | translate }}
                 </label>
               }
             </div>
             <div>
               <label class="settings-label" for="azEndpoint">
-                Blob endpoint <span class="settings-label-hint">(optional, for Azurite)</span>
+                {{ 'pages.settingsRecording.azure.endpointLabel' | translate }}
+                <span class="settings-label-hint">{{
+                  'pages.settingsRecording.azure.endpointHint' | translate
+                }}</span>
               </label>
               <input
                 id="azEndpoint"
@@ -343,7 +412,10 @@
             </div>
             <div>
               <label class="settings-label" for="azPrefix">
-                Path prefix <span class="settings-label-hint">(optional)</span>
+                {{ 'pages.settingsRecording.azure.pathPrefixLabel' | translate }}
+                <span class="settings-label-hint">{{
+                  'pages.settingsRecording.azure.pathPrefixHint' | translate
+                }}</span>
               </label>
               <input
                 id="azPrefix"
@@ -367,7 +439,11 @@
         } @else {
           <span class="material-symbols-outlined text-sm" aria-hidden="true">save</span>
         }
-        {{ busy() ? 'Saving…' : 'Save recording settings' }}
+        {{
+          busy()
+            ? ('pages.settingsRecording.actions.saving' | translate)
+            : ('pages.settingsRecording.actions.save' | translate)
+        }}
       </button>
     </div>
   </form>
@@ -376,13 +452,13 @@
   <div class="settings-card mt-6">
     <div class="settings-card-header">
       <span class="material-symbols-outlined settings-card-icon">network_check</span>
-      <h3 class="settings-card-title">Test connection</h3>
+      <h3 class="settings-card-title">
+        {{ 'pages.settingsRecording.testConnection.title' | translate }}
+      </h3>
     </div>
     <div class="settings-card-body">
       <p class="text-xs text-on-surface-variant mb-3">
-        Verifies the backend can write a tiny probe file to the storage target using the currently
-        saved settings. Run this after saving a new configuration to confirm credentials, network
-        access, and permissions before relying on it for real sessions.
+        {{ 'pages.settingsRecording.testConnection.description' | translate }}
       </p>
       <button
         type="button"
@@ -395,7 +471,11 @@
         } @else {
           <span class="material-symbols-outlined text-sm" aria-hidden="true">network_check</span>
         }
-        {{ testBusy() ? 'Testing…' : 'Test connection' }}
+        {{
+          testBusy()
+            ? ('pages.settingsRecording.testConnection.testing' | translate)
+            : ('pages.settingsRecording.testConnection.button' | translate)
+        }}
       </button>
     </div>
   </div>

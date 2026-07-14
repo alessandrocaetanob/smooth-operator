@@ -1,5 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   RecordingStorageService,
   RecordingStorageSettings,
@@ -9,12 +10,13 @@ import {
 
 @Component({
   selector: 'app-recording-settings',
-  imports: [FormsModule],
+  imports: [FormsModule, TranslatePipe],
   templateUrl: './recording.html',
   styleUrl: './recording.css',
 })
 export class RecordingSettingsPage implements OnInit {
   private readonly storage = inject(RecordingStorageService);
+  private readonly translate = inject(TranslateService);
 
   readonly current = this.storage.current;
   readonly loading = signal(false);
@@ -58,7 +60,10 @@ export class RecordingSettingsPage implements OnInit {
       },
       error: (err) => {
         this.loading.set(false);
-        this.error.set(this.toMessage(err) || 'Failed to load recording storage settings.');
+        this.error.set(
+          this.toMessage(err) ||
+            this.translate.instant('pages.settingsRecording.errors.loadFailed'),
+        );
       },
     });
   }
@@ -113,11 +118,14 @@ export class RecordingSettingsPage implements OnInit {
       next: (s) => {
         this.busy.set(false);
         this.applyToForm(s);
-        this.message.set('Recording storage settings saved.');
+        this.message.set(this.translate.instant('pages.settingsRecording.messages.saved'));
       },
       error: (err) => {
         this.busy.set(false);
-        this.error.set(this.toMessage(err) || 'Failed to save recording storage settings.');
+        this.error.set(
+          this.toMessage(err) ||
+            this.translate.instant('pages.settingsRecording.errors.saveFailed'),
+        );
       },
     });
   }
@@ -130,8 +138,13 @@ export class RecordingSettingsPage implements OnInit {
     this.storage.test().subscribe({
       next: (r) => {
         this.testBusy.set(false);
-        if (r.success) this.message.set('Storage backend responded successfully.');
-        else this.error.set(r.error ?? 'Storage test failed.');
+        if (r.success) {
+          this.message.set(this.translate.instant('pages.settingsRecording.messages.testSuccess'));
+        } else {
+          this.error.set(
+            r.error ?? this.translate.instant('pages.settingsRecording.errors.testFailed'),
+          );
+        }
       },
       error: (err) => {
         this.testBusy.set(false);
@@ -139,7 +152,7 @@ export class RecordingSettingsPage implements OnInit {
         const msg =
           (typeof body === 'object' && body && (body.error || body.message)) ||
           this.toMessage(err) ||
-          'Storage test failed.';
+          this.translate.instant('pages.settingsRecording.errors.testFailed');
         this.error.set(String(msg));
       },
     });

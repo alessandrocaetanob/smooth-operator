@@ -1,9 +1,10 @@
 <div>
   <div class="mb-6">
-    <h2 class="text-lg font-semibold text-on-surface">Session timeouts</h2>
+    <h2 class="text-lg font-semibold text-on-surface">
+      {{ 'pages.settingsSessions.title' | translate }}
+    </h2>
     <p class="text-sm text-on-surface-variant mt-1">
-      Forcibly close remote sessions that have been idle too long or exceeded a hard lifetime cap.
-      These limits apply to every Guacamole connection (RDP, SSH, VNC) regardless of vault.
+      {{ 'pages.settingsSessions.description' | translate }}
     </p>
   </div>
 
@@ -33,11 +34,13 @@
           style="color: rgb(var(--color-primary)); font-size: 20px"
           >motion_sensor_idle</span
         >
-        <h3 class="text-sm font-semibold text-on-surface">Idle timeout</h3>
+        <h3 class="text-sm font-semibold text-on-surface">
+          {{ 'pages.settingsSessions.idleCard.header' | translate }}
+        </h3>
       </div>
       <div class="p-5">
         <p class="text-xs uppercase tracking-widest text-on-surface-variant mb-3 font-semibold">
-          Quick select
+          {{ 'pages.settingsSessions.idleCard.quickSelect' | translate }}
         </p>
         <div class="flex flex-wrap gap-2 mb-5">
           @for (p of idlePresets; track p.minutes) {
@@ -48,7 +51,7 @@
               (click)="selectIdlePreset(p.minutes)"
               [disabled]="loading() || busy()"
             >
-              {{ p.label }}
+              {{ p.label | translate }}
             </button>
           }
         </div>
@@ -59,7 +62,7 @@
               for="idleTimeoutMinutes"
               class="block text-xs uppercase tracking-widest text-on-surface-variant mb-2 font-semibold"
             >
-              Custom (minutes)
+              {{ 'pages.settingsSessions.idleCard.customMinutesLabel' | translate }}
             </label>
             <input
               id="idleTimeoutMinutes"
@@ -79,15 +82,17 @@
               <span class="material-symbols-outlined text-tertiary" style="font-size: 16px"
                 >all_inclusive</span
               >
-              <span class="text-tertiary text-sm font-medium">No idle timeout</span>
+              <span class="text-tertiary text-sm font-medium">{{
+                'pages.settingsSessions.idleCard.noTimeout' | translate
+              }}</span>
             } @else {
               <span class="material-symbols-outlined text-amber-400" style="font-size: 16px"
                 >timer</span
               >
               <span class="text-on-surface-variant text-sm"
-                >Closes after
+                >{{ 'pages.settingsSessions.idleCard.closesAfterPrefix' | translate }}
                 <strong class="text-on-surface">{{ idleTimeoutMinutes() }}</strong>
-                min of inactivity</span
+                {{ 'pages.settingsSessions.idleCard.closesAfterSuffix' | translate }}</span
               >
             }
           </div>
@@ -103,11 +108,13 @@
           style="color: rgb(var(--color-secondary)); font-size: 20px"
           >schedule</span
         >
-        <h3 class="text-sm font-semibold text-on-surface">Max session lifetime</h3>
+        <h3 class="text-sm font-semibold text-on-surface">
+          {{ 'pages.settingsSessions.maxCard.header' | translate }}
+        </h3>
       </div>
       <div class="p-5">
         <p class="text-xs uppercase tracking-widest text-on-surface-variant mb-3 font-semibold">
-          Quick select
+          {{ 'pages.settingsSessions.maxCard.quickSelect' | translate }}
         </p>
         <div class="flex flex-wrap gap-2 mb-5">
           @for (p of maxPresets; track p.minutes) {
@@ -118,7 +125,7 @@
               (click)="selectMaxPreset(p.minutes)"
               [disabled]="loading() || busy()"
             >
-              {{ p.label }}
+              {{ p.label | translate }}
             </button>
           }
         </div>
@@ -129,7 +136,7 @@
               for="maxSessionMinutes"
               class="block text-xs uppercase tracking-widest text-on-surface-variant mb-2 font-semibold"
             >
-              Custom (minutes)
+              {{ 'pages.settingsSessions.maxCard.customMinutesLabel' | translate }}
             </label>
             <input
               id="maxSessionMinutes"
@@ -149,14 +156,17 @@
               <span class="material-symbols-outlined text-tertiary" style="font-size: 16px"
                 >all_inclusive</span
               >
-              <span class="text-tertiary text-sm font-medium">Unlimited</span>
+              <span class="text-tertiary text-sm font-medium">{{
+                'pages.settingsSessions.maxCard.unlimited' | translate
+              }}</span>
             } @else {
               <span class="material-symbols-outlined text-amber-400" style="font-size: 16px"
                 >hourglass_top</span
               >
               <span class="text-on-surface-variant text-sm"
-                >Hard cap at
-                <strong class="text-on-surface">{{ maxSessionMinutes() }}</strong> min</span
+                >{{ 'pages.settingsSessions.maxCard.hardCapPrefix' | translate }}
+                <strong class="text-on-surface">{{ maxSessionMinutes() }}</strong>
+                {{ 'pages.settingsSessions.maxCard.hardCapSuffix' | translate }}</span
               >
             }
           </div>
@@ -172,31 +182,46 @@
           style="color: rgb(var(--color-secondary)); font-size: 20px"
           >tips_and_updates</span
         >
-        <h3 class="text-sm font-semibold text-on-surface">Recommended settings</h3>
+        <h3 class="text-sm font-semibold text-on-surface">
+          {{ 'pages.settingsSessions.guidance.header' | translate }}
+        </h3>
       </div>
       <div class="p-4">
         <div class="guidance-grid">
           <div class="guidance-tier">
-            <span class="guidance-tier-label">Standard</span>
+            <span class="guidance-tier-label">{{
+              'pages.settingsSessions.guidance.standardLabel' | translate
+            }}</span>
             <span class="guidance-tier-value">15 / 480</span>
-            <span class="guidance-tier-desc">idle / max — typical office use</span>
+            <span class="guidance-tier-desc">{{
+              'pages.settingsSessions.guidance.standardDesc' | translate
+            }}</span>
           </div>
           <div class="guidance-divider"></div>
           <div class="guidance-tier">
-            <span class="guidance-tier-label">High security</span>
+            <span class="guidance-tier-label">{{
+              'pages.settingsSessions.guidance.highSecurityLabel' | translate
+            }}</span>
             <span class="guidance-tier-value">5 / 60</span>
-            <span class="guidance-tier-desc">shared workstations, kiosks</span>
+            <span class="guidance-tier-desc">{{
+              'pages.settingsSessions.guidance.highSecurityDesc' | translate
+            }}</span>
           </div>
           <div class="guidance-divider"></div>
           <div class="guidance-tier">
-            <span class="guidance-tier-label">Long-running</span>
+            <span class="guidance-tier-label">{{
+              'pages.settingsSessions.guidance.longRunningLabel' | translate
+            }}</span>
             <span class="guidance-tier-value">60 / 720</span>
-            <span class="guidance-tier-desc">build / migration jobs</span>
+            <span class="guidance-tier-desc">{{
+              'pages.settingsSessions.guidance.longRunningDesc' | translate
+            }}</span>
           </div>
         </div>
         <p class="text-xs text-on-surface-variant/50 mt-3">
-          Set either field to <strong class="text-on-surface-variant/80">0</strong> to disable that
-          limit independently. Active connections that exceed a limit are audited as
+          {{ 'pages.settingsSessions.guidance.footnotePrefix' | translate }}
+          <strong class="text-on-surface-variant/80">0</strong>
+          {{ 'pages.settingsSessions.guidance.footnoteSuffix' | translate }}
           <code class="font-mono text-on-surface-variant/80">session.timeout_closed</code>.
         </p>
       </div>
@@ -205,11 +230,15 @@
     <div class="flex items-center gap-2">
       <button type="submit" class="btn-primary" [disabled]="loading() || busy()">
         <span class="material-symbols-outlined text-sm" aria-hidden="true">save</span>
-        {{ busy() ? 'Saving…' : 'Save' }}
+        {{
+          busy()
+            ? ('pages.settingsSessions.actions.saving' | translate)
+            : ('common.actions.save' | translate)
+        }}
       </button>
       <button type="button" class="btn-ghost" (click)="refresh()" [disabled]="loading() || busy()">
         <span class="material-symbols-outlined text-sm" aria-hidden="true">undo</span>
-        Reset
+        {{ 'pages.settingsSessions.actions.reset' | translate }}
       </button>
     </div>
   </form>

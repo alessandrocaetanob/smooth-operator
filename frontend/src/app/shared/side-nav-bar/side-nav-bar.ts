@@ -1,6 +1,7 @@
 import { Component, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { TranslatePipe } from '@ngx-translate/core';
 import { filter, map } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 import { LayoutService } from '../../services/layout.service';
@@ -9,7 +10,7 @@ import { RuntimeConfigService } from '../../core/config/runtime-config.service';
 @Component({
   selector: 'app-side-nav-bar',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive],
+  imports: [RouterLink, RouterLinkActive, TranslatePipe],
   templateUrl: './side-nav-bar.html',
   styleUrl: './side-nav-bar.css',
 })

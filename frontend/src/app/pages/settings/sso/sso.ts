@@ -2,6 +2,7 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { switchMap } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { JsonPipe } from '@angular/common';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   SsoProviderType,
   SsoProviderView,
@@ -14,13 +15,14 @@ import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-sso-settings',
-  imports: [FormsModule, JsonPipe],
+  imports: [FormsModule, JsonPipe, TranslatePipe],
   templateUrl: './sso.html',
   styleUrl: './sso.css',
 })
 export class SsoSettings implements OnInit {
   private readonly svc = inject(SsoSettingsService);
   private readonly auth = inject(AuthService);
+  private readonly translate = inject(TranslateService);
 
   readonly current = this.svc.current;
   readonly loading = signal(false);
@@ -64,7 +66,7 @@ export class SsoSettings implements OnInit {
   readonly hasProvider = computed(() => !!this.current()?.type);
   readonly providerLabel = computed(() => {
     const c = this.current();
-    if (!c?.type) return 'Not configured';
+    if (!c?.type) return this.translate.instant('pages.settingsSso.status.notConfigured');
     return `${c.name} (${c.type})`;
   });
 
@@ -81,7 +83,9 @@ export class SsoSettings implements OnInit {
       },
       error: (err) => {
         this.loading.set(false);
-        this.error.set(this.toMessage(err) || 'Failed to load SSO settings.');
+        this.error.set(
+          this.toMessage(err) || this.translate.instant('pages.settingsSso.messages.loadError'),
+        );
       },
     });
   }
@@ -130,7 +134,7 @@ export class SsoSettings implements OnInit {
     obs
       .pipe(
         switchMap(() => {
-          this.message.set('SSO configuration saved.');
+          this.message.set(this.translate.instant('pages.settingsSso.messages.saveSuccess'));
           return this.svc.load();
         }),
         switchMap((p) => {
@@ -142,7 +146,9 @@ export class SsoSettings implements OnInit {
         next: () => this.busy.set(false),
         error: (err) => {
           this.busy.set(false);
-          this.error.set(this.toMessage(err) || 'Failed to save SSO settings.');
+          this.error.set(
+            this.toMessage(err) || this.translate.instant('pages.settingsSso.messages.saveError'),
+          );
         },
       });
   }
@@ -189,7 +195,13 @@ export class SsoSettings implements OnInit {
         this.svc.load().subscribe({
           next: () => {
             this.toggleBusy.set(false);
-            this.message.set(enable ? 'SSO enabled.' : 'SSO disabled.');
+            this.message.set(
+              this.translate.instant(
+                enable
+                  ? 'pages.settingsSso.messages.toggleOnSuccess'
+                  : 'pages.settingsSso.messages.toggleOffSuccess',
+              ),
+            );
             this.auth.loadSetupStatus().subscribe();
           },
           error: () => this.toggleBusy.set(false),
@@ -197,7 +209,9 @@ export class SsoSettings implements OnInit {
       },
       error: (err) => {
         this.toggleBusy.set(false);
-        this.error.set(this.toMessage(err) || 'Failed to toggle SSO.');
+        this.error.set(
+          this.toMessage(err) || this.translate.instant('pages.settingsSso.messages.toggleError'),
+        );
       },
     });
   }
@@ -214,7 +228,7 @@ export class SsoSettings implements OnInit {
           next: (p) => {
             this.deleteBusy.set(false);
             this.applyToForm(p);
-            this.message.set('SSO provider deleted.');
+            this.message.set(this.translate.instant('pages.settingsSso.messages.deleteSuccess'));
             this.auth.loadSetupStatus().subscribe();
           },
           error: () => this.deleteBusy.set(false),
@@ -222,7 +236,9 @@ export class SsoSettings implements OnInit {
       },
       error: (err) => {
         this.deleteBusy.set(false);
-        this.error.set(this.toMessage(err) || 'Failed to delete SSO provider.');
+        this.error.set(
+          this.toMessage(err) || this.translate.instant('pages.settingsSso.messages.deleteError'),
+        );
       },
     });
   }
@@ -241,29 +257,34 @@ export class SsoSettings implements OnInit {
       error: (err) => {
         this.testBusy.set(false);
         const msg = this.toMessage(err);
-        this.testResult.set({ success: false, message: msg || 'SSO test failed.' });
+        this.testResult.set({
+          success: false,
+          message: msg || this.translate.instant('pages.settingsSso.messages.testError'),
+        });
       },
     });
   }
 
   copyMetadataUrl(): void {
     navigator.clipboard?.writeText(this.metadataUrl()).then(
-      () => this.message.set('Metadata URL copied to clipboard.'),
-      () => this.error.set('Could not copy to clipboard.'),
+      () =>
+        this.message.set(this.translate.instant('pages.settingsSso.messages.copyMetadataSuccess')),
+      () => this.error.set(this.translate.instant('pages.settingsSso.messages.copyError')),
     );
   }
 
   copyCallbackUrl(): void {
     navigator.clipboard?.writeText(this.callbackUrl()).then(
-      () => this.message.set('Redirect URI copied to clipboard.'),
-      () => this.error.set('Could not copy to clipboard.'),
+      () =>
+        this.message.set(this.translate.instant('pages.settingsSso.messages.copyCallbackSuccess')),
+      () => this.error.set(this.translate.instant('pages.settingsSso.messages.copyError')),
     );
   }
 
   copyAcsUrl(): void {
     navigator.clipboard?.writeText(this.acsUrl()).then(
-      () => this.message.set('ACS URL copied to clipboard.'),
-      () => this.error.set('Could not copy to clipboard.'),
+      () => this.message.set(this.translate.instant('pages.settingsSso.messages.copyAcsSuccess')),
+      () => this.error.set(this.translate.instant('pages.settingsSso.messages.copyError')),
     );
   }
 

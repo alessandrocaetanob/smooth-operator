@@ -19,6 +19,7 @@ import { map } from 'rxjs/operators';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TranslatePipe } from '@ngx-translate/core';
 import {
   GuacamoleSessionManagerService,
   GuacamoleSession,
@@ -31,6 +32,7 @@ import { ConnectionsService, Connection } from '../../services/connections.servi
 import { Mascot, MascotState } from '../../shared/mascot/mascot';
 import { Spinner } from '../../shared/spinner/spinner';
 import { ThemeToggle } from '../../shared/theme-toggle/theme-toggle';
+import { LanguageSwitcher } from '../../shared/language-switcher/language-switcher';
 
 interface KeyOption {
   label: string;
@@ -44,12 +46,36 @@ interface TermColorScheme {
 }
 
 const TERM_COLOR_SCHEMES: TermColorScheme[] = [
-  { value: 'gray-black', label: 'Gray / Black', preview: '#111' },
-  { value: 'green-black', label: 'Green / Black', preview: '#0d1a0d' },
-  { value: 'white-black', label: 'White / Black', preview: '#1a1a1a' },
-  { value: 'black-white', label: 'Black / White', preview: '#f5f5f5' },
-  { value: 'solarized-dark', label: 'Solarized Dark', preview: '#002b36' },
-  { value: 'solarized-light', label: 'Solarized Light', preview: '#fdf6e3' },
+  {
+    value: 'gray-black',
+    label: 'pages.activeSession.terminalTheme.schemes.grayBlack',
+    preview: '#111',
+  },
+  {
+    value: 'green-black',
+    label: 'pages.activeSession.terminalTheme.schemes.greenBlack',
+    preview: '#0d1a0d',
+  },
+  {
+    value: 'white-black',
+    label: 'pages.activeSession.terminalTheme.schemes.whiteBlack',
+    preview: '#1a1a1a',
+  },
+  {
+    value: 'black-white',
+    label: 'pages.activeSession.terminalTheme.schemes.blackWhite',
+    preview: '#f5f5f5',
+  },
+  {
+    value: 'solarized-dark',
+    label: 'pages.activeSession.terminalTheme.schemes.solarizedDark',
+    preview: '#002b36',
+  },
+  {
+    value: 'solarized-light',
+    label: 'pages.activeSession.terminalTheme.schemes.solarizedLight',
+    preview: '#fdf6e3',
+  },
 ];
 
 const TERM_FONT_NAMES = [
@@ -92,7 +118,15 @@ const COMBO_KEYS: KeyOption[] = [
 
 @Component({
   selector: 'app-active-session',
-  imports: [CommonModule, FormsModule, Mascot, Spinner, ThemeToggle],
+  imports: [
+    CommonModule,
+    FormsModule,
+    Mascot,
+    Spinner,
+    ThemeToggle,
+    LanguageSwitcher,
+    TranslatePipe,
+  ],
   templateUrl: './active-session.html',
   styleUrl: './active-session.css',
 })

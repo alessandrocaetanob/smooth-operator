@@ -7,6 +7,7 @@ import {
   computed,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   Credential,
   CredentialsService,
@@ -50,7 +51,7 @@ const EMPTY_FORM: FormState = {
 
 @Component({
   selector: 'app-credentials',
-  imports: [FormsModule, Drawer],
+  imports: [FormsModule, Drawer, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './credentials.html',
   styleUrl: './credentials.css',
@@ -61,6 +62,7 @@ export class Credentials implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly confirmSvc = inject(ConfirmDialogService);
   private readonly toastSvc = inject(ToastService);
+  private readonly translate = inject(TranslateService);
 
   readonly credentials = this.svc.list;
   readonly providers = this.providersSvc.list;
@@ -100,8 +102,8 @@ export class Credentials implements OnInit {
   readonly isExternal = computed(() => this.form().storageMode === 'External');
 
   readonly types = [
-    { value: 'password', label: 'Password' },
-    { value: 'private_key', label: 'Private key (SSH)' },
+    { value: 'password', labelKey: 'pages.credentials.form.typePassword' },
+    { value: 'private_key', labelKey: 'pages.credentials.form.typePrivateKey' },
   ];
 
   ngOnInit(): void {
@@ -116,7 +118,9 @@ export class Credentials implements OnInit {
       next: () => this.loading.set(false),
       error: (err) => {
         this.loading.set(false);
-        this.errorMessage.set(this.toMessage(err) || 'Failed to load.');
+        this.errorMessage.set(
+          this.toMessage(err) || this.translate.instant('pages.credentials.errors.loadFailed'),
+        );
       },
     });
   }
@@ -189,7 +193,10 @@ export class Credentials implements OnInit {
       },
       error: (err) => {
         this.generatingSsh.set(false);
-        this.errorMessage.set(this.toMessage(err) || 'Failed to generate SSH key.');
+        this.errorMessage.set(
+          this.toMessage(err) ||
+            this.translate.instant('pages.credentials.errors.generateSshFailed'),
+        );
       },
     });
   }
@@ -198,7 +205,7 @@ export class Credentials implements OnInit {
     const key = this.publicKeyToShow();
     if (!key) return;
     navigator.clipboard.writeText(key);
-    this.toastSvc.success('Public key copied to clipboard');
+    this.toastSvc.success(this.translate.instant('pages.credentials.toasts.publicKeyCopied'));
   }
 
   copyRowPublicKey(c: Credential): void {
@@ -212,7 +219,9 @@ export class Credentials implements OnInit {
         return next;
       });
     }, 2000);
-    this.toastSvc.success(`Public key for "${c.name}" copied to clipboard`);
+    this.toastSvc.success(
+      this.translate.instant('pages.credentials.toasts.rowPublicKeyCopied', { name: c.name }),
+    );
   }
 
   publicKeyToShow(): string {
@@ -260,14 +269,16 @@ export class Credentials implements OnInit {
   private validateSaveForm(): boolean {
     const f = this.form();
     if (!f.name.trim() || !f.username.trim()) {
-      this.errorMessage.set('Name and username are required.');
+      this.errorMessage.set(
+        this.translate.instant('pages.credentials.errors.nameUsernameRequired'),
+      );
       return false;
     }
     if (f.storageMode === 'External') {
       return this.validateExternalStorage(f);
     }
     if (!f.id && !f.secret) {
-      this.errorMessage.set('Secret is required when creating a credential.');
+      this.errorMessage.set(this.translate.instant('pages.credentials.errors.secretRequired'));
       return false;
     }
     return true;
@@ -275,15 +286,19 @@ export class Credentials implements OnInit {
 
   private validateExternalStorage(f: FormState): boolean {
     if (!f.secretProviderId) {
-      this.errorMessage.set('Please select a secret provider.');
+      this.errorMessage.set(
+        this.translate.instant('pages.credentials.errors.selectProviderRequired'),
+      );
       return false;
     }
     if (f.pushToVault && !f.id && !f.secret) {
-      this.errorMessage.set('Secret value is required when pushing to vault.');
+      this.errorMessage.set(this.translate.instant('pages.credentials.errors.vaultSecretRequired'));
       return false;
     }
     if (!f.pushToVault && !f.externalSecretName) {
-      this.errorMessage.set('Please select an existing secret to link.');
+      this.errorMessage.set(
+        this.translate.instant('pages.credentials.errors.selectSecretRequired'),
+      );
       return false;
     }
     return true;
@@ -338,20 +353,25 @@ export class Credentials implements OnInit {
   async remove(c: Credential): Promise<void> {
     if (!this.canManageCredentials()) return;
     const ok = await this.confirmSvc.ask({
-      title: 'Delete credential',
-      message: `Delete credential "${c.name}"? Connections that use it will lose authentication. This cannot be undone.`,
-      confirmLabel: 'Delete',
+      title: this.translate.instant('pages.credentials.confirmDelete.title'),
+      message: this.translate.instant('pages.credentials.confirmDelete.message', {
+        name: c.name,
+      }),
+      confirmLabel: this.translate.instant('common.actions.delete'),
       tone: 'danger',
     });
     if (!ok) return;
     this.errorMessage.set(null);
     this.svc.remove(c.id).subscribe({
       next: () => {
-        this.toastSvc.success(`Credential "${c.name}" deleted.`);
+        this.toastSvc.success(
+          this.translate.instant('pages.credentials.toasts.deleted', { name: c.name }),
+        );
         this.refresh();
       },
       error: (err) => {
-        const msg = this.toMessage(err) || 'Delete failed.';
+        const msg =
+          this.toMessage(err) || this.translate.instant('pages.credentials.errors.deleteFailed');
         this.errorMessage.set(msg);
         this.toastSvc.error(msg);
       },
@@ -369,14 +389,19 @@ export class Credentials implements OnInit {
   private done(): void {
     const isUpdate = !!this.form().id;
     this.busy.set(false);
-    this.toastSvc.success(isUpdate ? 'Credential updated.' : 'Credential saved.');
+    this.toastSvc.success(
+      this.translate.instant(
+        isUpdate ? 'pages.credentials.toasts.updated' : 'pages.credentials.toasts.created',
+      ),
+    );
     this.cancel();
     this.refresh();
   }
 
   private fail(err: unknown): void {
     this.busy.set(false);
-    const msg = this.toMessage(err) || 'Save failed.';
+    const msg =
+      this.toMessage(err) || this.translate.instant('pages.credentials.errors.saveFailed');
     this.errorMessage.set(msg);
     this.toastSvc.error(msg);
   }

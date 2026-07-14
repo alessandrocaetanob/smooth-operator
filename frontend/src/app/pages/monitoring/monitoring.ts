@@ -10,6 +10,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { forkJoin, Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { MetricsService, MetricsSummary } from '../../services/metrics.service';
 import { MonitoringChartsComponent, MonitoringChartData } from './monitoring-charts.component';
 
@@ -29,13 +30,14 @@ const INTERVAL_MS: Record<string, number> = {
 @Component({
   selector: 'app-monitoring',
   standalone: true,
-  imports: [CommonModule, MonitoringChartsComponent],
+  imports: [CommonModule, MonitoringChartsComponent, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './monitoring.html',
   styleUrl: './monitoring.css',
 })
 export class Monitoring implements OnInit, OnDestroy {
   private readonly metricsService = inject(MetricsService);
+  private readonly translate = inject(TranslateService);
   private readonly handleVisibilityChange = (): void => {
     if (document.visibilityState === 'visible' && this.autoRefresh() !== 'off') {
       this.loadAll();
@@ -49,7 +51,7 @@ export class Monitoring implements OnInit, OnDestroy {
 
   readonly autoRefresh = signal<AutoRefreshInterval>('off');
   readonly autoRefreshOptions: { label: string; value: AutoRefreshInterval }[] = [
-    { label: 'Off', value: 'off' },
+    { label: this.translate.instant('pages.monitoring.autoRefresh.off'), value: 'off' },
     { label: '30s', value: '30s' },
     { label: '1m', value: '1m' },
     { label: '5m', value: '5m' },
@@ -141,9 +143,7 @@ export class Monitoring implements OnInit, OnDestroy {
         },
         error: (err) => {
           console.error('[Monitoring] HTTP error', err);
-          this.errorMessage.set(
-            'Unable to load monitoring metrics. Check your connection or try refreshing.',
-          );
+          this.errorMessage.set(this.translate.instant('pages.monitoring.loadError'));
         },
       });
   }

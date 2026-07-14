@@ -2,9 +2,11 @@
   <!-- Header -->
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
     <div>
-      <h1 class="text-2xl font-bold text-on-surface tracking-tight">Monitoring</h1>
+      <h1 class="text-2xl font-bold text-on-surface tracking-tight">
+        {{ 'pages.monitoring.title' | translate }}
+      </h1>
       <p class="text-sm text-on-surface-variant mt-1">
-        Real-time system metrics and activity dashboards.
+        {{ 'pages.monitoring.subtitle' | translate }}
       </p>
     </div>
     <div class="flex items-center gap-3 flex-wrap">
@@ -41,7 +43,7 @@
         (click)="loadAll()"
         [disabled]="loading()"
         class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium glass-card rounded-lg hover:bg-surface-variant/50 transition-colors disabled:opacity-50"
-        title="Refresh now"
+        [attr.title]="'pages.monitoring.refreshNow' | translate"
       >
         <span
           class="material-symbols-outlined text-sm"
@@ -52,7 +54,7 @@
         @if (lastRefreshed()) {
           <span class="text-on-surface-variant">{{ lastRefreshed() | date: 'HH:mm:ss' }}</span>
         } @else {
-          <span class="text-on-surface-variant">Refresh</span>
+          <span class="text-on-surface-variant">{{ 'pages.monitoring.refresh' | translate }}</span>
         }
       </button>
     </div>
@@ -64,26 +66,34 @@
       <span class="material-symbols-outlined text-primary text-lg" aria-hidden="true"
         >screen_share</span
       >
-      Active Sessions
+      {{ 'pages.monitoring.sections.activeSessions' | translate }}
     </h2>
 
     <!-- Stat cards -->
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
       <div class="glass-card p-4 rounded-xl">
-        <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-1">Live Sessions</p>
+        <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-1">
+          {{ 'pages.monitoring.stats.liveSessions' | translate }}
+        </p>
         <p class="text-3xl font-bold" [ngClass]="activeSessionsColor()">
           {{ summary()?.activeSessions ?? '–' }}
         </p>
-        <p class="text-xs text-on-surface-variant mt-1">Currently active</p>
+        <p class="text-xs text-on-surface-variant mt-1">
+          {{ 'pages.monitoring.stats.currentlyActive' | translate }}
+        </p>
       </div>
       <div class="glass-card p-4 rounded-xl">
-        <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-1">Started (24h)</p>
+        <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-1">
+          {{ 'pages.monitoring.stats.started24h' | translate }}
+        </p>
         <p class="text-3xl font-bold text-on-surface">
           {{ summary()?.connectionsStarted24h ?? '–' }}
         </p>
       </div>
       <div class="glass-card p-4 rounded-xl">
-        <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-1">Ended (24h)</p>
+        <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-1">
+          {{ 'pages.monitoring.stats.ended24h' | translate }}
+        </p>
         <p class="text-3xl font-bold text-on-surface">
           {{ summary()?.connectionsEnded24h ?? '–' }}
         </p>
@@ -97,14 +107,14 @@
   <section class="mb-8">
     <h2 class="text-base font-semibold text-on-surface mb-3 flex items-center gap-2">
       <span class="material-symbols-outlined text-primary text-lg" aria-hidden="true">shield</span>
-      Auth &amp; Security
+      {{ 'pages.monitoring.sections.authSecurity' | translate }}
     </h2>
 
     <!-- Stat cards -->
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
       <div class="glass-card p-4 rounded-xl">
         <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-1">
-          Login Attempts (24h)
+          {{ 'pages.monitoring.stats.loginAttempts24h' | translate }}
         </p>
         <p class="text-3xl font-bold text-on-surface">
           {{ summary()?.loginAttemptsTotal24h ?? '–' }}
@@ -112,7 +122,7 @@
       </div>
       <div class="glass-card p-4 rounded-xl">
         <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-1">
-          Failed Logins (24h)
+          {{ 'pages.monitoring.stats.failedLogins24h' | translate }}
         </p>
         <p
           class="text-3xl font-bold"
@@ -124,7 +134,7 @@
       </div>
       <div class="glass-card p-4 rounded-xl">
         <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-1">
-          Success Rate (24h)
+          {{ 'pages.monitoring.stats.successRate24h' | translate }}
         </p>
         <p class="text-3xl font-bold text-green-400">
           {{ summary() ? (summary()!.loginSuccessRate24h | number: '1.1-1') + '%' : '–' }}
@@ -140,21 +150,23 @@
       <span class="material-symbols-outlined text-primary text-lg" aria-hidden="true"
         >assignment</span
       >
-      Audit Events
+      {{ 'pages.monitoring.sections.auditEvents' | translate }}
     </h2>
 
     <!-- Stat cards -->
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
       <div class="glass-card p-4 rounded-xl">
         <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-1">
-          Total Events (24h)
+          {{ 'pages.monitoring.stats.totalEvents24h' | translate }}
         </p>
         <p class="text-3xl font-bold text-on-surface">
           {{ summary()?.auditEventsTotal24h ?? '–' }}
         </p>
       </div>
       <div class="glass-card p-4 rounded-xl">
-        <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-1">Failures (24h)</p>
+        <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-1">
+          {{ 'pages.monitoring.stats.failures24h' | translate }}
+        </p>
         <p
           class="text-3xl font-bold"
           [class.text-red-400]="(summary()?.auditFailures24h ?? 0) > 0"
@@ -165,7 +177,7 @@
       </div>
       <div class="glass-card p-4 rounded-xl">
         <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-1">
-          Auth Events (24h)
+          {{ 'pages.monitoring.stats.authEvents24h' | translate }}
         </p>
         <p class="text-3xl font-bold text-on-surface">{{ summary()?.authEvents24h ?? '–' }}</p>
       </div>
@@ -189,7 +201,7 @@
   } @placeholder {
     <div class="h-64 flex items-center justify-center text-on-surface-variant text-sm opacity-60">
       <span class="material-symbols-outlined text-2xl mr-2" aria-hidden="true">bar_chart</span>
-      Charts loading…
+      {{ 'pages.monitoring.chartsLoading' | translate }}
     </div>
   } @error {
     <div
@@ -197,7 +209,7 @@
       class="h-64 flex flex-col items-center justify-center text-on-surface-variant text-sm gap-2"
     >
       <span class="material-symbols-outlined text-2xl text-error" aria-hidden="true">error</span>
-      Failed to render charts.
+      {{ 'pages.monitoring.chartsRenderError' | translate }}
     </div>
   }
 </div>

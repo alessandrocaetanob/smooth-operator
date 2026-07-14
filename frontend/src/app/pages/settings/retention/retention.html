@@ -1,9 +1,10 @@
 <div>
   <div class="mb-6">
-    <h2 class="text-lg font-semibold text-on-surface">Audit Log Retention</h2>
+    <h2 class="text-lg font-semibold text-on-surface">
+      {{ 'pages.settingsRetention.heading' | translate }}
+    </h2>
     <p class="text-sm text-on-surface-variant mt-1">
-      Control how long audit log entries are kept in the database. A daily background job purges
-      entries older than the configured retention window.
+      {{ 'pages.settingsRetention.description' | translate }}
     </p>
   </div>
 
@@ -33,11 +34,13 @@
           style="color: rgb(var(--color-primary)); font-size: 20px"
           >schedule</span
         >
-        <h3 class="text-sm font-semibold text-on-surface">Retention window</h3>
+        <h3 class="text-sm font-semibold text-on-surface">
+          {{ 'pages.settingsRetention.window.title' | translate }}
+        </h3>
       </div>
       <div class="p-5">
         <p class="text-xs uppercase tracking-widest text-on-surface-variant mb-3 font-semibold">
-          Quick select
+          {{ 'pages.settingsRetention.window.quickSelect' | translate }}
         </p>
         <div class="flex flex-wrap gap-2 mb-5">
           @for (p of presets; track p.days) {
@@ -48,7 +51,7 @@
               (click)="selectPreset(p.days)"
               [disabled]="loading() || busy()"
             >
-              {{ p.label }}
+              {{ 'pages.settingsRetention.presets.' + p.key | translate }}
             </button>
           }
         </div>
@@ -59,7 +62,7 @@
               for="retentionDays"
               class="block text-xs uppercase tracking-widest text-on-surface-variant mb-2 font-semibold"
             >
-              Custom (days)
+              {{ 'pages.settingsRetention.window.customDaysLabel' | translate }}
             </label>
             <input
               id="retentionDays"
@@ -79,14 +82,17 @@
               <span class="material-symbols-outlined text-tertiary" style="font-size: 16px"
                 >all_inclusive</span
               >
-              <span class="text-tertiary text-sm font-medium">Kept forever</span>
+              <span class="text-tertiary text-sm font-medium">{{
+                'pages.settingsRetention.window.keptForever' | translate
+              }}</span>
             } @else {
               <span class="material-symbols-outlined text-amber-400" style="font-size: 16px"
                 >schedule</span
               >
               <span class="text-on-surface-variant text-sm"
-                >Purged after
-                <strong class="text-on-surface">{{ retentionDays() }}</strong> day(s)</span
+                >{{ 'pages.settingsRetention.window.purgedAfterPrefix' | translate }}
+                <strong class="text-on-surface">{{ retentionDays() }}</strong>
+                {{ 'pages.settingsRetention.window.dayUnit' | translate }}</span
               >
             }
           </div>
@@ -102,31 +108,52 @@
           style="color: rgb(var(--color-secondary)); font-size: 20px"
           >verified_user</span
         >
-        <h3 class="text-sm font-semibold text-on-surface">Compliance reference</h3>
+        <h3 class="text-sm font-semibold text-on-surface">
+          {{ 'pages.settingsRetention.compliance.title' | translate }}
+        </h3>
       </div>
       <div class="p-4">
         <div class="compliance-grid">
           <div class="compliance-tier">
-            <span class="compliance-tier-label">SOC 2</span>
-            <span class="compliance-tier-value">365 days</span>
-            <span class="compliance-tier-desc">Security event logs</span>
+            <span class="compliance-tier-label">{{
+              'pages.settingsRetention.compliance.soc2.label' | translate
+            }}</span>
+            <span class="compliance-tier-value">{{
+              'pages.settingsRetention.compliance.soc2.value' | translate
+            }}</span>
+            <span class="compliance-tier-desc">{{
+              'pages.settingsRetention.compliance.soc2.desc' | translate
+            }}</span>
           </div>
           <div class="compliance-divider"></div>
           <div class="compliance-tier">
-            <span class="compliance-tier-label">ISO 27001</span>
-            <span class="compliance-tier-value">365 days</span>
-            <span class="compliance-tier-desc">Access &amp; change records</span>
+            <span class="compliance-tier-label">{{
+              'pages.settingsRetention.compliance.iso27001.label' | translate
+            }}</span>
+            <span class="compliance-tier-value">{{
+              'pages.settingsRetention.compliance.iso27001.value' | translate
+            }}</span>
+            <span class="compliance-tier-desc">{{
+              'pages.settingsRetention.compliance.iso27001.desc' | translate
+            }}</span>
           </div>
           <div class="compliance-divider"></div>
           <div class="compliance-tier">
-            <span class="compliance-tier-label">HIPAA</span>
-            <span class="compliance-tier-value">2,190 days</span>
-            <span class="compliance-tier-desc">6 years of PHI access logs</span>
+            <span class="compliance-tier-label">{{
+              'pages.settingsRetention.compliance.hipaa.label' | translate
+            }}</span>
+            <span class="compliance-tier-value">{{
+              'pages.settingsRetention.compliance.hipaa.value' | translate
+            }}</span>
+            <span class="compliance-tier-desc">{{
+              'pages.settingsRetention.compliance.hipaa.desc' | translate
+            }}</span>
           </div>
         </div>
         <p class="text-xs text-on-surface-variant/50 mt-3">
-          Set to <strong class="text-on-surface-variant/80">0</strong> to keep logs forever — the
-          safest option for compliance.
+          {{ 'pages.settingsRetention.compliance.footnotePrefix' | translate }}
+          <strong class="text-on-surface-variant/80">0</strong>
+          {{ 'pages.settingsRetention.compliance.footnoteSuffix' | translate }}
         </p>
       </div>
     </div>
@@ -134,11 +161,13 @@
     <div class="flex items-center gap-2">
       <button type="submit" class="btn-primary" [disabled]="loading() || busy()">
         <span class="material-symbols-outlined text-sm" aria-hidden="true">save</span>
-        {{ busy() ? 'Saving…' : 'Save' }}
+        {{
+          (busy() ? 'pages.settingsRetention.actions.saving' : 'common.actions.save') | translate
+        }}
       </button>
       <button type="button" class="btn-ghost" (click)="refresh()" [disabled]="loading() || busy()">
         <span class="material-symbols-outlined text-sm" aria-hidden="true">undo</span>
-        Reset
+        {{ 'pages.settingsRetention.actions.reset' | translate }}
       </button>
     </div>
   </form>

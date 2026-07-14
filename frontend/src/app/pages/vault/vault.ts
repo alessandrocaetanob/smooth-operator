@@ -9,6 +9,7 @@ import {
 import { Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { catchError, forkJoin, of } from 'rxjs';
 import { Connection, ConnectionsService } from '../../services/connections.service';
 import { AuthService } from '../../services/auth.service';
@@ -19,7 +20,7 @@ import { listStagger } from '../../shared/animations';
 @Component({
   selector: 'app-vault',
   standalone: true,
-  imports: [RouterLink, CommonModule, FormsModule, Mascot],
+  imports: [RouterLink, CommonModule, FormsModule, Mascot, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './vault.html',
   styleUrl: './vault.css',
@@ -30,6 +31,7 @@ export class Vault implements OnInit {
   private readonly vaultsSvc = inject(VaultsService);
   private readonly router = inject(Router);
   private readonly auth = inject(AuthService);
+  private readonly translate = inject(TranslateService);
 
   readonly list = this.connections.list;
   readonly vaultsList = this.vaultsSvc.list;
@@ -176,14 +178,15 @@ export class Vault implements OnInit {
     if (!Number.isFinite(ts)) return null;
     const diff = Math.max(0, Date.now() - ts);
     const minutes = Math.floor(diff / 60_000);
-    if (minutes < 1) return 'just now';
-    if (minutes < 60) return `${minutes}m ago`;
+    if (minutes < 1) return this.translate.instant('pages.vault.lastConnected.justNow');
+    if (minutes < 60)
+      return this.translate.instant('pages.vault.lastConnected.minutesAgo', { minutes });
     const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours}h ago`;
+    if (hours < 24) return this.translate.instant('pages.vault.lastConnected.hoursAgo', { hours });
     const days = Math.floor(hours / 24);
-    if (days < 30) return `${days}d ago`;
+    if (days < 30) return this.translate.instant('pages.vault.lastConnected.daysAgo', { days });
     const months = Math.floor(days / 30);
-    return `${months}mo ago`;
+    return this.translate.instant('pages.vault.lastConnected.monthsAgo', { months });
   }
 
   reachability(id: string): 'unknown' | 'up' | 'down' {

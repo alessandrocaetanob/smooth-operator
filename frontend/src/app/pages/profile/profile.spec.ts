@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideTranslateService, TranslateService } from '@ngx-translate/core';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { signal } from '@angular/core';
 import { of, throwError } from 'rxjs';
@@ -49,12 +50,48 @@ describe('Profile', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
+        provideTranslateService(),
         { provide: ProfileService, useValue: profileSvc },
         { provide: AuthService, useValue: auth },
         { provide: MfaService, useValue: mfaSvc },
         { provide: ApiTokensService, useValue: apiTokensSvc },
       ],
     }).compileComponents();
+
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', {
+      pages: {
+        profile: {
+          name: { required: 'Name is required.' },
+          saved: 'Profile updated.',
+          saveError: 'Could not save profile.',
+          avatar: {
+            invalidType: 'Avatar must be PNG, JPEG, or WebP.',
+            tooLarge: 'Avatar exceeds 1 MB after downscaling. Pick a simpler image.',
+            readError: 'Could not read that image.',
+            removed: 'Avatar removed.',
+            removeError: 'Could not remove avatar.',
+          },
+          mfa: {
+            startError: 'Could not start MFA enrollment.',
+            invalidCode: 'Invalid code. Try again.',
+            disableError: 'Could not disable MFA.',
+            recoveryFile: {
+              title: 'Smooth Operator — MFA Recovery Codes',
+              generated: 'Generated: {{date}}',
+              instructions: 'Each code can be used once to sign in if you lose your authenticator.',
+              storeSafely: 'Store this file somewhere safe and delete it after printing.',
+            },
+          },
+          apiTokens: {
+            createError: 'Could not create token.',
+            revokeError: 'Could not revoke token.',
+          },
+        },
+      },
+    });
+    translate.use('en');
+
     fixture = TestBed.createComponent(Profile);
     component = fixture.componentInstance;
   }

@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import {
@@ -16,7 +17,7 @@ import { AuthService } from '../../services/auth.service';
 @Component({
   selector: 'app-recordings-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, RecordingPlayerComponent],
+  imports: [CommonModule, FormsModule, RecordingPlayerComponent, TranslatePipe],
   templateUrl: './recordings.html',
 })
 export class RecordingsPage implements OnInit {
@@ -24,6 +25,7 @@ export class RecordingsPage implements OnInit {
   private readonly toast = inject(ToastService);
   private readonly confirm = inject(ConfirmDialogService);
   private readonly auth = inject(AuthService);
+  private readonly translate = inject(TranslateService);
 
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
@@ -78,7 +80,9 @@ export class RecordingsPage implements OnInit {
       },
       error: (err) => {
         this.loading.set(false);
-        this.error.set(this.toMessage(err) || 'Failed to load recordings.');
+        this.error.set(
+          this.toMessage(err) || this.translate.instant('pages.recordings.errors.loadFailed'),
+        );
       },
     });
   }
@@ -132,18 +136,23 @@ export class RecordingsPage implements OnInit {
 
   async remove(r: Recording): Promise<void> {
     const ok = await this.confirm.ask({
-      title: 'Delete recording',
-      message: `Permanently delete the recording for "${r.connectionName}" started ${r.startedAt}? This cannot be undone.`,
-      confirmLabel: 'Delete',
+      title: this.translate.instant('pages.recordings.confirmDelete.title'),
+      message: this.translate.instant('pages.recordings.confirmDelete.message', {
+        connectionName: r.connectionName,
+        startedAt: r.startedAt,
+      }),
+      confirmLabel: this.translate.instant('common.actions.delete'),
       tone: 'danger',
     });
     if (!ok) return;
     try {
       await firstValueFrom(this.recordings.remove(r.id));
-      this.toast.success('Recording deleted.');
+      this.toast.success(this.translate.instant('pages.recordings.toasts.deleted'));
       this.refresh();
     } catch (err) {
-      this.toast.error(this.toMessage(err) || 'Failed to delete recording.');
+      this.toast.error(
+        this.toMessage(err) || this.translate.instant('pages.recordings.errors.deleteFailed'),
+      );
     }
   }
 
@@ -168,6 +177,10 @@ export class RecordingsPage implements OnInit {
     if (h > 0) return `${h}h ${m}m`;
     if (m > 0) return `${m}m ${s}s`;
     return `${s}s`;
+  }
+
+  statusLabelKey(status: RecordingStatus): string {
+    return `pages.recordings.status.${status.charAt(0).toLowerCase()}${status.slice(1)}`;
   }
 
   statusClass(status: RecordingStatus): string {

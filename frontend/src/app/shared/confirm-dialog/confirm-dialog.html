@@ -46,9 +46,9 @@
           @if (tone() === 'danger' && isCountingDown()) {
             <div class="mt-3 flex items-center gap-2 text-error/80">
               <span class="material-symbols-outlined text-sm" aria-hidden="true">timer</span>
-              <span class="font-mono text-[11px] font-semibold tracking-widest"
-                >CONFIRM IN 3 SECONDS…</span
-              >
+              <span class="font-mono text-[11px] font-semibold tracking-widest">{{
+                'confirmDialog.countdown' | translate
+              }}</span>
             </div>
           }
 

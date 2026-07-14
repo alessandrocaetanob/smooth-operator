@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
+import { provideTranslateService, TranslateService } from '@ngx-translate/core';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Observable, of, throwError } from 'rxjs';
 import { signal } from '@angular/core';
@@ -88,6 +89,7 @@ describe('Connections', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
+        provideTranslateService(),
         { provide: ConnectionsService, useValue: connections },
         { provide: HostsService, useValue: hosts },
         { provide: CredentialsService, useValue: creds },
@@ -96,6 +98,32 @@ describe('Connections', () => {
         { provide: ToastService, useValue: toast },
       ],
     }).compileComponents();
+
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', {
+      pages: {
+        connections: {
+          errors: {
+            loadFailed: 'Failed to load.',
+            saveFailed: 'Save failed.',
+            deleteFailed: 'Delete failed.',
+            validationRequired: 'Name, host, protocol and vault are required.',
+            hostNotFound: 'Failed to locate created host',
+          },
+          toasts: {
+            created: 'Connection created.',
+            updated: 'Connection updated.',
+            deleted: 'Connection "{{name}}" deleted.',
+          },
+          confirmDelete: {
+            title: 'Delete connection',
+            message: 'Delete connection "{{name}}"? This cannot be undone.',
+            confirmLabel: 'Delete',
+          },
+        },
+      },
+    });
+    translate.use('en');
 
     fixture = TestBed.createComponent(Connections);
     component = fixture.componentInstance;

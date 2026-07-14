@@ -1,10 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
+import { provideTranslateService } from '@ngx-translate/core';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { signal } from '@angular/core';
 import { of, throwError } from 'rxjs';
 
+import { TranslateService } from '@ngx-translate/core';
 import { Authentication } from './authentication';
 import { AuthService, Providers } from '../../services/auth.service';
 import { RuntimeConfigService } from '../../core/config/runtime-config.service';
@@ -33,10 +35,23 @@ describe('Authentication', () => {
       imports: [Authentication],
       providers: [
         provideRouter([]),
+        provideTranslateService(),
         { provide: AuthService, useValue: auth },
         { provide: RuntimeConfigService, useValue: runtimeConfig },
       ],
     }).compileComponents();
+
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', {
+      pages: {
+        auth: {
+          tooManyAttempts: 'Too many sign-in attempts. Please wait a moment and try again.',
+          signInFailed: 'Sign-in failed.',
+          verificationFailed: 'Verification failed.',
+        },
+      },
+    });
+    translate.use('en');
 
     fixture = TestBed.createComponent(Authentication);
     component = fixture.componentInstance;

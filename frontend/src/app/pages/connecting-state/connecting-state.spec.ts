@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideTranslateService } from '@ngx-translate/core';
 import { BehaviorSubject, of } from 'rxjs';
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { signal } from '@angular/core';
@@ -88,6 +89,7 @@ describe('ConnectingState', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
+        provideTranslateService(),
         { provide: GuacamoleSessionManagerService, useValue: manager },
         { provide: ConnectionsService, useValue: connectionsSvc },
         { provide: Router, useValue: router },
@@ -221,13 +223,13 @@ describe('ConnectingState', () => {
 
   describe('statusLabel', () => {
     it.each([
-      ['requesting-ticket', 'INITIATING'],
-      ['connecting', 'CONNECTING'],
-      ['waiting', 'AUTHENTICATING'],
-      ['connected', 'READY'],
-      ['error', 'ERROR'],
-      ['disconnected', 'DISCONNECTED'],
-      ['idle', 'IDLE'],
+      ['requesting-ticket', 'pages.connectingState.status.initiating'],
+      ['connecting', 'pages.connectingState.status.connecting'],
+      ['waiting', 'pages.connectingState.status.authenticating'],
+      ['connected', 'pages.connectingState.status.ready'],
+      ['error', 'pages.connectingState.status.error'],
+      ['disconnected', 'pages.connectingState.status.disconnected'],
+      ['idle', 'pages.connectingState.status.idle'],
     ] as const)('%s -> %s', (state, label) => {
       const s = makeFake();
       s.state.set(state);
@@ -270,11 +272,11 @@ describe('ConnectingState', () => {
     });
 
     it.each([
-      ['ok', '[OK]'],
-      ['warn', '[WRN]'],
-      ['error', '[ERR]'],
-      ['info', '[..]'],
-      ['', '[..]'],
+      ['ok', 'pages.connectingState.logTag.ok'],
+      ['warn', 'pages.connectingState.logTag.warn'],
+      ['error', 'pages.connectingState.logTag.error'],
+      ['info', 'pages.connectingState.logTag.info'],
+      ['', 'pages.connectingState.logTag.info'],
     ] as const)('logTag(%s) -> %s', (level, tag) => {
       expect(component.logTag(level)).toBe(tag);
     });

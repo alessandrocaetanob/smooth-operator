@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideTranslateService, TranslateService } from '@ngx-translate/core';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { of, throwError } from 'rxjs';
 
@@ -36,9 +37,21 @@ describe('Monitoring', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
+        provideTranslateService(),
         { provide: MetricsService, useValue: metrics },
       ],
     }).compileComponents();
+
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', {
+      pages: {
+        monitoring: {
+          autoRefresh: { off: 'Off' },
+          loadError: 'Unable to load monitoring metrics. Check your connection or try refreshing.',
+        },
+      },
+    });
+    translate.use('en');
 
     fixture = TestBed.createComponent(Monitoring);
     component = fixture.componentInstance;

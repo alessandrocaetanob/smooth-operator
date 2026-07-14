@@ -1,0 +1,1740 @@
+{
+  "common": {
+    "actions": {
+      "save": "Salvar",
+      "cancel": "Cancelar",
+      "delete": "Excluir",
+      "confirm": "Confirmar",
+      "close": "Fechar",
+      "edit": "Editar",
+      "create": "Criar",
+      "search": "Pesquisar"
+    },
+    "validation": {
+      "required": "Este campo é obrigatório",
+      "invalidEmail": "Informe um endereço de email válido"
+    },
+    "password": {
+      "show": "Mostrar senha",
+      "hide": "Ocultar senha"
+    },
+    "help": "Ajuda",
+    "privacy": "Privacidade"
+  },
+  "themeToggle": {
+    "toggleTheme": "Alternar tema",
+    "switchToLight": "Mudar para o modo claro",
+    "switchToDark": "Mudar para o modo escuro"
+  },
+  "languageSwitcher": {
+    "label": "Idioma",
+    "switchTo": "Mudar para {{language}}"
+  },
+  "nav": {
+    "topbar": {
+      "openMenu": "Abrir menu",
+      "closeMenu": "Fechar menu",
+      "goToDashboard": "Ir para o painel",
+      "brand": "Smooth Operator",
+      "searchPlaceholder": "Pesquisar vaults e conexões...",
+      "searchAriaLabel": "Pesquisar vaults e conexões",
+      "systemOptimal": "Sistema: Ótimo",
+      "systemOffline": "Sistema: Offline",
+      "systemChecking": "Sistema: Verificando",
+      "apiReachable": "API e banco de dados acessíveis",
+      "backendUnreachable": "Backend inacessível",
+      "checkingStatus": "Verificando status do sistema...",
+      "account": "Conta",
+      "profile": "Perfil",
+      "settings": "Configurações",
+      "signOut": "Sair"
+    },
+    "sidebar": {
+      "primaryNavigation": "Navegação principal",
+      "closeNavigationMenu": "Fechar menu de navegação",
+      "backToApp": "Voltar ao app",
+      "groupPeopleAccess": "Pessoas e Acesso",
+      "users": "Usuários",
+      "groups": "Grupos",
+      "roles": "Papéis",
+      "groupInfrastructure": "Infraestrutura",
+      "vaults": "Vaults",
+      "keyVault": "Key Vault",
+      "groupSecurity": "Segurança",
+      "sso": "SSO",
+      "sessions": "Sessões",
+      "retention": "Retenção",
+      "recording": "Gravação",
+      "groupSystem": "Sistema",
+      "email": "Email",
+      "integrations": "Integrações",
+      "webhooks": "Webhooks",
+      "myAccess": "Meu Acesso",
+      "myVaults": "Meus Vaults",
+      "connections": "Conexões",
+      "knownHosts": "Hosts Conhecidos",
+      "credentials": "Credenciais",
+      "auditLogs": "Logs de Auditoria",
+      "recordings": "Gravações",
+      "monitoring": "Monitoramento",
+      "settings": "Configurações",
+      "expandSidebar": "Expandir barra lateral",
+      "collapseSidebar": "Recolher barra lateral",
+      "collapse": "Recolher",
+      "helpDocs": "Ajuda e Documentação",
+      "help": "Ajuda",
+      "signOut": "Sair"
+    }
+  },
+  "sessionBar": {
+    "ariaLabel": "Sessões minimizadas",
+    "restore": "Restaurar: {{name}}",
+    "restoreAriaLabel": "Restaurar sessão {{name}}",
+    "terminate": "Encerrar sessão",
+    "minimizedAriaLabel": "Sessão minimizada {{name}}"
+  },
+  "confirmDialog": {
+    "countdown": "CONFIRME EM 3 SEGUNDOS…"
+  },
+  "toast": {
+    "dismiss": "Dispensar notificação"
+  },
+  "drawer": {
+    "close": "Fechar painel"
+  },
+  "pages": {
+    "auth": {
+      "tagline": "Acesso remoto seguro e sem cliente para infraestrutura moderna.",
+      "connecting": "Conectando…",
+      "signInWithSso": "Entrar com {{provider}}",
+      "orContinueWithEmail": "OU CONTINUE COM EMAIL",
+      "emailLabel": "Endereço de Email",
+      "emailPlaceholder": "admin@empresa.com",
+      "emailRequired": "O email é obrigatório.",
+      "passwordLabel": "Senha",
+      "forgotLink": "Esqueceu?",
+      "passwordRequired": "A senha é obrigatória.",
+      "signIn": "Entrar",
+      "signingIn": "Entrando…",
+      "mfaTitle": "Autenticação de dois fatores",
+      "mfaSubtitle": "Informe o código de 6 dígitos do seu aplicativo autenticador ou um código de recuperação.",
+      "mfaCodeLabel": "Código de verificação",
+      "mfaCodeError": "Informe um código de 6 dígitos ou um código de recuperação XXXX-XXXX.",
+      "verify": "Verificar",
+      "verifying": "Verificando…",
+      "backToSignIn": "← Voltar para o login",
+      "systemStatusOptimal": "STATUS DO SISTEMA: ÓTIMO",
+      "tooManyAttempts": "Muitas tentativas de login. Aguarde um momento e tente novamente.",
+      "signInFailed": "Falha no login.",
+      "verificationFailed": "Falha na verificação."
+    },
+    "ssoFinalize": {
+      "errorTitle": "Falha no login",
+      "backToSignIn": "Voltar para o login",
+      "completingTitle": "Concluindo o login…",
+      "validatingSession": "Validando sua sessão de logon único.",
+      "authFailedFallback": "Falha na autenticação. Tente fazer login novamente."
+    },
+    "firstAccess": {
+      "deploymentBadge": "Implantação do Sistema Iniciada",
+      "title": "Primeiro Acesso: Configuração ROOT",
+      "subtitle": "Configure sua conta administrativa root inicial para gerenciar as configurações do sistema e a integração SSO.",
+      "fullNameLabel": "Nome Completo",
+      "fullNamePlaceholder": "Administrador do Sistema",
+      "emailPlaceholder": "admin@dominio.com",
+      "passwordLabel": "Senha Mestra",
+      "passwordHint": "Mínimo de 12 caracteres.",
+      "confirmPasswordLabel": "Confirmar Senha",
+      "passwordMismatch": "As senhas não coincidem.",
+      "creating": "Criando…",
+      "createAccount": "Criar Conta Root",
+      "createAccountFailed": "Falha ao criar a conta root."
+    },
+    "notFound": {
+      "errorCode": "Erro 404",
+      "title": "Página não encontrada",
+      "message": "A página que você procurava não existe ou foi movida. O mascote procurou em todo lugar.",
+      "backToVault": "Voltar ao Vault"
+    },
+    "emptyState": {
+      "title": "Seu Cofre Está Vazio",
+      "description": "Parece que você ainda não foi atribuído a nenhuma equipe de servidores. Entre em contato com o administrador para solicitar acesso.",
+      "requestAccess": "Solicitar Acesso"
+    },
+    "forgotPassword": {
+      "title": "Recuperação de Senha",
+      "subtitle": "Informe seu email e enviaremos um link de redefinição se a conta existir.",
+      "smtpUnavailable": "O envio de emails não está configurado neste sistema. Entre em contato com o administrador para redefinir sua senha.",
+      "successMessage": "Se existir uma conta com esse email, um link de redefinição de senha foi enviado.",
+      "backToSignIn": "Voltar para o login",
+      "emailLabel": "Endereço de Email",
+      "emailPlaceholder": "admin@empresa.com",
+      "sending": "Enviando…",
+      "submit": "Enviar Link de Redefinição",
+      "unexpectedError": "Ocorreu um erro inesperado. Tente novamente."
+    },
+    "myAccess": {
+      "title": "Meu Acesso",
+      "subtitle": "Vaults que você pode acessar, diretamente ou por meio de um grupo do qual você participa.",
+      "loadingAria": "Carregando seu acesso…",
+      "notSignedIn": "Você não está autenticado.",
+      "loadFailed": "Falha ao carregar o acesso.",
+      "stats": {
+        "total": {
+          "label": "Total",
+          "caption": "vaults que você pode acessar"
+        },
+        "direct": {
+          "label": "Direto",
+          "caption": "atribuídos a você pessoalmente"
+        },
+        "viaGroups": {
+          "label": "Via grupos",
+          "caption": "grupos que concedem acesso a vaults"
+        }
+      },
+      "allVaults": {
+        "heading": "Todos os vaults",
+        "empty": "Você ainda não tem acesso a nenhum vault. Peça a um administrador."
+      },
+      "byGroup": {
+        "heading": "Por grupo",
+        "vaultCountOne": "{{count}} vault",
+        "vaultCountOther": "{{count}} vaults"
+      }
+    },
+    "connectingState": {
+      "heading": "Conectando a",
+      "remoteHostFallback": "host remoto",
+      "idLabel": "ID: {{id}}",
+      "steps": {
+        "initiating": "INICIANDO",
+        "connecting": "CONECTANDO",
+        "authenticating": "AUTENTICANDO",
+        "ready": "PRONTO"
+      },
+      "status": {
+        "initiating": "INICIANDO",
+        "connecting": "CONECTANDO",
+        "authenticating": "AUTENTICANDO",
+        "ready": "PRONTO",
+        "error": "ERRO",
+        "disconnected": "DESCONECTADO",
+        "idle": "OCIOSO"
+      },
+      "mascotCaption": {
+        "tunnelEstablished": "TÚNEL ESTABELECIDO",
+        "connectionFailed": "FALHA NA CONEXÃO",
+        "disconnected": "DESCONECTADO",
+        "processing": "PROCESSANDO…"
+      },
+      "progressLabel": "Progresso da Conexão",
+      "logsEmpty": "Aguardando eventos de conexão…",
+      "logTag": {
+        "ok": "[OK]",
+        "warn": "[AVISO]",
+        "error": "[ERRO]",
+        "info": "[..]"
+      },
+      "retry": "Tentar novamente"
+    },
+    "monitoring": {
+      "title": "Monitoramento",
+      "subtitle": "Métricas do sistema e painéis de atividade em tempo real.",
+      "refreshNow": "Atualizar agora",
+      "refresh": "Atualizar",
+      "loadError": "Não foi possível carregar as métricas de monitoramento. Verifique sua conexão ou tente atualizar novamente.",
+      "chartsLoading": "Carregando gráficos…",
+      "chartsRenderError": "Falha ao renderizar os gráficos.",
+      "autoRefresh": {
+        "off": "Desligado"
+      },
+      "sections": {
+        "activeSessions": "Sessões Ativas",
+        "authSecurity": "Autenticação e Segurança",
+        "auditEvents": "Eventos de Auditoria"
+      },
+      "stats": {
+        "liveSessions": "Sessões ao Vivo",
+        "currentlyActive": "Ativas no momento",
+        "started24h": "Iniciadas (24h)",
+        "ended24h": "Encerradas (24h)",
+        "loginAttempts24h": "Tentativas de Login (24h)",
+        "failedLogins24h": "Logins Falhos (24h)",
+        "successRate24h": "Taxa de Sucesso (24h)",
+        "totalEvents24h": "Total de Eventos (24h)",
+        "failures24h": "Falhas (24h)",
+        "authEvents24h": "Eventos de Autenticação (24h)"
+      },
+      "charts": {
+        "connectionsOverTime": "Conexões ao Longo do Tempo",
+        "connectionsOverTimeAriaLabel": "Conexões iniciadas e encerradas ao longo do tempo",
+        "loginAttemptsOverTime": "Tentativas de Login ao Longo do Tempo",
+        "loginAttemptsOverTimeAriaLabel": "Sucessos e falhas de login ao longo do tempo",
+        "outcomeBreakdown": "Distribuição de Resultados",
+        "outcomeBreakdownAriaLabel": "Distribuição de resultados dos eventos de auditoria",
+        "topEventTypes": "Top 10 Tipos de Eventos",
+        "topEventTypesAriaLabel": "Principais tipos de eventos de auditoria por contagem",
+        "eventRateByType": "Taxa de Eventos por Tipo",
+        "eventRateByTypeAriaLabel": "Taxa de eventos de auditoria por tipo ao longo do tempo",
+        "datasets": {
+          "success": "Sucesso",
+          "failure": "Falha",
+          "started": "Iniciadas",
+          "ended": "Encerradas",
+          "count": "Contagem"
+        }
+      }
+    },
+    "recordings": {
+      "subtitle": {
+        "prefix": "Veja as gravações de sessão capturadas. A reprodução abre um visualizador integrado ao navegador para o arquivo",
+        "suffix": "bruto."
+      },
+      "filters": {
+        "status": "Status",
+        "from": "De",
+        "to": "Até",
+        "apply": "Aplicar",
+        "clear": "Limpar"
+      },
+      "status": {
+        "all": "Todos",
+        "available": "Disponível",
+        "recording": "Gravando",
+        "uploading": "Enviando",
+        "failed": "Falha",
+        "deleted": "Excluída"
+      },
+      "table": {
+        "connection": "Conexão",
+        "user": "Usuário",
+        "started": "Início",
+        "duration": "Duração",
+        "size": "Tamanho",
+        "status": "Status",
+        "actions": "Ações",
+        "noVault": "(sem vault)",
+        "keysBadge": "teclas",
+        "keysBadgeTitle": "Inclui teclas digitadas capturadas"
+      },
+      "actions": {
+        "play": "Reproduzir",
+        "playTitle": "Reproduzir no navegador",
+        "download": "Baixar",
+        "downloadTitle": "Baixar arquivo .guac"
+      },
+      "list": {
+        "loading": "Carregando…",
+        "empty": "Nenhuma gravação corresponde a esses filtros."
+      },
+      "pagination": {
+        "summary": "{{total}} no total · página {{page}} de {{pageCount}}",
+        "previous": "Anterior",
+        "next": "Próxima"
+      },
+      "confirmDelete": {
+        "title": "Excluir gravação",
+        "message": "Excluir permanentemente a gravação de \"{{connectionName}}\" iniciada em {{startedAt}}? Essa ação não pode ser desfeita."
+      },
+      "toasts": {
+        "deleted": "Gravação excluída."
+      },
+      "errors": {
+        "loadFailed": "Falha ao carregar as gravações.",
+        "deleteFailed": "Falha ao excluir a gravação."
+      },
+      "player": {
+        "exitFullscreen": "Sair da tela cheia",
+        "fullscreen": "Tela cheia",
+        "closePlayer": "Fechar player",
+        "closeTitle": "Fechar (Esc)",
+        "sessionLabel": "sessão {{sessionId}}",
+        "loading": "Carregando gravação…",
+        "playbackFailedTitle": "Falha na reprodução no navegador",
+        "downloadRaw": "Baixar arquivo .guac bruto",
+        "downloadRawTitle": "Baixar .guac bruto",
+        "exporting": "Exportando vídeo — reproduzindo a gravação em segundo plano para capturar o canvas. Isso leva o mesmo tempo da duração da gravação.",
+        "play": "Reproduzir",
+        "pause": "Pausar",
+        "seek": "Buscar",
+        "export": "Exportar {{format}}",
+        "errors": {
+          "exportUnsupported": "Este navegador não é compatível com exportação de vídeo. Baixe o arquivo .guac em vez disso.",
+          "displayNotReady": "A tela de gravação ainda não está pronta — aguarde o carregamento terminar e tente novamente.",
+          "noVisibleFrame": "A gravação ainda não tem um quadro visível — reproduza-a uma vez antes de exportar.",
+          "canvasContextFailed": "Falha ao obter o contexto 2D do canvas para exportação.",
+          "captureStreamUnavailable": "captureStream não está disponível: {{message}}",
+          "recorderStartFailed": "Falha ao iniciar o gravador: {{message}}",
+          "fetchFailed": "Falha ao buscar a gravação.",
+          "playbackError": "Erro na reprodução da gravação.",
+          "initFailed": "Falha ao inicializar o player: {{message}}"
+        }
+      }
+    },
+    "activeSession": {
+      "header": {
+        "connectedTo": "Conectado a",
+        "errorOn": "Erro em",
+        "connectingTo": "Conectando a",
+        "terminalTheme": "Tema do terminal da sessão",
+        "minimize": "Minimizar sessão (mantém a conexão ativa)",
+        "terminateButton": "Encerrar"
+      },
+      "display": {
+        "remoteDesktopSession": "Sessão de área de trabalho remota",
+        "connectionLost": "Conexão perdida — redirecionando…",
+        "reconnecting": "Reconectando exibição…"
+      },
+      "toolbar": {
+        "expand": "Expandir barra de ferramentas",
+        "collapse": "Recolher barra de ferramentas",
+        "screenshot": "Captura de tela",
+        "takeScreenshot": "Capturar tela",
+        "ctrlAltDel": "Ctrl+Alt+Del",
+        "sendCtrlAltDel": "Enviar Ctrl+Alt+Del",
+        "keyCombo": "Combinação de teclas",
+        "sendKeyCombo": "Enviar combinação de teclas",
+        "clipboard": "Área de transferência",
+        "clipboardSync": "Sincronizar área de transferência",
+        "hideKeyboard": "Ocultar teclado",
+        "keyboard": "Teclado",
+        "hideOnScreenKeyboard": "Ocultar teclado na tela",
+        "showOnScreenKeyboard": "Mostrar teclado na tela",
+        "zoomIn": "Aumentar zoom",
+        "zoomOut": "Diminuir zoom",
+        "fitToScreen": "Ajustar à tela ({{percent}})",
+        "resetZoom": "Redefinir zoom para ajustar à tela",
+        "fullscreen": "Tela cheia",
+        "toggleFullscreen": "Alternar tela cheia"
+      },
+      "keyCombo": {
+        "title": "Enviar Combinação de Teclas",
+        "keyLabel": "Tecla",
+        "sent": "Enviado!",
+        "send": "Enviar"
+      },
+      "clipboard": {
+        "title": "Área de Transferência Compartilhada",
+        "description": "Edite e envie para o host, ou copie a área de transferência atual do host localmente.",
+        "textareaAriaLabel": "Conteúdo da área de transferência",
+        "charsCount": "{{count}} caracteres",
+        "copyHostClipboard": "Copiar área de transferência do host",
+        "pushed": "Enviado!",
+        "pushToHost": "Enviar para o host"
+      },
+      "terminalTheme": {
+        "title": "Tema do Terminal da Sessão",
+        "description": "Aplicado na próxima conexão/reconexão apenas para esta sessão do navegador.",
+        "colorScheme": "Esquema de cores",
+        "font": "Fonte",
+        "size": "Tamanho (px)",
+        "saveForSession": "Salvar para a sessão",
+        "schemes": {
+          "grayBlack": "Cinza / Preto",
+          "greenBlack": "Verde / Preto",
+          "whiteBlack": "Branco / Preto",
+          "blackWhite": "Preto / Branco",
+          "solarizedDark": "Solarized Escuro",
+          "solarizedLight": "Solarized Claro"
+        }
+      },
+      "mobileKeyboard": {
+        "remoteKeyboardInput": "Entrada de teclado remoto"
+      }
+    },
+    "administration": {
+      "title": "Usuários",
+      "subtitle": "Gerencie usuários, papéis e acesso a vaults.",
+      "refresh": "Atualizar",
+      "inviteUser": "Convidar usuário",
+      "searchUsersLabel": "Pesquisar usuários",
+      "searchPlaceholder": "Pesquisar usuários por nome, email ou papel…",
+      "clearSearch": "Limpar pesquisa",
+      "invitationCreated": "Convite criado",
+      "emailSentAutomatically": "Email enviado automaticamente. O link abaixo também está disponível como alternativa.",
+      "shareLinkExpires": "Compartilhe este link com o usuário. Ele expira em 72 horas.",
+      "smtpError": "Erro de SMTP: {{error}}",
+      "dismiss": "Dispensar",
+      "copy": "Copiar",
+      "copied": "Copiado!",
+      "copyFailed": "Falha ao copiar",
+      "inviteHelpText": "O usuário receberá um link seguro para definir sua própria senha. A conta permanece inativa até que o link seja utilizado.",
+      "fullNameOptional": "Nome completo (opcional)",
+      "emailPlaceholder": "Email",
+      "role": "Papel",
+      "sending": "Enviando…",
+      "sendInvite": "Enviar convite",
+      "tableUser": "Usuário",
+      "tableEmail": "Email",
+      "tableRole": "Papel",
+      "tableVaultScope": "Escopo de Vaults",
+      "tableStatus": "Status",
+      "tableActions": "Ações",
+      "changeRoleFor": "Alterar papel de {{name}}",
+      "vaultCount": "{{count}} vault(s)",
+      "global": "Global",
+      "active": "Ativo",
+      "disabled": "Desativado",
+      "disableUser": "Desativar",
+      "enableUser": "Ativar",
+      "loading": "Carregando…",
+      "noUsersMatchSearch": "Nenhum usuário corresponde à pesquisa.",
+      "noUsersYet": "Nenhum usuário ainda.",
+      "vaultAssignments": "Atribuições de vaults",
+      "vaultAssignmentsDescription": "{{name}} ({{role}}) pode acessar/gerenciar apenas os vaults selecionados.",
+      "noVaultsToAssign": "Crie pelo menos um vault para atribuir acesso.",
+      "saving": "Salvando…",
+      "saveAssignments": "Salvar atribuições",
+      "loadUsersFailed": "Falha ao carregar usuários.",
+      "emailRequired": "O email é obrigatório.",
+      "inviteFailed": "Falha ao enviar convite.",
+      "changeOwnershipTitle": "Alterar propriedade",
+      "changeRoleTitle": "Alterar papel",
+      "changeOwnershipMessage": "Isso alterará o papel de {{name}} de {{previous}} para {{role}}. O acesso de proprietário é permanente e concede controle total sobre esta instância. Continuar?",
+      "changeRoleMessage": "Alterar o papel de {{name}} de {{previous}} para {{role}}?",
+      "changeRoleConfirmLabel": "Alterar papel",
+      "roleUpdated": "Papel atualizado para {{name}}.",
+      "updateRoleFailed": "Falha ao atualizar papel.",
+      "vaultAssignmentsUpdated": "Atribuições de vaults atualizadas para {{name}}.",
+      "updateVaultAssignmentsFailed": "Falha ao atualizar atribuições de vaults.",
+      "userEnabled": "{{name}} ativado.",
+      "userDisabled": "{{name}} desativado.",
+      "updateFailed": "Falha na atualização.",
+      "cannotDeleteSelf": "Você não pode excluir sua própria conta.",
+      "deleteUserTitle": "Excluir usuário",
+      "deleteUserMessage": "Excluir usuário {{email}}? Esta ação não pode ser desfeita.",
+      "userDeleted": "Usuário {{email}} excluído.",
+      "deleteFailed": "Falha ao excluir."
+    },
+    "auditing": {
+      "title": "Logs de Auditoria",
+      "subtitle": "Toda autenticação e alteração de recursos é registrada.",
+      "exportCsv": "Exportar CSV",
+      "filters": {
+        "userLabel": "Usuário",
+        "userPlaceholder": "e-mail ou nome",
+        "actionLabel": "Ação",
+        "actionPlaceholder": "ex.: user.login",
+        "resourceTypeLabel": "Tipo de recurso",
+        "resourceTypePlaceholder": "ex.: connection",
+        "fromLabel": "De",
+        "toLabel": "Até",
+        "outcomeLabel": "Resultado",
+        "allOutcomes": "Todos os resultados",
+        "outcomeSuccess": "Sucesso",
+        "outcomeFailure": "Falha",
+        "reset": "Limpar"
+      },
+      "table": {
+        "timestamp": "Data e hora",
+        "user": "Usuário",
+        "action": "Ação",
+        "resource": "Recurso",
+        "ip": "IP",
+        "outcome": "Resultado",
+        "loading": "Carregando…",
+        "empty": "Nenhum registro corresponde aos filtros atuais.",
+        "rowAriaLabel": "Ver detalhes de {{action}} por {{actor}}",
+        "unknownUser": "desconhecido"
+      },
+      "pagination": {
+        "summary": "Página {{page}} de {{totalPages}} — {{totalItems}} registros",
+        "rows": "Linhas:",
+        "rowsPerPage": "Linhas por página",
+        "firstPage": "Primeira página",
+        "prev": "Anterior",
+        "next": "Próxima",
+        "lastPage": "Última página"
+      },
+      "detail": {
+        "title": "Detalhe do Log de Auditoria",
+        "closePanel": "Fechar painel de detalhes",
+        "timestamp": "Data e hora",
+        "user": "Usuário",
+        "ipAddress": "Endereço IP",
+        "resourceType": "Tipo de recurso",
+        "resourceId": "ID do recurso",
+        "outcome": "Resultado",
+        "correlationId": "ID de correlação",
+        "userAgent": "User Agent",
+        "details": "Detalhes",
+        "noDetails": "(sem detalhes)"
+      }
+    },
+    "connections": {
+      "title": "Gerenciador de Conexões",
+      "subtitle": "Defina sessões remotas: protocolos, destinos e credenciais.",
+      "refresh": "Atualizar",
+      "newConnection": "Nova Conexão",
+      "searchPlaceholder": "Buscar conexões, hosts, tags…",
+      "clearSearchAriaLabel": "Limpar busca",
+      "resultCount": "{{filtered}} de {{total}}",
+      "clearFilters": "Limpar",
+      "errors": {
+        "loadFailed": "Falha ao carregar.",
+        "saveFailed": "Falha ao salvar.",
+        "deleteFailed": "Falha ao excluir.",
+        "validationRequired": "Nome, host, protocolo e vault são obrigatórios.",
+        "hostNotFound": "Não foi possível localizar o host criado"
+      },
+      "toasts": {
+        "created": "Conexão criada.",
+        "updated": "Conexão atualizada.",
+        "deleted": "Conexão \"{{name}}\" excluída."
+      },
+      "confirmDelete": {
+        "title": "Excluir conexão",
+        "message": "Excluir a conexão \"{{name}}\"? Esta ação não pode ser desfeita.",
+        "confirmLabel": "Excluir"
+      },
+      "table": {
+        "connection": "Conexão",
+        "target": "Destino",
+        "vault": "Vault",
+        "credentials": "Credenciais",
+        "tags": "Tags",
+        "actions": "Ações",
+        "none": "Nenhuma",
+        "editAriaLabel": "Editar conexão",
+        "deleteAriaLabel": "Excluir conexão",
+        "loading": "Carregando conexões…",
+        "noMatch": "Nenhuma conexão corresponde à sua busca.",
+        "clearFilters": "Limpar filtros",
+        "empty": "Nenhuma conexão ainda.",
+        "emptyHint": "Clique em \"Nova Conexão\" para adicionar a primeira."
+      },
+      "form": {
+        "editTitle": "Editar Conexão",
+        "newTitle": "Nova Conexão",
+        "editSubtitle": "Atualize as configurações da conexão abaixo.",
+        "newSubtitle": "Preencha os detalhes para criar uma nova conexão remota.",
+        "nameLabel": "Nome de Exibição",
+        "namePlaceholder": "ex.: Servidor de Produção DB",
+        "protocolLabel": "Protocolo",
+        "targetHostLabel": "Host de Destino",
+        "targetHostTypeNew": "— Digite um novo endereço abaixo —",
+        "newHostAddressPlaceholder": "Ou informe um novo endereço (ex.: 10.0.0.5)",
+        "newHostAddressAriaLabel": "Novo endereço do host",
+        "vaultGroupLabel": "Vault / Grupo",
+        "vaultGroupPlaceholder": "Selecione o vault…",
+        "credentialsLabel": "Credenciais",
+        "noCredential": "Sem credencial",
+        "tagsLabel": "Tags",
+        "tagInputPlaceholder": "Adicionar tag… (Enter ou vírgula)",
+        "removeTagAriaLabel": "Remover tag {{tag}}",
+        "tagsHint": "Pressione Enter ou vírgula para adicionar. Backspace remove a última tag.",
+        "cancel": "Cancelar",
+        "save": "Salvar Conexão",
+        "saving": "Salvando…",
+        "recording": {
+          "title": "Gravação de sessão",
+          "modeLabel": "Modo",
+          "inherit": "Herdar do vault",
+          "forceOn": "Sempre gravar esta conexão",
+          "forceOff": "Nunca gravar esta conexão",
+          "keysLabel": "Capturar teclas digitadas",
+          "keysExclude": "Excluir teclas digitadas (recomendado)",
+          "keysInclude": "Incluir teclas digitadas",
+          "hint": "A gravação é configurada globalmente e por vault. Use esta opção apenas quando esta conexão precisar ser diferente do padrão do vault."
+        },
+        "terminal": {
+          "title": "Aparência do Terminal",
+          "colorScheme": "Esquema de cores",
+          "font": "Fonte",
+          "fontSize": "Tamanho (px)",
+          "schemes": {
+            "grayBlack": "Cinza / Preto",
+            "greenBlack": "Verde / Preto",
+            "whiteBlack": "Branco / Preto",
+            "blackWhite": "Preto / Branco",
+            "solarizedDark": "Solarized Escuro",
+            "solarizedLight": "Solarized Claro"
+          }
+        },
+        "advanced": {
+          "title": "Configurações Avançadas (JSON)",
+          "ariaLabel": "Configurações avançadas (JSON)",
+          "examplesTitle": "Exemplos por protocolo"
+        }
+      }
+    },
+    "credentials": {
+      "title": "Credenciais",
+      "subtitle": "Segredos armazenados criptografados em repouso. Os valores dos segredos nunca são retornados.",
+      "refresh": "Atualizar",
+      "newCredential": "Nova Credencial",
+      "searchPlaceholder": "Pesquisar por nome, usuário ou tipo…",
+      "clearSearch": "Limpar pesquisa",
+      "countSummary": "{{filtered}} de {{total}}",
+      "loading": "Carregando credenciais…",
+      "noSearchResults": "Nenhuma credencial corresponde à sua pesquisa.",
+      "emptyTitle": "Nenhuma credencial ainda.",
+      "emptyHint": "Clique em \"{{button}}\" para adicionar a primeira.",
+      "copyPublicKey": "Copiar chave pública",
+      "editAriaLabel": "Editar credencial",
+      "deleteAriaLabel": "Excluir credencial",
+      "table": {
+        "name": "Nome",
+        "username": "Usuário",
+        "type": "Tipo",
+        "actions": "Ações"
+      },
+      "badge": {
+        "password": "Senha",
+        "sshKey": "Chave SSH"
+      },
+      "drawer": {
+        "newTitle": "Nova Credencial",
+        "newSubtitle": "Adicione um novo conjunto de credenciais de autenticação.",
+        "editTitle": "Editar Credencial",
+        "editSubtitle": "Atualize as configurações da credencial abaixo."
+      },
+      "form": {
+        "nameLabel": "Nome de Exibição",
+        "namePlaceholder": "ex.: Admin de Produção",
+        "usernameLabel": "Usuário",
+        "usernamePlaceholder": "ex.: admin ou root",
+        "typeLabel": "Tipo",
+        "typePassword": "Senha",
+        "typePrivateKey": "Chave privada (SSH)",
+        "storageLabel": "Armazenamento do Segredo",
+        "storageLocal": "Local",
+        "storageExternal": "Azure Key Vault",
+        "providerLabel": "Provedor do Key Vault",
+        "selectProvider": "— Selecione um provedor —",
+        "noProviders": "Nenhum provedor de Key Vault configurado. Adicione um em Configurações → Key Vault.",
+        "vaultActionLabel": "Ação no Vault",
+        "pushToVault": "Enviar para o Vault",
+        "linkExisting": "Vincular Existente",
+        "vaultSecretLabel": "Segredo (será armazenado no vault)",
+        "vaultSecretPlaceholderKey": "Chave privada PEM para enviar ao Azure Key Vault",
+        "vaultSecretPlaceholderPassword": "Segredo para enviar ao Azure Key Vault",
+        "vaultSecretHint": "O segredo é enviado diretamente ao Key Vault e nunca é armazenado no banco de dados deste app.",
+        "existingSecretLabel": "Nome do Segredo Existente",
+        "loadingSecrets": "Carregando segredos do vault…",
+        "selectSecret": "— Selecione um segredo —",
+        "noSecretsFound": "Nenhum segredo encontrado neste vault. Verifique a conectividade do provedor em Configurações → Key Vault.",
+        "versionLabel": "Versão (opcional)",
+        "versionPlaceholder": "Deixe em branco para usar sempre a mais recente",
+        "privateKeyLabel": "Chave Privada (PEM)",
+        "privateKeyPlaceholderStored": "Chave privada armazenada (oculta). Gere uma nova abaixo para substituí-la.",
+        "privateKeyPlaceholderNew": "Cole a chave privada PEM aqui",
+        "privateKeyLockedHint": "A chave privada armazenada está bloqueada por segurança. Gere um novo par de chaves abaixo para substituí-la.",
+        "generateHeading": "Gerar Par de Chaves SSH",
+        "generateHint": "A chave privada preenche o campo acima. Copie a chave pública para o host de destino.",
+        "algorithmLabel": "Algoritmo",
+        "algorithmRsa": "RSA 4096",
+        "algorithmEcdsa": "ECDSA P-256",
+        "generating": "Gerando…",
+        "generate": "Gerar",
+        "publicKeyLabel": "Chave Pública (OpenSSH)",
+        "copy": "Copiar",
+        "noPublicKeyYet": "Nenhuma chave pública ainda. Gere um novo par de chaves acima para produzir uma.",
+        "secretLabel": "Segredo / Senha",
+        "secretPlaceholderExisting": "Deixe em branco para manter o segredo existente",
+        "secretPlaceholderNew": "Segredo",
+        "saving": "Salvando…",
+        "save": "Salvar Credencial"
+      },
+      "confirmDelete": {
+        "title": "Excluir credencial",
+        "message": "Excluir a credencial \"{{name}}\"? As conexões que a utilizam perderão a autenticação. Esta ação não pode ser desfeita."
+      },
+      "toasts": {
+        "publicKeyCopied": "Chave pública copiada para a área de transferência",
+        "rowPublicKeyCopied": "Chave pública de \"{{name}}\" copiada para a área de transferência",
+        "deleted": "Credencial \"{{name}}\" excluída.",
+        "updated": "Credencial atualizada.",
+        "created": "Credencial salva."
+      },
+      "errors": {
+        "loadFailed": "Falha ao carregar.",
+        "generateSshFailed": "Falha ao gerar a chave SSH.",
+        "nameUsernameRequired": "Nome e usuário são obrigatórios.",
+        "secretRequired": "O segredo é obrigatório ao criar uma credencial.",
+        "selectProviderRequired": "Selecione um provedor de segredo.",
+        "vaultSecretRequired": "O valor do segredo é obrigatório ao enviar para o vault.",
+        "selectSecretRequired": "Selecione um segredo existente para vincular.",
+        "deleteFailed": "Falha ao excluir.",
+        "saveFailed": "Falha ao salvar."
+      }
+    },
+    "hosts": {
+      "title": "Hosts Conhecidos",
+      "subtitle": "Servidores e endpoints de destino cadastrados, usados pelas conexões.",
+      "refresh": "Atualizar",
+      "newHost": "Novo Host",
+      "searchPlaceholder": "Pesquisar por nome ou endereço…",
+      "clearSearch": "Limpar pesquisa",
+      "countSummary": "{{filtered}} de {{total}}",
+      "columnName": "Nome",
+      "columnAddress": "Endereço",
+      "columnActions": "Ações",
+      "editHostAriaLabel": "Editar host",
+      "deleteHostAriaLabel": "Excluir host",
+      "loading": "Carregando hosts…",
+      "noSearchResults": "Nenhum host corresponde à sua pesquisa.",
+      "emptyTitle": "Nenhum host conhecido ainda.",
+      "emptyHint": "Os hosts são adicionados automaticamente ao criar conexões, ou manualmente aqui.",
+      "editHostTitle": "Editar Host",
+      "newHostTitle": "Novo Host",
+      "editHostSubtitle": "Atualize os detalhes do host abaixo.",
+      "newHostSubtitle": "Cadastre um novo servidor ou endpoint de destino.",
+      "displayNameLabel": "Nome de Exibição",
+      "displayNamePlaceholder": "ex.: Servidor Web de Produção",
+      "addressLabel": "Endereço",
+      "addressPlaceholder": "Endereço IP ou nome do host (ex.: 10.0.0.5)",
+      "saving": "Salvando…",
+      "saveHost": "Salvar Host",
+      "loadFailed": "Falha ao carregar.",
+      "nameAddressRequired": "Nome e endereço são obrigatórios.",
+      "hostSaved": "Host salvo.",
+      "hostUpdated": "Host atualizado.",
+      "saveFailed": "Falha ao salvar.",
+      "deleteFailed": "Falha ao excluir.",
+      "hostDeleted": "Host \"{{name}}\" excluído.",
+      "deleteHostTitle": "Excluir host",
+      "deleteHostMessage": "Excluir o host \"{{name}}\"? As conexões que usam este host deixarão de funcionar. Esta ação não pode ser desfeita."
+    },
+    "invite": {
+      "subtitle": "Finalize a configuração da sua conta",
+      "validating": "Validando convite…",
+      "backToLogin": "Voltar para o login",
+      "passwordResetRedirecting": "Senha atualizada. Redirecionando para o login…",
+      "accountReadyRedirecting": "Conta pronta. Redirecionando para o login…",
+      "passwordResetLabel": "Redefinição de senha",
+      "welcomeLabel": "Bem-vindo",
+      "fullNameLabel": "Nome completo",
+      "passwordLabel": "Senha",
+      "newPasswordLabel": "Nova senha",
+      "confirmPasswordLabel": "Confirmar senha",
+      "resetting": "Redefinindo…",
+      "creatingAccount": "Criando conta…",
+      "resetPasswordAction": "Redefinir senha",
+      "createAccountAction": "Criar conta",
+      "missingToken": "Token de convite ausente.",
+      "invalidOrExpired": "Este convite é inválido ou expirou.",
+      "passwordTooShort": "A senha deve ter pelo menos 8 caracteres.",
+      "passwordMismatch": "As senhas não coincidem.",
+      "setupFailed": "Falha ao concluir a configuração da conta."
+    },
+    "profile": {
+      "heading": "Perfil",
+      "subtitle": "Gerencie seu nome de exibição e avatar. As alterações são armazenadas no servidor.",
+      "save": "Salvar alterações",
+      "saving": "Salvando…",
+      "saved": "Perfil atualizado.",
+      "saveError": "Não foi possível salvar o perfil.",
+      "avatar": {
+        "alt": "Pré-visualização do avatar",
+        "chooseImage": "Escolher imagem",
+        "discardPreview": "Descartar pré-visualização",
+        "removeAvatar": "Remover avatar",
+        "hint": "PNG, JPEG ou WebP. Redimensionado automaticamente para 512px, máximo de 1 MB.",
+        "invalidType": "O avatar deve ser PNG, JPEG ou WebP.",
+        "tooLarge": "O avatar excede 1 MB após o redimensionamento. Escolha uma imagem mais simples.",
+        "readError": "Não foi possível ler essa imagem.",
+        "removed": "Avatar removido.",
+        "removeError": "Não foi possível remover o avatar."
+      },
+      "name": {
+        "label": "Nome",
+        "placeholder": "Seu nome de exibição",
+        "required": "O nome é obrigatório."
+      },
+      "email": {
+        "label": "E-mail",
+        "hint": "O e-mail não pode ser alterado aqui."
+      },
+      "roles": {
+        "label": "Funções",
+        "none": "Nenhuma função atribuída."
+      },
+      "mfa": {
+        "heading": "Autenticação de dois fatores",
+        "subtitle": "Adicione uma segunda etapa de verificação em cada login.",
+        "enabled": "Ativada",
+        "loading": "Carregando…",
+        "notEnabled": "A autenticação de dois fatores não está ativada. Proteja sua conta com um aplicativo autenticador.",
+        "enable": "Ativar autenticação de dois fatores",
+        "settingUp": "Configurando…",
+        "setupInstructions": "Escaneie o QR code com seu aplicativo autenticador (Google Authenticator, Authy, etc.) e, em seguida, informe o código de 6 dígitos para confirmar.",
+        "qrAlt": "QR code do TOTP",
+        "cantScan": "Não consegue escanear?",
+        "confirmationCodeLabel": "Código de confirmação",
+        "verifyAndActivate": "Verificar e ativar",
+        "verifying": "Verificando…",
+        "saveCodesTitle": "Salve seus códigos de recuperação",
+        "saveCodesBody": "Esses códigos podem ser usados para recuperar o acesso caso você perca seu autenticador. Cada código funciona uma única vez. Guarde-os em um local seguro — você não os verá novamente.",
+        "savedCodesConfirm": "Salvei esses códigos",
+        "downloadTxt": "Baixar como .txt",
+        "recoveryCodesRemaining": "Códigos de recuperação restantes:",
+        "disable": "Desativar autenticação de dois fatores",
+        "disablePrompt": "Informe sua senha para confirmar a desativação da autenticação de dois fatores.",
+        "passwordLabel": "Senha",
+        "passwordPlaceholder": "Sua senha atual",
+        "confirmDisable": "Confirmar desativação",
+        "disabling": "Desativando…",
+        "startError": "Não foi possível iniciar o cadastro do MFA.",
+        "invalidCode": "Código inválido. Tente novamente.",
+        "disableError": "Não foi possível desativar o MFA.",
+        "recoveryFile": {
+          "title": "Smooth Operator — Códigos de Recuperação do MFA",
+          "generated": "Gerado em: {{date}}",
+          "instructions": "Cada código pode ser usado uma única vez para entrar caso você perca seu autenticador.",
+          "storeSafely": "Guarde este arquivo em um local seguro e exclua-o após imprimi-lo."
+        }
+      },
+      "apiTokens": {
+        "heading": "Tokens de API",
+        "subtitle": "Tokens de portador de longa duração para CLI, CI e automação. Envie como",
+        "saveTokenTitle": "Salve este token agora",
+        "saveTokenBody": "Esta é a única vez em que o token em texto puro é exibido. Guarde-o em um local seguro — você não o verá novamente.",
+        "copy": "Copiar",
+        "savedTokenConfirm": "Salvei este token",
+        "tokenNameLabel": "Nome do token",
+        "tokenNamePlaceholder": "ci-bot, terraform, etc.",
+        "expiresLabel": "Expira (opcional)",
+        "createToken": "Criar token",
+        "creating": "Criando…",
+        "none": "Nenhum token de API ainda.",
+        "revoked": "Revogado",
+        "expired": "Expirado",
+        "created": "Criado em {{date}}",
+        "lastUsed": "· Último uso em {{date}}",
+        "expires": "· Expira em {{date}}",
+        "revoke": "Revogar",
+        "revoking": "Revogando…",
+        "createError": "Não foi possível criar o token.",
+        "revokeError": "Não foi possível revogar o token."
+      }
+    },
+    "searchResults": {
+      "title": "Resultados da Pesquisa",
+      "searchingFor": "Pesquisando por",
+      "resultsForOne": "{{count}} resultado para",
+      "resultsForOther": "{{count}} resultados para",
+      "typeQueryPrompt": "Digite uma consulta na barra de pesquisa para encontrar vaults e conexões.",
+      "loading": "Carregando…",
+      "noMatchesFound": "Nenhum resultado encontrado",
+      "noMatchesFor": "Nada correspondeu a",
+      "tryDifferentKeyword": "Tente uma palavra-chave diferente.",
+      "vaultsHeading": "Vaults",
+      "connectionsHeading": "Conexões",
+      "vaultFallback": "Vault",
+      "connectionFallback": "Conexão",
+      "userCountOne": "{{count}} usuário",
+      "userCountOther": "{{count}} usuários",
+      "groupCountOne": "{{count}} grupo",
+      "groupCountOther": "{{count}} grupos"
+    },
+    "settingsEmail": {
+      "title": "Email (SMTP)",
+      "description": "Configure um relay SMTP (SendGrid, AWS SES, servidor interno, …) para que o sistema possa enviar emails de convite e redefinição de senha. Se não configurado, os links de convite precisarão ser compartilhados manualmente.",
+      "status": {
+        "configuredTitle": "Relay SMTP configurado",
+        "activeHint": "Ativo — o sistema enviará emails.",
+        "disabledHint": "Configurado, mas atualmente desativado.",
+        "notConfiguredTitle": "Nenhum relay SMTP configurado",
+        "notConfiguredHint": "Os links de convite e redefinição de senha precisam ser compartilhados manualmente."
+      },
+      "serverConnection": {
+        "title": "Conexão com o servidor",
+        "hostLabel": "Host",
+        "hostPlaceholder": "smtp.sendgrid.net",
+        "portLabel": "Porta",
+        "useSslLabel": "Usar SSL/TLS",
+        "useSslHint": "Recomendado para a porta 465 (SMTPS) e para a maioria dos relays na nuvem"
+      },
+      "authentication": {
+        "title": "Autenticação",
+        "usernameLabel": "Usuário",
+        "usernamePlaceholder": "apikey ou usuário SMTP",
+        "passwordLabel": "Senha",
+        "passwordKeepHint": "(deixe em branco para manter)",
+        "passwordPlaceholder": "Senha SMTP / chave de API",
+        "clearPasswordLabel": "Limpar senha armazenada"
+      },
+      "senderIdentity": {
+        "title": "Identidade do remetente",
+        "fromAddressLabel": "Endereço de origem",
+        "fromAddressPlaceholder": "no-reply@example.com",
+        "fromNameLabel": "Nome do remetente",
+        "enabledLabel": "Relay ativado",
+        "enabledHint": "Quando desativado, os emails não são enviados mesmo com o SMTP configurado"
+      },
+      "actions": {
+        "save": "Salvar configurações de SMTP",
+        "saving": "Salvando…"
+      },
+      "testEmail": {
+        "title": "Enviar email de teste",
+        "description": "Envia uma mensagem de teste usando as configurações salvas atualmente.",
+        "recipientPlaceholder": "destinatario@exemplo.com",
+        "recipientAriaLabel": "Destinatário do email de teste",
+        "sendButton": "Enviar teste",
+        "sending": "Enviando…",
+        "saveFirstHint": "Salve configurações de SMTP válidas primeiro para habilitar isso."
+      },
+      "messages": {
+        "saved": "Configurações de SMTP salvas.",
+        "testSent": "Email de teste enviado para {{to}}."
+      },
+      "errors": {
+        "loadFailed": "Falha ao carregar as configurações de SMTP.",
+        "saveFailed": "Falha ao salvar as configurações de SMTP.",
+        "recipientRequired": "Informe um endereço de destinatário.",
+        "testFailed": "Falha no teste."
+      }
+    },
+    "settingsGroups": {
+      "title": "Grupos",
+      "subtitle": "Os grupos concedem acesso a vaults para todos os seus membros de uma vez.",
+      "refresh": "Atualizar",
+      "newGroup": {
+        "heading": "Novo Grupo",
+        "namePlaceholder": "Nome do grupo",
+        "create": "Criar grupo",
+        "creating": "Criando…"
+      },
+      "table": {
+        "name": "Nome",
+        "members": "Membros",
+        "actions": "Ações",
+        "membersAction": "Membros",
+        "renameAction": "Renomear",
+        "loading": "Carregando…",
+        "empty": "Nenhum grupo ainda. Crie um acima.",
+        "memberCountOne": "{{count}} membro",
+        "memberCountOther": "{{count}} membros",
+        "vaultCountOne": "{{count}} vault",
+        "vaultCountOther": "{{count}} vaults"
+      },
+      "membersModal": {
+        "title": "Membros — {{name}}",
+        "description": "Selecione os usuários que pertencem a este grupo.",
+        "selectedCount": "{{count}} selecionado(s)",
+        "searchPlaceholder": "Buscar usuários…",
+        "available": "disponíveis",
+        "noUsers": "Nenhum usuário encontrado.",
+        "save": "Salvar membros",
+        "saving": "Salvando…"
+      },
+      "errors": {
+        "loadFailed": "Falha ao carregar os grupos.",
+        "nameRequired": "O nome do grupo é obrigatório.",
+        "createFailed": "Falha ao criar o grupo.",
+        "renameFailed": "Falha ao renomear o grupo.",
+        "deleteFailed": "Falha ao excluir o grupo.",
+        "membersUpdateFailed": "Falha ao atualizar os membros."
+      },
+      "toasts": {
+        "created": "Grupo \"{{name}}\" criado.",
+        "renamed": "Grupo renomeado para \"{{name}}\".",
+        "deleted": "Grupo \"{{name}}\" excluído.",
+        "membersUpdated": "Membros atualizados para \"{{name}}\"."
+      },
+      "confirmDelete": {
+        "title": "Excluir grupo",
+        "message": "Excluir o grupo \"{{name}}\"? Os usuários deste grupo perderão o acesso a vaults concedido por ele. Esta ação não pode ser desfeita."
+      }
+    },
+    "settingsIntegrations": {
+      "title": "Integrações de Observabilidade",
+      "description": "Conecte sua própria stack de monitoramento usando os endpoints abaixo.",
+      "startItWith": "A stack de observabilidade integrada (Grafana, Prometheus, Loki, Tempo) é opcional — inicie-a com",
+      "tabs": {
+        "prometheus": "Métricas do Prometheus",
+        "otlp": "OpenTelemetry (OTLP)",
+        "loki": "Logs do Loki",
+        "grafana": "Painéis do Grafana"
+      },
+      "common": {
+        "copy": "Copiar",
+        "download": "Baixar",
+        "downloadTitle": "Baixar {{filename}}"
+      },
+      "prometheus": {
+        "endpointCardTitle": "Endpoint de métricas",
+        "endpointDescriptionPrefix": "Métricas compatíveis com o Prometheus são expostas em",
+        "endpointDescriptionSuffix": "Faça a coleta desse endpoint com sua instância do Prometheus ou qualquer scraper compatível.",
+        "endpoints": {
+          "metricsScrape": "Endpoint de coleta de métricas"
+        },
+        "availableMetricsTitle": "Métricas disponíveis",
+        "scrapeConfigLabel": "Configuração de coleta do prometheus.yml"
+      },
+      "otlp": {
+        "endpointsCardTitle": "Endpoints do OpenTelemetry",
+        "endpointsDescription": "O backend exporta rastros distribuídos via OTLP gRPC para o Grafana Tempo. Conecte seu próprio OpenTelemetry Collector ao endpoint abaixo para receber os rastros.",
+        "endpoints": {
+          "grpc": "Endpoint gRPC do OTLP",
+          "tempoQuery": "API de consulta HTTP do Tempo"
+        },
+        "collectorConfigLabel": "Configuração do OpenTelemetry Collector (receivers)",
+        "serviceNameTitle": "Nome do serviço",
+        "serviceNameDescriptionPrefix": "O serviço de backend está registrado como",
+        "serviceNameDescriptionMid": "Filtre os rastros por",
+        "serviceNameDescriptionSuffix": "na sua interface de rastreamento."
+      },
+      "loki": {
+        "endpointsCardTitle": "Endpoints do Loki",
+        "endpointsDescription": "Os logs da aplicação são enviados ao Loki no formato CLEF (Compact Log Event Format). Cada linha de log carrega propriedades estruturadas que podem ser filtradas com LogQL.",
+        "endpoints": {
+          "push": "Endpoint de envio (push) do Loki",
+          "queryApi": "API de consulta do Loki"
+        },
+        "availableLabelsTitle": "Rótulos disponíveis",
+        "queriesTitle": "Exemplos de consultas LogQL",
+        "queries": {
+          "allAuditEvents": "Todos os eventos de auditoria",
+          "failedLoginAttempts": "Tentativas de login com falha",
+          "specificUserActivity": "Atividade de um usuário específico",
+          "failureEventsOnly": "Somente eventos de falha"
+        }
+      },
+      "grafana": {
+        "cardTitle": "Arquivos de painéis do Grafana",
+        "descriptionPrefix": "Baixe estes arquivos JSON de painéis do Grafana já prontos para usar com seu próprio servidor Grafana independente. Importe cada arquivo em",
+        "descriptionSuffix": "na interface do Grafana. Requer as fontes de dados do Prometheus, Loki e Tempo configuradas com os endpoints das outras abas.",
+        "dashboards": {
+          "activeSessions": {
+            "name": "Sessões Ativas",
+            "description": "Contagens de sessões ao vivo e históricas, indicador de conexões e histórico de sessões ao longo do tempo."
+          },
+          "aspnetOverview": {
+            "name": "Visão Geral do ASP.NET Core",
+            "description": "Taxa de requisições HTTP, taxa de erros, percentis de tempo de resposta e volume total de requisições."
+          },
+          "auditEvents": {
+            "name": "Eventos de Auditoria",
+            "description": "Totais de eventos de auditoria, distribuição por tipo, detalhamento de resultados e série temporal da taxa de eventos."
+          },
+          "authSecurity": {
+            "name": "Autenticação e Segurança",
+            "description": "Tentativas de login, contagem de falhas, tendências de taxa de sucesso e painéis de monitoramento de segurança."
+          }
+        }
+      }
+    },
+    "settingsRecording": {
+      "title": "Armazenamento de gravações de sessão",
+      "description": "Define onde o sistema grava as gravações de sessão capturadas. As opções de \"gravar esta sessão\" em nível de vault e de conexão são configuradas em cada vault/conexão; esta página controla o backend de destino (volume local, compatível com S3 ou Azure Blob).",
+      "status": {
+        "configuredTitle": "Armazenamento de gravações configurado",
+        "backendPrefix": "Backend:",
+        "retentionUnlimited": "— retenção ilimitada.",
+        "retentionDays": "— retenção de {{days}} dias.",
+        "notConfiguredTitle": "Usando armazenamento local integrado",
+        "notConfiguredHintPrefix": "As gravações são gravadas no volume",
+        "notConfiguredHintSuffix": "do Docker, por padrão. Configure o S3 ou o Azure abaixo para obter armazenamento durável fora do host."
+      },
+      "messages": {
+        "saved": "Configurações de armazenamento de gravações salvas.",
+        "testSuccess": "O backend de armazenamento respondeu com sucesso."
+      },
+      "errors": {
+        "loadFailed": "Falha ao carregar as configurações de armazenamento de gravações.",
+        "saveFailed": "Falha ao salvar as configurações de armazenamento de gravações.",
+        "testFailed": "Falha no teste de armazenamento."
+      },
+      "storageBackend": {
+        "title": "Backend de armazenamento",
+        "backendLabel": "Backend",
+        "optionLocal": "Volume local — padrão, sem configuração",
+        "optionS3": "Compatível com S3 (AWS S3, MinIO, R2, Backblaze)",
+        "optionAzure": "Azure Blob Storage",
+        "hintPrefix": "Local é a opção mais simples — as gravações ficam no volume",
+        "hintSuffix": "do Docker. Mude para S3 ou Azure quando precisar de armazenamento durável fora do host, replicação ou gerenciamento de ciclo de vida."
+      },
+      "retentionPolicy": {
+        "title": "Política de retenção",
+        "daysLabel": "Retenção (dias)",
+        "hintPrefix": "Gravações mais antigas que este valor são excluídas pela limpeza diária.",
+        "hintSuffix": "mantém as gravações para sempre. As substituições por vault têm precedência sobre este padrão."
+      },
+      "localStorage": {
+        "title": "Armazenamento local",
+        "pathLabel": "Caminho",
+        "hintPart1": "Deve ter permissão de escrita para o processo do backend. No Docker, o volume",
+        "hintPart2": "é montado em",
+        "hintPart3": "; em uma instalação bare-metal, aponte para qualquer diretório em que o serviço de backend possa criar arquivos. Use",
+        "hintPart4": "abaixo para verificar."
+      },
+      "s3": {
+        "title": "Configuração do S3",
+        "bucketLabel": "Bucket",
+        "regionLabel": "Região",
+        "endpointLabel": "Endpoint",
+        "endpointHint": "(opcional, para MinIO / R2)",
+        "pathPrefixLabel": "Prefixo do caminho",
+        "pathPrefixHint": "(opcional)",
+        "accessKeyLabel": "ID da chave de acesso",
+        "secretLabel": "Chave de acesso secreta",
+        "secretLeaveBlankHint": "(deixe em branco para manter)",
+        "secretPlaceholder": "segredo",
+        "clearSecretLabel": "Limpar segredo armazenado",
+        "forcePathStyleLabel": "Forçar endereçamento no estilo de caminho",
+        "forcePathStyleHint": "Necessário para o MinIO e alguns servidores S3 auto-hospedados"
+      },
+      "azure": {
+        "title": "Configuração do Azure Blob",
+        "accountNameLabel": "Nome da conta de armazenamento",
+        "containerLabel": "Contêiner",
+        "keyLabel": "Chave da conta",
+        "keyLeaveBlankHint": "(deixe em branco para manter)",
+        "keyPlaceholder": "chave da conta",
+        "clearKeyLabel": "Limpar chave armazenada",
+        "endpointLabel": "Endpoint do Blob",
+        "endpointHint": "(opcional, para Azurite)",
+        "pathPrefixLabel": "Prefixo do caminho",
+        "pathPrefixHint": "(opcional)"
+      },
+      "actions": {
+        "save": "Salvar configurações de gravação",
+        "saving": "Salvando…"
+      },
+      "testConnection": {
+        "title": "Testar conexão",
+        "description": "Verifica se o backend consegue gravar um pequeno arquivo de teste no destino de armazenamento usando as configurações salvas atualmente. Execute este teste após salvar uma nova configuração para confirmar credenciais, acesso de rede e permissões antes de confiar nele para sessões reais.",
+        "button": "Testar conexão",
+        "testing": "Testando…"
+      }
+    },
+    "settingsRetention": {
+      "heading": "Retenção de Logs de Auditoria",
+      "description": "Controle por quanto tempo as entradas do log de auditoria são mantidas no banco de dados. Uma tarefa em segundo plano executada diariamente descarta entradas mais antigas que a janela de retenção configurada.",
+      "messages": {
+        "disabledForever": "Retenção desativada — os logs de auditoria serão mantidos para sempre.",
+        "purgeScheduled": "Logs de auditoria com mais de {{days}} dia(s) serão descartados diariamente."
+      },
+      "errors": {
+        "invalidRange": "A retenção deve ser um número inteiro entre 0 (para sempre) e 3650 dias.",
+        "loadFailed": "Falha ao carregar as configurações do sistema.",
+        "saveFailed": "Falha ao salvar as configurações."
+      },
+      "presets": {
+        "forever": "Para sempre",
+        "days30": "30 dias",
+        "days90": "90 dias",
+        "months6": "6 meses",
+        "year1": "1 ano",
+        "years2": "2 anos"
+      },
+      "window": {
+        "title": "Janela de retenção",
+        "quickSelect": "Seleção rápida",
+        "customDaysLabel": "Personalizado (dias)",
+        "keptForever": "Mantido para sempre",
+        "purgedAfterPrefix": "Descartado após",
+        "dayUnit": "dia(s)"
+      },
+      "compliance": {
+        "title": "Referência de conformidade",
+        "soc2": {
+          "label": "SOC 2",
+          "value": "365 dias",
+          "desc": "Logs de eventos de segurança"
+        },
+        "iso27001": {
+          "label": "ISO 27001",
+          "value": "365 dias",
+          "desc": "Registros de acesso e alteração"
+        },
+        "hipaa": {
+          "label": "HIPAA",
+          "value": "2.190 dias",
+          "desc": "6 anos de logs de acesso a PHI"
+        },
+        "footnotePrefix": "Defina como",
+        "footnoteSuffix": "para manter os logs para sempre — a opção mais segura para conformidade."
+      },
+      "actions": {
+        "saving": "Salvando…",
+        "reset": "Redefinir"
+      }
+    },
+    "settingsRoles": {
+      "title": "Funções",
+      "subtitle": "O Smooth Operator vem com quatro funções fixas. Cada usuário possui exatamente uma função.",
+      "singleRolePolicyLabel": "Política de função única:",
+      "singleRolePolicyBody": "Os usuários possuem apenas uma função por vez. Alterar a função substitui a anterior. As permissões não podem ser personalizadas nesta versão.",
+      "owner": {
+        "name": "Proprietário",
+        "summary": "Conta raiz, criada na configuração inicial. Não pode ser rebaixada por ninguém além do próprio titular.",
+        "permissions": {
+          "fullAccess": "Acesso total a todos os recursos e configurações",
+          "manageAll": "Gerenciar todos os usuários, grupos, cofres, credenciais e conexões",
+          "viewAudit": "Visualizar logs de auditoria e configurações de e-mail/sistema",
+          "promoteDemote": "Promover e rebaixar Administradores"
+        }
+      },
+      "admin": {
+        "name": "Administrador",
+        "summary": "Administradores do workspace. Gerenciam usuários, grupos, cofres e credenciais, além de auditar atividades.",
+        "permissions": {
+          "invite": "Convidar usuários e atribuir funções (Usuário, Administrador de Equipe, Administrador)",
+          "manageGroups": "Criar, renomear e excluir grupos e cofres",
+          "manageCredentials": "Gerenciar todas as credenciais e conexões",
+          "viewAudit": "Visualizar logs de auditoria e configurações de e-mail"
+        }
+      },
+      "teamAdmin": {
+        "name": "Administrador de Equipe",
+        "summary": "Gerencia conexões dentro dos cofres aos quais tem acesso. Não pode criar cofres nem convidar usuários.",
+        "permissions": {
+          "manageConnections": "Criar, editar e excluir conexões nos cofres atribuídos",
+          "useCredentials": "Usar as credenciais disponíveis nesses cofres",
+          "viewMembers": "Visualizar membros e grupos atribuídos a esses cofres",
+          "noAdminAccess": "Sem acesso à administração de usuários, grupos ou cofres"
+        }
+      },
+      "user": {
+        "name": "Usuário",
+        "summary": "Usuário padrão. Pode iniciar e usar conexões nos cofres atribuídos a ele.",
+        "permissions": {
+          "launchSessions": "Iniciar sessões em conexões nos cofres atribuídos",
+          "viewProfile": "Visualizar o próprio perfil e o acesso efetivo",
+          "noManagement": "Não pode gerenciar usuários, grupos, cofres ou credenciais"
+        }
+      }
+    },
+    "settingsSecretProviders": {
+      "title": "Provedores de Segredos",
+      "subtitle": "Conecte instâncias do Azure Key Vault. Somente Proprietário/Administrador.",
+      "addProvider": "Adicionar Provedor",
+      "form": {
+        "editTitle": "Editar Provedor",
+        "addTitle": "Adicionar Provedor Azure Key Vault",
+        "nameLabel": "Nome",
+        "namePlaceholder": "KV de Produção",
+        "vaultUriLabel": "URI do Vault",
+        "vaultUriPlaceholder": "https://meu-vault.vault.azure.net/",
+        "tenantIdLabel": "ID do Locatário",
+        "clientIdLabel": "ID do Cliente",
+        "idPlaceholder": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+        "clientSecretLabel": "Segredo do Cliente",
+        "clientSecretHint": "(deixe em branco para manter o atual)",
+        "saveChanges": "Salvar Alterações",
+        "createProvider": "Criar Provedor",
+        "cancel": "Cancelar"
+      },
+      "empty": {
+        "title": "Nenhum provedor de segredos configurado.",
+        "subtitle": "Adicione um provedor Azure Key Vault para gerenciar segredos externamente."
+      },
+      "table": {
+        "name": "Nome",
+        "type": "Tipo",
+        "vaultUri": "URI do Vault",
+        "status": "Status",
+        "actions": "Ações",
+        "enabled": "Ativado",
+        "disabled": "Desativado"
+      },
+      "actions": {
+        "testConnection": "Testar conexão de {{name}}",
+        "edit": "Editar provedor {{name}}",
+        "delete": "Excluir provedor {{name}}"
+      },
+      "errors": {
+        "loadFailed": "Falha ao carregar os provedores de segredos.",
+        "requiredFields": "Nome, URI do Vault, ID do Locatário e ID do Cliente são obrigatórios.",
+        "clientSecretRequired": "O Segredo do Cliente é obrigatório ao criar um provedor.",
+        "saveFailed": "Falha ao salvar o provedor.",
+        "createFailed": "Falha ao criar o provedor.",
+        "deleteFailed": "Falha ao excluir."
+      },
+      "toasts": {
+        "updated": "Provedor de segredos atualizado.",
+        "created": "Provedor de segredos criado.",
+        "testSuccess": "Conexão com \"{{name}}\" bem-sucedida.",
+        "testFailed": "Falha na conexão com \"{{name}}\".",
+        "deleted": "\"{{name}}\" excluído."
+      },
+      "deleteDialog": {
+        "title": "Excluir provedor de segredos",
+        "message": "Excluir \"{{name}}\"? As credenciais vinculadas a este provedor deixarão de funcionar. Esta ação não pode ser desfeita.",
+        "confirmLabel": "Excluir"
+      }
+    },
+    "settingsSessions": {
+      "title": "Tempos limite de sessão",
+      "description": "Encerra automaticamente sessões remotas que ficaram ociosas por tempo demais ou excederam um limite máximo de duração. Esses limites se aplicam a toda conexão Guacamole (RDP, SSH, VNC), independentemente do vault.",
+      "idleCard": {
+        "header": "Tempo limite de inatividade",
+        "quickSelect": "Seleção rápida",
+        "customMinutesLabel": "Personalizado (minutos)",
+        "noTimeout": "Sem tempo limite de inatividade",
+        "closesAfterPrefix": "Encerra após",
+        "closesAfterSuffix": "min de inatividade"
+      },
+      "maxCard": {
+        "header": "Duração máxima da sessão",
+        "quickSelect": "Seleção rápida",
+        "customMinutesLabel": "Personalizado (minutos)",
+        "unlimited": "Ilimitado",
+        "hardCapPrefix": "Limite máximo de",
+        "hardCapSuffix": "min"
+      },
+      "presets": {
+        "disabled": "Desativado",
+        "min5": "5 min",
+        "min15": "15 min",
+        "min30": "30 min",
+        "hour1": "1 hora",
+        "hour4": "4 horas",
+        "hour8": "8 horas",
+        "hour12": "12 horas",
+        "hour24": "24 horas",
+        "unlimited": "Ilimitado"
+      },
+      "guidance": {
+        "header": "Configurações recomendadas",
+        "standardLabel": "Padrão",
+        "standardDesc": "inatividade / máximo — uso típico de escritório",
+        "highSecurityLabel": "Alta segurança",
+        "highSecurityDesc": "estações compartilhadas, quiosques",
+        "longRunningLabel": "Execução prolongada",
+        "longRunningDesc": "jobs de build / migração",
+        "footnotePrefix": "Defina qualquer um dos campos como",
+        "footnoteSuffix": "para desativar aquele limite de forma independente. Conexões ativas que excedem um limite são registradas na auditoria como"
+      },
+      "actions": {
+        "saving": "Salvando…",
+        "reset": "Redefinir"
+      },
+      "messages": {
+        "idleDisabled": "Tempo limite de inatividade desativado.",
+        "idleWillClose": "Sessões ociosas por {{minutes}} min serão encerradas.",
+        "noHardCap": "Sem limite máximo de duração de sessão.",
+        "maxWillCap": "Sessões limitadas a {{minutes}} min no total.",
+        "loadFailed": "Falha ao carregar as configurações de sessão.",
+        "saveFailed": "Falha ao salvar as configurações.",
+        "idleValidation": "O tempo limite de inatividade deve ser um número inteiro entre 0 (desativado) e 10080 minutos.",
+        "maxValidation": "A duração máxima da sessão deve ser um número inteiro entre 0 (ilimitado) e 10080 minutos."
+      }
+    },
+    "settingsSso": {
+      "title": "Single Sign-On",
+      "subtitle": "Configure um único provedor de identidade OIDC ou SAML 2.0. O login local por usuário e senha continua sempre disponível como alternativa.",
+      "status": {
+        "enabledBadge": "Ativado",
+        "disabledBadge": "Desativado",
+        "notConfigured": "Não configurado"
+      },
+      "emptyState": {
+        "title": "Nenhum provedor de SSO configurado",
+        "hint": "Escolha um protocolo abaixo e preencha os dados do IdP."
+      },
+      "actions": {
+        "enable": "Ativar",
+        "disable": "Desativar",
+        "testConnection": "Testar conexão",
+        "testing": "Testando…",
+        "deleteConfirmQuestion": "Excluir provedor?",
+        "confirmDelete": "Confirmar exclusão",
+        "deleting": "Excluindo…",
+        "save": "Salvar configurações de SSO",
+        "saving": "Salvando…"
+      },
+      "messages": {
+        "loadError": "Falha ao carregar as configurações de SSO.",
+        "saveSuccess": "Configuração de SSO salva.",
+        "saveError": "Falha ao salvar as configurações de SSO.",
+        "toggleOnSuccess": "SSO ativado.",
+        "toggleOffSuccess": "SSO desativado.",
+        "toggleError": "Falha ao alternar o SSO.",
+        "deleteSuccess": "Provedor de SSO excluído.",
+        "deleteError": "Falha ao excluir o provedor de SSO.",
+        "testError": "Falha no teste de SSO.",
+        "copyMetadataSuccess": "URL de metadados copiada para a área de transferência.",
+        "copyCallbackSuccess": "Redirect URI copiada para a área de transferência.",
+        "copyAcsSuccess": "URL do ACS copiada para a área de transferência.",
+        "copyError": "Não foi possível copiar para a área de transferência."
+      },
+      "common": {
+        "oidcTypeLabel": "OpenID Connect (OIDC)",
+        "samlTypeLabel": "SAML 2.0",
+        "registerTitle": "Registre esta aplicação no seu provedor de identidade",
+        "leaveBlankToKeep": "(deixe em branco para manter)",
+        "copy": "Copiar",
+        "redirectUriTerm": "Redirect URI",
+        "replyUrlTerm": "Reply URL"
+      },
+      "protocol": {
+        "cardTitle": "Protocolo",
+        "label": "Protocolo",
+        "switchHint": "Exclua o provedor atual para trocar de protocolo.",
+        "nameLabel": "Nome de exibição",
+        "namePlaceholder": "ex.: SSO Corporativo",
+        "defaultNamePlaceholder": "SSO Corporativo",
+        "nameHint": "Exibido no botão de login (ex.: “Entrar com {{name}}”)."
+      },
+      "oidc": {
+        "cardTitle": "Provedor OIDC",
+        "registerHintPrefix": "Ao criar o app / client no seu IdP (Entra ID, Okta, Keycloak, etc.), adicione o seguinte como um",
+        "registerHintSuffix": "permitido:",
+        "copyRedirectUriAction": "Copiar Redirect URI",
+        "entraHintPrefix": "Para o",
+        "entraHintSuffix": ": App registrations → seu app → Authentication → Add platform → Web → cole a URL acima.",
+        "authorityLabel": "Authority (issuer)",
+        "authorityPlaceholder": "https://login.example.com/realms/my-realm",
+        "authorityHintPrefix": "A URL base do IdP. A descoberta (discovery) é obtida em",
+        "clientIdLabel": "Client ID",
+        "clientSecretLabel": "Client secret",
+        "clientSecretPlaceholderRequired": "Obrigatório",
+        "scopesLabel": "Scopes",
+        "scopesPlaceholder": "openid profile email",
+        "subjectClaimLabel": "Subject claim",
+        "subjectClaimPlaceholder": "sub",
+        "emailClaimLabel": "Email claim",
+        "emailClaimPlaceholder": "email",
+        "nameClaimLabel": "Name claim",
+        "nameClaimPlaceholder": "name"
+      },
+      "saml": {
+        "cardTitle": "Provedor SAML 2.0",
+        "registerHint": "Ao configurar o SP (service provider) no seu IdP, use estas URLs:",
+        "acsUrlLabel": "URL do ACS (Assertion Consumer Service)",
+        "copyAcsUrlAction": "Copiar URL do ACS",
+        "spMetadataUrlLabel": "URL de metadados do SP",
+        "copyMetadataUrlAction": "Copiar URL de metadados",
+        "autoImportHintPrefix": "A maioria dos IdPs consegue importar automaticamente as configurações do SP a partir da URL de metadados. Use a URL do ACS como a",
+        "autoImportHintSuffix": "ao importar manualmente.",
+        "spEntityIdLabel": "SP entity ID",
+        "spEntityIdPlaceholder": "urn:smooth-operator",
+        "idpEntityIdLabel": "IdP entity ID",
+        "idpSsoUrlLabel": "URL de SSO do IdP",
+        "idpSsoUrlPlaceholder": "https://idp.example.com/saml/sso",
+        "idpCertLabel": "Certificado de assinatura do IdP (PEM)",
+        "certPlaceholder": "-----BEGIN CERTIFICATE-----\n…\n-----END CERTIFICATE-----",
+        "spCertLabel": "Certificado de assinatura do SP (PEM)",
+        "spKeyLabel": "Chave privada do SP (PEM)",
+        "spKeyPlaceholderStored": "•••••••• (já armazenada)",
+        "spKeyPlaceholderNew": "-----BEGIN PRIVATE KEY-----…",
+        "nameIdFormatLabel": "Formato do NameID",
+        "attrEmailLabel": "Atributo de e-mail",
+        "attrEmailPlaceholder": "email",
+        "attrNameLabel": "Atributo de nome",
+        "attrNamePlaceholder": "name",
+        "requireSignedAssertions": "Exigir assertions assinadas",
+        "requireSignedResponses": "Exigir responses assinadas",
+        "metadataUrlSectionLabel": "URL de metadados do SP",
+        "metadataUrlHint": "Forneça esta URL ao administrador do seu IdP para registrar o SP."
+      }
+    },
+    "settingsVaults": {
+      "title": "Cofres",
+      "subtitle": "Crie e gerencie cofres que agrupam conexões.",
+      "refresh": "Atualizar",
+      "newVault": {
+        "heading": "Novo Cofre",
+        "namePlaceholder": "Nome do cofre",
+        "create": "Criar cofre",
+        "creating": "Criando…"
+      },
+      "table": {
+        "name": "Nome",
+        "access": "Acesso",
+        "actions": "Ações",
+        "user": "usuário",
+        "users": "usuários",
+        "group": "grupo",
+        "groups": "grupos",
+        "loading": "Carregando…",
+        "empty": "Nenhum cofre ainda. Crie um acima."
+      },
+      "actions": {
+        "assign": "Atribuir",
+        "rename": "Renomear"
+      },
+      "recording": {
+        "onTooltip": "As sessões neste cofre estão sendo gravadas",
+        "offTooltip": "A gravação está desativada para este cofre",
+        "enabledLabel": "Gravação ativada",
+        "disabledLabel": "Gravação"
+      },
+      "assignModal": {
+        "title": "Atribuir Acesso — {{name}}",
+        "subtitle": "Selecione os usuários e grupos que podem acessar este cofre.",
+        "usersHeading": "Usuários",
+        "groupsHeading": "Grupos",
+        "selectedCount": "{{count}} selecionado(s)",
+        "searchUsersPlaceholder": "Buscar usuários…",
+        "searchGroupsPlaceholder": "Buscar grupos…",
+        "availableDivider": "disponíveis",
+        "noUsersFound": "Nenhum usuário encontrado.",
+        "noGroupsFound": "Nenhum grupo encontrado.",
+        "save": "Salvar atribuições",
+        "saving": "Salvando…"
+      },
+      "recordingModal": {
+        "title": "Gravação: {{name}}",
+        "subtitle": "Padrão para todas as conexões deste cofre. Cada conexão pode substituir essa configuração.",
+        "enableLabel": "Gravar sessões neste cofre",
+        "enableDescription": "Quando ativado, todas as conexões dentro deste cofre são gravadas por padrão. Conexões individuais podem optar por não participar.",
+        "includeKeysLabel": "Também capturar teclas digitadas",
+        "includeKeysDescription": "Desativado por padrão. As teclas capturadas podem incluir senhas digitadas em telas de login — ative somente quando exigido para conformidade ou perícia forense.",
+        "retentionLabel": "Retenção personalizada (dias)",
+        "retentionPlaceholder": "Usar padrão global",
+        "retentionHintPre": "Deixe em branco para herdar a retenção global. Digite",
+        "retentionHintPost": "para manter as gravações deste cofre para sempre.",
+        "save": "Salvar",
+        "saving": "Salvando…"
+      },
+      "confirmDelete": {
+        "title": "Excluir cofre",
+        "message": "Excluir o cofre \"{{name}}\"? Todas as conexões dentro dele ficarão sem vínculo. Esta ação não pode ser desfeita."
+      },
+      "toasts": {
+        "created": "Cofre \"{{name}}\" criado.",
+        "renamed": "Cofre renomeado para \"{{name}}\".",
+        "deleted": "Cofre \"{{name}}\" excluído.",
+        "recordingSaved": "Configurações de gravação salvas para \"{{name}}\".",
+        "assignmentsUpdated": "Atribuições atualizadas para \"{{name}}\"."
+      },
+      "errors": {
+        "loadFailed": "Falha ao carregar os cofres.",
+        "nameRequired": "O nome do cofre é obrigatório.",
+        "createFailed": "Falha ao criar o cofre.",
+        "renameFailed": "Falha ao renomear o cofre.",
+        "deleteFailed": "Falha ao excluir o cofre.",
+        "loadAssignmentsFailed": "Falha ao carregar as atribuições.",
+        "assignmentsSaveFailed": "Falha ao salvar as atribuições.",
+        "recordingSaveFailed": "Falha ao salvar as configurações de gravação."
+      }
+    },
+    "settingsWebhooks": {
+      "title": "Webhooks",
+      "description": "Cadastre endpoints externos para receber um POST assinado com HMAC sempre que ocorrer um evento de auditoria inscrito — alimente um SIEM, envie alertas ou dispare automações.",
+      "secret": {
+        "titleFor": "Segredo de assinatura de “{{name}}”",
+        "descriptionBefore": "Copie agora — ele é exibido apenas uma vez e não pode ser recuperado depois. Seu receptor o utiliza para verificar o cabeçalho",
+        "descriptionAfter": ".",
+        "copyLabel": "Copiar segredo de assinatura",
+        "saved": "Já salvei"
+      },
+      "toolbar": {
+        "countOne": "{{count}} endpoint",
+        "countOther": "{{count}} endpoints",
+        "add": "Adicionar endpoint"
+      },
+      "editor": {
+        "titleNew": "Novo endpoint",
+        "titleEdit": "Editar endpoint",
+        "nameLabel": "Nome",
+        "namePlaceholder": "ex.: Ingestão do SIEM",
+        "urlLabel": "URL de destino",
+        "urlPlaceholder": "https://exemplo.com/hooks/smooth-operator",
+        "urlHint": "Deve ser uma URL HTTPS absoluta.",
+        "eventsLabel": "Eventos a entregar",
+        "enabledToggle": "Endpoint habilitado",
+        "save": "Salvar endpoint",
+        "saving": "Salvando…"
+      },
+      "events": {
+        "all": "Todos os eventos",
+        "users": "Usuários e autenticação",
+        "connections": "Conexões",
+        "credentials": "Credenciais",
+        "sso": "Single sign-on",
+        "groups": "Grupos",
+        "invitations": "Convites",
+        "webhooks": "Webhooks",
+        "system": "Sistema"
+      },
+      "list": {
+        "loading": "Carregando webhooks…",
+        "emptyTitle": "Nenhum endpoint de webhook",
+        "emptyHint": "Adicione um endpoint para começar a entregar eventos de auditoria."
+      },
+      "card": {
+        "actionsFor": "Ações de {{name}}",
+        "copyUrlTitle": "Copiar URL do endpoint",
+        "copyUrlFor": "Copiar URL de {{name}}",
+        "lastDelivery": "Última: {{date}}",
+        "neverDelivered": "Nunca entregue",
+        "httpCode": "HTTP {{code}}",
+        "failureOne": "{{count}} falha consecutiva",
+        "failureOther": "{{count}} falhas consecutivas",
+        "sendTest": "Enviar teste",
+        "working": "Processando…",
+        "closeMenu": "Fechar menu",
+        "menu": {
+          "edit": "Editar endpoint",
+          "disable": "Desabilitar",
+          "enable": "Habilitar",
+          "rotateSecret": "Rotacionar segredo",
+          "delete": "Excluir endpoint"
+        }
+      },
+      "status": {
+        "disabled": "Desabilitado",
+        "noDeliveries": "Nenhuma entrega ainda",
+        "healthy": "Saudável",
+        "failing": "Falhando ({{count}})"
+      },
+      "errors": {
+        "loadFailed": "Falha ao carregar os webhooks.",
+        "nameUrlRequired": "Nome e URL são obrigatórios.",
+        "saveFailed": "Falha ao salvar o webhook.",
+        "createFailed": "Falha ao criar o webhook.",
+        "updateFailed": "Falha ao atualizar o webhook.",
+        "testFailed": "Falha ao enfileirar o evento de teste.",
+        "deleteFailed": "Falha ao excluir o webhook.",
+        "rotateFailed": "Falha ao rotacionar o segredo.",
+        "copyFailed": "Não foi possível copiar para a área de transferência."
+      },
+      "messages": {
+        "updated": "Endpoint de webhook atualizado.",
+        "created": "Endpoint de webhook criado.",
+        "disabled": "Webhook desabilitado.",
+        "enabled": "Webhook habilitado.",
+        "testQueued": "Evento de teste enfileirado para \"{{name}}\". Ele será entregue em instantes.",
+        "deleted": "Endpoint de webhook excluído.",
+        "rotated": "Segredo de assinatura rotacionado.",
+        "secretCopied": "Segredo de assinatura copiado para a área de transferência.",
+        "urlCopied": "URL do endpoint copiada para a área de transferência."
+      },
+      "confirmDelete": {
+        "title": "Excluir endpoint de webhook?",
+        "message": "\"{{name}}\" será removido e deixará de receber eventos. Essa ação não pode ser desfeita."
+      },
+      "confirmRotate": {
+        "title": "Rotacionar o segredo de assinatura?",
+        "message": "O segredo atual de \"{{name}}\" para de funcionar imediatamente — atualize seu receptor com o novo segredo assim que possível.",
+        "confirmLabel": "Rotacionar segredo"
+      }
+    },
+    "vault": {
+      "subtitle": "Selecione uma conexão para iniciar um túnel seguro.",
+      "refresh": "Atualizar",
+      "manage": "Gerenciar",
+      "filterByVault": "Filtrar por vault",
+      "selectVaultLabel": "Selecionar vault",
+      "allConnectionsWithCount": "Todas as Conexões ({{count}})",
+      "allConnections": "Todas as Conexões",
+      "loadingConnections": "Carregando conexões do vault…",
+      "emptyTitle": "Nenhuma conexão aqui",
+      "emptyVaultMessage": "Este vault está vazio.",
+      "emptyAllMessage": "Você ainda não tem nenhuma conexão.",
+      "createConnection": "Criar Conexão",
+      "connect": "Conectar",
+      "downloadFile": "Baixar arquivo de conexão",
+      "reachability": {
+        "up": "Host acessível",
+        "down": "Host inacessível",
+        "checking": "Verificando…"
+      },
+      "lastConnected": {
+        "justNow": "agora mesmo",
+        "minutesAgo": "{{minutes}}min atrás",
+        "hoursAgo": "{{hours}}h atrás",
+        "daysAgo": "{{days}}d atrás",
+        "monthsAgo": "{{months}} meses atrás"
+      }
+    }
+  }
+}

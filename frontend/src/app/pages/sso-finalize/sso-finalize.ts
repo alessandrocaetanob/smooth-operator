@@ -1,17 +1,19 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../services/auth.service';
 import { Spinner } from '../../shared/spinner/spinner';
 
 @Component({
   selector: 'app-sso-finalize',
-  imports: [Spinner, RouterLink],
+  imports: [Spinner, RouterLink, TranslatePipe],
   templateUrl: './sso-finalize.html',
 })
 export class SsoFinalize implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly auth = inject(AuthService);
+  private readonly translate = inject(TranslateService);
 
   readonly errorMessage = signal<string | null>(null);
 
@@ -29,7 +31,7 @@ export class SsoFinalize implements OnInit {
     this.auth.me().subscribe({
       next: () => this.router.navigateByUrl(this.safeReturnUrl(returnUrl)),
       error: () => {
-        this.errorMessage.set('Authentication failed. Please try logging in again.');
+        this.errorMessage.set(this.translate.instant('pages.ssoFinalize.authFailedFallback'));
       },
     });
   }

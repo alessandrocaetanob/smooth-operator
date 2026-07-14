@@ -1,6 +1,7 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { Vault, VaultsService } from '../../../services/vaults.service';
 import { AppUser, UsersService } from '../../../services/users.service';
 import { UserGroup, GroupsService } from '../../../services/groups.service';
@@ -10,7 +11,7 @@ import { ToastService } from '../../../shared/toast/toast.service';
 @Component({
   selector: 'app-settings-vaults',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, TranslatePipe],
   templateUrl: './vaults.html',
 })
 export class SettingsVaults implements OnInit {
@@ -19,6 +20,7 @@ export class SettingsVaults implements OnInit {
   private readonly groupsSvc = inject(GroupsService);
   private readonly confirmSvc = inject(ConfirmDialogService);
   private readonly toastSvc = inject(ToastService);
+  private readonly translate = inject(TranslateService);
 
   readonly vaults = this.vaultsSvc.list;
   readonly users = this.usersSvc.list;
@@ -90,7 +92,9 @@ export class SettingsVaults implements OnInit {
       next: () => this.loading.set(false),
       error: (err) => {
         this.loading.set(false);
-        this.errorMessage.set(this.toMessage(err) || 'Failed to load vaults.');
+        this.errorMessage.set(
+          this.toMessage(err) || this.translate.instant('pages.settingsVaults.errors.loadFailed'),
+        );
       },
     });
   }
@@ -99,7 +103,7 @@ export class SettingsVaults implements OnInit {
     if (this.vaultBusy()) return;
     const name = this.newVaultName().trim();
     if (!name) {
-      this.errorMessage.set('Vault name is required.');
+      this.errorMessage.set(this.translate.instant('pages.settingsVaults.errors.nameRequired'));
       return;
     }
     this.vaultBusy.set(true);
@@ -108,12 +112,15 @@ export class SettingsVaults implements OnInit {
       next: () => {
         this.vaultBusy.set(false);
         this.newVaultName.set('');
-        this.toastSvc.success(`Vault "${name}" created.`);
+        this.toastSvc.success(
+          this.translate.instant('pages.settingsVaults.toasts.created', { name }),
+        );
         this.refresh();
       },
       error: (err) => {
         this.vaultBusy.set(false);
-        const msg = this.toMessage(err) || 'Failed to create vault.';
+        const msg =
+          this.toMessage(err) || this.translate.instant('pages.settingsVaults.errors.createFailed');
         this.errorMessage.set(msg);
         this.toastSvc.error(msg);
       },
@@ -147,12 +154,16 @@ export class SettingsVaults implements OnInit {
         next: () => {
           this.vaultBusy.set(false);
           this.cancelEdit();
-          this.toastSvc.success(`Vault renamed to "${name}".`);
+          this.toastSvc.success(
+            this.translate.instant('pages.settingsVaults.toasts.renamed', { name }),
+          );
           this.refresh();
         },
         error: (err) => {
           this.vaultBusy.set(false);
-          const msg = this.toMessage(err) || 'Failed to rename vault.';
+          const msg =
+            this.toMessage(err) ||
+            this.translate.instant('pages.settingsVaults.errors.renameFailed');
           this.errorMessage.set(msg);
           this.toastSvc.error(msg);
         },
@@ -161,20 +172,25 @@ export class SettingsVaults implements OnInit {
 
   async deleteVault(vault: Vault): Promise<void> {
     const ok = await this.confirmSvc.ask({
-      title: 'Delete vault',
-      message: `Delete vault "${vault.name}"? All connections inside will be unlinked. This cannot be undone.`,
-      confirmLabel: 'Delete',
+      title: this.translate.instant('pages.settingsVaults.confirmDelete.title'),
+      message: this.translate.instant('pages.settingsVaults.confirmDelete.message', {
+        name: vault.name,
+      }),
+      confirmLabel: this.translate.instant('common.actions.delete'),
       tone: 'danger',
     });
     if (!ok) return;
     this.errorMessage.set(null);
     this.vaultsSvc.remove(vault.id).subscribe({
       next: () => {
-        this.toastSvc.success(`Vault "${vault.name}" deleted.`);
+        this.toastSvc.success(
+          this.translate.instant('pages.settingsVaults.toasts.deleted', { name: vault.name }),
+        );
         this.refresh();
       },
       error: (err) => {
-        const msg = this.toMessage(err) || 'Failed to delete vault.';
+        const msg =
+          this.toMessage(err) || this.translate.instant('pages.settingsVaults.errors.deleteFailed');
         this.errorMessage.set(msg);
         this.toastSvc.error(msg);
       },
@@ -192,7 +208,11 @@ export class SettingsVaults implements OnInit {
         this.selectedUserIds.set(a.userIds);
         this.selectedGroupIds.set(a.groupIds);
       },
-      error: (err) => this.errorMessage.set(this.toMessage(err) || 'Failed to load assignments.'),
+      error: (err) =>
+        this.errorMessage.set(
+          this.toMessage(err) ||
+            this.translate.instant('pages.settingsVaults.errors.loadAssignmentsFailed'),
+        ),
     });
   }
 
@@ -231,13 +251,19 @@ export class SettingsVaults implements OnInit {
       .subscribe({
         next: () => {
           this.recordingBusy.set(false);
-          this.toastSvc.success(`Recording settings saved for "${vault.name}".`);
+          this.toastSvc.success(
+            this.translate.instant('pages.settingsVaults.toasts.recordingSaved', {
+              name: vault.name,
+            }),
+          );
           this.closeRecording();
           this.refresh();
         },
         error: (err) => {
           this.recordingBusy.set(false);
-          const msg = this.toMessage(err) || 'Failed to save recording settings.';
+          const msg =
+            this.toMessage(err) ||
+            this.translate.instant('pages.settingsVaults.errors.recordingSaveFailed');
           this.errorMessage.set(msg);
           this.toastSvc.error(msg);
         },
@@ -279,13 +305,19 @@ export class SettingsVaults implements OnInit {
       .subscribe({
         next: () => {
           this.assignBusy.set(false);
-          this.toastSvc.success(`Assignments updated for "${vault.name}".`);
+          this.toastSvc.success(
+            this.translate.instant('pages.settingsVaults.toasts.assignmentsUpdated', {
+              name: vault.name,
+            }),
+          );
           this.closeAssignments();
           this.refresh();
         },
         error: (err) => {
           this.assignBusy.set(false);
-          const msg = this.toMessage(err) || 'Failed to save assignments.';
+          const msg =
+            this.toMessage(err) ||
+            this.translate.instant('pages.settingsVaults.errors.assignmentsSaveFailed');
           this.errorMessage.set(msg);
           this.toastSvc.error(msg);
         },

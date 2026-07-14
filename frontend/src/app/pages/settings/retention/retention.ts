@@ -1,15 +1,17 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { SystemSettingsService } from '../../../services/system-settings.service';
 
 @Component({
   selector: 'app-retention-settings',
-  imports: [FormsModule],
+  imports: [FormsModule, TranslatePipe],
   templateUrl: './retention.html',
   styleUrl: './retention.css',
 })
 export class Retention implements OnInit {
   private readonly system = inject(SystemSettingsService);
+  private readonly translate = inject(TranslateService);
 
   readonly loading = signal(false);
   readonly busy = signal(false);
@@ -23,12 +25,12 @@ export class Retention implements OnInit {
   private maxSessionMinutes = 0;
 
   readonly presets = [
-    { days: 0, label: 'Forever' },
-    { days: 30, label: '30 days' },
-    { days: 90, label: '90 days' },
-    { days: 180, label: '6 months' },
-    { days: 365, label: '1 year' },
-    { days: 730, label: '2 years' },
+    { days: 0, key: 'forever' },
+    { days: 30, key: 'days30' },
+    { days: 90, key: 'days90' },
+    { days: 180, key: 'months6' },
+    { days: 365, key: 'year1' },
+    { days: 730, key: 'years2' },
   ];
 
   selectPreset(days: number): void {
@@ -50,7 +52,10 @@ export class Retention implements OnInit {
       },
       error: (err) => {
         this.loading.set(false);
-        this.error.set(this.toMessage(err) || 'Failed to load system settings.');
+        this.error.set(
+          this.toMessage(err) ||
+            this.translate.instant('pages.settingsRetention.errors.loadFailed'),
+        );
       },
     });
   }
@@ -59,7 +64,7 @@ export class Retention implements OnInit {
     if (this.busy()) return;
     const value = this.retentionDays();
     if (value < 0 || value > 3650 || !Number.isInteger(value)) {
-      this.error.set('Retention must be an integer between 0 (forever) and 3650 days.');
+      this.error.set(this.translate.instant('pages.settingsRetention.errors.invalidRange'));
       return;
     }
     this.busy.set(true);
@@ -77,13 +82,18 @@ export class Retention implements OnInit {
           this.retentionDays.set(s.auditLogRetentionDays);
           this.message.set(
             s.auditLogRetentionDays === 0
-              ? 'Retention disabled — audit logs will be kept forever.'
-              : `Audit logs older than ${s.auditLogRetentionDays} day(s) will be purged daily.`,
+              ? this.translate.instant('pages.settingsRetention.messages.disabledForever')
+              : this.translate.instant('pages.settingsRetention.messages.purgeScheduled', {
+                  days: s.auditLogRetentionDays,
+                }),
           );
         },
         error: (err) => {
           this.busy.set(false);
-          this.error.set(this.toMessage(err) || 'Failed to save settings.');
+          this.error.set(
+            this.toMessage(err) ||
+              this.translate.instant('pages.settingsRetention.errors.saveFailed'),
+          );
         },
       });
   }

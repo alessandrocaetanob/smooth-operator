@@ -1,9 +1,10 @@
 <div>
   <div class="mb-6">
-    <h2 class="text-lg font-semibold text-on-surface">Email (SMTP)</h2>
+    <h2 class="text-lg font-semibold text-on-surface">
+      {{ 'pages.settingsEmail.title' | translate }}
+    </h2>
     <p class="text-sm text-on-surface-variant mt-1">
-      Configure an SMTP relay (SendGrid, AWS SES, internal server, …) so the system can send
-      invitation and password-reset emails. When unset, invitation links must be shared manually.
+      {{ 'pages.settingsEmail.description' | translate }}
     </p>
   </div>
 
@@ -12,12 +13,12 @@
     <div class="status-banner status-ok mb-6">
       <span class="material-symbols-outlined">check_circle</span>
       <div>
-        <p class="font-medium">SMTP relay configured</p>
+        <p class="font-medium">{{ 'pages.settingsEmail.status.configuredTitle' | translate }}</p>
         <p class="text-xs opacity-70">
           {{
             current()?.enabled
-              ? 'Active — the system will send emails.'
-              : 'Configured but currently disabled.'
+              ? ('pages.settingsEmail.status.activeHint' | translate)
+              : ('pages.settingsEmail.status.disabledHint' | translate)
           }}
         </p>
       </div>
@@ -26,9 +27,11 @@
     <div class="status-banner status-warn mb-6">
       <span class="material-symbols-outlined">warning</span>
       <div>
-        <p class="font-medium">No SMTP relay configured</p>
+        <p class="font-medium">
+          {{ 'pages.settingsEmail.status.notConfiguredTitle' | translate }}
+        </p>
         <p class="text-xs opacity-70">
-          Invitation and password-reset links must be shared manually.
+          {{ 'pages.settingsEmail.status.notConfiguredHint' | translate }}
         </p>
       </div>
     </div>
@@ -52,25 +55,33 @@
     <div class="settings-card">
       <div class="settings-card-header">
         <span class="material-symbols-outlined settings-card-icon">dns</span>
-        <h3 class="settings-card-title">Server connection</h3>
+        <h3 class="settings-card-title">
+          {{ 'pages.settingsEmail.serverConnection.title' | translate }}
+        </h3>
       </div>
       <div class="settings-card-body">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
           <div class="md:col-span-2">
-            <label class="settings-label" for="host">Host</label>
+            <label class="settings-label" for="host">{{
+              'pages.settingsEmail.serverConnection.hostLabel' | translate
+            }}</label>
             <input
               id="host"
               type="text"
               [ngModel]="host()"
               (ngModelChange)="host.set($event)"
               name="host"
-              placeholder="smtp.sendgrid.net"
+              [attr.placeholder]="
+                'pages.settingsEmail.serverConnection.hostPlaceholder' | translate
+              "
               required
               class="w-full input-field"
             />
           </div>
           <div>
-            <label class="settings-label" for="port">Port</label>
+            <label class="settings-label" for="port">{{
+              'pages.settingsEmail.serverConnection.portLabel' | translate
+            }}</label>
             <input
               id="port"
               type="number"
@@ -97,8 +108,10 @@
               <span class="toggle-thumb" [class.toggle-thumb-on]="useSsl()"></span>
             </span>
           </span>
-          <span>Use SSL/TLS</span>
-          <span class="toggle-hint">Recommended for port 465 (SMTPS) and most cloud relays</span>
+          <span>{{ 'pages.settingsEmail.serverConnection.useSslLabel' | translate }}</span>
+          <span class="toggle-hint">{{
+            'pages.settingsEmail.serverConnection.useSslHint' | translate
+          }}</span>
         </label>
       </div>
     </div>
@@ -107,27 +120,35 @@
     <div class="settings-card">
       <div class="settings-card-header">
         <span class="material-symbols-outlined settings-card-icon">key</span>
-        <h3 class="settings-card-title">Authentication</h3>
+        <h3 class="settings-card-title">
+          {{ 'pages.settingsEmail.authentication.title' | translate }}
+        </h3>
       </div>
       <div class="settings-card-body">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
-            <label class="settings-label" for="username">Username</label>
+            <label class="settings-label" for="username">{{
+              'pages.settingsEmail.authentication.usernameLabel' | translate
+            }}</label>
             <input
               id="username"
               type="text"
               [ngModel]="username()"
               (ngModelChange)="username.set($event)"
               name="username"
-              placeholder="apikey or SMTP user"
+              [attr.placeholder]="
+                'pages.settingsEmail.authentication.usernamePlaceholder' | translate
+              "
               class="w-full input-field"
             />
           </div>
           <div>
             <label class="settings-label" for="password">
-              Password
+              {{ 'pages.settingsEmail.authentication.passwordLabel' | translate }}
               @if (current()?.hasPassword) {
-                <span class="settings-label-hint">(leave blank to keep)</span>
+                <span class="settings-label-hint">{{
+                  'pages.settingsEmail.authentication.passwordKeepHint' | translate
+                }}</span>
               }
             </label>
             <input
@@ -136,7 +157,11 @@
               [ngModel]="password()"
               (ngModelChange)="password.set($event)"
               name="password"
-              [placeholder]="current()?.hasPassword ? '••••••••' : 'SMTP password / API key'"
+              [placeholder]="
+                current()?.hasPassword
+                  ? '••••••••'
+                  : ('pages.settingsEmail.authentication.passwordPlaceholder' | translate)
+              "
               [disabled]="clearPassword()"
               class="w-full input-field disabled:opacity-50"
             />
@@ -151,7 +176,7 @@
                   name="clearPassword"
                   class="accent-error"
                 />
-                Clear stored password
+                {{ 'pages.settingsEmail.authentication.clearPasswordLabel' | translate }}
               </label>
             }
           </div>
@@ -163,25 +188,33 @@
     <div class="settings-card">
       <div class="settings-card-header">
         <span class="material-symbols-outlined settings-card-icon">alternate_email</span>
-        <h3 class="settings-card-title">Sender identity</h3>
+        <h3 class="settings-card-title">
+          {{ 'pages.settingsEmail.senderIdentity.title' | translate }}
+        </h3>
       </div>
       <div class="settings-card-body">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
           <div>
-            <label class="settings-label" for="fromAddress">From address</label>
+            <label class="settings-label" for="fromAddress">{{
+              'pages.settingsEmail.senderIdentity.fromAddressLabel' | translate
+            }}</label>
             <input
               id="fromAddress"
               type="email"
               [ngModel]="fromAddress()"
               (ngModelChange)="fromAddress.set($event)"
               name="fromAddress"
-              placeholder="no-reply@example.com"
+              [attr.placeholder]="
+                'pages.settingsEmail.senderIdentity.fromAddressPlaceholder' | translate
+              "
               required
               class="w-full input-field"
             />
           </div>
           <div>
-            <label class="settings-label" for="fromName">From name</label>
+            <label class="settings-label" for="fromName">{{
+              'pages.settingsEmail.senderIdentity.fromNameLabel' | translate
+            }}</label>
             <input
               id="fromName"
               type="text"
@@ -206,10 +239,10 @@
               <span class="toggle-thumb" [class.toggle-thumb-on]="enabled()"></span>
             </span>
           </span>
-          <span>Relay enabled</span>
-          <span class="toggle-hint"
-            >When disabled, emails are not sent even if SMTP is configured</span
-          >
+          <span>{{ 'pages.settingsEmail.senderIdentity.enabledLabel' | translate }}</span>
+          <span class="toggle-hint">{{
+            'pages.settingsEmail.senderIdentity.enabledHint' | translate
+          }}</span>
         </label>
       </div>
     </div>
@@ -217,7 +250,11 @@
     <div class="flex justify-end">
       <button type="submit" [disabled]="busy()" class="btn-primary">
         <span class="material-symbols-outlined text-sm" aria-hidden="true">save</span>
-        {{ busy() ? 'Saving…' : 'Save SMTP settings' }}
+        {{
+          busy()
+            ? ('pages.settingsEmail.actions.saving' | translate)
+            : ('pages.settingsEmail.actions.save' | translate)
+        }}
       </button>
     </div>
   </form>
@@ -226,11 +263,11 @@
   <div class="settings-card mt-6">
     <div class="settings-card-header">
       <span class="material-symbols-outlined settings-card-icon">send</span>
-      <h3 class="settings-card-title">Send test email</h3>
+      <h3 class="settings-card-title">{{ 'pages.settingsEmail.testEmail.title' | translate }}</h3>
     </div>
     <div class="settings-card-body">
       <p class="text-xs text-on-surface-variant mb-3">
-        Sends a test message using the currently saved settings.
+        {{ 'pages.settingsEmail.testEmail.description' | translate }}
       </p>
       <div class="flex gap-2">
         <input
@@ -238,9 +275,9 @@
           [ngModel]="testTo()"
           (ngModelChange)="testTo.set($event)"
           name="testTo"
-          placeholder="recipient@example.com"
+          [attr.placeholder]="'pages.settingsEmail.testEmail.recipientPlaceholder' | translate"
           class="flex-1 input-field"
-          aria-label="Test email recipient"
+          [attr.aria-label]="'pages.settingsEmail.testEmail.recipientAriaLabel' | translate"
         />
         <button
           type="button"
@@ -249,13 +286,17 @@
           class="btn-secondary whitespace-nowrap"
         >
           <span class="material-symbols-outlined text-sm" aria-hidden="true">send</span>
-          {{ testBusy() ? 'Sending…' : 'Send test' }}
+          {{
+            testBusy()
+              ? ('pages.settingsEmail.testEmail.sending' | translate)
+              : ('pages.settingsEmail.testEmail.sendButton' | translate)
+          }}
         </button>
       </div>
       @if (!current()?.configured) {
         <p class="text-xs text-amber-400/70 mt-2 flex items-center gap-1">
           <span class="material-symbols-outlined" style="font-size: 13px">info</span>
-          Save valid SMTP settings first to enable this.
+          {{ 'pages.settingsEmail.testEmail.saveFirstHint' | translate }}
         </p>
       }
     </div>

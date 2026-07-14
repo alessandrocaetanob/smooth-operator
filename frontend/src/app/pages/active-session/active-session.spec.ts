@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideTranslateService } from '@ngx-translate/core';
 import { BehaviorSubject, of } from 'rxjs';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { ElementRef, signal } from '@angular/core';
@@ -105,6 +106,7 @@ describe('ActiveSession', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
+        provideTranslateService(),
         { provide: GuacamoleSessionManagerService, useValue: manager },
         { provide: ConnectionsService, useValue: connectionsSvc },
         { provide: Router, useValue: router },

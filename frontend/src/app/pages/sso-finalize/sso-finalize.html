@@ -3,18 +3,24 @@
     @if (errorMessage()) {
       <div class="space-y-app-md">
         <span class="material-symbols-outlined text-4xl text-error">error</span>
-        <h1 class="font-h2 text-h2 text-on-background">Sign-in failed</h1>
+        <h1 class="font-h2 text-h2 text-on-background">
+          {{ 'pages.ssoFinalize.errorTitle' | translate }}
+        </h1>
         <p class="font-body-sm text-body-sm text-on-surface-variant">
           {{ errorMessage() }}
         </p>
-        <a routerLink="/login" class="btn-primary inline-block px-app-lg py-2.5">Back to sign-in</a>
+        <a routerLink="/login" class="btn-primary inline-block px-app-lg py-2.5">{{
+          'pages.ssoFinalize.backToSignIn' | translate
+        }}</a>
       </div>
     } @else {
       <div class="space-y-app-md flex flex-col items-center">
         <app-spinner size="md"></app-spinner>
-        <h1 class="font-h2 text-h2 text-on-background">Completing sign-in…</h1>
+        <h1 class="font-h2 text-h2 text-on-background">
+          {{ 'pages.ssoFinalize.completingTitle' | translate }}
+        </h1>
         <p class="font-body-sm text-body-sm text-on-surface-variant">
-          Validating your single sign-on session.
+          {{ 'pages.ssoFinalize.validatingSession' | translate }}
         </p>
       </div>
     }

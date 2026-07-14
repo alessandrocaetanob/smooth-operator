@@ -4,6 +4,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { signal } from '@angular/core';
 import { of, throwError } from 'rxjs';
+import { provideTranslateService, TranslateService } from '@ngx-translate/core';
 
 import { Administration } from './administration';
 import { AppRole, AppUser, UsersService } from '../../services/users.service';
@@ -66,6 +67,7 @@ describe('Administration', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
+        provideTranslateService(),
         { provide: UsersService, useValue: users },
         { provide: VaultsService, useValue: vaults },
         { provide: AuthService, useValue: auth },
@@ -73,6 +75,41 @@ describe('Administration', () => {
         { provide: ToastService, useValue: toast },
       ],
     }).compileComponents();
+
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', {
+      common: {
+        actions: {
+          delete: 'Delete',
+        },
+      },
+      pages: {
+        administration: {
+          loadUsersFailed: 'Failed to load users.',
+          emailRequired: 'Email is required.',
+          inviteFailed: 'Invite failed.',
+          changeOwnershipTitle: 'Change ownership',
+          changeRoleTitle: 'Change role',
+          changeOwnershipMessage:
+            "This will change {{name}}'s role from {{previous}} to {{role}}. Owner access is permanent and grants full control over this instance. Continue?",
+          changeRoleMessage: "Change {{name}}'s role from {{previous}} to {{role}}?",
+          changeRoleConfirmLabel: 'Change role',
+          roleUpdated: 'Role updated for {{name}}.',
+          updateRoleFailed: 'Failed to update role.',
+          vaultAssignmentsUpdated: 'Vault assignments updated for {{name}}.',
+          updateVaultAssignmentsFailed: 'Failed to update vault assignments.',
+          userEnabled: '{{name}} enabled.',
+          userDisabled: '{{name}} disabled.',
+          updateFailed: 'Update failed.',
+          cannotDeleteSelf: 'You cannot delete your own account.',
+          deleteUserTitle: 'Delete user',
+          deleteUserMessage: 'Delete user {{email}}? This cannot be undone.',
+          userDeleted: 'User {{email}} deleted.',
+          deleteFailed: 'Delete failed.',
+        },
+      },
+    });
+    translate.use('en');
 
     fixture = TestBed.createComponent(Administration);
     component = fixture.componentInstance;

@@ -3,8 +3,10 @@ import { NgClass } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 
 import { Router, RouterLink } from '@angular/router';
+import { TranslatePipe } from '@ngx-translate/core';
 import { Mascot, MascotState } from '../mascot/mascot';
 import { ThemeToggle } from '../theme-toggle/theme-toggle';
+import { LanguageSwitcher } from '../language-switcher/language-switcher';
 import { AuthService } from '../../services/auth.service';
 import { ThemeService } from '../../services/theme.service';
 import { ToastService } from '../toast/toast.service';
@@ -16,7 +18,7 @@ const HEALTH_POLL_MS = 30_000;
 @Component({
   selector: 'app-top-nav-bar',
   standalone: true,
-  imports: [RouterLink, Mascot, ThemeToggle, NgClass],
+  imports: [RouterLink, Mascot, ThemeToggle, LanguageSwitcher, NgClass, TranslatePipe],
   templateUrl: './top-nav-bar.html',
   styleUrl: './top-nav-bar.css',
 })
@@ -53,6 +55,18 @@ export class TopNavBar implements OnInit {
     if (s === 'healthy') return 'text-tertiary';
     if (s === 'down') return 'text-error';
     return 'text-on-surface-variant';
+  });
+  readonly healthLabelKey = computed(() => {
+    const s = this.health();
+    if (s === 'healthy') return 'nav.topbar.systemOptimal';
+    if (s === 'down') return 'nav.topbar.systemOffline';
+    return 'nav.topbar.systemChecking';
+  });
+  readonly healthTitleKey = computed(() => {
+    const s = this.health();
+    if (s === 'healthy') return 'nav.topbar.apiReachable';
+    if (s === 'down') return 'nav.topbar.backendUnreachable';
+    return 'nav.topbar.checkingStatus';
   });
 
   readonly navMascotState = computed<MascotState>(() =>

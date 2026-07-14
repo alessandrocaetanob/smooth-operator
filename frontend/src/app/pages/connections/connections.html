@@ -2,19 +2,21 @@
   <!-- Page header -->
   <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-6 gap-3">
     <div class="min-w-0">
-      <h1 class="text-2xl font-bold text-on-surface tracking-tight">Connections Manager</h1>
+      <h1 class="text-2xl font-bold text-on-surface tracking-tight">
+        {{ 'pages.connections.title' | translate }}
+      </h1>
       <p class="text-sm text-on-surface-variant mt-1">
-        Define remote sessions: protocols, targets, and credentials.
+        {{ 'pages.connections.subtitle' | translate }}
       </p>
     </div>
     <div class="flex flex-wrap items-center gap-2 sm:shrink-0 sm:mt-1">
       <button (click)="refresh()" class="btn-ghost">
         <span class="material-symbols-outlined text-base">refresh</span>
-        Refresh
+        {{ 'pages.connections.refresh' | translate }}
       </button>
       <button (click)="newConnection()" class="btn-primary">
         <span class="material-symbols-outlined text-base">add</span>
-        New Connection
+        {{ 'pages.connections.newConnection' | translate }}
       </button>
     </div>
   </div>
@@ -38,7 +40,7 @@
         >
         <input
           type="text"
-          placeholder="Search connections, hosts, tags…"
+          [placeholder]="'pages.connections.searchPlaceholder' | translate"
           [ngModel]="searchQuery()"
           (ngModelChange)="searchQuery.set($event)"
           name="search"
@@ -48,7 +50,7 @@
           <button
             (click)="searchQuery.set('')"
             class="absolute right-2 top-1/2 -translate-y-1/2 text-on-surface-variant/60 hover:text-on-surface transition-colors"
-            aria-label="Clear search"
+            [attr.aria-label]="'pages.connections.clearSearchAriaLabel' | translate"
           >
             <span class="material-symbols-outlined text-base">close</span>
           </button>
@@ -56,13 +58,16 @@
       </div>
 
       <span class="text-xs text-on-surface-variant/60 whitespace-nowrap">
-        {{ resultCount() }} of {{ connections().length }}
+        {{
+          'pages.connections.resultCount'
+            | translate: { filtered: resultCount(), total: connections().length }
+        }}
       </span>
 
       @if (isFiltered()) {
         <button (click)="clearFilters()" class="btn-ghost text-xs py-1.5">
           <span class="material-symbols-outlined text-sm">filter_alt_off</span>
-          Clear
+          {{ 'pages.connections.clearFilters' | translate }}
         </button>
       }
     </div>
@@ -96,12 +101,24 @@
           class="bg-surface-container/60 text-[11px] uppercase tracking-wider text-on-surface-variant border-b border-outline-variant/30"
         >
           <tr>
-            <th class="text-left px-5 py-4 font-semibold rounded-tl-2xl">Connection</th>
-            <th class="text-left px-5 py-4 font-semibold">Target</th>
-            <th class="text-left px-5 py-4 font-semibold">Vault</th>
-            <th class="text-left px-5 py-4 font-semibold">Credentials</th>
-            <th class="text-left px-5 py-4 font-semibold">Tags</th>
-            <th class="text-right px-5 py-4 font-semibold rounded-tr-2xl">Actions</th>
+            <th class="text-left px-5 py-4 font-semibold rounded-tl-2xl">
+              {{ 'pages.connections.table.connection' | translate }}
+            </th>
+            <th class="text-left px-5 py-4 font-semibold">
+              {{ 'pages.connections.table.target' | translate }}
+            </th>
+            <th class="text-left px-5 py-4 font-semibold">
+              {{ 'pages.connections.table.vault' | translate }}
+            </th>
+            <th class="text-left px-5 py-4 font-semibold">
+              {{ 'pages.connections.table.credentials' | translate }}
+            </th>
+            <th class="text-left px-5 py-4 font-semibold">
+              {{ 'pages.connections.table.tags' | translate }}
+            </th>
+            <th class="text-right px-5 py-4 font-semibold rounded-tr-2xl">
+              {{ 'pages.connections.table.actions' | translate }}
+            </th>
           </tr>
         </thead>
         <tbody class="divide-y divide-outline-variant/10">
@@ -144,7 +161,9 @@
                     {{ credentialName(c.credentialId) }}
                   </div>
                 } @else {
-                  <span class="text-xs opacity-40 italic">None</span>
+                  <span class="text-xs opacity-40 italic">{{
+                    'pages.connections.table.none' | translate
+                  }}</span>
                 }
               </td>
               <td class="px-5 py-4">
@@ -168,16 +187,16 @@
                   <button
                     (click)="edit(c)"
                     class="btn-ghost p-2 rounded-lg"
-                    title="Edit"
-                    aria-label="Edit connection"
+                    [title]="'common.actions.edit' | translate"
+                    [attr.aria-label]="'pages.connections.table.editAriaLabel' | translate"
                   >
                     <span class="material-symbols-outlined text-lg" aria-hidden="true">edit</span>
                   </button>
                   <button
                     (click)="remove(c)"
                     class="p-2 text-error hover:bg-error/10 rounded-lg transition-colors"
-                    title="Delete"
-                    aria-label="Delete connection"
+                    [title]="'common.actions.delete' | translate"
+                    [attr.aria-label]="'pages.connections.table.deleteAriaLabel' | translate"
                   >
                     <span class="material-symbols-outlined text-lg" aria-hidden="true">delete</span>
                   </button>
@@ -190,15 +209,17 @@
                 <div class="flex flex-col items-center justify-center text-on-surface-variant/60">
                   <span class="material-symbols-outlined text-4xl mb-3 opacity-40">hub</span>
                   @if (loading()) {
-                    <p>Loading connections…</p>
+                    <p>{{ 'pages.connections.table.loading' | translate }}</p>
                   } @else if (isFiltered()) {
-                    <p class="font-medium">No connections match your search.</p>
+                    <p class="font-medium">{{ 'pages.connections.table.noMatch' | translate }}</p>
                     <button (click)="clearFilters()" class="btn-ghost mt-3 text-xs">
-                      Clear filters
+                      {{ 'pages.connections.table.clearFilters' | translate }}
                     </button>
                   } @else {
-                    <p class="font-medium">No connections yet.</p>
-                    <p class="text-xs mt-1">Click "New Connection" to add your first one.</p>
+                    <p class="font-medium">{{ 'pages.connections.table.empty' | translate }}</p>
+                    <p class="text-xs mt-1">
+                      {{ 'pages.connections.table.emptyHint' | translate }}
+                    </p>
                   }
                 </div>
               </td>
@@ -213,11 +234,13 @@
 <!-- Drawer: Create / Edit connection -->
 @if (showDrawer()) {
   <app-drawer
-    [title]="form().id ? 'Edit Connection' : 'New Connection'"
+    [title]="
+      (form().id ? 'pages.connections.form.editTitle' : 'pages.connections.form.newTitle')
+        | translate
+    "
     [subtitle]="
-      form().id
-        ? 'Update connection settings below.'
-        : 'Fill in the details to create a new remote connection.'
+      (form().id ? 'pages.connections.form.editSubtitle' : 'pages.connections.form.newSubtitle')
+        | translate
     "
     (closed)="closeDrawer()"
   >
@@ -241,12 +264,12 @@
         <label
           class="text-xs font-semibold text-on-surface-variant uppercase tracking-widest"
           for="connectionName"
-          >Display Name</label
+          >{{ 'pages.connections.form.nameLabel' | translate }}</label
         >
         <input
           id="connectionName"
           type="text"
-          placeholder="e.g. Production DB Server"
+          [placeholder]="'pages.connections.form.namePlaceholder' | translate"
           [ngModel]="form().name"
           (ngModelChange)="patch('name', $event); mascotState.set('typing')"
           (blur)="mascotState.set('idle')"
@@ -261,7 +284,7 @@
         <label
           class="text-xs font-semibold text-on-surface-variant uppercase tracking-widest"
           for="connectionProtocol"
-          >Protocol</label
+          >{{ 'pages.connections.form.protocolLabel' | translate }}</label
         >
         <div class="relative">
           <span
@@ -287,7 +310,7 @@
         <label
           class="text-xs font-semibold text-on-surface-variant uppercase tracking-widest"
           for="connectionTargetHost"
-          >Target Host</label
+          >{{ 'pages.connections.form.targetHostLabel' | translate }}</label
         >
         <div class="space-y-2">
           <div class="relative">
@@ -302,7 +325,7 @@
               name="hostId"
               class="select-field pl-10 w-full"
             >
-              <option value="">— Type a new address below —</option>
+              <option value="">{{ 'pages.connections.form.targetHostTypeNew' | translate }}</option>
               @for (h of hosts(); track trackHost($index, h)) {
                 <option [value]="h.id">{{ h.name }} ({{ h.address }})</option>
               }
@@ -311,8 +334,8 @@
           <input
             id="connectionNewHostAddress"
             type="text"
-            placeholder="Or enter new address (e.g., 10.0.0.5)"
-            aria-label="New host address"
+            [placeholder]="'pages.connections.form.newHostAddressPlaceholder' | translate"
+            [attr.aria-label]="'pages.connections.form.newHostAddressAriaLabel' | translate"
             [ngModel]="form().newHostAddress"
             (ngModelChange)="
               patch('newHostAddress', $event); patch('hostId', ''); mascotState.set('typing')
@@ -331,7 +354,7 @@
         <label
           class="text-xs font-semibold text-on-surface-variant uppercase tracking-widest"
           for="connectionVaultGroup"
-          >Vault / Group</label
+          >{{ 'pages.connections.form.vaultGroupLabel' | translate }}</label
         >
         <div class="relative">
           <span
@@ -346,7 +369,9 @@
             required
             class="select-field pl-10 w-full"
           >
-            <option value="" disabled>Select vault…</option>
+            <option value="" disabled>
+              {{ 'pages.connections.form.vaultGroupPlaceholder' | translate }}
+            </option>
             @for (v of vaults(); track trackVault($index, v)) {
               <option [value]="v.id">{{ v.name }}</option>
             }
@@ -359,7 +384,7 @@
         <label
           class="text-xs font-semibold text-on-surface-variant uppercase tracking-widest"
           for="connectionCredentials"
-          >Credentials</label
+          >{{ 'pages.connections.form.credentialsLabel' | translate }}</label
         >
         <div class="relative">
           <span
@@ -373,7 +398,7 @@
             name="credentialId"
             class="select-field pl-10 w-full"
           >
-            <option value="">No credential</option>
+            <option value="">{{ 'pages.connections.form.noCredential' | translate }}</option>
             @for (c of credentials(); track trackCred($index, c)) {
               <option [value]="c.id">{{ c.name }} ({{ c.username }})</option>
             }
@@ -386,7 +411,7 @@
         <label
           class="text-xs font-semibold text-on-surface-variant uppercase tracking-widest"
           for="connectionTagInput"
-          >Tags</label
+          >{{ 'pages.connections.form.tagsLabel' | translate }}</label
         >
         <!-- Tag chips display + input -->
         <div
@@ -403,7 +428,9 @@
               <button
                 type="button"
                 (click)="removeTag(tag)"
-                aria-label="Remove tag {{ tag }}"
+                [attr.aria-label]="
+                  'pages.connections.form.removeTagAriaLabel' | translate: { tag: tag }
+                "
                 class="hover:opacity-70 transition-opacity"
               >
                 <span class="material-symbols-outlined text-[12px]">close</span>
@@ -414,7 +441,7 @@
             #tagInput
             id="connectionTagInput"
             type="text"
-            placeholder="Add tag… (Enter or comma)"
+            [placeholder]="'pages.connections.form.tagInputPlaceholder' | translate"
             [ngModel]="tagInputValue()"
             (ngModelChange)="tagInputValue.set($event)"
             (keydown)="onTagInputKeydown($event)"
@@ -424,18 +451,20 @@
           />
         </div>
         <p class="text-xs text-on-surface-variant/60">
-          Press Enter or comma to add. Backspace removes the last tag.
+          {{ 'pages.connections.form.tagsHint' | translate }}
         </p>
       </div>
 
       <!-- Recording (overrides the parent vault) -->
       <div class="space-y-1.5">
         <p class="text-xs font-semibold text-on-surface-variant uppercase tracking-widest">
-          Session recording
+          {{ 'pages.connections.form.recording.title' | translate }}
         </p>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
-            <label class="text-xs text-on-surface-variant" for="recOverride">Mode</label>
+            <label class="text-xs text-on-surface-variant" for="recOverride">{{
+              'pages.connections.form.recording.modeLabel' | translate
+            }}</label>
             <select
               id="recOverride"
               [ngModel]="form().recordingOverride"
@@ -443,13 +472,21 @@
               name="recordingOverride"
               class="select-field w-full"
             >
-              <option value="Inherit">Inherit from vault</option>
-              <option value="ForceOn">Always record this connection</option>
-              <option value="ForceOff">Never record this connection</option>
+              <option value="Inherit">
+                {{ 'pages.connections.form.recording.inherit' | translate }}
+              </option>
+              <option value="ForceOn">
+                {{ 'pages.connections.form.recording.forceOn' | translate }}
+              </option>
+              <option value="ForceOff">
+                {{ 'pages.connections.form.recording.forceOff' | translate }}
+              </option>
             </select>
           </div>
           <div>
-            <label class="text-xs text-on-surface-variant" for="recKeys">Capture keystrokes</label>
+            <label class="text-xs text-on-surface-variant" for="recKeys">{{
+              'pages.connections.form.recording.keysLabel' | translate
+            }}</label>
             <select
               id="recKeys"
               [ngModel]="form().recordingIncludeKeys"
@@ -457,15 +494,20 @@
               name="recordingIncludeKeys"
               class="select-field w-full"
             >
-              <option value="inherit">Inherit from vault</option>
-              <option value="false">Exclude keystrokes (recommended)</option>
-              <option value="true">Include keystrokes</option>
+              <option value="inherit">
+                {{ 'pages.connections.form.recording.inherit' | translate }}
+              </option>
+              <option value="false">
+                {{ 'pages.connections.form.recording.keysExclude' | translate }}
+              </option>
+              <option value="true">
+                {{ 'pages.connections.form.recording.keysInclude' | translate }}
+              </option>
             </select>
           </div>
         </div>
         <p class="text-xs text-on-surface-variant/60">
-          Recording is configured globally and per-vault. Use this only when this connection needs
-          to differ from its vault default.
+          {{ 'pages.connections.form.recording.hint' | translate }}
         </p>
       </div>
 
@@ -479,7 +521,7 @@
               class="material-symbols-outlined text-sm group-open:rotate-90 transition-transform"
               >chevron_right</span
             >
-            Terminal Appearance
+            {{ 'pages.connections.form.terminal.title' | translate }}
           </summary>
           <div class="mt-2 space-y-3">
             <!-- Color Scheme -->
@@ -487,7 +529,7 @@
               <p
                 class="block text-xs font-medium text-on-surface-variant mb-2 uppercase tracking-widest"
               >
-                Color scheme
+                {{ 'pages.connections.form.terminal.colorScheme' | translate }}
               </p>
               <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 @for (scheme of termColorSchemes; track scheme.value) {
@@ -506,7 +548,7 @@
                       class="w-4 h-4 rounded-sm flex-shrink-0 border border-white/10"
                       [style.background]="scheme.preview"
                     ></span>
-                    {{ scheme.label }}
+                    {{ scheme.label | translate }}
                   </button>
                 }
               </div>
@@ -518,7 +560,7 @@
                 <label
                   class="block text-xs font-medium text-on-surface-variant mb-1 uppercase tracking-widest"
                   for="termFontName"
-                  >Font</label
+                  >{{ 'pages.connections.form.terminal.font' | translate }}</label
                 >
                 <select
                   id="termFontName"
@@ -536,7 +578,7 @@
                 <label
                   class="block text-xs font-medium text-on-surface-variant mb-1 uppercase tracking-widest"
                   for="termFontSize"
-                  >Size (px)</label
+                  >{{ 'pages.connections.form.terminal.fontSize' | translate }}</label
                 >
                 <input
                   id="termFontSize"
@@ -562,7 +604,7 @@
           <span class="material-symbols-outlined text-sm group-open:rotate-90 transition-transform"
             >chevron_right</span
           >
-          Advanced Settings (JSON)
+          {{ 'pages.connections.form.advanced.title' | translate }}
         </summary>
         <div class="mt-2 space-y-3">
           <textarea
@@ -573,7 +615,7 @@
             (ngModelChange)="patch('settings', $event); mascotState.set('typing')"
             (blur)="mascotState.set('idle')"
             name="settings"
-            aria-label="Advanced settings (JSON)"
+            [attr.aria-label]="'pages.connections.form.advanced.ariaLabel' | translate"
             class="input-field font-mono text-xs w-full resize-y"
           ></textarea>
 
@@ -585,7 +627,7 @@
               class="flex items-center gap-1.5 px-3 py-2 border-b border-outline-variant/20 text-on-surface-variant/80 font-medium"
             >
               <span class="material-symbols-outlined text-sm">code</span>
-              Protocol examples
+              {{ 'pages.connections.form.advanced.examplesTitle' | translate }}
             </div>
             <div
               class="grid grid-cols-1 divide-y divide-outline-variant/20 md:grid-cols-3 md:divide-y-0 md:divide-x"
@@ -624,7 +666,9 @@
 
       <!-- Actions -->
       <div class="flex justify-end gap-3 pt-4 border-t border-outline-variant/20">
-        <button type="button" (click)="closeDrawer()" class="btn-ghost px-5">Cancel</button>
+        <button type="button" (click)="closeDrawer()" class="btn-ghost px-5">
+          {{ 'common.actions.cancel' | translate }}
+        </button>
         <button
           type="submit"
           [disabled]="busy()"
@@ -632,10 +676,10 @@
         >
           @if (busy()) {
             <app-spinner size="sm" color="white"></app-spinner>
-            Saving…
+            {{ 'pages.connections.form.saving' | translate }}
           } @else {
             <span class="material-symbols-outlined text-base">save</span>
-            Save Connection
+            {{ 'pages.connections.form.save' | translate }}
           }
         </button>
       </div>

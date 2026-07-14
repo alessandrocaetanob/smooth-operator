@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
+import { provideTranslateService, TranslateService } from '@ngx-translate/core';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { of, throwError } from 'rxjs';
 
@@ -15,8 +16,23 @@ describe('FirstAccess', () => {
     auth = { setup: vi.fn(() => of({})) };
     await TestBed.configureTestingModule({
       imports: [FirstAccess],
-      providers: [provideRouter([]), { provide: AuthService, useValue: auth }],
+      providers: [
+        provideRouter([]),
+        provideTranslateService(),
+        { provide: AuthService, useValue: auth },
+      ],
     }).compileComponents();
+
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', {
+      pages: {
+        firstAccess: {
+          createAccountFailed: 'Failed to create the root account.',
+        },
+      },
+    });
+    translate.use('en');
+
     fixture = TestBed.createComponent(FirstAccess);
     component = fixture.componentInstance;
   });

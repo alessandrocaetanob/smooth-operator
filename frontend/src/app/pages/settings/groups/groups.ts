@@ -1,6 +1,7 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { UserGroup, GroupsService } from '../../../services/groups.service';
 import { AppUser, UsersService } from '../../../services/users.service';
 import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
@@ -9,7 +10,7 @@ import { ToastService } from '../../../shared/toast/toast.service';
 @Component({
   selector: 'app-settings-groups',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, TranslatePipe],
   templateUrl: './groups.html',
 })
 export class SettingsGroups implements OnInit {
@@ -17,6 +18,7 @@ export class SettingsGroups implements OnInit {
   private readonly usersSvc = inject(UsersService);
   private readonly confirmSvc = inject(ConfirmDialogService);
   private readonly toastSvc = inject(ToastService);
+  private readonly translate = inject(TranslateService);
 
   readonly groups = this.groupsSvc.list;
   readonly users = this.usersSvc.list;
@@ -65,7 +67,9 @@ export class SettingsGroups implements OnInit {
       next: () => this.loading.set(false),
       error: (err) => {
         this.loading.set(false);
-        this.errorMessage.set(this.toMessage(err) || 'Failed to load groups.');
+        this.errorMessage.set(
+          this.toMessage(err) || this.translate.instant('pages.settingsGroups.errors.loadFailed'),
+        );
       },
     });
   }
@@ -74,7 +78,7 @@ export class SettingsGroups implements OnInit {
     if (this.groupBusy()) return;
     const name = this.newGroupName().trim();
     if (!name) {
-      this.errorMessage.set('Group name is required.');
+      this.errorMessage.set(this.translate.instant('pages.settingsGroups.errors.nameRequired'));
       return;
     }
     this.groupBusy.set(true);
@@ -83,12 +87,15 @@ export class SettingsGroups implements OnInit {
       next: () => {
         this.groupBusy.set(false);
         this.newGroupName.set('');
-        this.toastSvc.success(`Group "${name}" created.`);
+        this.toastSvc.success(
+          this.translate.instant('pages.settingsGroups.toasts.created', { name }),
+        );
         this.refresh();
       },
       error: (err) => {
         this.groupBusy.set(false);
-        const msg = this.toMessage(err) || 'Failed to create group.';
+        const msg =
+          this.toMessage(err) || this.translate.instant('pages.settingsGroups.errors.createFailed');
         this.errorMessage.set(msg);
         this.toastSvc.error(msg);
       },
@@ -114,12 +121,15 @@ export class SettingsGroups implements OnInit {
       next: () => {
         this.groupBusy.set(false);
         this.cancelEdit();
-        this.toastSvc.success(`Group renamed to "${name}".`);
+        this.toastSvc.success(
+          this.translate.instant('pages.settingsGroups.toasts.renamed', { name }),
+        );
         this.refresh();
       },
       error: (err) => {
         this.groupBusy.set(false);
-        const msg = this.toMessage(err) || 'Failed to rename group.';
+        const msg =
+          this.toMessage(err) || this.translate.instant('pages.settingsGroups.errors.renameFailed');
         this.errorMessage.set(msg);
         this.toastSvc.error(msg);
       },
@@ -128,20 +138,25 @@ export class SettingsGroups implements OnInit {
 
   async deleteGroup(group: UserGroup): Promise<void> {
     const ok = await this.confirmSvc.ask({
-      title: 'Delete group',
-      message: `Delete group "${group.name}"? Users in this group will lose vault access granted via the group. This cannot be undone.`,
-      confirmLabel: 'Delete',
+      title: this.translate.instant('pages.settingsGroups.confirmDelete.title'),
+      message: this.translate.instant('pages.settingsGroups.confirmDelete.message', {
+        name: group.name,
+      }),
+      confirmLabel: this.translate.instant('common.actions.delete'),
       tone: 'danger',
     });
     if (!ok) return;
     this.errorMessage.set(null);
     this.groupsSvc.remove(group.id).subscribe({
       next: () => {
-        this.toastSvc.success(`Group "${group.name}" deleted.`);
+        this.toastSvc.success(
+          this.translate.instant('pages.settingsGroups.toasts.deleted', { name: group.name }),
+        );
         this.refresh();
       },
       error: (err) => {
-        const msg = this.toMessage(err) || 'Failed to delete group.';
+        const msg =
+          this.toMessage(err) || this.translate.instant('pages.settingsGroups.errors.deleteFailed');
         this.errorMessage.set(msg);
         this.toastSvc.error(msg);
       },
@@ -179,13 +194,19 @@ export class SettingsGroups implements OnInit {
     this.groupsSvc.setMembers(group.id, this.selectedMemberIds()).subscribe({
       next: () => {
         this.membersBusy.set(false);
-        this.toastSvc.success(`Members updated for "${group.name}".`);
+        this.toastSvc.success(
+          this.translate.instant('pages.settingsGroups.toasts.membersUpdated', {
+            name: group.name,
+          }),
+        );
         this.closeMembers();
         this.refresh();
       },
       error: (err) => {
         this.membersBusy.set(false);
-        const msg = this.toMessage(err) || 'Failed to update members.';
+        const msg =
+          this.toMessage(err) ||
+          this.translate.instant('pages.settingsGroups.errors.membersUpdateFailed');
         this.errorMessage.set(msg);
         this.toastSvc.error(msg);
       },

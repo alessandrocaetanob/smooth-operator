@@ -1,9 +1,11 @@
 <div>
   <div class="mb-6">
-    <h2 class="text-lg font-semibold text-on-surface">Observability Integrations</h2>
+    <h2 class="text-lg font-semibold text-on-surface">
+      {{ 'pages.settingsIntegrations.title' | translate }}
+    </h2>
     <p class="text-sm text-on-surface-variant mt-1">
-      Connect your own monitoring stack using the endpoints below. The built-in observability stack
-      (Grafana, Prometheus, Loki, Tempo) is optional — start it with
+      {{ 'pages.settingsIntegrations.description' | translate }}
+      {{ 'pages.settingsIntegrations.startItWith' | translate }}
       <code class="font-mono text-xs bg-surface-variant px-1 py-0.5 rounded"
         >docker compose --profile observability up -d</code
       >.
@@ -21,7 +23,7 @@
       class="flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 hover:text-on-surface transition-colors"
     >
       <span class="material-symbols-outlined text-base">query_stats</span>
-      Prometheus Metrics
+      {{ 'pages.settingsIntegrations.tabs.prometheus' | translate }}
     </button>
     <button
       (click)="setTab('otlp')"
@@ -32,7 +34,7 @@
       class="flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 hover:text-on-surface transition-colors"
     >
       <span class="material-symbols-outlined text-base">timeline</span>
-      OpenTelemetry (OTLP)
+      {{ 'pages.settingsIntegrations.tabs.otlp' | translate }}
     </button>
     <button
       (click)="setTab('loki')"
@@ -43,7 +45,7 @@
       class="flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 hover:text-on-surface transition-colors"
     >
       <span class="material-symbols-outlined text-base">receipt_long</span>
-      Loki Logs
+      {{ 'pages.settingsIntegrations.tabs.loki' | translate }}
     </button>
     <button
       (click)="setTab('grafana')"
@@ -54,7 +56,7 @@
       class="flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 hover:text-on-surface transition-colors"
     >
       <span class="material-symbols-outlined text-base">dashboard</span>
-      Grafana Dashboards
+      {{ 'pages.settingsIntegrations.tabs.grafana' | translate }}
     </button>
   </nav>
 
@@ -65,27 +67,29 @@
       <div class="settings-card">
         <div class="settings-card-header">
           <span class="material-symbols-outlined settings-card-icon">query_stats</span>
-          <h3 class="settings-card-title">Metrics endpoint</h3>
+          <h3 class="settings-card-title">
+            {{ 'pages.settingsIntegrations.prometheus.endpointCardTitle' | translate }}
+          </h3>
         </div>
         <div class="settings-card-body">
           <p class="text-sm text-on-surface-variant mb-4">
-            Prometheus-compatible metrics are exposed at
-            <code class="font-mono text-xs">/metrics</code>. Scrape this endpoint with your
-            Prometheus instance or any compatible scraper.
+            {{ 'pages.settingsIntegrations.prometheus.endpointDescriptionPrefix' | translate }}
+            <code class="font-mono text-xs">/metrics</code>.
+            {{ 'pages.settingsIntegrations.prometheus.endpointDescriptionSuffix' | translate }}
           </p>
           @for (ep of prometheusEndpoints; track ep.label) {
             <div
               class="flex items-center justify-between gap-3 bg-surface-variant/30 rounded-lg px-4 py-3 mb-2"
             >
               <div>
-                <p class="text-xs text-on-surface-variant">{{ ep.label }}</p>
+                <p class="text-xs text-on-surface-variant">{{ ep.label | translate }}</p>
                 <p class="font-mono text-sm text-on-surface mt-0.5">{{ ep.value }}</p>
               </div>
               <button
                 (click)="copy(ep.value, ep.label)"
                 class="icon-btn shrink-0"
-                title="Copy"
-                aria-label="Copy"
+                [attr.title]="'pages.settingsIntegrations.common.copy' | translate"
+                [attr.aria-label]="'pages.settingsIntegrations.common.copy' | translate"
               >
                 <span class="material-symbols-outlined text-base">
                   {{ copiedKey() === ep.label ? 'check' : 'content_copy' }}
@@ -100,7 +104,9 @@
       <div class="settings-card">
         <div class="settings-card-header">
           <span class="material-symbols-outlined settings-card-icon">monitoring</span>
-          <h3 class="settings-card-title">Available metrics</h3>
+          <h3 class="settings-card-title">
+            {{ 'pages.settingsIntegrations.prometheus.availableMetricsTitle' | translate }}
+          </h3>
         </div>
         <div class="settings-card-body">
           <ul class="space-y-1.5">
@@ -118,12 +124,12 @@
       <div class="settings-card">
         <div class="settings-card-header">
           <span class="material-symbols-outlined settings-card-icon">code</span>
-          <h3 class="settings-card-title">{{ prometheusConfig.label }}</h3>
+          <h3 class="settings-card-title">{{ prometheusConfig.label | translate }}</h3>
           <button
             (click)="copy(prometheusConfig.code, 'prom-config')"
             class="icon-btn ml-auto"
-            title="Copy"
-            aria-label="Copy"
+            [attr.title]="'pages.settingsIntegrations.common.copy' | translate"
+            [attr.aria-label]="'pages.settingsIntegrations.common.copy' | translate"
           >
             <span class="material-symbols-outlined text-base">
               {{ copiedKey() === 'prom-config' ? 'check' : 'content_copy' }}
@@ -147,26 +153,27 @@
       <div class="settings-card">
         <div class="settings-card-header">
           <span class="material-symbols-outlined settings-card-icon">timeline</span>
-          <h3 class="settings-card-title">OpenTelemetry endpoints</h3>
+          <h3 class="settings-card-title">
+            {{ 'pages.settingsIntegrations.otlp.endpointsCardTitle' | translate }}
+          </h3>
         </div>
         <div class="settings-card-body">
           <p class="text-sm text-on-surface-variant mb-4">
-            The backend exports distributed traces via OTLP gRPC to Grafana Tempo. Connect your own
-            OpenTelemetry Collector to the endpoint below to receive traces.
+            {{ 'pages.settingsIntegrations.otlp.endpointsDescription' | translate }}
           </p>
           @for (ep of otlpEndpoints; track ep.label) {
             <div
               class="flex items-center justify-between gap-3 bg-surface-variant/30 rounded-lg px-4 py-3 mb-2"
             >
               <div>
-                <p class="text-xs text-on-surface-variant">{{ ep.label }}</p>
+                <p class="text-xs text-on-surface-variant">{{ ep.label | translate }}</p>
                 <p class="font-mono text-sm text-on-surface mt-0.5">{{ ep.value }}</p>
               </div>
               <button
                 (click)="copy(ep.value, ep.label)"
                 class="icon-btn shrink-0"
-                title="Copy"
-                aria-label="Copy"
+                [attr.title]="'pages.settingsIntegrations.common.copy' | translate"
+                [attr.aria-label]="'pages.settingsIntegrations.common.copy' | translate"
               >
                 <span class="material-symbols-outlined text-base">
                   {{ copiedKey() === ep.label ? 'check' : 'content_copy' }}
@@ -181,12 +188,12 @@
       <div class="settings-card">
         <div class="settings-card-header">
           <span class="material-symbols-outlined settings-card-icon">code</span>
-          <h3 class="settings-card-title">{{ otlpConfig.label }}</h3>
+          <h3 class="settings-card-title">{{ otlpConfig.label | translate }}</h3>
           <button
             (click)="copy(otlpConfig.code, 'otlp-config')"
             class="icon-btn ml-auto"
-            title="Copy"
-            aria-label="Copy"
+            [attr.title]="'pages.settingsIntegrations.common.copy' | translate"
+            [attr.aria-label]="'pages.settingsIntegrations.common.copy' | translate"
           >
             <span class="material-symbols-outlined text-base">
               {{ copiedKey() === 'otlp-config' ? 'check' : 'content_copy' }}
@@ -205,14 +212,17 @@
       <div class="settings-card">
         <div class="settings-card-header">
           <span class="material-symbols-outlined settings-card-icon">info</span>
-          <h3 class="settings-card-title">Service name</h3>
+          <h3 class="settings-card-title">
+            {{ 'pages.settingsIntegrations.otlp.serviceNameTitle' | translate }}
+          </h3>
         </div>
         <div class="settings-card-body">
           <p class="text-sm text-on-surface-variant">
-            The backend service is registered as
-            <code class="font-mono text-xs">smooth-operator-backend</code>. Filter traces by
-            <code class="font-mono text-xs">service.name = "smooth-operator-backend"</code> in your
-            tracing UI.
+            {{ 'pages.settingsIntegrations.otlp.serviceNameDescriptionPrefix' | translate }}
+            <code class="font-mono text-xs">smooth-operator-backend</code>.
+            {{ 'pages.settingsIntegrations.otlp.serviceNameDescriptionMid' | translate }}
+            <code class="font-mono text-xs">service.name = "smooth-operator-backend"</code>
+            {{ 'pages.settingsIntegrations.otlp.serviceNameDescriptionSuffix' | translate }}
           </p>
         </div>
       </div>
@@ -226,26 +236,27 @@
       <div class="settings-card">
         <div class="settings-card-header">
           <span class="material-symbols-outlined settings-card-icon">receipt_long</span>
-          <h3 class="settings-card-title">Loki endpoints</h3>
+          <h3 class="settings-card-title">
+            {{ 'pages.settingsIntegrations.loki.endpointsCardTitle' | translate }}
+          </h3>
         </div>
         <div class="settings-card-body">
           <p class="text-sm text-on-surface-variant mb-4">
-            Application logs are shipped to Loki in CLEF (Compact Log Event Format). Each log line
-            carries structured properties you can filter with LogQL.
+            {{ 'pages.settingsIntegrations.loki.endpointsDescription' | translate }}
           </p>
           @for (ep of lokiEndpoints; track ep.label) {
             <div
               class="flex items-center justify-between gap-3 bg-surface-variant/30 rounded-lg px-4 py-3 mb-2"
             >
               <div>
-                <p class="text-xs text-on-surface-variant">{{ ep.label }}</p>
+                <p class="text-xs text-on-surface-variant">{{ ep.label | translate }}</p>
                 <p class="font-mono text-sm text-on-surface mt-0.5">{{ ep.value }}</p>
               </div>
               <button
                 (click)="copy(ep.value, ep.label)"
                 class="icon-btn shrink-0"
-                title="Copy"
-                aria-label="Copy"
+                [attr.title]="'pages.settingsIntegrations.common.copy' | translate"
+                [attr.aria-label]="'pages.settingsIntegrations.common.copy' | translate"
               >
                 <span class="material-symbols-outlined text-base">
                   {{ copiedKey() === ep.label ? 'check' : 'content_copy' }}
@@ -260,7 +271,9 @@
       <div class="settings-card">
         <div class="settings-card-header">
           <span class="material-symbols-outlined settings-card-icon">label</span>
-          <h3 class="settings-card-title">Available labels</h3>
+          <h3 class="settings-card-title">
+            {{ 'pages.settingsIntegrations.loki.availableLabelsTitle' | translate }}
+          </h3>
         </div>
         <div class="settings-card-body">
           <ul class="space-y-1.5">
@@ -278,19 +291,23 @@
       <div class="settings-card">
         <div class="settings-card-header">
           <span class="material-symbols-outlined settings-card-icon">search</span>
-          <h3 class="settings-card-title">Example LogQL queries</h3>
+          <h3 class="settings-card-title">
+            {{ 'pages.settingsIntegrations.loki.queriesTitle' | translate }}
+          </h3>
         </div>
         <div class="settings-card-body">
           <div class="space-y-4">
             @for (q of lokiQueries; track q.label) {
               <div>
                 <div class="flex items-center justify-between mb-1.5">
-                  <p class="text-xs font-medium text-on-surface-variant">{{ q.label }}</p>
+                  <p class="text-xs font-medium text-on-surface-variant">
+                    {{ q.label | translate }}
+                  </p>
                   <button
                     (click)="copy(q.code, q.label)"
                     class="icon-btn"
-                    title="Copy"
-                    aria-label="Copy"
+                    [attr.title]="'pages.settingsIntegrations.common.copy' | translate"
+                    [attr.aria-label]="'pages.settingsIntegrations.common.copy' | translate"
                   >
                     <span class="material-symbols-outlined text-base">
                       {{ copiedKey() === q.label ? 'check' : 'content_copy' }}
@@ -315,17 +332,17 @@
       <div class="settings-card">
         <div class="settings-card-header">
           <span class="material-symbols-outlined settings-card-icon">dashboard</span>
-          <h3 class="settings-card-title">Grafana dashboard files</h3>
+          <h3 class="settings-card-title">
+            {{ 'pages.settingsIntegrations.grafana.cardTitle' | translate }}
+          </h3>
         </div>
         <div class="settings-card-body">
           <p class="text-sm text-on-surface-variant mb-4">
-            Download these pre-built Grafana dashboard JSON files to use with your own standalone
-            Grafana server. Import each file via
+            {{ 'pages.settingsIntegrations.grafana.descriptionPrefix' | translate }}
             <strong class="font-medium text-on-surface"
               >Dashboards → Import → Upload JSON file</strong
             >
-            in the Grafana UI. Requires Prometheus, Loki, and Tempo data sources configured with the
-            endpoints from the other tabs.
+            {{ 'pages.settingsIntegrations.grafana.descriptionSuffix' | translate }}
           </p>
           <div class="space-y-3">
             @for (d of grafanaDashboards; track d.filename) {
@@ -333,8 +350,10 @@
                 class="flex items-center justify-between gap-4 bg-surface-variant/30 rounded-lg px-4 py-3"
               >
                 <div class="min-w-0">
-                  <p class="text-sm font-medium text-on-surface">{{ d.name }}</p>
-                  <p class="text-xs text-on-surface-variant mt-0.5">{{ d.description }}</p>
+                  <p class="text-sm font-medium text-on-surface">{{ d.name | translate }}</p>
+                  <p class="text-xs text-on-surface-variant mt-0.5">
+                    {{ d.description | translate }}
+                  </p>
                   <code class="font-mono text-xs text-on-surface-variant/70 mt-1 block">{{
                     d.filename
                   }}</code>
@@ -343,10 +362,13 @@
                   [href]="d.url"
                   [attr.download]="d.filename"
                   class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-outline-variant/30 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-colors shrink-0"
-                  title="Download {{ d.filename }}"
+                  title="{{
+                    'pages.settingsIntegrations.common.downloadTitle'
+                      | translate: { filename: d.filename }
+                  }}"
                 >
                   <span class="material-symbols-outlined text-base">download</span>
-                  Download
+                  {{ 'pages.settingsIntegrations.common.download' | translate }}
                 </a>
               </div>
             }

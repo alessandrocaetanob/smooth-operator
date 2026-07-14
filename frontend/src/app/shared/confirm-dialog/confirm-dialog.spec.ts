@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideAnimations } from '@angular/platform-browser/animations';
+import { TranslateService, provideTranslateService } from '@ngx-translate/core';
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 
 import { ConfirmDialog } from './confirm-dialog';
@@ -13,8 +14,14 @@ describe('ConfirmDialog', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [ConfirmDialog],
-      providers: [provideAnimations()],
+      providers: [provideAnimations(), provideTranslateService()],
     }).compileComponents();
+
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', {
+      common: { actions: { confirm: 'Confirm', cancel: 'Cancel' } },
+    });
+    translate.use('en');
 
     svc = TestBed.inject(ConfirmDialogService);
     fixture = TestBed.createComponent(ConfirmDialog);

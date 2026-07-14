@@ -10,6 +10,7 @@ import {
   ViewChild,
 } from '@angular/core';
 import { animate, style, transition, trigger } from '@angular/animations';
+import { TranslatePipe } from '@ngx-translate/core';
 
 const drawerPanel = trigger('drawerPanel', [
   transition(':enter', [
@@ -29,6 +30,7 @@ const backdrop = trigger('backdrop', [
 @Component({
   selector: 'app-drawer',
   standalone: true,
+  imports: [TranslatePipe],
   templateUrl: './drawer.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [drawerPanel, backdrop],

@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { ActivatedRoute, Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { VaultsService, Vault } from '../../services/vaults.service';
 import { ConnectionsService, Connection } from '../../services/connections.service';
 import { Mascot } from '../../shared/mascot/mascot';
@@ -24,7 +25,7 @@ interface ConnectionMatch {
 @Component({
   selector: 'app-search-results',
   standalone: true,
-  imports: [Mascot],
+  imports: [Mascot, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './search-results.html',
   styleUrl: './search-results.css',
@@ -34,6 +35,7 @@ export class SearchResults {
   private readonly router = inject(Router);
   private readonly vaults = inject(VaultsService);
   private readonly connections = inject(ConnectionsService);
+  private readonly translate = inject(TranslateService);
 
   readonly query = toSignal(this.route.queryParamMap.pipe(map((p) => (p.get('q') ?? '').trim())), {
     initialValue: '',
@@ -135,15 +137,27 @@ export class SearchResults {
 
   private vaultSubtitle(v: Vault): string {
     const parts: string[] = [];
-    if (v.userCount != null) parts.push(`${v.userCount} user${v.userCount === 1 ? '' : 's'}`);
-    if (v.groupCount != null) parts.push(`${v.groupCount} group${v.groupCount === 1 ? '' : 's'}`);
-    return parts.join(' · ') || 'Vault';
+    if (v.userCount != null) {
+      const key =
+        v.userCount === 1
+          ? 'pages.searchResults.userCountOne'
+          : 'pages.searchResults.userCountOther';
+      parts.push(this.translate.instant(key, { count: v.userCount }));
+    }
+    if (v.groupCount != null) {
+      const key =
+        v.groupCount === 1
+          ? 'pages.searchResults.groupCountOne'
+          : 'pages.searchResults.groupCountOther';
+      parts.push(this.translate.instant(key, { count: v.groupCount }));
+    }
+    return parts.join(' · ') || this.translate.instant('pages.searchResults.vaultFallback');
   }
 
   private connectionSubtitle(c: Connection): string {
     if (c.host?.address) return `${c.host.name ?? c.host.address} · ${c.host.address}`;
     if (c.host?.name) return c.host.name;
-    return 'Connection';
+    return this.translate.instant('pages.searchResults.connectionFallback');
   }
 
   openVault(id: string): void {

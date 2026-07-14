@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideTranslateService, TranslateService } from '@ngx-translate/core';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { of, throwError } from 'rxjs';
 
@@ -27,9 +28,29 @@ describe('Retention', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
+        provideTranslateService(),
         { provide: SystemSettingsService, useValue: svc },
       ],
     }).compileComponents();
+
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', {
+      pages: {
+        settingsRetention: {
+          errors: {
+            invalidRange: 'Retention must be an integer between 0 (forever) and 3650 days.',
+            loadFailed: 'Failed to load system settings.',
+            saveFailed: 'Failed to save settings.',
+          },
+          messages: {
+            disabledForever: 'Retention disabled — audit logs will be kept forever.',
+            purgeScheduled: 'Audit logs older than {{days}} day(s) will be purged daily.',
+          },
+        },
+      },
+    });
+    translate.use('en');
+
     fixture = TestBed.createComponent(Retention);
     component = fixture.componentInstance;
   });

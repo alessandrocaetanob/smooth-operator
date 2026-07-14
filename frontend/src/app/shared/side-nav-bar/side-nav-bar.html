@@ -3,7 +3,7 @@
     type="button"
     class="md:hidden fixed inset-0 z-30 bg-black/45 backdrop-blur-[2px]"
     (click)="closeMobileNav()"
-    aria-label="Close navigation menu"
+    [attr.aria-label]="'nav.sidebar.closeNavigationMenu' | translate"
   ></button>
 }
 
@@ -20,7 +20,7 @@
   [class.sidebar-shell--expanded]="!collapsed()"
   [class.md:w-64]="!collapsed()"
   [class.md:w-20]="collapsed()"
-  [attr.aria-label]="'Primary navigation'"
+  [attr.aria-label]="'nav.sidebar.primaryNavigation' | translate"
   [attr.aria-modal]="mobileNavOpen() ? 'true' : null"
 >
   <div class="sidebar-body flex-1 overflow-y-auto py-3">
@@ -32,17 +32,19 @@
             (click)="closeMobileNav()"
             class="nav-link settings-nav-back-btn"
             [class.nav-link--icon-only]="collapsed()"
-            [attr.title]="collapsed() ? 'Back to app' : null"
+            [attr.title]="collapsed() ? ('nav.sidebar.backToApp' | translate) : null"
           >
             <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
             @if (!collapsed()) {
-              <span>Back to app</span>
+              <span>{{ 'nav.sidebar.backToApp' | translate }}</span>
             }
           </a>
         </li>
         <li class="settings-nav-divider" role="separator"></li>
         @if (!collapsed()) {
-          <li class="settings-nav-group-label">People &amp; Access</li>
+          <li class="settings-nav-group-label">
+            {{ 'nav.sidebar.groupPeopleAccess' | translate }}
+          </li>
         }
         <li>
           <a
@@ -53,11 +55,11 @@
             [ariaCurrentWhenActive]="'page'"
             class="nav-link"
             [class.nav-link--icon-only]="collapsed()"
-            [attr.title]="collapsed() ? 'Users' : null"
+            [attr.title]="collapsed() ? ('nav.sidebar.users' | translate) : null"
           >
             <span class="material-symbols-outlined" aria-hidden="true">group</span>
             @if (!collapsed()) {
-              <span>Users</span>
+              <span>{{ 'nav.sidebar.users' | translate }}</span>
             }
           </a>
         </li>
@@ -70,11 +72,11 @@
             [ariaCurrentWhenActive]="'page'"
             class="nav-link"
             [class.nav-link--icon-only]="collapsed()"
-            [attr.title]="collapsed() ? 'Groups' : null"
+            [attr.title]="collapsed() ? ('nav.sidebar.groups' | translate) : null"
           >
             <span class="material-symbols-outlined" aria-hidden="true">workspaces</span>
             @if (!collapsed()) {
-              <span>Groups</span>
+              <span>{{ 'nav.sidebar.groups' | translate }}</span>
             }
           </a>
         </li>
@@ -87,17 +89,19 @@
             [ariaCurrentWhenActive]="'page'"
             class="nav-link"
             [class.nav-link--icon-only]="collapsed()"
-            [attr.title]="collapsed() ? 'Roles' : null"
+            [attr.title]="collapsed() ? ('nav.sidebar.roles' | translate) : null"
           >
             <span class="material-symbols-outlined" aria-hidden="true">verified_user</span>
             @if (!collapsed()) {
-              <span>Roles</span>
+              <span>{{ 'nav.sidebar.roles' | translate }}</span>
             }
           </a>
         </li>
 
         @if (!collapsed()) {
-          <li class="settings-nav-group-label">Infrastructure</li>
+          <li class="settings-nav-group-label">
+            {{ 'nav.sidebar.groupInfrastructure' | translate }}
+          </li>
         }
         <li>
           <a
@@ -108,11 +112,11 @@
             [ariaCurrentWhenActive]="'page'"
             class="nav-link"
             [class.nav-link--icon-only]="collapsed()"
-            [attr.title]="collapsed() ? 'Vaults' : null"
+            [attr.title]="collapsed() ? ('nav.sidebar.vaults' | translate) : null"
           >
             <span class="material-symbols-outlined" aria-hidden="true">lock</span>
             @if (!collapsed()) {
-              <span>Vaults</span>
+              <span>{{ 'nav.sidebar.vaults' | translate }}</span>
             }
           </a>
         </li>
@@ -125,17 +129,17 @@
             [ariaCurrentWhenActive]="'page'"
             class="nav-link"
             [class.nav-link--icon-only]="collapsed()"
-            [attr.title]="collapsed() ? 'Key Vault' : null"
+            [attr.title]="collapsed() ? ('nav.sidebar.keyVault' | translate) : null"
           >
             <span class="material-symbols-outlined" aria-hidden="true">lock_open</span>
             @if (!collapsed()) {
-              <span>Key Vault</span>
+              <span>{{ 'nav.sidebar.keyVault' | translate }}</span>
             }
           </a>
         </li>
 
         @if (!collapsed()) {
-          <li class="settings-nav-group-label">Security</li>
+          <li class="settings-nav-group-label">{{ 'nav.sidebar.groupSecurity' | translate }}</li>
         }
         <li>
           <a
@@ -146,11 +150,11 @@
             [ariaCurrentWhenActive]="'page'"
             class="nav-link"
             [class.nav-link--icon-only]="collapsed()"
-            [attr.title]="collapsed() ? 'SSO' : null"
+            [attr.title]="collapsed() ? ('nav.sidebar.sso' | translate) : null"
           >
             <span class="material-symbols-outlined" aria-hidden="true">key</span>
             @if (!collapsed()) {
-              <span>SSO</span>
+              <span>{{ 'nav.sidebar.sso' | translate }}</span>
             }
           </a>
         </li>
@@ -163,11 +167,11 @@
             [ariaCurrentWhenActive]="'page'"
             class="nav-link"
             [class.nav-link--icon-only]="collapsed()"
-            [attr.title]="collapsed() ? 'Sessions' : null"
+            [attr.title]="collapsed() ? ('nav.sidebar.sessions' | translate) : null"
           >
             <span class="material-symbols-outlined" aria-hidden="true">timer</span>
             @if (!collapsed()) {
-              <span>Sessions</span>
+              <span>{{ 'nav.sidebar.sessions' | translate }}</span>
             }
           </a>
         </li>
@@ -180,11 +184,11 @@
             [ariaCurrentWhenActive]="'page'"
             class="nav-link"
             [class.nav-link--icon-only]="collapsed()"
-            [attr.title]="collapsed() ? 'Retention' : null"
+            [attr.title]="collapsed() ? ('nav.sidebar.retention' | translate) : null"
           >
             <span class="material-symbols-outlined" aria-hidden="true">schedule</span>
             @if (!collapsed()) {
-              <span>Retention</span>
+              <span>{{ 'nav.sidebar.retention' | translate }}</span>
             }
           </a>
         </li>
@@ -197,17 +201,17 @@
             [ariaCurrentWhenActive]="'page'"
             class="nav-link"
             [class.nav-link--icon-only]="collapsed()"
-            [attr.title]="collapsed() ? 'Recording' : null"
+            [attr.title]="collapsed() ? ('nav.sidebar.recording' | translate) : null"
           >
             <span class="material-symbols-outlined" aria-hidden="true">videocam</span>
             @if (!collapsed()) {
-              <span>Recording</span>
+              <span>{{ 'nav.sidebar.recording' | translate }}</span>
             }
           </a>
         </li>
 
         @if (!collapsed()) {
-          <li class="settings-nav-group-label">System</li>
+          <li class="settings-nav-group-label">{{ 'nav.sidebar.groupSystem' | translate }}</li>
         }
         <li>
           <a
@@ -218,11 +222,11 @@
             [ariaCurrentWhenActive]="'page'"
             class="nav-link"
             [class.nav-link--icon-only]="collapsed()"
-            [attr.title]="collapsed() ? 'Email' : null"
+            [attr.title]="collapsed() ? ('nav.sidebar.email' | translate) : null"
           >
             <span class="material-symbols-outlined" aria-hidden="true">mail</span>
             @if (!collapsed()) {
-              <span>Email</span>
+              <span>{{ 'nav.sidebar.email' | translate }}</span>
             }
           </a>
         </li>
@@ -235,11 +239,11 @@
             [ariaCurrentWhenActive]="'page'"
             class="nav-link"
             [class.nav-link--icon-only]="collapsed()"
-            [attr.title]="collapsed() ? 'Integrations' : null"
+            [attr.title]="collapsed() ? ('nav.sidebar.integrations' | translate) : null"
           >
             <span class="material-symbols-outlined" aria-hidden="true">hub</span>
             @if (!collapsed()) {
-              <span>Integrations</span>
+              <span>{{ 'nav.sidebar.integrations' | translate }}</span>
             }
           </a>
         </li>
@@ -252,11 +256,11 @@
             [ariaCurrentWhenActive]="'page'"
             class="nav-link"
             [class.nav-link--icon-only]="collapsed()"
-            [attr.title]="collapsed() ? 'Webhooks' : null"
+            [attr.title]="collapsed() ? ('nav.sidebar.webhooks' | translate) : null"
           >
             <span class="material-symbols-outlined" aria-hidden="true">webhook</span>
             @if (!collapsed()) {
-              <span>Webhooks</span>
+              <span>{{ 'nav.sidebar.webhooks' | translate }}</span>
             }
           </a>
         </li>
@@ -270,11 +274,11 @@
             routerLinkActive="nav-link-active"
             class="nav-link"
             [class.nav-link--icon-only]="collapsed()"
-            [attr.title]="collapsed() ? 'My Access' : null"
+            [attr.title]="collapsed() ? ('nav.sidebar.myAccess' | translate) : null"
           >
             <span class="material-symbols-outlined" aria-hidden="true">verified_user</span>
             @if (!collapsed()) {
-              <span>My Access</span>
+              <span>{{ 'nav.sidebar.myAccess' | translate }}</span>
             }
           </a>
         </li>
@@ -286,11 +290,11 @@
             [routerLinkActiveOptions]="{ exact: false }"
             class="nav-link"
             [class.nav-link--icon-only]="collapsed()"
-            [attr.title]="collapsed() ? 'My Vaults' : null"
+            [attr.title]="collapsed() ? ('nav.sidebar.myVaults' | translate) : null"
           >
             <span class="material-symbols-outlined" aria-hidden="true">dashboard</span>
             @if (!collapsed()) {
-              <span>My Vaults</span>
+              <span>{{ 'nav.sidebar.myVaults' | translate }}</span>
             }
           </a>
         </li>
@@ -302,11 +306,11 @@
               routerLinkActive="nav-link-active"
               class="nav-link"
               [class.nav-link--icon-only]="collapsed()"
-              [attr.title]="collapsed() ? 'Connections' : null"
+              [attr.title]="collapsed() ? ('nav.sidebar.connections' | translate) : null"
             >
               <span class="material-symbols-outlined" aria-hidden="true">hub</span>
               @if (!collapsed()) {
-                <span>Connections</span>
+                <span>{{ 'nav.sidebar.connections' | translate }}</span>
               }
             </a>
           </li>
@@ -317,11 +321,11 @@
               routerLinkActive="nav-link-active"
               class="nav-link"
               [class.nav-link--icon-only]="collapsed()"
-              [attr.title]="collapsed() ? 'Known Hosts' : null"
+              [attr.title]="collapsed() ? ('nav.sidebar.knownHosts' | translate) : null"
             >
               <span class="material-symbols-outlined" aria-hidden="true">dns</span>
               @if (!collapsed()) {
-                <span>Known Hosts</span>
+                <span>{{ 'nav.sidebar.knownHosts' | translate }}</span>
               }
             </a>
           </li>
@@ -334,11 +338,11 @@
               routerLinkActive="nav-link-active"
               class="nav-link"
               [class.nav-link--icon-only]="collapsed()"
-              [attr.title]="collapsed() ? 'Credentials' : null"
+              [attr.title]="collapsed() ? ('nav.sidebar.credentials' | translate) : null"
             >
               <span class="material-symbols-outlined" aria-hidden="true">key</span>
               @if (!collapsed()) {
-                <span>Credentials</span>
+                <span>{{ 'nav.sidebar.credentials' | translate }}</span>
               }
             </a>
           </li>
@@ -352,11 +356,11 @@
               [routerLinkActiveOptions]="{ exact: false }"
               class="nav-link"
               [class.nav-link--icon-only]="collapsed()"
-              [attr.title]="collapsed() ? 'Audit Logs' : null"
+              [attr.title]="collapsed() ? ('nav.sidebar.auditLogs' | translate) : null"
             >
               <span class="material-symbols-outlined" aria-hidden="true">receipt_long</span>
               @if (!collapsed()) {
-                <span>Audit Logs</span>
+                <span>{{ 'nav.sidebar.auditLogs' | translate }}</span>
               }
             </a>
           </li>
@@ -370,11 +374,11 @@
               [routerLinkActiveOptions]="{ exact: false }"
               class="nav-link"
               [class.nav-link--icon-only]="collapsed()"
-              [attr.title]="collapsed() ? 'Recordings' : null"
+              [attr.title]="collapsed() ? ('nav.sidebar.recordings' | translate) : null"
             >
               <span class="material-symbols-outlined" aria-hidden="true">videocam</span>
               @if (!collapsed()) {
-                <span>Recordings</span>
+                <span>{{ 'nav.sidebar.recordings' | translate }}</span>
               }
             </a>
           </li>
@@ -388,11 +392,11 @@
               [routerLinkActiveOptions]="{ exact: false }"
               class="nav-link"
               [class.nav-link--icon-only]="collapsed()"
-              [attr.title]="collapsed() ? 'Monitoring' : null"
+              [attr.title]="collapsed() ? ('nav.sidebar.monitoring' | translate) : null"
             >
               <span class="material-symbols-outlined" aria-hidden="true">monitoring</span>
               @if (!collapsed()) {
-                <span>Monitoring</span>
+                <span>{{ 'nav.sidebar.monitoring' | translate }}</span>
               }
             </a>
           </li>
@@ -405,11 +409,11 @@
               routerLinkActive="nav-link-active"
               class="nav-link"
               [class.nav-link--icon-only]="collapsed()"
-              [attr.title]="collapsed() ? 'Settings' : null"
+              [attr.title]="collapsed() ? ('nav.sidebar.settings' | translate) : null"
             >
               <span class="material-symbols-outlined" aria-hidden="true">settings</span>
               @if (!collapsed()) {
-                <span>Settings</span>
+                <span>{{ 'nav.sidebar.settings' | translate }}</span>
               }
             </a>
           </li>
@@ -423,14 +427,18 @@
       (click)="toggleCollapsed()"
       class="sidebar-toggle hidden md:flex w-full items-center gap-3"
       [class.nav-link--icon-only]="collapsed()"
-      [attr.title]="collapsed() ? 'Expand sidebar' : 'Collapse sidebar'"
-      [attr.aria-label]="collapsed() ? 'Expand sidebar' : 'Collapse sidebar'"
+      [attr.title]="
+        (collapsed() ? 'nav.sidebar.expandSidebar' : 'nav.sidebar.collapseSidebar') | translate
+      "
+      [attr.aria-label]="
+        (collapsed() ? 'nav.sidebar.expandSidebar' : 'nav.sidebar.collapseSidebar') | translate
+      "
     >
       <span class="material-symbols-outlined text-base" aria-hidden="true">{{
         collapsed() ? 'chevron_right' : 'chevron_left'
       }}</span>
       @if (!collapsed()) {
-        <span class="text-[10px]">Collapse</span>
+        <span class="text-[10px]">{{ 'nav.sidebar.collapse' | translate }}</span>
       }
     </button>
   </div>
@@ -444,12 +452,12 @@
         (click)="closeMobileNav()"
         class="sidebar-footer-link w-full flex items-center gap-3"
         [class.nav-link--icon-only]="collapsed()"
-        [attr.title]="collapsed() ? 'Help & Documentation' : null"
-        [attr.aria-label]="'Help & Documentation'"
+        [attr.title]="collapsed() ? ('nav.sidebar.helpDocs' | translate) : null"
+        [attr.aria-label]="'nav.sidebar.helpDocs' | translate"
       >
         <span class="material-symbols-outlined text-lg" aria-hidden="true">help</span>
         @if (!collapsed()) {
-          <span>Help</span>
+          <span>{{ 'nav.sidebar.help' | translate }}</span>
         }
       </a>
     }
@@ -457,12 +465,12 @@
       (click)="logout()"
       class="sidebar-footer-link sidebar-footer-link--danger w-full flex items-center gap-3"
       [class.nav-link--icon-only]="collapsed()"
-      [attr.title]="collapsed() ? 'Sign out' : null"
-      [attr.aria-label]="'Sign out'"
+      [attr.title]="collapsed() ? ('nav.sidebar.signOut' | translate) : null"
+      [attr.aria-label]="'nav.sidebar.signOut' | translate"
     >
       <span class="material-symbols-outlined text-lg" aria-hidden="true">logout</span>
       @if (!collapsed()) {
-        <span>Sign out</span>
+        <span>{{ 'nav.sidebar.signOut' | translate }}</span>
       }
     </button>
   </div>

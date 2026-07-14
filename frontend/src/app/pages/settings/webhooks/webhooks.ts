@@ -1,6 +1,7 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   CreateWebhookPayload,
   UpdateWebhookPayload,
@@ -12,20 +13,21 @@ import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dia
 
 interface EventCategory {
   pattern: string;
-  label: string;
+  labelKey: string;
 }
 
 type StatusTone = 'ok' | 'bad' | 'idle';
 
 @Component({
   selector: 'app-webhooks-settings',
-  imports: [FormsModule, DatePipe],
+  imports: [FormsModule, DatePipe, TranslatePipe],
   templateUrl: './webhooks.html',
   styleUrl: './webhooks.css',
 })
 export class WebhooksSettings implements OnInit {
   private readonly svc = inject(WebhooksService);
   private readonly confirm = inject(ConfirmDialogService);
+  private readonly translate = inject(TranslateService);
 
   readonly webhooks = this.svc.list;
   readonly loading = signal(false);
@@ -52,18 +54,22 @@ export class WebhooksSettings implements OnInit {
   readonly openMenuId = signal<string | null>(null);
 
   readonly eventCategories: EventCategory[] = [
-    { pattern: 'user.*', label: 'Users & authentication' },
-    { pattern: 'connection.*', label: 'Connections' },
-    { pattern: 'credential.*', label: 'Credentials' },
-    { pattern: 'sso.*', label: 'Single sign-on' },
-    { pattern: 'group.*', label: 'Groups' },
-    { pattern: 'invite.*', label: 'Invitations' },
-    { pattern: 'webhook.*', label: 'Webhooks' },
-    { pattern: 'system.*', label: 'System' },
+    { pattern: 'user.*', labelKey: 'pages.settingsWebhooks.events.users' },
+    { pattern: 'connection.*', labelKey: 'pages.settingsWebhooks.events.connections' },
+    { pattern: 'credential.*', labelKey: 'pages.settingsWebhooks.events.credentials' },
+    { pattern: 'sso.*', labelKey: 'pages.settingsWebhooks.events.sso' },
+    { pattern: 'group.*', labelKey: 'pages.settingsWebhooks.events.groups' },
+    { pattern: 'invite.*', labelKey: 'pages.settingsWebhooks.events.invitations' },
+    { pattern: 'webhook.*', labelKey: 'pages.settingsWebhooks.events.webhooks' },
+    { pattern: 'system.*', labelKey: 'pages.settingsWebhooks.events.system' },
   ];
 
   readonly allEventsSelected = computed(() => this.selectedEvents().includes('*'));
-  readonly editorTitle = computed(() => (this.editingId() ? 'Edit endpoint' : 'New endpoint'));
+  readonly editorTitle = computed(() =>
+    this.editingId()
+      ? 'pages.settingsWebhooks.editor.titleEdit'
+      : 'pages.settingsWebhooks.editor.titleNew',
+  );
 
   ngOnInit(): void {
     this.refresh();
@@ -75,7 +81,9 @@ export class WebhooksSettings implements OnInit {
       next: () => this.loading.set(false),
       error: (err) => {
         this.loading.set(false);
-        this.error.set(this.toMessage(err) || 'Failed to load webhooks.');
+        this.error.set(
+          this.toMessage(err) || this.translate.instant('pages.settingsWebhooks.errors.loadFailed'),
+        );
       },
     });
   }
@@ -139,7 +147,7 @@ export class WebhooksSettings implements OnInit {
     const name = this.formName().trim();
     const url = this.formUrl().trim();
     if (!name || !url) {
-      this.error.set('Name and URL are required.');
+      this.error.set(this.translate.instant('pages.settingsWebhooks.errors.nameUrlRequired'));
       return;
     }
     const eventTypes = this.selectedEvents().join(',');
@@ -150,17 +158,20 @@ export class WebhooksSettings implements OnInit {
     if (id) {
       const payload: UpdateWebhookPayload = { name, url, eventTypes, enabled: this.formEnabled() };
       this.svc.update(id, payload).subscribe({
-        next: () => this.afterWrite('Webhook endpoint updated.'),
-        error: (err) => this.failWrite(err, 'Failed to save webhook.'),
+        next: () =>
+          this.afterWrite(this.translate.instant('pages.settingsWebhooks.messages.updated')),
+        error: (err) =>
+          this.failWrite(err, this.translate.instant('pages.settingsWebhooks.errors.saveFailed')),
       });
     } else {
       const payload: CreateWebhookPayload = { name, url, eventTypes };
       this.svc.create(payload).subscribe({
         next: (secret) => {
           this.revealedSecret.set(secret);
-          this.afterWrite('Webhook endpoint created.');
+          this.afterWrite(this.translate.instant('pages.settingsWebhooks.messages.created'));
         },
-        error: (err) => this.failWrite(err, 'Failed to create webhook.'),
+        error: (err) =>
+          this.failWrite(err, this.translate.instant('pages.settingsWebhooks.errors.createFailed')),
       });
     }
   }
@@ -181,12 +192,21 @@ export class WebhooksSettings implements OnInit {
     this.svc.update(w.id, payload).subscribe({
       next: () => {
         this.rowBusyId.set(null);
-        this.message.set(w.enabled ? 'Webhook disabled.' : 'Webhook enabled.');
+        this.message.set(
+          this.translate.instant(
+            w.enabled
+              ? 'pages.settingsWebhooks.messages.disabled'
+              : 'pages.settingsWebhooks.messages.enabled',
+          ),
+        );
         this.svc.load().subscribe();
       },
       error: (err) => {
         this.rowBusyId.set(null);
-        this.error.set(this.toMessage(err) || 'Failed to update webhook.');
+        this.error.set(
+          this.toMessage(err) ||
+            this.translate.instant('pages.settingsWebhooks.errors.updateFailed'),
+        );
       },
     });
   }
@@ -198,11 +218,15 @@ export class WebhooksSettings implements OnInit {
     this.svc.sendTest(w.id).subscribe({
       next: () => {
         this.rowBusyId.set(null);
-        this.message.set(`Test event queued for "${w.name}". It will be delivered shortly.`);
+        this.message.set(
+          this.translate.instant('pages.settingsWebhooks.messages.testQueued', { name: w.name }),
+        );
       },
       error: (err) => {
         this.rowBusyId.set(null);
-        this.error.set(this.toMessage(err) || 'Failed to queue test event.');
+        this.error.set(
+          this.toMessage(err) || this.translate.instant('pages.settingsWebhooks.errors.testFailed'),
+        );
       },
     });
   }
@@ -210,9 +234,11 @@ export class WebhooksSettings implements OnInit {
   async requestDelete(w: Webhook): Promise<void> {
     this.closeMenu();
     const confirmed = await this.confirm.ask({
-      title: 'Delete webhook endpoint?',
-      message: `"${w.name}" will be removed and stop receiving events. This cannot be undone.`,
-      confirmLabel: 'Delete',
+      title: this.translate.instant('pages.settingsWebhooks.confirmDelete.title'),
+      message: this.translate.instant('pages.settingsWebhooks.confirmDelete.message', {
+        name: w.name,
+      }),
+      confirmLabel: this.translate.instant('common.actions.delete'),
       tone: 'danger',
     });
     if (confirmed) this.doDelete(w.id);
@@ -221,9 +247,11 @@ export class WebhooksSettings implements OnInit {
   async requestRotate(w: Webhook): Promise<void> {
     this.closeMenu();
     const confirmed = await this.confirm.ask({
-      title: 'Rotate signing secret?',
-      message: `The current secret for "${w.name}" stops working immediately — update your receiver with the new secret right away.`,
-      confirmLabel: 'Rotate secret',
+      title: this.translate.instant('pages.settingsWebhooks.confirmRotate.title'),
+      message: this.translate.instant('pages.settingsWebhooks.confirmRotate.message', {
+        name: w.name,
+      }),
+      confirmLabel: this.translate.instant('pages.settingsWebhooks.confirmRotate.confirmLabel'),
     });
     if (confirmed) this.doRotate(w.id);
   }
@@ -234,12 +262,15 @@ export class WebhooksSettings implements OnInit {
     this.svc.remove(id).subscribe({
       next: () => {
         this.rowBusyId.set(null);
-        this.message.set('Webhook endpoint deleted.');
+        this.message.set(this.translate.instant('pages.settingsWebhooks.messages.deleted'));
         this.svc.load().subscribe();
       },
       error: (err) => {
         this.rowBusyId.set(null);
-        this.error.set(this.toMessage(err) || 'Failed to delete webhook.');
+        this.error.set(
+          this.toMessage(err) ||
+            this.translate.instant('pages.settingsWebhooks.errors.deleteFailed'),
+        );
       },
     });
   }
@@ -251,11 +282,14 @@ export class WebhooksSettings implements OnInit {
       next: (secret) => {
         this.rowBusyId.set(null);
         this.revealedSecret.set(secret);
-        this.message.set('Signing secret rotated.');
+        this.message.set(this.translate.instant('pages.settingsWebhooks.messages.rotated'));
       },
       error: (err) => {
         this.rowBusyId.set(null);
-        this.error.set(this.toMessage(err) || 'Failed to rotate secret.');
+        this.error.set(
+          this.toMessage(err) ||
+            this.translate.instant('pages.settingsWebhooks.errors.rotateFailed'),
+        );
       },
     });
   }
@@ -266,8 +300,9 @@ export class WebhooksSettings implements OnInit {
     const s = this.revealedSecret();
     if (!s) return;
     navigator.clipboard?.writeText(s.secret).then(
-      () => this.message.set('Signing secret copied to clipboard.'),
-      () => this.error.set('Could not copy to clipboard.'),
+      () =>
+        this.message.set(this.translate.instant('pages.settingsWebhooks.messages.secretCopied')),
+      () => this.error.set(this.translate.instant('pages.settingsWebhooks.errors.copyFailed')),
     );
   }
 
@@ -277,8 +312,8 @@ export class WebhooksSettings implements OnInit {
 
   copyUrl(w: Webhook): void {
     navigator.clipboard?.writeText(w.url).then(
-      () => this.message.set('Endpoint URL copied to clipboard.'),
-      () => this.error.set('Could not copy to clipboard.'),
+      () => this.message.set(this.translate.instant('pages.settingsWebhooks.messages.urlCopied')),
+      () => this.error.set(this.translate.instant('pages.settingsWebhooks.errors.copyFailed')),
     );
   }
 
@@ -286,17 +321,24 @@ export class WebhooksSettings implements OnInit {
 
   eventSummary(eventTypes: string): string {
     const parts = this.parseEventTypes(eventTypes);
-    if (parts.includes('*')) return 'All events';
+    if (parts.includes('*')) return this.translate.instant('pages.settingsWebhooks.events.all');
     return parts
-      .map((p) => this.eventCategories.find((c) => c.pattern === p)?.label ?? p)
+      .map((p) => {
+        const labelKey = this.eventCategories.find((c) => c.pattern === p)?.labelKey;
+        return labelKey ? this.translate.instant(labelKey) : p;
+      })
       .join(', ');
   }
 
   statusText(w: Webhook): string {
-    if (!w.enabled) return 'Disabled';
-    if (!w.lastDeliveryStatus) return 'No deliveries yet';
-    if (w.lastDeliveryStatus === 'success') return 'Healthy';
-    return `Failing (${w.consecutiveFailures})`;
+    if (!w.enabled) return this.translate.instant('pages.settingsWebhooks.status.disabled');
+    if (!w.lastDeliveryStatus)
+      return this.translate.instant('pages.settingsWebhooks.status.noDeliveries');
+    if (w.lastDeliveryStatus === 'success')
+      return this.translate.instant('pages.settingsWebhooks.status.healthy');
+    return this.translate.instant('pages.settingsWebhooks.status.failing', {
+      count: w.consecutiveFailures,
+    });
   }
 
   statusTone(w: Webhook): StatusTone {

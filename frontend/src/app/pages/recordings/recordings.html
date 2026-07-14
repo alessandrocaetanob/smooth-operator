@@ -1,10 +1,13 @@
 <div class="page-shell">
   <div class="mb-6 flex items-start justify-between gap-4 flex-wrap">
     <div>
-      <h1 class="text-2xl font-bold text-on-surface tracking-tight">Recordings</h1>
+      <h1 class="text-2xl font-bold text-on-surface tracking-tight">
+        {{ 'nav.sidebar.recordings' | translate }}
+      </h1>
       <p class="text-sm text-on-surface-variant mt-1">
-        Browse captured session recordings. Playback opens an in-browser viewer for the raw
-        <code>.guac</code> file.
+        {{ 'pages.recordings.subtitle.prefix' | translate }}
+        <code>.guac</code>
+        {{ 'pages.recordings.subtitle.suffix' | translate }}
       </p>
     </div>
   </div>
@@ -13,7 +16,9 @@
   <div class="glass-card rounded-lg p-3 mb-4">
     <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
       <div>
-        <label class="text-xs text-on-surface-variant" for="fStatus">Status</label>
+        <label class="text-xs text-on-surface-variant" for="fStatus">{{
+          'pages.recordings.filters.status' | translate
+        }}</label>
         <select
           id="fStatus"
           [ngModel]="filterStatus()"
@@ -21,16 +26,22 @@
           name="fStatus"
           class="select-field w-full"
         >
-          <option value="">All</option>
-          <option value="Available">Available</option>
-          <option value="Recording">Recording</option>
-          <option value="Uploading">Uploading</option>
-          <option value="Failed">Failed</option>
-          <option value="Deleted">Deleted</option>
+          <option value="">{{ 'pages.recordings.status.all' | translate }}</option>
+          <option value="Available">{{ 'pages.recordings.status.available' | translate }}</option>
+          <option value="Recording">
+            {{ 'pages.recordings.status.recording' | translate }}
+          </option>
+          <option value="Uploading">
+            {{ 'pages.recordings.status.uploading' | translate }}
+          </option>
+          <option value="Failed">{{ 'pages.recordings.status.failed' | translate }}</option>
+          <option value="Deleted">{{ 'pages.recordings.status.deleted' | translate }}</option>
         </select>
       </div>
       <div>
-        <label class="text-xs text-on-surface-variant" for="fFrom">From</label>
+        <label class="text-xs text-on-surface-variant" for="fFrom">{{
+          'pages.recordings.filters.from' | translate
+        }}</label>
         <input
           id="fFrom"
           type="datetime-local"
@@ -41,7 +52,9 @@
         />
       </div>
       <div>
-        <label class="text-xs text-on-surface-variant" for="fTo">To</label>
+        <label class="text-xs text-on-surface-variant" for="fTo">{{
+          'pages.recordings.filters.to' | translate
+        }}</label>
         <input
           id="fTo"
           type="datetime-local"
@@ -52,8 +65,12 @@
         />
       </div>
       <div class="flex items-end gap-2">
-        <button class="btn-primary flex-1" (click)="applyFilters()">Apply</button>
-        <button class="btn-ghost" (click)="clearFilters()">Clear</button>
+        <button class="btn-primary flex-1" (click)="applyFilters()">
+          {{ 'pages.recordings.filters.apply' | translate }}
+        </button>
+        <button class="btn-ghost" (click)="clearFilters()">
+          {{ 'pages.recordings.filters.clear' | translate }}
+        </button>
       </div>
     </div>
   </div>
@@ -70,13 +87,27 @@
     <table class="w-full text-sm">
       <thead class="bg-white/5 text-[11px] uppercase tracking-widest text-on-surface-variant">
         <tr>
-          <th class="text-left px-4 py-3 font-medium">Connection</th>
-          <th class="text-left px-4 py-3 font-medium">User</th>
-          <th class="text-left px-4 py-3 font-medium">Started</th>
-          <th class="text-left px-4 py-3 font-medium">Duration</th>
-          <th class="text-left px-4 py-3 font-medium">Size</th>
-          <th class="text-left px-4 py-3 font-medium">Status</th>
-          <th class="text-right px-4 py-3 font-medium">Actions</th>
+          <th class="text-left px-4 py-3 font-medium">
+            {{ 'pages.recordings.table.connection' | translate }}
+          </th>
+          <th class="text-left px-4 py-3 font-medium">
+            {{ 'pages.recordings.table.user' | translate }}
+          </th>
+          <th class="text-left px-4 py-3 font-medium">
+            {{ 'pages.recordings.table.started' | translate }}
+          </th>
+          <th class="text-left px-4 py-3 font-medium">
+            {{ 'pages.recordings.table.duration' | translate }}
+          </th>
+          <th class="text-left px-4 py-3 font-medium">
+            {{ 'pages.recordings.table.size' | translate }}
+          </th>
+          <th class="text-left px-4 py-3 font-medium">
+            {{ 'pages.recordings.table.status' | translate }}
+          </th>
+          <th class="text-right px-4 py-3 font-medium">
+            {{ 'pages.recordings.table.actions' | translate }}
+          </th>
         </tr>
       </thead>
       <tbody>
@@ -85,7 +116,8 @@
             <td class="px-4 py-3">
               <div class="font-medium text-on-surface">{{ r.connectionName }}</div>
               <div class="text-xs text-on-surface-variant">
-                {{ r.protocol }} · {{ r.vaultName ?? '(no vault)' }}
+                {{ r.protocol }} ·
+                {{ r.vaultName ?? ('pages.recordings.table.noVault' | translate) }}
               </div>
             </td>
             <td class="px-4 py-3 text-on-surface-variant">{{ r.userEmail ?? '—' }}</td>
@@ -95,13 +127,15 @@
             </td>
             <td class="px-4 py-3 text-on-surface-variant">{{ formatBytes(r.fileSizeBytes) }}</td>
             <td class="px-4 py-3">
-              <span [class]="'text-xs font-medium ' + statusClass(r.status)">{{ r.status }}</span>
+              <span [class]="'text-xs font-medium ' + statusClass(r.status)">{{
+                statusLabelKey(r.status) | translate
+              }}</span>
               @if (r.includeKeys) {
                 <span
                   class="ml-2 inline-block text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400"
-                  title="Includes captured keystrokes"
+                  [title]="'pages.recordings.table.keysBadgeTitle' | translate"
                 >
-                  keys
+                  {{ 'pages.recordings.table.keysBadge' | translate }}
                 </span>
               }
               @if (r.status === 'Failed' && r.errorMessage) {
@@ -114,24 +148,24 @@
                   (click)="open(r)"
                   [disabled]="r.status !== 'Available'"
                   class="px-2 py-1 text-xs text-primary hover:bg-primary/10 rounded disabled:opacity-40"
-                  title="Play in browser"
+                  [title]="'pages.recordings.actions.playTitle' | translate"
                 >
-                  Play
+                  {{ 'pages.recordings.actions.play' | translate }}
                 </button>
                 <button
                   (click)="download(r)"
                   [disabled]="r.status !== 'Available'"
                   class="px-2 py-1 text-xs text-primary hover:bg-primary/10 rounded disabled:opacity-40"
-                  title="Download .guac file"
+                  [title]="'pages.recordings.actions.downloadTitle' | translate"
                 >
-                  Download
+                  {{ 'pages.recordings.actions.download' | translate }}
                 </button>
                 @if (isOwnerOrAdmin()) {
                   <button
                     (click)="remove(r)"
                     class="px-2 py-1 text-xs text-error hover:bg-error/10 rounded"
                   >
-                    Delete
+                    {{ 'common.actions.delete' | translate }}
                   </button>
                 }
               </div>
@@ -140,7 +174,11 @@
         } @empty {
           <tr>
             <td colspan="7" class="px-4 py-8 text-center text-on-surface-variant">
-              {{ loading() ? 'Loading…' : 'No recordings match these filters.' }}
+              {{
+                loading()
+                  ? ('pages.recordings.list.loading' | translate)
+                  : ('pages.recordings.list.empty' | translate)
+              }}
             </td>
           </tr>
         }
@@ -149,11 +187,16 @@
   </div>
 
   <div class="mt-4 flex items-center justify-between text-xs text-on-surface-variant">
-    <span>{{ total() }} total · page {{ page() }} of {{ pageCount() }}</span>
+    <span>{{
+      'pages.recordings.pagination.summary'
+        | translate: { total: total(), page: page(), pageCount: pageCount() }
+    }}</span>
     <div class="flex gap-2">
-      <button class="btn-ghost" [disabled]="page() <= 1" (click)="prevPage()">Previous</button>
+      <button class="btn-ghost" [disabled]="page() <= 1" (click)="prevPage()">
+        {{ 'pages.recordings.pagination.previous' | translate }}
+      </button>
       <button class="btn-ghost" [disabled]="page() >= pageCount()" (click)="nextPage()">
-        Next
+        {{ 'pages.recordings.pagination.next' | translate }}
       </button>
     </div>
   </div>

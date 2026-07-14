@@ -4,6 +4,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { signal } from '@angular/core';
 import { of, throwError } from 'rxjs';
+import { provideTranslateService, TranslateService } from '@ngx-translate/core';
 
 import { Email } from './email';
 import { SmtpSettings, SmtpSettingsService } from '../../../services/smtp-settings.service';
@@ -48,10 +49,31 @@ describe('Email', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
+        provideTranslateService(),
         { provide: SmtpSettingsService, useValue: smtp },
         { provide: AuthService, useValue: auth },
       ],
     }).compileComponents();
+
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', {
+      pages: {
+        settingsEmail: {
+          errors: {
+            loadFailed: 'Failed to load SMTP settings.',
+            saveFailed: 'Failed to save SMTP settings.',
+            recipientRequired: 'Enter a recipient address.',
+            testFailed: 'Test failed.',
+          },
+          messages: {
+            saved: 'SMTP settings saved.',
+            testSent: 'Test email sent to {{to}}.',
+          },
+        },
+      },
+    });
+    translate.use('en');
+
     fixture = TestBed.createComponent(Email);
     component = fixture.componentInstance;
   });

@@ -4,9 +4,10 @@
     (click)="toggle()"
     class="theme-toggle-floating fixed top-4 right-4 z-50 w-10 h-10 rounded-full glass-panel border border-white/10 flex items-center justify-center text-on-surface-variant hover:text-on-surface shadow-lg shadow-black/20 hover:shadow-primary/20 transition-all duration-200 hover:scale-105 active:scale-95 btn-interactive"
     [attr.aria-label]="
-      themeService.theme() === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'
+      (themeService.theme() === 'dark' ? 'themeToggle.switchToLight' : 'themeToggle.switchToDark')
+        | translate
     "
-    title="Toggle theme"
+    [title]="'themeToggle.toggleTheme' | translate"
   >
     @if (themeService.theme() === 'dark') {
       <span
@@ -34,9 +35,10 @@
         : 'p-2 rounded-md text-on-surface-variant hover:text-on-surface hover:bg-on-surface/5 transition-colors btn-interactive'
     "
     [attr.aria-label]="
-      themeService.theme() === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'
+      (themeService.theme() === 'dark' ? 'themeToggle.switchToLight' : 'themeToggle.switchToDark')
+        | translate
     "
-    title="Toggle theme"
+    [title]="'themeToggle.toggleTheme' | translate"
   >
     @if (themeService.theme() === 'dark') {
       <span

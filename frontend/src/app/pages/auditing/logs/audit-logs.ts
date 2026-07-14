@@ -10,6 +10,7 @@ import {
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   AuditLogEntry,
   AuditLogQuery,
@@ -18,13 +19,14 @@ import {
 
 @Component({
   selector: 'app-audit-logs',
-  imports: [FormsModule, DatePipe, SlicePipe],
+  imports: [FormsModule, DatePipe, SlicePipe, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './audit-logs.html',
   styleUrl: './audit-logs.css',
 })
 export class AuditLogs implements OnInit {
   private readonly svc = inject(AuditLogsService);
+  private readonly translate = inject(TranslateService);
 
   @ViewChild('closeBtn') closeBtnRef?: ElementRef<HTMLButtonElement>;
 
@@ -67,13 +69,23 @@ export class AuditLogs implements OnInit {
   }
 
   formattedDetails(details: string): string {
+    const noDetails = this.translate.instant('pages.auditing.detail.noDetails');
     try {
       const parsed = JSON.parse(details);
-      if (Object.keys(parsed).length === 0) return '(no details)';
+      if (Object.keys(parsed).length === 0) return noDetails;
       return JSON.stringify(parsed, null, 2);
     } catch {
-      return details || '(no details)';
+      return details || noDetails;
     }
+  }
+
+  rowAriaLabel(entry: AuditLogEntry): string {
+    const actor =
+      entry.userEmail || entry.userId || this.translate.instant('pages.auditing.table.unknownUser');
+    return this.translate.instant('pages.auditing.table.rowAriaLabel', {
+      action: entry.action,
+      actor,
+    });
   }
 
   readonly user = signal('');
