@@ -1,0 +1,96 @@
+# Dependabot: automatic security updates + weekly grouped version updates.
+# Covers every ecosystem in the repo: npm (frontend, docs), NuGet (backend),
+# Docker base images (frontend, backend, docs) and GitHub Actions.
+# See HYP-38 for the rationale.
+version: 2
+updates:
+  # ── npm — Angular SPA ────────────────────────────────────────────────
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 10
+    groups:
+      angular:
+        patterns:
+          - "@angular/*"
+          - "angular-eslint"
+      frontend-minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
+        exclude-patterns:
+          - "@angular/*"
+          - "angular-eslint"
+    labels:
+      - "dependencies"
+      - "frontend"
+
+  # ── npm — Docusaurus docs site ───────────────────────────────────────
+  - package-ecosystem: "npm"
+    directory: "/docs"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    groups:
+      docusaurus:
+        patterns:
+          - "@docusaurus/*"
+      docs-minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
+        exclude-patterns:
+          - "@docusaurus/*"
+    labels:
+      - "dependencies"
+      - "docs"
+
+  # ── NuGet — .NET backend (sln at repo root) ──────────────────────────
+  - package-ecosystem: "nuget"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 10
+    groups:
+      backend-minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
+        # Pinned to 8.18.0: JwtBearer and ITfoxtec.Identity.Saml2 must resolve
+        # the same IdentityModel version or SAML/OIDC throws
+        # MissingMethodException at runtime (see CLAUDE.md gotcha). Bumps to
+        # these packages must be coordinated + SSO-tested, never automatic.
+        exclude-patterns:
+          - "Microsoft.IdentityModel.*"
+    ignore:
+      - dependency-name: "Microsoft.IdentityModel.*"
+    labels:
+      - "dependencies"
+      - "backend"
+
+  # ── Docker base images ───────────────────────────────────────────────
+  - package-ecosystem: "docker"
+    directories:
+      - "/backend"
+      - "/frontend"
+      - "/docs"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    labels:
+      - "dependencies"
+      - "infra"
+
+  # ── GitHub Actions (none today; covers any workflow added later) ─────
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    labels:
+      - "dependencies"
+      - "infra"

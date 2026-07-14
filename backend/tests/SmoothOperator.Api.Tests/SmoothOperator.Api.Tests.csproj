@@ -19,6 +19,10 @@
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.8" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.8" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.8" />
+    <!-- Override the vulnerable SQLitePCLRaw 2.1.11 (GHSA-2m69-gcr7-jv3q, native SQLite
+         < 3.50.2) pulled in via Microsoft.EntityFrameworkCore.Sqlite. The 2.1.x line has
+         no patched release; the fix only exists in the 3.x line (bundles SQLite 3.50.2+). -->
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.3" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageReference Include="Moq" Version="4.20.72" />
     <!-- Override the vulnerable System.Security.Cryptography.Xml 10.0.0 transitively
