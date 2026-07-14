@@ -41,7 +41,7 @@
     </PackageReference>
     <PackageReference Include="MailKit" Version="4.16.0" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.1" />
-    <PackageReference Include="StackExchange.Redis" Version="2.12.14" />
+    <PackageReference Include="StackExchange.Redis" Version="3.0.17" />
 
     <!-- Structured logging + Loki sink -->
     <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
