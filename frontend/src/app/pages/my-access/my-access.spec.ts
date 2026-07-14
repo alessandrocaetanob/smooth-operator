@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideTranslateService, TranslateService } from '@ngx-translate/core';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { signal } from '@angular/core';
 import { of, throwError } from 'rxjs';
@@ -33,10 +34,23 @@ describe('MyAccess', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
+        provideTranslateService(),
         { provide: UsersService, useValue: usersSvc },
         { provide: AuthService, useValue: auth },
       ],
     }).compileComponents();
+
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', {
+      pages: {
+        myAccess: {
+          notSignedIn: 'You are not signed in.',
+          loadFailed: 'Failed to load access.',
+        },
+      },
+    });
+    translate.use('en');
+
     fixture = TestBed.createComponent(MyAccess);
     component = fixture.componentInstance;
   });

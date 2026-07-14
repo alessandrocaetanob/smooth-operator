@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideTranslateService } from '@ngx-translate/core';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { TopNavBar } from './top-nav-bar';
 
@@ -12,7 +13,12 @@ describe('TopNavBar', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [TopNavBar],
-      providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
+      providers: [
+        provideRouter([]),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideTranslateService(),
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(TopNavBar);

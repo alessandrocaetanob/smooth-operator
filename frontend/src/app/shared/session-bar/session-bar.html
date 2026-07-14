@@ -1,17 +1,21 @@
 @if (minimizedSessions().length > 0) {
-  <section class="session-bar" aria-label="Minimized sessions">
+  <section class="session-bar" [attr.aria-label]="'sessionBar.ariaLabel' | translate">
     <ul class="flex gap-2 p-2">
       @for (session of minimizedSessions(); track session.connectionId) {
         <li
           class="session-chip flex items-center bg-surface-variant/20 rounded-full border border-outline-variant/30 overflow-hidden"
-          [attr.aria-label]="'Minimized session ' + connectionName(session)"
+          [attr.aria-label]="
+            'sessionBar.minimizedAriaLabel' | translate: { name: connectionName(session) }
+          "
         >
           <button
             class="chip-restore flex items-center gap-2 px-3 py-1.5 hover:bg-on-surface/5 transition-colors"
             (click)="restore(session)"
-            [title]="'Restore: ' + connectionName(session)"
+            [title]="'sessionBar.restore' | translate: { name: connectionName(session) }"
             type="button"
-            [attr.aria-label]="'Restore session ' + connectionName(session)"
+            [attr.aria-label]="
+              'sessionBar.restoreAriaLabel' | translate: { name: connectionName(session) }
+            "
           >
             <span
               class="live-dot w-2 h-2 rounded-full bg-success animate-pulse"
@@ -25,9 +29,9 @@
           <button
             class="chip-close p-1.5 hover:bg-error/10 text-on-surface-variant hover:text-error transition-colors"
             (click)="close(session, $event)"
-            title="Terminate session"
+            [title]="'sessionBar.terminate' | translate"
             type="button"
-            aria-label="Terminate session"
+            [attr.aria-label]="'sessionBar.terminate' | translate"
           >
             <span aria-hidden="true">✕</span>
           </button>

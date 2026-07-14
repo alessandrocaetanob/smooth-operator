@@ -1,6 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ProfileService } from '../../services/profile.service';
 import { AuthService } from '../../services/auth.service';
 import { MfaService, MfaStatus } from '../../services/mfa.service';
@@ -17,7 +18,7 @@ const TARGET_DIMENSION = 512;
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [FormsModule, DatePipe],
+  imports: [FormsModule, DatePipe, TranslatePipe],
   templateUrl: './profile.html',
   styleUrl: './profile.css',
 })
@@ -26,6 +27,7 @@ export class Profile {
   private readonly auth = inject(AuthService);
   private readonly mfaSvc = inject(MfaService);
   private readonly apiTokensSvc = inject(ApiTokensService);
+  private readonly translate = inject(TranslateService);
 
   readonly user = this.auth.currentUser;
   readonly name = signal('');
@@ -92,7 +94,7 @@ export class Profile {
     if (!file) return;
 
     if (!/^image\/(png|jpeg|jpg|webp)$/.test(file.type)) {
-      this.error.set('Avatar must be PNG, JPEG, or WebP.');
+      this.error.set(this.translate.instant('pages.profile.avatar.invalidType'));
       input.value = '';
       return;
     }
@@ -101,7 +103,7 @@ export class Profile {
       const { base64, mime, dataUrl } = await this.downscale(file);
       const decodedSize = Math.ceil((base64.length * 3) / 4);
       if (decodedSize > MAX_AVATAR_BYTES) {
-        this.error.set('Avatar exceeds 1 MB after downscaling. Pick a simpler image.');
+        this.error.set(this.translate.instant('pages.profile.avatar.tooLarge'));
         input.value = '';
         return;
       }
@@ -109,7 +111,7 @@ export class Profile {
       this.pendingBase64.set(base64);
       this.pendingMime.set(mime);
     } catch {
-      this.error.set('Could not read that image.');
+      this.error.set(this.translate.instant('pages.profile.avatar.readError'));
     } finally {
       input.value = '';
     }
@@ -124,7 +126,7 @@ export class Profile {
   save(): void {
     const trimmed = this.name().trim();
     if (!trimmed) {
-      this.error.set('Name is required.');
+      this.error.set(this.translate.instant('pages.profile.name.required'));
       return;
     }
     this.error.set(null);
@@ -142,11 +144,11 @@ export class Profile {
           this.previewUrl.set(null);
           this.pendingBase64.set(null);
           this.pendingMime.set(null);
-          this.success.set('Profile updated.');
+          this.success.set(this.translate.instant('pages.profile.saved'));
         },
         error: (err) => {
           this.saving.set(false);
-          this.error.set(err?.error?.error ?? 'Could not save profile.');
+          this.error.set(err?.error?.error ?? this.translate.instant('pages.profile.saveError'));
         },
       });
   }
@@ -158,11 +160,11 @@ export class Profile {
     this.profile.removeAvatar().subscribe({
       next: () => {
         this.removing.set(false);
-        this.success.set('Avatar removed.');
+        this.success.set(this.translate.instant('pages.profile.avatar.removed'));
       },
       error: () => {
         this.removing.set(false);
-        this.error.set('Could not remove avatar.');
+        this.error.set(this.translate.instant('pages.profile.avatar.removeError'));
       },
     });
   }
@@ -193,7 +195,9 @@ export class Profile {
       },
       error: (err) => {
         this.mfaEnrolling.set(false);
-        this.mfaError.set(err?.error?.message ?? 'Could not start MFA enrollment.');
+        this.mfaError.set(
+          err?.error?.message ?? this.translate.instant('pages.profile.mfa.startError'),
+        );
       },
     });
   }
@@ -211,7 +215,9 @@ export class Profile {
       },
       error: (err) => {
         this.mfaConfirming.set(false);
-        this.mfaError.set(err?.error?.message ?? 'Invalid code. Try again.');
+        this.mfaError.set(
+          err?.error?.message ?? this.translate.instant('pages.profile.mfa.invalidCode'),
+        );
       },
     });
   }
@@ -220,11 +226,11 @@ export class Profile {
     const codes = this.mfaRecoveryCodes();
     const date = new Date().toISOString().slice(0, 10);
     const content = [
-      'Smooth Operator — MFA Recovery Codes',
-      `Generated: ${date}`,
+      this.translate.instant('pages.profile.mfa.recoveryFile.title'),
+      this.translate.instant('pages.profile.mfa.recoveryFile.generated', { date }),
       '',
-      'Each code can be used once to sign in if you lose your authenticator.',
-      'Store this file somewhere safe and delete it after printing.',
+      this.translate.instant('pages.profile.mfa.recoveryFile.instructions'),
+      this.translate.instant('pages.profile.mfa.recoveryFile.storeSafely'),
       '',
       ...codes,
       '',
@@ -281,7 +287,9 @@ export class Profile {
       },
       error: (err) => {
         this.mfaDisabling.set(false);
-        this.mfaError.set(err?.error?.message ?? 'Could not disable MFA.');
+        this.mfaError.set(
+          err?.error?.message ?? this.translate.instant('pages.profile.mfa.disableError'),
+        );
       },
     });
   }
@@ -311,7 +319,9 @@ export class Profile {
       },
       error: (err) => {
         this.creatingToken.set(false);
-        this.apiTokensError.set(err?.error?.message ?? 'Could not create token.');
+        this.apiTokensError.set(
+          err?.error?.message ?? this.translate.instant('pages.profile.apiTokens.createError'),
+        );
       },
     });
   }
@@ -340,7 +350,9 @@ export class Profile {
       },
       error: (err) => {
         this.revokingTokenId.set(null);
-        this.apiTokensError.set(err?.error?.message ?? 'Could not revoke token.');
+        this.apiTokensError.set(
+          err?.error?.message ?? this.translate.instant('pages.profile.apiTokens.revokeError'),
+        );
       },
     });
   }

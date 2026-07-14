@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideTranslateService, TranslateService } from '@ngx-translate/core';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { signal } from '@angular/core';
 import { of, throwError } from 'rxjs';
@@ -42,12 +43,37 @@ describe('Hosts', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
+        provideTranslateService(),
         { provide: HostsService, useValue: svc },
         { provide: AuthService, useValue: auth },
         { provide: ConfirmDialogService, useValue: confirm },
         { provide: ToastService, useValue: toast },
       ],
     }).compileComponents();
+
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', {
+      common: {
+        actions: {
+          delete: 'Delete',
+        },
+      },
+      pages: {
+        hosts: {
+          loadFailed: 'Failed to load.',
+          nameAddressRequired: 'Name and address are required.',
+          hostSaved: 'Host saved.',
+          hostUpdated: 'Host updated.',
+          saveFailed: 'Save failed.',
+          deleteFailed: 'Delete failed.',
+          hostDeleted: 'Host "{{name}}" deleted.',
+          deleteHostTitle: 'Delete host',
+          deleteHostMessage:
+            'Delete host "{{name}}"? Connections using this host will break. This cannot be undone.',
+        },
+      },
+    });
+    translate.use('en');
 
     fixture = TestBed.createComponent(Hosts);
     component = fixture.componentInstance;

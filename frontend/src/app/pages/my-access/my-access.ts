@@ -1,4 +1,5 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { UsersService, EffectiveVaults } from '../../services/users.service';
 import { AuthService } from '../../services/auth.service';
 import { Mascot } from '../../shared/mascot/mascot';
@@ -6,12 +7,13 @@ import { Mascot } from '../../shared/mascot/mascot';
 @Component({
   selector: 'app-my-access',
   standalone: true,
-  imports: [Mascot],
+  imports: [Mascot, TranslatePipe],
   templateUrl: './my-access.html',
 })
 export class MyAccess implements OnInit {
   private readonly usersSvc = inject(UsersService);
   private readonly auth = inject(AuthService);
+  private readonly translate = inject(TranslateService);
 
   readonly loading = signal(true);
   readonly errorMessage = signal<string | null>(null);
@@ -26,7 +28,7 @@ export class MyAccess implements OnInit {
     const user = this.profile();
     if (!user?.id) {
       this.loading.set(false);
-      this.errorMessage.set('You are not signed in.');
+      this.errorMessage.set(this.translate.instant('pages.myAccess.notSignedIn'));
       return;
     }
     this.usersSvc.getEffectiveVaults(user.id).subscribe({
@@ -37,7 +39,10 @@ export class MyAccess implements OnInit {
       error: (err) => {
         this.loading.set(false);
         this.errorMessage.set(
-          err?.error?.message ?? err?.error?.Message ?? err?.message ?? 'Failed to load access.',
+          err?.error?.message ??
+            err?.error?.Message ??
+            err?.message ??
+            this.translate.instant('pages.myAccess.loadFailed'),
         );
       },
     });

@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideTranslateService } from '@ngx-translate/core';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 import { MonitoringChartsComponent, MonitoringChartData } from './monitoring-charts.component';
@@ -67,6 +68,7 @@ describe('MonitoringChartsComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [MonitoringChartsComponent],
+      providers: [provideTranslateService()],
     }).compileComponents();
 
     fixture = TestBed.createComponent(MonitoringChartsComponent);

@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideTranslateService, TranslateService } from '@ngx-translate/core';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { of, throwError } from 'rxjs';
 
@@ -20,8 +21,29 @@ describe('Sessions', () => {
 
     await TestBed.configureTestingModule({
       imports: [Sessions],
-      providers: [{ provide: SystemSettingsService, useValue: svc }],
+      providers: [provideTranslateService(), { provide: SystemSettingsService, useValue: svc }],
     }).compileComponents();
+
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', {
+      pages: {
+        settingsSessions: {
+          messages: {
+            idleDisabled: 'Idle timeout disabled.',
+            idleWillClose: 'Sessions idle for {{minutes}} min will be closed.',
+            noHardCap: 'No hard session lifetime cap.',
+            maxWillCap: 'Sessions capped at {{minutes}} min total.',
+            loadFailed: 'Failed to load session settings.',
+            saveFailed: 'Failed to save settings.',
+            idleValidation:
+              'Idle timeout must be an integer between 0 (disabled) and 10080 minutes.',
+            maxValidation:
+              'Max session must be an integer between 0 (unlimited) and 10080 minutes.',
+          },
+        },
+      },
+    });
+    translate.use('en');
 
     fixture = TestBed.createComponent(Sessions);
     component = fixture.componentInstance;

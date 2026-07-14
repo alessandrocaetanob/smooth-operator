@@ -7,6 +7,7 @@ import {
   computed,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { HostsService, AppHost, CreateHostPayload } from '../../services/hosts.service';
 import { AuthService } from '../../services/auth.service';
 import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog.service';
@@ -27,7 +28,7 @@ const EMPTY_FORM: FormState = {
 
 @Component({
   selector: 'app-hosts',
-  imports: [FormsModule, Drawer],
+  imports: [FormsModule, Drawer, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './hosts.html',
   styleUrl: './hosts.css',
@@ -37,6 +38,7 @@ export class Hosts implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly confirmSvc = inject(ConfirmDialogService);
   private readonly toastSvc = inject(ToastService);
+  private readonly translate = inject(TranslateService);
 
   readonly hosts = this.svc.list;
   readonly canManageConnections = this.auth.canManageConnections;
@@ -75,7 +77,9 @@ export class Hosts implements OnInit {
       next: () => this.loading.set(false),
       error: (err) => {
         this.loading.set(false);
-        this.errorMessage.set(this.toMessage(err) || 'Failed to load.');
+        this.errorMessage.set(
+          this.toMessage(err) || this.translate.instant('pages.hosts.loadFailed'),
+        );
       },
     });
   }
@@ -109,7 +113,7 @@ export class Hosts implements OnInit {
     if (this.busy()) return;
     const f = this.form();
     if (!f.name.trim() || !f.address.trim()) {
-      this.errorMessage.set('Name and address are required.');
+      this.errorMessage.set(this.translate.instant('pages.hosts.nameAddressRequired'));
       return;
     }
     this.busy.set(true);
@@ -133,20 +137,20 @@ export class Hosts implements OnInit {
   async remove(h: AppHost): Promise<void> {
     if (!this.canManageConnections()) return;
     const ok = await this.confirmSvc.ask({
-      title: 'Delete host',
-      message: `Delete host "${h.name}"? Connections using this host will break. This cannot be undone.`,
-      confirmLabel: 'Delete',
+      title: this.translate.instant('pages.hosts.deleteHostTitle'),
+      message: this.translate.instant('pages.hosts.deleteHostMessage', { name: h.name }),
+      confirmLabel: this.translate.instant('common.actions.delete'),
       tone: 'danger',
     });
     if (!ok) return;
     this.errorMessage.set(null);
     this.svc.remove(h.id).subscribe({
       next: () => {
-        this.toastSvc.success(`Host "${h.name}" deleted.`);
+        this.toastSvc.success(this.translate.instant('pages.hosts.hostDeleted', { name: h.name }));
         this.refresh();
       },
       error: (err) => {
-        const msg = this.toMessage(err) || 'Delete failed.';
+        const msg = this.toMessage(err) || this.translate.instant('pages.hosts.deleteFailed');
         this.errorMessage.set(msg);
         this.toastSvc.error(msg);
       },
@@ -160,14 +164,16 @@ export class Hosts implements OnInit {
   private done(): void {
     const isUpdate = !!this.form().id;
     this.busy.set(false);
-    this.toastSvc.success(isUpdate ? 'Host updated.' : 'Host saved.');
+    this.toastSvc.success(
+      this.translate.instant(isUpdate ? 'pages.hosts.hostUpdated' : 'pages.hosts.hostSaved'),
+    );
     this.closeDrawer();
     this.refresh();
   }
 
   private fail(err: unknown): void {
     this.busy.set(false);
-    const msg = this.toMessage(err) || 'Save failed.';
+    const msg = this.toMessage(err) || this.translate.instant('pages.hosts.saveFailed');
     this.errorMessage.set(msg);
     this.toastSvc.error(msg);
   }

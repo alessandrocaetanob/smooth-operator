@@ -2,18 +2,21 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ThemeToggle } from '../../shared/theme-toggle/theme-toggle';
+import { LanguageSwitcher } from '../../shared/language-switcher/language-switcher';
 import { Spinner } from '../../shared/spinner/spinner';
 
 @Component({
   selector: 'app-forgot-password',
-  imports: [ReactiveFormsModule, RouterLink, ThemeToggle, Spinner],
+  imports: [ReactiveFormsModule, RouterLink, ThemeToggle, LanguageSwitcher, Spinner, TranslatePipe],
   templateUrl: './forgot-password.html',
   styleUrl: './forgot-password.css',
 })
 export class ForgotPassword implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly http = inject(HttpClient);
+  private readonly translate = inject(TranslateService);
 
   readonly smtpAvailable = signal<boolean | null>(null);
   readonly submitting = signal(false);
@@ -50,7 +53,7 @@ export class ForgotPassword implements OnInit {
           this.submitting.set(false);
           // Transport failure — set error message so the banner renders.
           // Keep submitted false so the user can retry.
-          this.errorMessage.set('An unexpected error occurred. Please try again.');
+          this.errorMessage.set(this.translate.instant('pages.forgotPassword.unexpectedError'));
         },
       });
   }

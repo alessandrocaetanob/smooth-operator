@@ -7,13 +7,15 @@ import {
   ValidationErrors,
 } from '@angular/forms';
 import { Router } from '@angular/router';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../services/auth.service';
 import { ThemeToggle } from '../../shared/theme-toggle/theme-toggle';
+import { LanguageSwitcher } from '../../shared/language-switcher/language-switcher';
 import { Spinner } from '../../shared/spinner/spinner';
 
 @Component({
   selector: 'app-first-access',
-  imports: [ReactiveFormsModule, ThemeToggle, Spinner],
+  imports: [ReactiveFormsModule, ThemeToggle, LanguageSwitcher, Spinner, TranslatePipe],
   templateUrl: './first-access.html',
   styleUrl: './first-access.css',
 })
@@ -21,6 +23,7 @@ export class FirstAccess {
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly translate = inject(TranslateService);
 
   readonly submitting = signal(false);
   readonly errorMessage = signal<string | null>(null);
@@ -53,7 +56,9 @@ export class FirstAccess {
       },
       error: (err) => {
         this.submitting.set(false);
-        this.errorMessage.set(err?.error?.message ?? 'Failed to create the root account.');
+        this.errorMessage.set(
+          err?.error?.message ?? this.translate.instant('pages.firstAccess.createAccountFailed'),
+        );
       },
     });
   }

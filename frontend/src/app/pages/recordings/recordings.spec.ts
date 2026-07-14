@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideTranslateService, TranslateService } from '@ngx-translate/core';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { signal } from '@angular/core';
 import { of, throwError } from 'rxjs';
@@ -69,12 +70,40 @@ describe('RecordingsPage', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
+        provideTranslateService(),
         { provide: RecordingsService, useValue: recordings },
         { provide: ToastService, useValue: toast },
         { provide: ConfirmDialogService, useValue: confirm },
         { provide: AuthService, useValue: auth },
       ],
     }).compileComponents();
+
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', {
+      pages: {
+        recordings: {
+          errors: {
+            loadFailed: 'Failed to load recordings.',
+            deleteFailed: 'Failed to delete recording.',
+          },
+          toasts: {
+            deleted: 'Recording deleted.',
+          },
+          confirmDelete: {
+            title: 'Delete recording',
+            message:
+              'Permanently delete the recording for "{{connectionName}}" started {{startedAt}}? This cannot be undone.',
+          },
+        },
+      },
+      common: {
+        actions: {
+          delete: 'Delete',
+        },
+      },
+    });
+    translate.use('en');
+
     fixture = TestBed.createComponent(RecordingsPage);
     component = fixture.componentInstance;
   });

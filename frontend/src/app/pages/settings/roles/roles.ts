@@ -1,69 +1,67 @@
 import { Component } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 
 interface RoleDescriptor {
   key: string;
-  name: string;
+  nameKey: string;
   tone: string;
-  summary: string;
-  permissions: string[];
+  summaryKey: string;
+  permissionKeys: string[];
 }
 
 @Component({
   selector: 'app-settings-roles',
   standalone: true,
-  imports: [],
+  imports: [TranslatePipe],
   templateUrl: './roles.html',
 })
 export class SettingsRoles {
   readonly roles: RoleDescriptor[] = [
     {
       key: 'Owner',
-      name: 'Owner',
+      nameKey: 'pages.settingsRoles.owner.name',
       tone: 'text-amber-700 border-amber-500/50 bg-amber-500/15 dark:text-amber-300 dark:border-amber-500/40 dark:bg-amber-500/10',
-      summary:
-        'Root account, created on first setup. Cannot be demoted by anyone other than themselves.',
-      permissions: [
-        'Full access to every resource and setting',
-        'Manage all users, groups, vaults, credentials, and connections',
-        'View audit logs and email/system configuration',
-        'Promote and demote Admins',
+      summaryKey: 'pages.settingsRoles.owner.summary',
+      permissionKeys: [
+        'pages.settingsRoles.owner.permissions.fullAccess',
+        'pages.settingsRoles.owner.permissions.manageAll',
+        'pages.settingsRoles.owner.permissions.viewAudit',
+        'pages.settingsRoles.owner.permissions.promoteDemote',
       ],
     },
     {
       key: 'Admin',
-      name: 'Admin',
+      nameKey: 'pages.settingsRoles.admin.name',
       tone: 'text-blue-700 border-blue-500/50 bg-blue-500/15 dark:text-blue-300 dark:border-blue-500/40 dark:bg-blue-500/10',
-      summary:
-        'Workspace administrators. Manage users, groups, vaults, and credentials, and audit activity.',
-      permissions: [
-        'Invite users and assign roles (User, TeamAdmin, Admin)',
-        'Create, rename and delete groups and vaults',
-        'Manage all credentials and connections',
-        'View audit logs and email settings',
+      summaryKey: 'pages.settingsRoles.admin.summary',
+      permissionKeys: [
+        'pages.settingsRoles.admin.permissions.invite',
+        'pages.settingsRoles.admin.permissions.manageGroups',
+        'pages.settingsRoles.admin.permissions.manageCredentials',
+        'pages.settingsRoles.admin.permissions.viewAudit',
       ],
     },
     {
       key: 'TeamAdmin',
-      name: 'Team Admin',
+      nameKey: 'pages.settingsRoles.teamAdmin.name',
       tone: 'text-violet-700 border-violet-500/50 bg-violet-500/15 dark:text-violet-300 dark:border-violet-500/40 dark:bg-violet-500/10',
-      summary:
-        'Manage connections inside vaults they have access to. Cannot create vaults or invite users.',
-      permissions: [
-        'Create, edit and delete connections in assigned vaults',
-        'Use credentials available to those vaults',
-        'View members and groups assigned to those vaults',
-        'No access to user, group or vault administration',
+      summaryKey: 'pages.settingsRoles.teamAdmin.summary',
+      permissionKeys: [
+        'pages.settingsRoles.teamAdmin.permissions.manageConnections',
+        'pages.settingsRoles.teamAdmin.permissions.useCredentials',
+        'pages.settingsRoles.teamAdmin.permissions.viewMembers',
+        'pages.settingsRoles.teamAdmin.permissions.noAdminAccess',
       ],
     },
     {
       key: 'User',
-      name: 'User',
+      nameKey: 'pages.settingsRoles.user.name',
       tone: 'text-slate-700 border-slate-400/50 bg-slate-500/10 dark:text-slate-300 dark:border-white/10 dark:bg-white/5',
-      summary: 'Standard user. Can launch and use connections in vaults assigned to them.',
-      permissions: [
-        'Launch sessions on connections in assigned vaults',
-        'View their own profile and effective access',
-        'Cannot manage users, groups, vaults or credentials',
+      summaryKey: 'pages.settingsRoles.user.summary',
+      permissionKeys: [
+        'pages.settingsRoles.user.permissions.launchSessions',
+        'pages.settingsRoles.user.permissions.viewProfile',
+        'pages.settingsRoles.user.permissions.noManagement',
       ],
     },
   ];

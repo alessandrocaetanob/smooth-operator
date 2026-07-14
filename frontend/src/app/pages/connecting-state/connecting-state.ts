@@ -3,26 +3,29 @@ import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { map } from 'rxjs/operators';
 import { CommonModule } from '@angular/common';
+import { TranslatePipe } from '@ngx-translate/core';
 import { GuacamoleSessionManagerService, GuacState } from '../../services/guacamole.service';
 import { ConnectionsService, Connection } from '../../services/connections.service';
 import { Mascot, MascotState } from '../../shared/mascot/mascot';
 import { ThemeToggle } from '../../shared/theme-toggle/theme-toggle';
+import { LanguageSwitcher } from '../../shared/language-switcher/language-switcher';
 
 interface Step {
   key: GuacState;
+  /** i18n translation key (not literal text) — resolved via the `translate` pipe in the template. */
   label: string;
 }
 
 const STEP_ORDER: Step[] = [
-  { key: 'requesting-ticket', label: 'INITIATING' },
-  { key: 'connecting', label: 'CONNECTING' },
-  { key: 'waiting', label: 'AUTHENTICATING' },
-  { key: 'connected', label: 'READY' },
+  { key: 'requesting-ticket', label: 'pages.connectingState.steps.initiating' },
+  { key: 'connecting', label: 'pages.connectingState.steps.connecting' },
+  { key: 'waiting', label: 'pages.connectingState.steps.authenticating' },
+  { key: 'connected', label: 'pages.connectingState.steps.ready' },
 ];
 
 @Component({
   selector: 'app-connecting-state',
-  imports: [CommonModule, Mascot, ThemeToggle],
+  imports: [CommonModule, Mascot, ThemeToggle, LanguageSwitcher, TranslatePipe],
   templateUrl: './connecting-state.html',
   styleUrl: './connecting-state.css',
 })
@@ -88,23 +91,24 @@ export class ConnectingState implements OnInit, OnDestroy {
     }
   });
 
+  /** Returns an i18n translation key (not literal text) — resolved via the `translate` pipe in the template. */
   readonly statusLabel = computed<string>(() => {
     const s = this.state();
     switch (s) {
       case 'requesting-ticket':
-        return 'INITIATING';
+        return 'pages.connectingState.status.initiating';
       case 'connecting':
-        return 'CONNECTING';
+        return 'pages.connectingState.status.connecting';
       case 'waiting':
-        return 'AUTHENTICATING';
+        return 'pages.connectingState.status.authenticating';
       case 'connected':
-        return 'READY';
+        return 'pages.connectingState.status.ready';
       case 'error':
-        return 'ERROR';
+        return 'pages.connectingState.status.error';
       case 'disconnected':
-        return 'DISCONNECTED';
+        return 'pages.connectingState.status.disconnected';
       default:
-        return 'IDLE';
+        return 'pages.connectingState.status.idle';
     }
   });
 
@@ -193,16 +197,17 @@ export class ConnectingState implements OnInit, OnDestroy {
         return 'text-primary';
     }
   }
+  /** Returns an i18n translation key (not literal text) — resolved via the `translate` pipe in the template. */
   logTag(level: string): string {
     switch (level) {
       case 'ok':
-        return '[OK]';
+        return 'pages.connectingState.logTag.ok';
       case 'warn':
-        return '[WRN]';
+        return 'pages.connectingState.logTag.warn';
       case 'error':
-        return '[ERR]';
+        return 'pages.connectingState.logTag.error';
       default:
-        return '[..]';
+        return 'pages.connectingState.logTag.info';
     }
   }
 }

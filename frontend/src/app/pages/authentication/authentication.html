@@ -1,4 +1,5 @@
-<!-- Floating theme toggle (layout-less page) -->
+<!-- Floating theme + language toggles (layout-less page) -->
+<app-language-switcher variant="floating" />
 <app-theme-toggle variant="floating" />
 <!-- Ambient Background Lighting -->
 <div class="absolute inset-0 z-0 pointer-events-none">
@@ -19,9 +20,11 @@
       <div class="mb-app-md">
         <app-mascot [state]="mascotState()" [trackPointer]="true"></app-mascot>
       </div>
-      <h1 class="font-h1 text-h1 text-on-background tracking-tighter">Smooth Operator</h1>
+      <h1 class="font-h1 text-h1 text-on-background tracking-tighter">
+        {{ 'nav.topbar.brand' | translate }}
+      </h1>
       <p class="font-body-sm text-body-sm text-on-surface-variant mt-app-sm max-w-[280px]">
-        Secure, clientless remote access for modern infrastructure.
+        {{ 'pages.auth.tagline' | translate }}
       </p>
     </div>
 
@@ -37,17 +40,17 @@
           >
             @if (ssoLoading()) {
               <app-spinner size="sm" color="white"></app-spinner>
-              <span>Connecting…</span>
+              <span>{{ 'pages.auth.connecting' | translate }}</span>
             } @else {
               <span class="material-symbols-outlined text-body-lg">login</span>
-              <span>Sign in with {{ sso.name }}</span>
+              <span>{{ 'pages.auth.signInWithSso' | translate: { provider: sso.name } }}</span>
             }
           </button>
           <div class="flex items-center w-full py-app-md">
             <div class="flex-grow border-t border-white/10"></div>
-            <span class="px-app-md font-label-caps text-label-caps text-on-surface-variant"
-              >OR CONTINUE WITH EMAIL</span
-            >
+            <span class="px-app-md font-label-caps text-label-caps text-on-surface-variant">{{
+              'pages.auth.orContinueWithEmail' | translate
+            }}</span>
             <div class="flex-grow border-t border-white/10"></div>
           </div>
         }
@@ -62,13 +65,13 @@
             <label
               class="block font-label-caps text-label-caps text-on-surface-variant mb-app-xs"
               for="email"
-              >Email Address</label
+              >{{ 'pages.auth.emailLabel' | translate }}</label
             >
             <input
               class="w-full input-field px-app-md py-2.5 text-body-md"
               id="email"
               formControlName="email"
-              placeholder="admin@company.com"
+              [attr.placeholder]="'pages.auth.emailPlaceholder' | translate"
               type="email"
               autocomplete="email"
               (input)="onEmailInput($event)"
@@ -76,9 +79,9 @@
             @if (form.controls.email.invalid && form.controls.email.touched) {
               <p class="mt-1 text-xs text-error">
                 @if (form.controls.email.errors?.['required']) {
-                  Email is required.
+                  {{ 'pages.auth.emailRequired' | translate }}
                 } @else {
-                  Enter a valid email address.
+                  {{ 'common.validation.invalidEmail' | translate }}
                 }
               </p>
             }
@@ -88,12 +91,12 @@
               <label
                 class="block font-label-caps text-label-caps text-on-surface-variant"
                 for="password"
-                >Password</label
+                >{{ 'pages.auth.passwordLabel' | translate }}</label
               >
               <a
                 class="font-label-caps text-label-caps text-primary hover:underline hover:text-primary/80"
                 routerLink="/forgot-password"
-                >Forgot?</a
+                >{{ 'pages.auth.forgotLink' | translate }}</a
               >
             </div>
             <div class="relative flex items-center">
@@ -111,7 +114,9 @@
                 type="button"
                 class="absolute right-3 text-on-surface-variant hover:text-on-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-full p-1 flex items-center justify-center transition-colors"
                 (click)="togglePasswordVisibility()"
-                [attr.aria-label]="passwordVisible() ? 'Hide password' : 'Show password'"
+                [attr.aria-label]="
+                  (passwordVisible() ? 'common.password.hide' : 'common.password.show') | translate
+                "
                 [attr.aria-pressed]="passwordVisible()"
               >
                 <span class="material-symbols-outlined text-[20px]" aria-hidden="true">
@@ -120,7 +125,7 @@
               </button>
             </div>
             @if (form.controls.password.invalid && form.controls.password.touched) {
-              <p class="mt-1 text-xs text-error">Password is required.</p>
+              <p class="mt-1 text-xs text-error">{{ 'pages.auth.passwordRequired' | translate }}</p>
             }
           </div>
 
@@ -139,9 +144,9 @@
           >
             @if (submitting()) {
               <app-spinner size="sm" color="white"></app-spinner>
-              Signing in…
+              {{ 'pages.auth.signingIn' | translate }}
             } @else {
-              Sign In
+              {{ 'pages.auth.signIn' | translate }}
             }
           </button>
         </form>
@@ -161,9 +166,11 @@
               aria-hidden="true"
               >lock</span
             >
-            <h2 class="font-h2 text-h2 text-on-background">Two-factor authentication</h2>
+            <h2 class="font-h2 text-h2 text-on-background">
+              {{ 'pages.auth.mfaTitle' | translate }}
+            </h2>
             <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">
-              Enter the 6-digit code from your authenticator app, or a recovery code.
+              {{ 'pages.auth.mfaSubtitle' | translate }}
             </p>
           </div>
 
@@ -171,7 +178,7 @@
             <label
               class="block font-label-caps text-label-caps text-on-surface-variant mb-app-xs"
               for="mfa-code"
-              >Verification code</label
+              >{{ 'pages.auth.mfaCodeLabel' | translate }}</label
             >
             <input
               class="w-full input-field px-app-md py-2.5 text-body-md text-center tracking-widest"
@@ -185,7 +192,7 @@
             />
             @if (mfaForm.controls.code.invalid && mfaForm.controls.code.touched) {
               <p class="mt-1 text-xs text-error">
-                Enter a 6-digit code or XXXX-XXXX recovery code.
+                {{ 'pages.auth.mfaCodeError' | translate }}
               </p>
             }
           </div>
@@ -205,9 +212,9 @@
           >
             @if (submitting()) {
               <app-spinner size="sm" color="white"></app-spinner>
-              Verifying…
+              {{ 'pages.auth.verifying' | translate }}
             } @else {
-              Verify
+              {{ 'pages.auth.verify' | translate }}
             }
           </button>
 
@@ -216,7 +223,7 @@
             class="w-full text-center font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors"
             (click)="backToCredentials()"
           >
-            ← Back to sign in
+            {{ 'pages.auth.backToSignIn' | translate }}
           </button>
         </form>
       </div>
@@ -232,11 +239,13 @@
           [href]="helpUrl"
           target="_blank"
           rel="noopener noreferrer"
-          >Help</a
+          >{{ 'common.help' | translate }}</a
         >
       }
-      <a class="font-body-sm text-body-sm hover:text-primary-fixed-dim transition-colors" href="#"
-        >Privacy</a
+      <a
+        class="font-body-sm text-body-sm hover:text-primary-fixed-dim transition-colors"
+        href="#"
+        >{{ 'common.privacy' | translate }}</a
       >
     </div>
   </div>
@@ -245,6 +254,8 @@
     <div
       class="w-2 h-2 rounded-full bg-tertiary-fixed-dim shadow-[0_0_8px_rgba(78,222,163,0.6)] animate-pulse"
     ></div>
-    <span class="font-label-caps text-label-caps">SYSTEM STATUS: OPTIMAL</span>
+    <span class="font-label-caps text-label-caps">{{
+      'pages.auth.systemStatusOptimal' | translate
+    }}</span>
   </div>
 </main>

@@ -2,20 +2,22 @@
   <!-- Page header -->
   <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-6 gap-3">
     <div class="min-w-0">
-      <h1 class="text-2xl font-bold text-on-surface tracking-tight">Known Hosts</h1>
+      <h1 class="text-2xl font-bold text-on-surface tracking-tight">
+        {{ 'pages.hosts.title' | translate }}
+      </h1>
       <p class="text-sm text-on-surface-variant mt-1">
-        Registered target servers and endpoints used by connections.
+        {{ 'pages.hosts.subtitle' | translate }}
       </p>
     </div>
     <div class="flex flex-wrap items-center gap-2 sm:shrink-0 sm:mt-1">
       <button (click)="refresh()" class="btn-ghost">
         <span class="material-symbols-outlined text-base">refresh</span>
-        Refresh
+        {{ 'pages.hosts.refresh' | translate }}
       </button>
       @if (canManageConnections()) {
         <button (click)="newHost()" class="btn-primary">
           <span class="material-symbols-outlined text-base">add</span>
-          New Host
+          {{ 'pages.hosts.newHost' | translate }}
         </button>
       }
     </div>
@@ -39,7 +41,7 @@
       >
       <input
         type="text"
-        placeholder="Search by name or address…"
+        [attr.placeholder]="'pages.hosts.searchPlaceholder' | translate"
         [ngModel]="searchQuery()"
         (ngModelChange)="searchQuery.set($event)"
         name="search"
@@ -49,7 +51,7 @@
         <button
           type="button"
           (click)="searchQuery.set('')"
-          aria-label="Clear search"
+          [attr.aria-label]="'pages.hosts.clearSearch' | translate"
           class="absolute right-2 top-1/2 -translate-y-1/2 text-on-surface-variant/60 hover:text-on-surface transition-colors"
         >
           <span class="material-symbols-outlined text-base">close</span>
@@ -57,7 +59,10 @@
       }
     </div>
     <span class="text-xs text-on-surface-variant/60 whitespace-nowrap">
-      {{ filteredHosts().length }} of {{ hosts().length }}
+      {{
+        'pages.hosts.countSummary'
+          | translate: { filtered: filteredHosts().length, total: hosts().length }
+      }}
     </span>
   </div>
 
@@ -69,9 +74,15 @@
           class="bg-surface-container/60 text-[11px] uppercase tracking-wider text-on-surface-variant border-b border-outline-variant/30"
         >
           <tr>
-            <th class="text-left px-5 py-4 font-semibold rounded-tl-2xl">Name</th>
-            <th class="text-left px-5 py-4 font-semibold">Address</th>
-            <th class="text-right px-5 py-4 font-semibold rounded-tr-2xl">Actions</th>
+            <th class="text-left px-5 py-4 font-semibold rounded-tl-2xl">
+              {{ 'pages.hosts.columnName' | translate }}
+            </th>
+            <th class="text-left px-5 py-4 font-semibold">
+              {{ 'pages.hosts.columnAddress' | translate }}
+            </th>
+            <th class="text-right px-5 py-4 font-semibold rounded-tr-2xl">
+              {{ 'pages.hosts.columnActions' | translate }}
+            </th>
           </tr>
         </thead>
         <tbody class="divide-y divide-outline-variant/10">
@@ -96,16 +107,16 @@
                     <button
                       (click)="edit(h)"
                       class="btn-ghost p-2 rounded-lg"
-                      title="Edit"
-                      aria-label="Edit host"
+                      [attr.title]="'common.actions.edit' | translate"
+                      [attr.aria-label]="'pages.hosts.editHostAriaLabel' | translate"
                     >
                       <span class="material-symbols-outlined text-lg">edit</span>
                     </button>
                     <button
                       (click)="remove(h)"
                       class="p-2 text-error hover:bg-error/10 rounded-lg transition-colors"
-                      title="Delete"
-                      aria-label="Delete host"
+                      [attr.title]="'common.actions.delete' | translate"
+                      [attr.aria-label]="'pages.hosts.deleteHostAriaLabel' | translate"
                     >
                       <span class="material-symbols-outlined text-lg">delete</span>
                     </button>
@@ -119,16 +130,16 @@
                 <div class="flex flex-col items-center justify-center text-on-surface-variant/60">
                   <span class="material-symbols-outlined text-4xl mb-3 opacity-40">dns</span>
                   @if (loading()) {
-                    <p>Loading hosts…</p>
+                    <p>{{ 'pages.hosts.loading' | translate }}</p>
                   } @else if (isFiltered()) {
-                    <p class="font-medium">No hosts match your search.</p>
+                    <p class="font-medium">{{ 'pages.hosts.noSearchResults' | translate }}</p>
                     <button (click)="searchQuery.set('')" class="btn-ghost mt-3 text-xs">
-                      Clear search
+                      {{ 'pages.hosts.clearSearch' | translate }}
                     </button>
                   } @else {
-                    <p class="font-medium">No known hosts yet.</p>
+                    <p class="font-medium">{{ 'pages.hosts.emptyTitle' | translate }}</p>
                     <p class="text-xs mt-1">
-                      Hosts are added automatically when creating connections, or manually here.
+                      {{ 'pages.hosts.emptyHint' | translate }}
                     </p>
                   }
                 </div>
@@ -144,9 +155,9 @@
 <!-- Drawer: Create / Edit host -->
 @if (showDrawer()) {
   <app-drawer
-    [title]="form().id ? 'Edit Host' : 'New Host'"
+    [title]="(form().id ? 'pages.hosts.editHostTitle' : 'pages.hosts.newHostTitle') | translate"
     [subtitle]="
-      form().id ? 'Update host details below.' : 'Register a new target server or endpoint.'
+      (form().id ? 'pages.hosts.editHostSubtitle' : 'pages.hosts.newHostSubtitle') | translate
     "
     (closed)="closeDrawer()"
   >
@@ -164,12 +175,12 @@
         <label
           class="text-xs font-semibold text-on-surface-variant uppercase tracking-widest"
           for="host-display-name"
-          >Display Name</label
+          >{{ 'pages.hosts.displayNameLabel' | translate }}</label
         >
         <input
           type="text"
           id="host-display-name"
-          placeholder="e.g. Production Web Server"
+          [attr.placeholder]="'pages.hosts.displayNamePlaceholder' | translate"
           [ngModel]="form().name"
           (ngModelChange)="patch('name', $event)"
           name="name"
@@ -182,7 +193,7 @@
         <label
           class="text-xs font-semibold text-on-surface-variant uppercase tracking-widest"
           for="host-address"
-          >Address</label
+          >{{ 'pages.hosts.addressLabel' | translate }}</label
         >
         <div class="relative">
           <span
@@ -192,7 +203,7 @@
           <input
             type="text"
             id="host-address"
-            placeholder="IP address or hostname (e.g. 10.0.0.5)"
+            [attr.placeholder]="'pages.hosts.addressPlaceholder' | translate"
             [ngModel]="form().address"
             (ngModelChange)="patch('address', $event)"
             name="address"
@@ -203,7 +214,9 @@
       </div>
 
       <div class="flex justify-end gap-3 pt-4 border-t border-outline-variant/20">
-        <button type="button" (click)="closeDrawer()" class="btn-ghost px-5">Cancel</button>
+        <button type="button" (click)="closeDrawer()" class="btn-ghost px-5">
+          {{ 'common.actions.cancel' | translate }}
+        </button>
         <button
           type="submit"
           [disabled]="busy()"
@@ -212,7 +225,7 @@
           <span class="material-symbols-outlined text-base">{{
             busy() ? 'hourglass_empty' : 'save'
           }}</span>
-          {{ busy() ? 'Saving…' : 'Save Host' }}
+          {{ (busy() ? 'pages.hosts.saving' : 'pages.hosts.saveHost') | translate }}
         </button>
       </div>
     </form>

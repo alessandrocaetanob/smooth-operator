@@ -1,14 +1,16 @@
 <div>
   <div class="flex items-center justify-between mb-6">
     <div>
-      <h2 class="text-lg font-semibold text-on-surface">Vaults</h2>
+      <h2 class="text-lg font-semibold text-on-surface">
+        {{ 'pages.settingsVaults.title' | translate }}
+      </h2>
       <p class="text-sm text-on-surface-variant mt-1">
-        Create and manage vaults that group connections together.
+        {{ 'pages.settingsVaults.subtitle' | translate }}
       </p>
     </div>
     <button (click)="refresh()" class="btn-ghost">
       <span class="material-symbols-outlined text-base" aria-hidden="true">refresh</span>
-      Refresh
+      {{ 'pages.settingsVaults.refresh' | translate }}
     </button>
   </div>
 
@@ -20,12 +22,12 @@
 
   <div class="glass-card rounded-lg mb-6 p-5">
     <h3 class="text-xs font-semibold text-on-surface-variant uppercase tracking-widest mb-3">
-      New Vault
+      {{ 'pages.settingsVaults.newVault.heading' | translate }}
     </h3>
     <div class="flex gap-2">
       <input
         type="text"
-        placeholder="Vault name"
+        [placeholder]="'pages.settingsVaults.newVault.namePlaceholder' | translate"
         [ngModel]="newVaultName()"
         (ngModelChange)="newVaultName.set($event)"
         (keyup.enter)="createVault()"
@@ -33,7 +35,11 @@
         class="flex-1 input-field"
       />
       <button type="button" (click)="createVault()" [disabled]="vaultBusy()" class="btn-primary">
-        {{ vaultBusy() ? 'Creating…' : 'Create vault' }}
+        {{
+          vaultBusy()
+            ? ('pages.settingsVaults.newVault.creating' | translate)
+            : ('pages.settingsVaults.newVault.create' | translate)
+        }}
       </button>
     </div>
   </div>
@@ -42,9 +48,15 @@
     <table class="w-full text-sm">
       <thead class="bg-white/5 text-[11px] uppercase tracking-widest text-on-surface-variant">
         <tr>
-          <th class="text-left px-4 py-3 font-medium">Name</th>
-          <th class="text-left px-4 py-3 font-medium">Access</th>
-          <th class="text-right px-4 py-3 font-medium">Actions</th>
+          <th class="text-left px-4 py-3 font-medium">
+            {{ 'pages.settingsVaults.table.name' | translate }}
+          </th>
+          <th class="text-left px-4 py-3 font-medium">
+            {{ 'pages.settingsVaults.table.access' | translate }}
+          </th>
+          <th class="text-right px-4 py-3 font-medium">
+            {{ 'pages.settingsVaults.table.actions' | translate }}
+          </th>
         </tr>
       </thead>
       <tbody>
@@ -65,9 +77,19 @@
               }
             </td>
             <td class="px-4 py-3 text-xs text-outline">
-              {{ vault.userCount ?? 0 }} user{{ (vault.userCount ?? 0) === 1 ? '' : 's' }}
+              {{ vault.userCount ?? 0 }}
+              {{
+                (vault.userCount ?? 0) === 1
+                  ? ('pages.settingsVaults.table.user' | translate)
+                  : ('pages.settingsVaults.table.users' | translate)
+              }}
               ·
-              {{ vault.groupCount ?? 0 }} group{{ (vault.groupCount ?? 0) === 1 ? '' : 's' }}
+              {{ vault.groupCount ?? 0 }}
+              {{
+                (vault.groupCount ?? 0) === 1
+                  ? ('pages.settingsVaults.table.group' | translate)
+                  : ('pages.settingsVaults.table.groups' | translate)
+              }}
             </td>
             <td class="px-4 py-3">
               <div class="flex items-center justify-end gap-2">
@@ -77,20 +99,20 @@
                     [disabled]="vaultBusy()"
                     class="px-2 py-1 text-xs text-tertiary hover:bg-tertiary/10 rounded disabled:opacity-50"
                   >
-                    Save
+                    {{ 'common.actions.save' | translate }}
                   </button>
                   <button
                     (click)="cancelEdit()"
                     class="px-2 py-1 text-xs text-on-surface-variant hover:bg-on-surface/5 rounded"
                   >
-                    Cancel
+                    {{ 'common.actions.cancel' | translate }}
                   </button>
                 } @else {
                   <button
                     (click)="openAssignments(vault)"
                     class="px-2 py-1 text-xs text-primary hover:bg-primary/10 rounded"
                   >
-                    Assign
+                    {{ 'pages.settingsVaults.actions.assign' | translate }}
                   </button>
                   <button
                     (click)="openRecording(vault)"
@@ -101,24 +123,28 @@
                     [class.hover:bg-on-surface]="!vault.recordingEnabled"
                     [title]="
                       vault.recordingEnabled
-                        ? 'Sessions in this vault are being recorded'
-                        : 'Recording is off for this vault'
+                        ? ('pages.settingsVaults.recording.onTooltip' | translate)
+                        : ('pages.settingsVaults.recording.offTooltip' | translate)
                     "
                   >
                     <span class="material-symbols-outlined text-base align-middle">videocam</span>
-                    {{ vault.recordingEnabled ? 'Recording on' : 'Recording' }}
+                    {{
+                      vault.recordingEnabled
+                        ? ('pages.settingsVaults.recording.enabledLabel' | translate)
+                        : ('pages.settingsVaults.recording.disabledLabel' | translate)
+                    }}
                   </button>
                   <button
                     (click)="startEdit(vault)"
                     class="px-2 py-1 text-xs text-primary hover:bg-primary/10 rounded"
                   >
-                    Rename
+                    {{ 'pages.settingsVaults.actions.rename' | translate }}
                   </button>
                   <button
                     (click)="deleteVault(vault)"
                     class="px-2 py-1 text-xs text-error hover:bg-error/10 rounded"
                   >
-                    Delete
+                    {{ 'common.actions.delete' | translate }}
                   </button>
                 }
               </div>
@@ -127,7 +153,11 @@
         } @empty {
           <tr>
             <td colspan="3" class="px-4 py-8 text-center text-slate-500">
-              {{ loading() ? 'Loading…' : 'No vaults yet. Create one above.' }}
+              {{
+                loading()
+                  ? ('pages.settingsVaults.table.loading' | translate)
+                  : ('pages.settingsVaults.table.empty' | translate)
+              }}
             </td>
           </tr>
         }
@@ -157,10 +187,10 @@
         id="vault-assignments-title"
         class="text-sm font-semibold text-on-surface uppercase tracking-widest"
       >
-        Assign Access — {{ vault.name }}
+        {{ 'pages.settingsVaults.assignModal.title' | translate: { name: vault.name } }}
       </h3>
       <p class="text-xs text-on-surface-variant mt-1">
-        Select users and groups that can access this vault.
+        {{ 'pages.settingsVaults.assignModal.subtitle' | translate }}
       </p>
 
       <div class="mt-4 grid grid-cols-2 gap-4">
@@ -168,17 +198,20 @@
         <div>
           <div class="flex items-center justify-between mb-2">
             <p class="text-xs font-semibold text-on-surface-variant uppercase tracking-widest">
-              Users
+              {{ 'pages.settingsVaults.assignModal.usersHeading' | translate }}
             </p>
             @if (selectedUserIds().length > 0) {
               <span class="text-[11px] font-medium text-primary">
-                {{ selectedUserIds().length }} selected
+                {{
+                  'pages.settingsVaults.assignModal.selectedCount'
+                    | translate: { count: selectedUserIds().length }
+                }}
               </span>
             }
           </div>
           <input
             type="text"
-            placeholder="Search users…"
+            [placeholder]="'pages.settingsVaults.assignModal.searchUsersPlaceholder' | translate"
             [ngModel]="userAssignSearch()"
             (ngModelChange)="userAssignSearch.set($event)"
             name="userAssignSearch"
@@ -207,7 +240,9 @@
             ) {
               <div class="flex items-center gap-2 my-1.5">
                 <div class="h-px flex-1 bg-white/10"></div>
-                <span class="text-[10px] text-outline uppercase tracking-wider">available</span>
+                <span class="text-[10px] text-outline uppercase tracking-wider">{{
+                  'pages.settingsVaults.assignModal.availableDivider' | translate
+                }}</span>
                 <div class="h-px flex-1 bg-white/10"></div>
               </div>
             }
@@ -232,7 +267,9 @@
               filteredSelectedAssignUsers().length === 0 &&
               filteredUnselectedAssignUsers().length === 0
             ) {
-              <div class="text-xs text-outline py-2 px-2">No users found.</div>
+              <div class="text-xs text-outline py-2 px-2">
+                {{ 'pages.settingsVaults.assignModal.noUsersFound' | translate }}
+              </div>
             }
           </div>
         </div>
@@ -241,17 +278,20 @@
         <div>
           <div class="flex items-center justify-between mb-2">
             <p class="text-xs font-semibold text-on-surface-variant uppercase tracking-widest">
-              Groups
+              {{ 'pages.settingsVaults.assignModal.groupsHeading' | translate }}
             </p>
             @if (selectedGroupIds().length > 0) {
               <span class="text-[11px] font-medium text-primary">
-                {{ selectedGroupIds().length }} selected
+                {{
+                  'pages.settingsVaults.assignModal.selectedCount'
+                    | translate: { count: selectedGroupIds().length }
+                }}
               </span>
             }
           </div>
           <input
             type="text"
-            placeholder="Search groups…"
+            [placeholder]="'pages.settingsVaults.assignModal.searchGroupsPlaceholder' | translate"
             [ngModel]="groupAssignSearch()"
             (ngModelChange)="groupAssignSearch.set($event)"
             name="groupAssignSearch"
@@ -276,7 +316,9 @@
             ) {
               <div class="flex items-center gap-2 my-1.5">
                 <div class="h-px flex-1 bg-white/10"></div>
-                <span class="text-[10px] text-outline uppercase tracking-wider">available</span>
+                <span class="text-[10px] text-outline uppercase tracking-wider">{{
+                  'pages.settingsVaults.assignModal.availableDivider' | translate
+                }}</span>
                 <div class="h-px flex-1 bg-white/10"></div>
               </div>
             }
@@ -296,21 +338,29 @@
               filteredSelectedAssignGroups().length === 0 &&
               filteredUnselectedAssignGroups().length === 0
             ) {
-              <div class="text-xs text-outline py-2 px-2">No groups found.</div>
+              <div class="text-xs text-outline py-2 px-2">
+                {{ 'pages.settingsVaults.assignModal.noGroupsFound' | translate }}
+              </div>
             }
           </div>
         </div>
       </div>
 
       <div class="mt-5 flex justify-end gap-2">
-        <button type="button" (click)="closeAssignments()" class="btn-ghost">Cancel</button>
+        <button type="button" (click)="closeAssignments()" class="btn-ghost">
+          {{ 'common.actions.cancel' | translate }}
+        </button>
         <button
           type="button"
           (click)="saveAssignments()"
           [disabled]="assignBusy()"
           class="btn-primary"
         >
-          {{ assignBusy() ? 'Saving…' : 'Save assignments' }}
+          {{
+            assignBusy()
+              ? ('pages.settingsVaults.assignModal.saving' | translate)
+              : ('pages.settingsVaults.assignModal.save' | translate)
+          }}
         </button>
       </div>
     </div>
@@ -336,13 +386,17 @@
       <div class="flex items-center justify-between mb-3">
         <div>
           <h3 id="recording-modal-title" class="text-base font-semibold text-on-surface">
-            Recording: {{ vault.name }}
+            {{ 'pages.settingsVaults.recordingModal.title' | translate: { name: vault.name } }}
           </h3>
           <p class="text-xs text-on-surface-variant mt-0.5">
-            Default for every connection in this vault. Each connection can override.
+            {{ 'pages.settingsVaults.recordingModal.subtitle' | translate }}
           </p>
         </div>
-        <button (click)="closeRecording()" class="btn-ghost-icon" aria-label="Close">
+        <button
+          (click)="closeRecording()"
+          class="btn-ghost-icon"
+          [attr.aria-label]="'common.actions.close' | translate"
+        >
           <span class="material-symbols-outlined">close</span>
         </button>
       </div>
@@ -363,11 +417,12 @@
                 <span class="toggle-thumb" [class.toggle-thumb-on]="recordingEnabledForm()"></span>
               </span>
             </span>
-            <span class="font-medium text-on-surface">Record sessions in this vault</span>
+            <span class="font-medium text-on-surface">{{
+              'pages.settingsVaults.recordingModal.enableLabel' | translate
+            }}</span>
           </label>
           <p class="text-xs text-on-surface-variant mt-1 ml-[54px]">
-            When on, every connection inside this vault is recorded by default. Individual
-            connections can opt out.
+            {{ 'pages.settingsVaults.recordingModal.enableDescription' | translate }}
           </p>
         </div>
 
@@ -390,17 +445,20 @@
                 ></span>
               </span>
             </span>
-            <span class="font-medium text-on-surface">Also capture keystrokes</span>
+            <span class="font-medium text-on-surface">{{
+              'pages.settingsVaults.recordingModal.includeKeysLabel' | translate
+            }}</span>
           </label>
           <p class="text-xs text-on-surface-variant mt-1 ml-[54px]">
-            Off by default. Captured keystrokes can include passwords typed at login prompts — only
-            enable when required for compliance or forensics.
+            {{ 'pages.settingsVaults.recordingModal.includeKeysDescription' | translate }}
           </p>
         </div>
 
         <!-- Retention override -->
         <div>
-          <label class="settings-label" for="recRetention">Retention override (days)</label>
+          <label class="settings-label" for="recRetention">{{
+            'pages.settingsVaults.recordingModal.retentionLabel' | translate
+          }}</label>
           <input
             id="recRetention"
             type="number"
@@ -409,25 +467,32 @@
             [ngModel]="recordingRetentionDaysForm()"
             (ngModelChange)="recordingRetentionDaysForm.set($event)"
             name="recRetention"
-            placeholder="Use global default"
+            [placeholder]="'pages.settingsVaults.recordingModal.retentionPlaceholder' | translate"
             class="w-full input-field"
           />
           <p class="text-xs text-on-surface-variant mt-1">
-            Leave blank to inherit the global retention. Enter <code>0</code> to keep recordings
-            from this vault forever.
+            {{ 'pages.settingsVaults.recordingModal.retentionHintPre' | translate }}
+            <code>0</code>
+            {{ 'pages.settingsVaults.recordingModal.retentionHintPost' | translate }}
           </p>
         </div>
       </div>
 
       <div class="mt-5 flex justify-end gap-2">
-        <button type="button" (click)="closeRecording()" class="btn-ghost">Cancel</button>
+        <button type="button" (click)="closeRecording()" class="btn-ghost">
+          {{ 'common.actions.cancel' | translate }}
+        </button>
         <button
           type="button"
           (click)="saveRecording()"
           [disabled]="recordingBusy()"
           class="btn-primary"
         >
-          {{ recordingBusy() ? 'Saving…' : 'Save' }}
+          {{
+            recordingBusy()
+              ? ('pages.settingsVaults.recordingModal.saving' | translate)
+              : ('pages.settingsVaults.recordingModal.save' | translate)
+          }}
         </button>
       </div>
     </dialog>

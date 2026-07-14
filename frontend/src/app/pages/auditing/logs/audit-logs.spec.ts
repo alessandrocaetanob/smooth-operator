@@ -4,6 +4,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { signal } from '@angular/core';
 import { of, throwError } from 'rxjs';
+import { provideTranslateService, TranslateService } from '@ngx-translate/core';
 
 import { AuditLogs } from './audit-logs';
 import { AuditLogsService, AuditLogEntry } from '../../../services/audit-logs.service';
@@ -29,9 +30,26 @@ describe('AuditLogs', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
+        provideTranslateService(),
         { provide: AuditLogsService, useValue: svc },
       ],
     }).compileComponents();
+
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', {
+      pages: {
+        auditing: {
+          table: {
+            unknownUser: 'unknown',
+            rowAriaLabel: 'View details for {{action}} by {{actor}}',
+          },
+          detail: {
+            noDetails: '(no details)',
+          },
+        },
+      },
+    });
+    translate.use('en');
 
     fixture = TestBed.createComponent(AuditLogs);
     component = fixture.componentInstance;

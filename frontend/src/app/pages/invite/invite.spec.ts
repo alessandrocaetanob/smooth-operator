@@ -2,11 +2,24 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideTranslateService, TranslateService } from '@ngx-translate/core';
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { of, throwError } from 'rxjs';
 
 import { Invite } from './invite';
 import { InvitesService, InvitePreview } from '../../services/invites.service';
+
+const INVITE_TRANSLATIONS = {
+  pages: {
+    invite: {
+      missingToken: 'Missing invitation token.',
+      invalidOrExpired: 'This invitation is invalid or has expired.',
+      passwordTooShort: 'Password must be at least 8 characters.',
+      passwordMismatch: 'Passwords do not match.',
+      setupFailed: 'Failed to complete account setup.',
+    },
+  },
+};
 
 describe('Invite', () => {
   let component: Invite;
@@ -31,6 +44,7 @@ describe('Invite', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
+        provideTranslateService(),
         { provide: InvitesService, useValue: invites },
         { provide: Router, useValue: router },
         {
@@ -39,6 +53,10 @@ describe('Invite', () => {
         },
       ],
     }).compileComponents();
+
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', INVITE_TRANSLATIONS);
+    translate.use('en');
 
     fixture = TestBed.createComponent(Invite);
     component = fixture.componentInstance;
@@ -60,11 +78,17 @@ describe('Invite', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
+        provideTranslateService(),
         { provide: InvitesService, useValue: invites },
         { provide: Router, useValue: router },
         { provide: ActivatedRoute, useValue: { snapshot: { paramMap } } },
       ],
     }).compileComponents();
+
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', INVITE_TRANSLATIONS);
+    translate.use('en');
+
     fixture = TestBed.createComponent(Invite);
     component = fixture.componentInstance;
     component.ngOnInit();

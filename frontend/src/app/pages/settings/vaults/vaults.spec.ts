@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideTranslateService, TranslateService } from '@ngx-translate/core';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { signal } from '@angular/core';
 import { of, throwError } from 'rxjs';
@@ -60,6 +61,7 @@ describe('SettingsVaults', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
+        provideTranslateService(),
         { provide: VaultsService, useValue: vaultsSvc },
         { provide: UsersService, useValue: usersSvc },
         { provide: GroupsService, useValue: groupsSvc },
@@ -67,6 +69,43 @@ describe('SettingsVaults', () => {
         { provide: ToastService, useValue: toast },
       ],
     }).compileComponents();
+
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', {
+      pages: {
+        settingsVaults: {
+          errors: {
+            loadFailed: 'Failed to load vaults.',
+            nameRequired: 'Vault name is required.',
+            createFailed: 'Failed to create vault.',
+            renameFailed: 'Failed to rename vault.',
+            deleteFailed: 'Failed to delete vault.',
+            loadAssignmentsFailed: 'Failed to load assignments.',
+            assignmentsSaveFailed: 'Failed to save assignments.',
+            recordingSaveFailed: 'Failed to save recording settings.',
+          },
+          toasts: {
+            created: 'Vault "{{name}}" created.',
+            renamed: 'Vault renamed to "{{name}}".',
+            deleted: 'Vault "{{name}}" deleted.',
+            recordingSaved: 'Recording settings saved for "{{name}}".',
+            assignmentsUpdated: 'Assignments updated for "{{name}}".',
+          },
+          confirmDelete: {
+            title: 'Delete vault',
+            message:
+              'Delete vault "{{name}}"? All connections inside will be unlinked. This cannot be undone.',
+          },
+        },
+      },
+      common: {
+        actions: {
+          delete: 'Delete',
+        },
+      },
+    });
+    translate.use('en');
+
     fixture = TestBed.createComponent(SettingsVaults);
     component = fixture.componentInstance;
   });

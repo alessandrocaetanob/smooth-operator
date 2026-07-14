@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideTranslateService, TranslateService } from '@ngx-translate/core';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { BehaviorSubject } from 'rxjs';
 import { of, throwError } from 'rxjs';
@@ -9,6 +10,30 @@ import { of, throwError } from 'rxjs';
 import { SearchResults } from './search-results';
 import { VaultsService, Vault } from '../../services/vaults.service';
 import { ConnectionsService, Connection } from '../../services/connections.service';
+
+const EN_TRANSLATIONS = {
+  pages: {
+    searchResults: {
+      title: 'Search Results',
+      searchingFor: 'Searching for',
+      resultsForOne: '{{count}} result for',
+      resultsForOther: '{{count}} results for',
+      typeQueryPrompt: 'Type a query in the search bar to find vaults and connections.',
+      loading: 'Loading…',
+      noMatchesFound: 'No matches found',
+      noMatchesFor: 'Nothing matched',
+      tryDifferentKeyword: 'Try a different keyword.',
+      vaultsHeading: 'Vaults',
+      connectionsHeading: 'Connections',
+      vaultFallback: 'Vault',
+      connectionFallback: 'Connection',
+      userCountOne: '{{count}} user',
+      userCountOther: '{{count}} users',
+      groupCountOne: '{{count}} group',
+      groupCountOther: '{{count}} groups',
+    },
+  },
+};
 
 describe('SearchResults', () => {
   let component: SearchResults;
@@ -63,12 +88,17 @@ describe('SearchResults', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
+        provideTranslateService(),
         { provide: ActivatedRoute, useValue: { queryParamMap } },
         { provide: VaultsService, useValue: vaultsSvc },
         { provide: ConnectionsService, useValue: connectionsSvc },
         { provide: Router, useValue: router },
       ],
     }).compileComponents();
+
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', EN_TRANSLATIONS);
+    translate.use('en');
 
     fixture = TestBed.createComponent(SearchResults);
     component = fixture.componentInstance;

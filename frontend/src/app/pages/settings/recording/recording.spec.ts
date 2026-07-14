@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideTranslateService, TranslateService } from '@ngx-translate/core';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { signal } from '@angular/core';
 import { of, throwError } from 'rxjs';
@@ -55,9 +56,29 @@ describe('RecordingSettingsPage', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
+        provideTranslateService(),
         { provide: RecordingStorageService, useValue: storage },
       ],
     }).compileComponents();
+
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', {
+      pages: {
+        settingsRecording: {
+          errors: {
+            loadFailed: 'Failed to load recording storage settings.',
+            saveFailed: 'Failed to save recording storage settings.',
+            testFailed: 'Storage test failed.',
+          },
+          messages: {
+            saved: 'Recording storage settings saved.',
+            testSuccess: 'Storage backend responded successfully.',
+          },
+        },
+      },
+    });
+    translate.use('en');
+
     fixture = TestBed.createComponent(RecordingSettingsPage);
     component = fixture.componentInstance;
   });

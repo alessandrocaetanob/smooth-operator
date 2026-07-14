@@ -1,5 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { TranslatePipe } from '@ngx-translate/core';
 
 interface Endpoint {
   label: string;
@@ -20,7 +21,7 @@ interface GrafanaDashboard {
 
 @Component({
   selector: 'app-integrations',
-  imports: [CommonModule],
+  imports: [CommonModule, TranslatePipe],
   templateUrl: './integrations.html',
   styleUrl: './integrations.css',
 })
@@ -30,11 +31,14 @@ export class Integrations {
   readonly copiedKey = signal<string | null>(null);
 
   readonly prometheusEndpoints: Endpoint[] = [
-    { label: 'Metrics scrape endpoint', value: 'https://<your-host>:5000/metrics' },
+    {
+      label: 'pages.settingsIntegrations.prometheus.endpoints.metricsScrape',
+      value: 'https://<your-host>:5000/metrics',
+    },
   ];
 
   readonly prometheusConfig: CodeBlock = {
-    label: 'prometheus.yml scrape config',
+    label: 'pages.settingsIntegrations.prometheus.scrapeConfigLabel',
     code: `global:
   scrape_interval: 15s
 
@@ -55,12 +59,18 @@ scrape_configs:
   ];
 
   readonly otlpEndpoints: Endpoint[] = [
-    { label: 'OTLP gRPC endpoint', value: 'https://<your-host>:4317' },
-    { label: 'Tempo HTTP query endpoint', value: 'https://<your-host>:3200' },
+    {
+      label: 'pages.settingsIntegrations.otlp.endpoints.grpc',
+      value: 'https://<your-host>:4317',
+    },
+    {
+      label: 'pages.settingsIntegrations.otlp.endpoints.tempoQuery',
+      value: 'https://<your-host>:3200',
+    },
   ];
 
   readonly otlpConfig: CodeBlock = {
-    label: 'OpenTelemetry Collector config (receivers)',
+    label: 'pages.settingsIntegrations.otlp.collectorConfigLabel',
     code: `receivers:
   otlp:
     protocols:
@@ -81,25 +91,31 @@ service:
   };
 
   readonly lokiEndpoints: Endpoint[] = [
-    { label: 'Loki push endpoint', value: 'https://<your-host>:3100' },
-    { label: 'Loki query API', value: 'https://<your-host>:3100/loki/api/v1/query_range' },
+    {
+      label: 'pages.settingsIntegrations.loki.endpoints.push',
+      value: 'https://<your-host>:3100',
+    },
+    {
+      label: 'pages.settingsIntegrations.loki.endpoints.queryApi',
+      value: 'https://<your-host>:3100/loki/api/v1/query_range',
+    },
   ];
 
   readonly lokiQueries: CodeBlock[] = [
     {
-      label: 'All audit events',
+      label: 'pages.settingsIntegrations.loki.queries.allAuditEvents',
       code: `{app="smooth-operator"} | json | action != ""`,
     },
     {
-      label: 'Failed login attempts',
+      label: 'pages.settingsIntegrations.loki.queries.failedLoginAttempts',
       code: `{app="smooth-operator"} | json | action = \`user.login_failed\``,
     },
     {
-      label: 'Specific user activity',
+      label: 'pages.settingsIntegrations.loki.queries.specificUserActivity',
       code: `{app="smooth-operator"} | json | action != "" | userId = "<user-id>"`,
     },
     {
-      label: 'Failure events only',
+      label: 'pages.settingsIntegrations.loki.queries.failureEventsOnly',
       code: `{app="smooth-operator"} | json | outcome = \`failure\``,
     },
   ];
@@ -112,30 +128,26 @@ service:
 
   readonly grafanaDashboards: GrafanaDashboard[] = [
     {
-      name: 'Active Sessions',
-      description:
-        'Live and historical session counts, connection gauge, and session history over time.',
+      name: 'pages.settingsIntegrations.grafana.dashboards.activeSessions.name',
+      description: 'pages.settingsIntegrations.grafana.dashboards.activeSessions.description',
       filename: 'active-sessions.json',
       url: '/grafana-dashboards/active-sessions.json',
     },
     {
-      name: 'ASP.NET Core Overview',
-      description:
-        'HTTP request rate, error rate, response time percentiles, and total request volume.',
+      name: 'pages.settingsIntegrations.grafana.dashboards.aspnetOverview.name',
+      description: 'pages.settingsIntegrations.grafana.dashboards.aspnetOverview.description',
       filename: 'aspnetcore-overview.json',
       url: '/grafana-dashboards/aspnetcore-overview.json',
     },
     {
-      name: 'Audit Events',
-      description:
-        'Audit event totals, type distribution, outcome breakdown, and event rate timeseries.',
+      name: 'pages.settingsIntegrations.grafana.dashboards.auditEvents.name',
+      description: 'pages.settingsIntegrations.grafana.dashboards.auditEvents.description',
       filename: 'audit-events.json',
       url: '/grafana-dashboards/audit-events.json',
     },
     {
-      name: 'Auth & Security',
-      description:
-        'Login attempts, failure counts, success rate trends, and security monitoring panels.',
+      name: 'pages.settingsIntegrations.grafana.dashboards.authSecurity.name',
+      description: 'pages.settingsIntegrations.grafana.dashboards.authSecurity.description',
       filename: 'auth-security.json',
       url: '/grafana-dashboards/auth-security.json',
     },

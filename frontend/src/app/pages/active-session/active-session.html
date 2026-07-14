@@ -8,7 +8,7 @@
       <app-mascot [isSmall]="true" [state]="mascotState()"></app-mascot>
       <span
         class="hidden sm:inline text-sm font-black tracking-tighter text-on-surface uppercase logo-glow"
-        >Smooth Operator</span
+        >{{ 'nav.topbar.brand' | translate }}</span
       >
     </div>
 
@@ -24,11 +24,12 @@
       ></div>
       <span class="hidden sm:inline text-xs text-on-surface-variant/70">
         {{
-          state() === 'connected'
-            ? 'Connected to'
+          (state() === 'connected'
+            ? 'pages.activeSession.header.connectedTo'
             : state() === 'error'
-              ? 'Error on'
-              : 'Connecting to'
+              ? 'pages.activeSession.header.errorOn'
+              : 'pages.activeSession.header.connectingTo'
+          ) | translate
         }}
       </span>
       <span class="truncate text-xs font-mono font-semibold text-on-surface/90">
@@ -51,12 +52,16 @@
   </div>
 
   <div class="flex shrink-0 items-center gap-2">
-    <app-theme-toggle [compact]="true" aria-label="Toggle theme"></app-theme-toggle>
+    <app-theme-toggle
+      [compact]="true"
+      [attr.aria-label]="'themeToggle.toggleTheme' | translate"
+    ></app-theme-toggle>
+    <app-language-switcher [compact]="true" />
     @if (isSshConnection()) {
       <button
         class="tool-btn-sm"
         (click)="openTerminalThemeModal()"
-        aria-label="Session terminal theme"
+        [attr.aria-label]="'pages.activeSession.header.terminalTheme' | translate"
         type="button"
       >
         <span class="material-symbols-outlined text-sm" aria-hidden="true">palette</span>
@@ -65,13 +70,19 @@
     <button
       class="tool-btn-sm"
       (click)="minimize()"
-      aria-label="Minimize session (keep connection alive)"
+      [attr.aria-label]="'pages.activeSession.header.minimize' | translate"
     >
       <span class="material-symbols-outlined text-sm" aria-hidden="true">minimize</span>
     </button>
-    <button class="terminate-btn" (click)="terminate()" aria-label="Terminate session">
+    <button
+      class="terminate-btn"
+      (click)="terminate()"
+      [attr.aria-label]="'sessionBar.terminate' | translate"
+    >
       <span class="material-symbols-outlined text-sm" aria-hidden="true">power_settings_new</span>
-      <span class="hidden sm:inline">Terminate</span>
+      <span class="hidden sm:inline">{{
+        'pages.activeSession.header.terminateButton' | translate
+      }}</span>
     </button>
   </div>
 </header>
@@ -85,7 +96,7 @@
     <div
       #display
       class="w-full h-full flex items-center justify-center overflow-auto bg-black select-none"
-      aria-label="Remote desktop session"
+      [attr.aria-label]="'pages.activeSession.display.remoteDesktopSession' | translate"
     ></div>
 
     <!-- Reconnect / loading overlay -->
@@ -96,7 +107,12 @@
         <app-spinner size="lg" [color]="state() === 'error' ? 'error' : 'primary'"></app-spinner>
         <app-mascot [state]="mascotState()"></app-mascot>
         <p class="blink-message font-mono text-xs">
-          {{ state() === 'error' ? 'Connection lost — redirecting…' : 'Reconnecting display…' }}
+          {{
+            (state() === 'error'
+              ? 'pages.activeSession.display.connectionLost'
+              : 'pages.activeSession.display.reconnecting'
+            ) | translate
+          }}
         </p>
       </div>
     }
@@ -110,12 +126,22 @@
     <!-- Collapse toggle -->
     <div
       class="tool-btn-wrap"
-      [attr.data-label]="toolbarCollapsed() ? 'Expand toolbar' : 'Collapse toolbar'"
+      [attr.data-label]="
+        (toolbarCollapsed()
+          ? 'pages.activeSession.toolbar.expand'
+          : 'pages.activeSession.toolbar.collapse'
+        ) | translate
+      "
     >
       <button
         class="tool-btn"
         (click)="toggleToolbarCollapse()"
-        [attr.aria-label]="toolbarCollapsed() ? 'Expand toolbar' : 'Collapse toolbar'"
+        [attr.aria-label]="
+          (toolbarCollapsed()
+            ? 'pages.activeSession.toolbar.expand'
+            : 'pages.activeSession.toolbar.collapse'
+          ) | translate
+        "
         [attr.aria-expanded]="!toolbarCollapsed()"
       >
         <span class="material-symbols-outlined text-base" aria-hidden="true">{{
@@ -143,37 +169,70 @@
 
       <div class="h-px w-6 bg-outline-variant/20 mx-auto"></div>
 
-      <div class="tool-btn-wrap" data-label="Screenshot">
-        <button class="tool-btn" (click)="takeScreenshot()" aria-label="Take screenshot">
+      <div
+        class="tool-btn-wrap"
+        [attr.data-label]="'pages.activeSession.toolbar.screenshot' | translate"
+      >
+        <button
+          class="tool-btn"
+          (click)="takeScreenshot()"
+          [attr.aria-label]="'pages.activeSession.toolbar.takeScreenshot' | translate"
+        >
           <span class="material-symbols-outlined text-lg" aria-hidden="true">screenshot</span>
         </button>
       </div>
 
       <div class="h-px w-6 bg-outline-variant/20 mx-auto"></div>
 
-      <div class="tool-btn-wrap" data-label="Ctrl+Alt+Del">
-        <button class="tool-btn" (click)="sendCtrlAltDel()" aria-label="Send Ctrl+Alt+Del">
+      <div
+        class="tool-btn-wrap"
+        [attr.data-label]="'pages.activeSession.toolbar.ctrlAltDel' | translate"
+      >
+        <button
+          class="tool-btn"
+          (click)="sendCtrlAltDel()"
+          [attr.aria-label]="'pages.activeSession.toolbar.sendCtrlAltDel' | translate"
+        >
           <span class="material-symbols-outlined text-lg" aria-hidden="true">restart_alt</span>
         </button>
       </div>
 
-      <div class="tool-btn-wrap" data-label="Key combo">
-        <button class="tool-btn" (click)="openKeyComboModal()" aria-label="Send key combo">
+      <div
+        class="tool-btn-wrap"
+        [attr.data-label]="'pages.activeSession.toolbar.keyCombo' | translate"
+      >
+        <button
+          class="tool-btn"
+          (click)="openKeyComboModal()"
+          [attr.aria-label]="'pages.activeSession.toolbar.sendKeyCombo' | translate"
+        >
           <span class="material-symbols-outlined text-lg" aria-hidden="true"
             >keyboard_command_key</span
           >
         </button>
       </div>
 
-      <div class="tool-btn-wrap" data-label="Clipboard">
-        <button class="tool-btn" (click)="openClipboardModal()" aria-label="Clipboard sync">
+      <div
+        class="tool-btn-wrap"
+        [attr.data-label]="'pages.activeSession.toolbar.clipboard' | translate"
+      >
+        <button
+          class="tool-btn"
+          (click)="openClipboardModal()"
+          [attr.aria-label]="'pages.activeSession.toolbar.clipboardSync' | translate"
+        >
           <span class="material-symbols-outlined text-lg" aria-hidden="true">content_paste</span>
         </button>
       </div>
 
       <div
         class="tool-btn-wrap"
-        [attr.data-label]="keyboardActive() ? 'Hide keyboard' : 'Keyboard'"
+        [attr.data-label]="
+          (keyboardActive()
+            ? 'pages.activeSession.toolbar.hideKeyboard'
+            : 'pages.activeSession.toolbar.keyboard'
+          ) | translate
+        "
       >
         <button
           class="tool-btn"
@@ -181,7 +240,10 @@
           (pointerdown)="$event.preventDefault()"
           (click)="toggleMobileKeyboard()"
           [attr.aria-label]="
-            keyboardActive() ? 'Hide on-screen keyboard' : 'Show on-screen keyboard'
+            (keyboardActive()
+              ? 'pages.activeSession.toolbar.hideOnScreenKeyboard'
+              : 'pages.activeSession.toolbar.showOnScreenKeyboard'
+            ) | translate
           "
           [attr.aria-pressed]="keyboardActive()"
         >
@@ -191,28 +253,58 @@
 
       <div class="h-px w-6 bg-outline-variant/20 mx-auto"></div>
 
-      <div class="tool-btn-wrap" data-label="Zoom in">
-        <button class="tool-btn" (click)="zoomIn()" aria-label="Zoom in">
+      <div
+        class="tool-btn-wrap"
+        [attr.data-label]="'pages.activeSession.toolbar.zoomIn' | translate"
+      >
+        <button
+          class="tool-btn"
+          (click)="zoomIn()"
+          [attr.aria-label]="'pages.activeSession.toolbar.zoomIn' | translate"
+        >
           <span class="material-symbols-outlined text-lg" aria-hidden="true">zoom_in</span>
         </button>
       </div>
 
-      <div class="tool-btn-wrap" data-label="Zoom out">
-        <button class="tool-btn" (click)="zoomOut()" aria-label="Zoom out">
+      <div
+        class="tool-btn-wrap"
+        [attr.data-label]="'pages.activeSession.toolbar.zoomOut' | translate"
+      >
+        <button
+          class="tool-btn"
+          (click)="zoomOut()"
+          [attr.aria-label]="'pages.activeSession.toolbar.zoomOut' | translate"
+        >
           <span class="material-symbols-outlined text-lg" aria-hidden="true">zoom_out</span>
         </button>
       </div>
 
-      <div class="tool-btn-wrap" [attr.data-label]="'Fit to screen (' + zoomPercent() + ')'">
-        <button class="tool-btn" (click)="zoomReset()" aria-label="Reset zoom to fit screen">
+      <div
+        class="tool-btn-wrap"
+        [attr.data-label]="
+          'pages.activeSession.toolbar.fitToScreen' | translate: { percent: zoomPercent() }
+        "
+      >
+        <button
+          class="tool-btn"
+          (click)="zoomReset()"
+          [attr.aria-label]="'pages.activeSession.toolbar.resetZoom' | translate"
+        >
           <span class="material-symbols-outlined text-lg" aria-hidden="true">fit_screen</span>
         </button>
       </div>
 
       <div class="h-px w-6 bg-outline-variant/20 mx-auto"></div>
 
-      <div class="tool-btn-wrap" data-label="Fullscreen">
-        <button class="tool-btn" (click)="toggleFullscreen()" aria-label="Toggle fullscreen">
+      <div
+        class="tool-btn-wrap"
+        [attr.data-label]="'pages.activeSession.toolbar.fullscreen' | translate"
+      >
+        <button
+          class="tool-btn"
+          (click)="toggleFullscreen()"
+          [attr.aria-label]="'pages.activeSession.toolbar.toggleFullscreen' | translate"
+        >
           <span class="material-symbols-outlined text-lg" aria-hidden="true">fullscreen</span>
         </button>
       </div>
@@ -241,7 +333,7 @@
           <span class="material-symbols-outlined text-sm text-primary" aria-hidden="true"
             >keyboard</span
           >
-          Send Key Combo
+          {{ 'pages.activeSession.keyCombo.title' | translate }}
         </h2>
 
         <!-- Live combo preview -->
@@ -288,7 +380,9 @@
           </button>
         </div>
 
-        <p class="text-xs text-on-surface-variant/70 mb-2 tracking-widest uppercase">Key</p>
+        <p class="text-xs text-on-surface-variant/70 mb-2 tracking-widest uppercase">
+          {{ 'pages.activeSession.keyCombo.keyLabel' | translate }}
+        </p>
         <div class="grid grid-cols-6 gap-1.5 mb-5 max-h-52 overflow-y-auto">
           @for (key of comboKeys; track key.keysym) {
             <button
@@ -303,7 +397,9 @@
         </div>
 
         <div class="flex justify-end gap-3">
-          <button class="btn-ghost px-4 py-2 text-sm" (click)="closeKeyComboModal()">Cancel</button>
+          <button class="btn-ghost px-4 py-2 text-sm" (click)="closeKeyComboModal()">
+            {{ 'common.actions.cancel' | translate }}
+          </button>
           <button
             class="btn-primary px-5 py-2 text-sm min-w-[100px] flex items-center justify-center gap-2"
             [disabled]="comboSent()"
@@ -311,10 +407,10 @@
           >
             @if (comboSent()) {
               <span class="material-symbols-outlined text-sm" aria-hidden="true">check</span>
-              Sent!
+              {{ 'pages.activeSession.keyCombo.sent' | translate }}
             } @else {
               <span class="material-symbols-outlined text-sm" aria-hidden="true">send</span>
-              Send
+              {{ 'pages.activeSession.keyCombo.send' | translate }}
             }
           </button>
         </div>
@@ -344,10 +440,10 @@
           <span class="material-symbols-outlined text-sm text-primary" aria-hidden="true"
             >content_paste</span
           >
-          Shared Clipboard
+          {{ 'pages.activeSession.clipboard.title' | translate }}
         </h2>
         <p class="text-xs text-on-surface-variant/80 mb-4">
-          Edit and push to host, or copy current host clipboard locally.
+          {{ 'pages.activeSession.clipboard.description' | translate }}
         </p>
 
         <!-- Textarea with char counter -->
@@ -357,13 +453,16 @@
             class="w-full bg-surface-container border border-outline-variant/30 rounded-lg p-3 font-mono text-sm text-on-surface/85 focus:outline-none focus:border-primary/50 resize-none leading-relaxed"
             [ngModel]="clipboardDraft()"
             (ngModelChange)="clipboardDraft.set($event)"
-            aria-label="Clipboard content"
+            [attr.aria-label]="'pages.activeSession.clipboard.textareaAriaLabel' | translate"
           ></textarea>
           <div
             class="absolute bottom-2 right-3 text-xs text-on-surface-variant/60 font-mono select-none pointer-events-none"
             aria-hidden="true"
           >
-            {{ clipboardDraft().length }} chars
+            {{
+              'pages.activeSession.clipboard.charsCount'
+                | translate: { count: clipboardDraft().length }
+            }}
           </div>
         </div>
 
@@ -374,11 +473,11 @@
             (click)="copyHostClipboardLocally()"
           >
             <span class="material-symbols-outlined text-sm" aria-hidden="true">download</span>
-            Copy host clipboard
+            {{ 'pages.activeSession.clipboard.copyHostClipboard' | translate }}
           </button>
           <div class="flex gap-3">
             <button class="btn-ghost px-4 py-2 text-sm" (click)="closeClipboardModal()">
-              Close
+              {{ 'common.actions.close' | translate }}
             </button>
             <button
               class="btn-primary px-5 py-2 text-sm min-w-[130px] flex items-center justify-center gap-2"
@@ -387,10 +486,10 @@
             >
               @if (clipboardPushed()) {
                 <span class="material-symbols-outlined text-sm" aria-hidden="true">check</span>
-                Pushed!
+                {{ 'pages.activeSession.clipboard.pushed' | translate }}
               } @else {
                 <span class="material-symbols-outlined text-sm" aria-hidden="true">send</span>
-                Push to host
+                {{ 'pages.activeSession.clipboard.pushToHost' | translate }}
               }
             </button>
           </div>
@@ -420,10 +519,10 @@
           <span class="material-symbols-outlined text-sm text-primary" aria-hidden="true"
             >palette</span
           >
-          Session Terminal Theme
+          {{ 'pages.activeSession.terminalTheme.title' | translate }}
         </h2>
         <p class="mb-4 text-xs text-on-surface-variant/80">
-          Applies on the next connect/reconnect for this browser session only.
+          {{ 'pages.activeSession.terminalTheme.description' | translate }}
         </p>
 
         <div class="space-y-4">
@@ -431,7 +530,7 @@
             <p
               class="mb-2 block text-xs font-medium uppercase tracking-widest text-on-surface-variant"
             >
-              Color scheme
+              {{ 'pages.activeSession.terminalTheme.colorScheme' | translate }}
             </p>
             <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
               @for (scheme of termColorSchemes; track scheme.value) {
@@ -450,7 +549,7 @@
                     class="h-4 w-4 shrink-0 rounded-sm border border-white/10"
                     [style.background]="scheme.preview"
                   ></span>
-                  {{ scheme.label }}
+                  {{ scheme.label | translate }}
                 </button>
               }
             </div>
@@ -462,7 +561,7 @@
                 class="mb-1 block text-xs font-medium uppercase tracking-widest text-on-surface-variant"
                 for="sessionTermFontName"
               >
-                Font
+                {{ 'pages.activeSession.terminalTheme.font' | translate }}
               </label>
               <select
                 id="sessionTermFontName"
@@ -481,7 +580,7 @@
                 class="mb-1 block text-xs font-medium uppercase tracking-widest text-on-surface-variant"
                 for="sessionTermFontSize"
               >
-                Size (px)
+                {{ 'pages.activeSession.terminalTheme.size' | translate }}
               </label>
               <input
                 id="sessionTermFontSize"
@@ -503,14 +602,14 @@
             type="button"
             (click)="closeTerminalThemeModal()"
           >
-            Close
+            {{ 'common.actions.close' | translate }}
           </button>
           <button
             class="btn-primary px-5 py-2 text-sm"
             type="button"
             (click)="saveTerminalThemeForSession()"
           >
-            Save for session
+            {{ 'pages.activeSession.terminalTheme.saveForSession' | translate }}
           </button>
         </div>
       </dialog>
@@ -524,7 +623,7 @@
     #hiddenKbd
     type="text"
     class="mobile-kbd-input"
-    aria-label="Remote keyboard input"
+    [attr.aria-label]="'pages.activeSession.mobileKeyboard.remoteKeyboardInput' | translate"
     autocapitalize="off"
     autocomplete="off"
     autocorrect="off"

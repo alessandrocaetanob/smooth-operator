@@ -3,6 +3,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Router } from '@angular/router';
 import { provideAnimations } from '@angular/platform-browser/animations';
+import { provideTranslateService, TranslateService } from '@ngx-translate/core';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { signal } from '@angular/core';
 import { of, throwError } from 'rxjs';
@@ -52,12 +53,29 @@ describe('Vault', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideAnimations(),
+        provideTranslateService(),
         { provide: ConnectionsService, useValue: connections },
         { provide: VaultsService, useValue: vaults },
         { provide: AuthService, useValue: auth },
         { provide: Router, useValue: router },
       ],
     }).compileComponents();
+
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', {
+      pages: {
+        vault: {
+          lastConnected: {
+            justNow: 'just now',
+            minutesAgo: '{{minutes}}m ago',
+            hoursAgo: '{{hours}}h ago',
+            daysAgo: '{{days}}d ago',
+            monthsAgo: '{{months}}mo ago',
+          },
+        },
+      },
+    });
+    translate.use('en');
 
     fixture = TestBed.createComponent(Vault);
     component = fixture.componentInstance;

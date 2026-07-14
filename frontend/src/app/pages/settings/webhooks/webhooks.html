@@ -1,9 +1,10 @@
 <div>
   <div class="mb-6">
-    <h2 class="text-lg font-semibold text-on-surface">Webhooks</h2>
+    <h2 class="text-lg font-semibold text-on-surface">
+      {{ 'pages.settingsWebhooks.title' | translate }}
+    </h2>
     <p class="text-sm text-on-surface-variant mt-1 max-w-2xl">
-      Register external endpoints to receive an HMAC-signed POST whenever a subscribed audit event
-      occurs — feed a SIEM, post alerts, or trigger automation.
+      {{ 'pages.settingsWebhooks.description' | translate }}
     </p>
   </div>
 
@@ -14,11 +15,12 @@
         <span class="material-symbols-outlined text-base text-primary" aria-hidden="true"
           >vpn_key</span
         >
-        Signing secret for “{{ s.name }}”
+        {{ 'pages.settingsWebhooks.secret.titleFor' | translate: { name: s.name } }}
       </p>
       <p class="text-xs text-on-surface-variant mt-1 mb-2">
-        Copy this now — it is shown only once and cannot be retrieved later. Your receiver uses it
-        to verify the <code>X-SmoothOperator-Signature</code> header.
+        {{ 'pages.settingsWebhooks.secret.descriptionBefore' | translate }}
+        <code>X-SmoothOperator-Signature</code>
+        {{ 'pages.settingsWebhooks.secret.descriptionAfter' | translate }}
       </p>
       <div class="flex items-center gap-2">
         <code class="wh-secret-code">{{ s.secret }}</code>
@@ -26,14 +28,16 @@
           type="button"
           (click)="copySecret()"
           class="wh-icon-btn"
-          title="Copy signing secret"
-          aria-label="Copy signing secret"
+          [title]="'pages.settingsWebhooks.secret.copyLabel' | translate"
+          [attr.aria-label]="'pages.settingsWebhooks.secret.copyLabel' | translate"
         >
           <span class="material-symbols-outlined" aria-hidden="true">content_copy</span>
         </button>
       </div>
       <div class="flex justify-end mt-3">
-        <button type="button" (click)="dismissSecret()" class="btn-secondary">I've saved it</button>
+        <button type="button" (click)="dismissSecret()" class="btn-secondary">
+          {{ 'pages.settingsWebhooks.secret.saved' | translate }}
+        </button>
       </div>
     </div>
   }
@@ -54,12 +58,17 @@
   <!-- Toolbar -->
   <div class="flex items-center justify-between gap-3 mb-4">
     <p class="text-sm text-on-surface-variant">
-      {{ webhooks().length }} endpoint{{ webhooks().length === 1 ? '' : 's' }}
+      {{
+        (webhooks().length === 1
+          ? 'pages.settingsWebhooks.toolbar.countOne'
+          : 'pages.settingsWebhooks.toolbar.countOther'
+        ) | translate: { count: webhooks().length }
+      }}
     </p>
     @if (!editorOpen()) {
       <button type="button" (click)="openCreate()" class="btn-primary">
         <span class="material-symbols-outlined text-sm" aria-hidden="true">add</span>
-        Add endpoint
+        {{ 'pages.settingsWebhooks.toolbar.add' | translate }}
       </button>
     }
   </div>
@@ -69,41 +78,49 @@
     <div class="settings-card mb-4">
       <div class="settings-card-header">
         <span class="material-symbols-outlined settings-card-icon" aria-hidden="true">webhook</span>
-        <h3 class="settings-card-title">{{ editorTitle() }}</h3>
+        <h3 class="settings-card-title">{{ editorTitle() | translate }}</h3>
       </div>
       <form (ngSubmit)="submitEditor()" class="settings-card-body space-y-4">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
-            <label class="settings-label" for="wh-name">Name</label>
+            <label class="settings-label" for="wh-name">{{
+              'pages.settingsWebhooks.editor.nameLabel' | translate
+            }}</label>
             <input
               type="text"
               [ngModel]="formName()"
               (ngModelChange)="formName.set($event)"
               name="name"
               id="wh-name"
-              placeholder="e.g. SIEM ingestion"
+              [placeholder]="'pages.settingsWebhooks.editor.namePlaceholder' | translate"
               required
               class="w-full input-field"
             />
           </div>
           <div>
-            <label class="settings-label" for="wh-url">Payload URL</label>
+            <label class="settings-label" for="wh-url">{{
+              'pages.settingsWebhooks.editor.urlLabel' | translate
+            }}</label>
             <input
               type="url"
               [ngModel]="formUrl()"
               (ngModelChange)="formUrl.set($event)"
               name="url"
               id="wh-url"
-              placeholder="https://example.com/hooks/smooth-operator"
+              [placeholder]="'pages.settingsWebhooks.editor.urlPlaceholder' | translate"
               required
               class="w-full input-field"
             />
-            <p class="text-xs text-on-surface-variant mt-1">Must be an absolute HTTPS URL.</p>
+            <p class="text-xs text-on-surface-variant mt-1">
+              {{ 'pages.settingsWebhooks.editor.urlHint' | translate }}
+            </p>
           </div>
         </div>
 
         <div>
-          <span class="settings-label">Events to deliver</span>
+          <span class="settings-label">{{
+            'pages.settingsWebhooks.editor.eventsLabel' | translate
+          }}</span>
           <button
             type="button"
             class="wh-event w-full"
@@ -115,7 +132,7 @@
                 <span class="material-symbols-outlined" aria-hidden="true">check</span>
               }
             </span>
-            <span class="font-medium">All events</span>
+            <span class="font-medium">{{ 'pages.settingsWebhooks.events.all' | translate }}</span>
           </button>
           <div class="wh-event-grid mt-2">
             @for (cat of eventCategories; track cat.pattern) {
@@ -130,7 +147,7 @@
                     <span class="material-symbols-outlined" aria-hidden="true">check</span>
                   }
                 </span>
-                <span>{{ cat.label }}</span>
+                <span>{{ cat.labelKey | translate }}</span>
                 <code class="wh-event__code">{{ cat.pattern }}</code>
               </button>
             }
@@ -151,15 +168,22 @@
                 <span class="toggle-thumb" [class.toggle-thumb-on]="formEnabled()"></span>
               </span>
             </span>
-            <span>Endpoint enabled</span>
+            <span>{{ 'pages.settingsWebhooks.editor.enabledToggle' | translate }}</span>
           </label>
         }
 
         <div class="flex justify-end gap-2">
-          <button type="button" (click)="closeEditor()" class="btn-secondary">Cancel</button>
+          <button type="button" (click)="closeEditor()" class="btn-secondary">
+            {{ 'common.actions.cancel' | translate }}
+          </button>
           <button type="submit" [disabled]="busy()" class="btn-primary">
             <span class="material-symbols-outlined text-sm" aria-hidden="true">save</span>
-            {{ busy() ? 'Saving…' : 'Save endpoint' }}
+            {{
+              (busy()
+                ? 'pages.settingsWebhooks.editor.saving'
+                : 'pages.settingsWebhooks.editor.save'
+              ) | translate
+            }}
           </button>
         </div>
       </form>
@@ -168,13 +192,15 @@
 
   <!-- List -->
   @if (loading()) {
-    <p class="text-sm text-on-surface-variant py-8 text-center">Loading webhooks…</p>
+    <p class="text-sm text-on-surface-variant py-8 text-center">
+      {{ 'pages.settingsWebhooks.list.loading' | translate }}
+    </p>
   } @else if (webhooks().length === 0) {
     <div class="status-banner status-warn">
       <span class="material-symbols-outlined" aria-hidden="true">info</span>
       <div>
-        <p class="font-medium">No webhook endpoints</p>
-        <p class="text-xs opacity-70">Add an endpoint to start delivering audit events.</p>
+        <p class="font-medium">{{ 'pages.settingsWebhooks.list.emptyTitle' | translate }}</p>
+        <p class="text-xs opacity-70">{{ 'pages.settingsWebhooks.list.emptyHint' | translate }}</p>
       </div>
     </div>
   } @else {
@@ -210,7 +236,9 @@
               class="wh-kebab"
               [class.wh-kebab--active]="openMenuId() === w.id"
               (click)="toggleMenu(w.id)"
-              [attr.aria-label]="'Actions for ' + w.name"
+              [attr.aria-label]="
+                'pages.settingsWebhooks.card.actionsFor' | translate: { name: w.name }
+              "
               aria-haspopup="menu"
               [attr.aria-expanded]="openMenuId() === w.id"
             >
@@ -225,8 +253,10 @@
               type="button"
               class="wh-icon-btn"
               (click)="copyUrl(w)"
-              title="Copy endpoint URL"
-              [attr.aria-label]="'Copy URL for ' + w.name"
+              [title]="'pages.settingsWebhooks.card.copyUrlTitle' | translate"
+              [attr.aria-label]="
+                'pages.settingsWebhooks.card.copyUrlFor' | translate: { name: w.name }
+              "
             >
               <span class="material-symbols-outlined" aria-hidden="true">content_copy</span>
             </button>
@@ -241,20 +271,28 @@
             <span class="wh-chip">
               <span class="material-symbols-outlined" aria-hidden="true">schedule</span>
               {{
-                w.lastDeliveryAt ? 'Last: ' + (w.lastDeliveryAt | date: 'short') : 'Never delivered'
+                w.lastDeliveryAt
+                  ? ('pages.settingsWebhooks.card.lastDelivery'
+                    | translate: { date: (w.lastDeliveryAt | date: 'short') })
+                  : ('pages.settingsWebhooks.card.neverDelivered' | translate)
               }}
             </span>
             @if (w.lastResponseCode) {
               <span class="wh-chip">
                 <span class="material-symbols-outlined" aria-hidden="true">swap_vert</span>
-                HTTP {{ w.lastResponseCode }}
+                {{
+                  'pages.settingsWebhooks.card.httpCode' | translate: { code: w.lastResponseCode }
+                }}
               </span>
             }
             @if (w.consecutiveFailures > 0) {
               <span class="wh-chip wh-chip--bad">
                 <span class="material-symbols-outlined" aria-hidden="true">error</span>
-                {{ w.consecutiveFailures }} consecutive failure{{
-                  w.consecutiveFailures === 1 ? '' : 's'
+                {{
+                  (w.consecutiveFailures === 1
+                    ? 'pages.settingsWebhooks.card.failureOne'
+                    : 'pages.settingsWebhooks.card.failureOther'
+                  ) | translate: { count: w.consecutiveFailures }
                 }}
               </span>
             }
@@ -269,7 +307,12 @@
               [disabled]="rowBusyId() === w.id"
             >
               <span class="material-symbols-outlined text-sm" aria-hidden="true">bolt</span>
-              {{ rowBusyId() === w.id ? 'Working…' : 'Send test' }}
+              {{
+                (rowBusyId() === w.id
+                  ? 'pages.settingsWebhooks.card.working'
+                  : 'pages.settingsWebhooks.card.sendTest'
+                ) | translate
+              }}
             </button>
           </div>
 
@@ -279,22 +322,27 @@
               type="button"
               class="wh-backdrop"
               (click)="closeMenu()"
-              aria-label="Close menu"
+              [attr.aria-label]="'pages.settingsWebhooks.card.closeMenu' | translate"
             ></button>
             <div class="wh-menu" role="menu">
               <button type="button" class="wh-menu-item" role="menuitem" (click)="openEdit(w)">
                 <span class="material-symbols-outlined" aria-hidden="true">edit</span>
-                Edit endpoint
+                {{ 'pages.settingsWebhooks.card.menu.edit' | translate }}
               </button>
               <button type="button" class="wh-menu-item" role="menuitem" (click)="toggleEnabled(w)">
                 <span class="material-symbols-outlined" aria-hidden="true">{{
                   w.enabled ? 'toggle_off' : 'toggle_on'
                 }}</span>
-                {{ w.enabled ? 'Disable' : 'Enable' }}
+                {{
+                  (w.enabled
+                    ? 'pages.settingsWebhooks.card.menu.disable'
+                    : 'pages.settingsWebhooks.card.menu.enable'
+                  ) | translate
+                }}
               </button>
               <button type="button" class="wh-menu-item" role="menuitem" (click)="requestRotate(w)">
                 <span class="material-symbols-outlined" aria-hidden="true">vpn_key</span>
-                Rotate secret
+                {{ 'pages.settingsWebhooks.card.menu.rotateSecret' | translate }}
               </button>
               <div class="wh-menu-divider"></div>
               <button
@@ -304,7 +352,7 @@
                 (click)="requestDelete(w)"
               >
                 <span class="material-symbols-outlined" aria-hidden="true">delete</span>
-                Delete endpoint
+                {{ 'pages.settingsWebhooks.card.menu.delete' | translate }}
               </button>
             </div>
           }

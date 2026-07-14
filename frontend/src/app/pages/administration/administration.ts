@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AppRole, AppUser, InviteResult, UsersService } from '../../services/users.service';
 import { AuthService } from '../../services/auth.service';
 import { VaultsService } from '../../services/vaults.service';
@@ -16,7 +17,7 @@ import { ToastService } from '../../shared/toast/toast.service';
 
 @Component({
   selector: 'app-administration',
-  imports: [FormsModule],
+  imports: [FormsModule, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './administration.html',
   styleUrl: './administration.css',
@@ -27,6 +28,7 @@ export class Administration implements OnInit {
   private readonly vaultsSvc = inject(VaultsService);
   private readonly confirmSvc = inject(ConfirmDialogService);
   private readonly toastSvc = inject(ToastService);
+  private readonly translate = inject(TranslateService);
 
   readonly users = this.usersSvc.list;
   readonly vaults = this.vaultsSvc.list;
@@ -89,7 +91,9 @@ export class Administration implements OnInit {
       },
       error: (err) => {
         this.loading.set(false);
-        this.errorMessage.set(this.toMessage(err) || 'Failed to load users.');
+        this.errorMessage.set(
+          this.toMessage(err) || this.translate.instant('pages.administration.loadUsersFailed'),
+        );
       },
     });
   }
@@ -109,7 +113,7 @@ export class Administration implements OnInit {
     const email = this.inviteEmail().trim();
     const role = this.inviteRole();
     if (!email) {
-      this.errorMessage.set('Email is required.');
+      this.errorMessage.set(this.translate.instant('pages.administration.emailRequired'));
       return;
     }
     this.inviteBusy.set(true);
@@ -127,7 +131,9 @@ export class Administration implements OnInit {
       },
       error: (err) => {
         this.inviteBusy.set(false);
-        this.errorMessage.set(this.toMessage(err) || 'Invite failed.');
+        this.errorMessage.set(
+          this.toMessage(err) || this.translate.instant('pages.administration.inviteFailed'),
+        );
       },
     });
   }
@@ -143,11 +149,23 @@ export class Administration implements OnInit {
 
     const isOwnerMove = role === 'Owner' || previous === 'Owner';
     const ok = await this.confirmSvc.ask({
-      title: isOwnerMove ? 'Change ownership' : 'Change role',
+      title: this.translate.instant(
+        isOwnerMove
+          ? 'pages.administration.changeOwnershipTitle'
+          : 'pages.administration.changeRoleTitle',
+      ),
       message: isOwnerMove
-        ? `This will change ${user.name}'s role from ${previous} to ${role}. Owner access is permanent and grants full control over this instance. Continue?`
-        : `Change ${user.name}'s role from ${previous} to ${role}?`,
-      confirmLabel: 'Change role',
+        ? this.translate.instant('pages.administration.changeOwnershipMessage', {
+            name: user.name,
+            previous,
+            role,
+          })
+        : this.translate.instant('pages.administration.changeRoleMessage', {
+            name: user.name,
+            previous,
+            role,
+          }),
+      confirmLabel: this.translate.instant('pages.administration.changeRoleConfirmLabel'),
       tone: isOwnerMove ? 'danger' : 'default',
     });
     if (!ok) {
@@ -160,12 +178,15 @@ export class Administration implements OnInit {
     this.usersSvc.setRole(user.id, role).subscribe({
       next: () => {
         this.roleBusyUserId.set(null);
-        this.toastSvc.success(`Role updated for ${user.name}.`);
+        this.toastSvc.success(
+          this.translate.instant('pages.administration.roleUpdated', { name: user.name }),
+        );
         this.refresh();
       },
       error: (err) => {
         this.roleBusyUserId.set(null);
-        const msg = this.toMessage(err) || 'Failed to update role.';
+        const msg =
+          this.toMessage(err) || this.translate.instant('pages.administration.updateRoleFailed');
         this.errorMessage.set(msg);
         this.toastSvc.error(msg);
         this.refresh();
@@ -200,13 +221,19 @@ export class Administration implements OnInit {
     this.usersSvc.setVaultAssignments(user.id, this.selectedVaultIds()).subscribe({
       next: () => {
         this.vaultAssignmentBusy.set(false);
-        this.toastSvc.success(`Vault assignments updated for ${user.name}.`);
+        this.toastSvc.success(
+          this.translate.instant('pages.administration.vaultAssignmentsUpdated', {
+            name: user.name,
+          }),
+        );
         this.closeVaultAssignments();
         this.refresh();
       },
       error: (err) => {
         this.vaultAssignmentBusy.set(false);
-        const msg = this.toMessage(err) || 'Failed to update vault assignments.';
+        const msg =
+          this.toMessage(err) ||
+          this.translate.instant('pages.administration.updateVaultAssignmentsFailed');
         this.errorMessage.set(msg);
         this.toastSvc.error(msg);
       },
@@ -247,11 +274,17 @@ export class Administration implements OnInit {
     this.errorMessage.set(null);
     this.usersSvc.setActive(user.id, active).subscribe({
       next: () => {
-        this.toastSvc.success(`${user.name} ${active ? 'enabled' : 'disabled'}.`);
+        this.toastSvc.success(
+          this.translate.instant(
+            active ? 'pages.administration.userEnabled' : 'pages.administration.userDisabled',
+            { name: user.name },
+          ),
+        );
         this.refresh();
       },
       error: (err) => {
-        const msg = this.toMessage(err) || 'Update failed.';
+        const msg =
+          this.toMessage(err) || this.translate.instant('pages.administration.updateFailed');
         this.errorMessage.set(msg);
         this.toastSvc.error(msg);
       },
@@ -260,24 +293,29 @@ export class Administration implements OnInit {
 
   async delete(user: AppUser): Promise<void> {
     if (this.currentUser()?.id === user.id) {
-      this.errorMessage.set('You cannot delete your own account.');
+      this.errorMessage.set(this.translate.instant('pages.administration.cannotDeleteSelf'));
       return;
     }
     const ok = await this.confirmSvc.ask({
-      title: 'Delete user',
-      message: `Delete user ${user.email}? This cannot be undone.`,
-      confirmLabel: 'Delete',
+      title: this.translate.instant('pages.administration.deleteUserTitle'),
+      message: this.translate.instant('pages.administration.deleteUserMessage', {
+        email: user.email,
+      }),
+      confirmLabel: this.translate.instant('common.actions.delete'),
       tone: 'danger',
     });
     if (!ok) return;
     this.errorMessage.set(null);
     this.usersSvc.remove(user.id).subscribe({
       next: () => {
-        this.toastSvc.success(`User ${user.email} deleted.`);
+        this.toastSvc.success(
+          this.translate.instant('pages.administration.userDeleted', { email: user.email }),
+        );
         this.refresh();
       },
       error: (err) => {
-        const msg = this.toMessage(err) || 'Delete failed.';
+        const msg =
+          this.toMessage(err) || this.translate.instant('pages.administration.deleteFailed');
         this.errorMessage.set(msg);
         this.toastSvc.error(msg);
       },

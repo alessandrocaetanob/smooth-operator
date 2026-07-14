@@ -4,14 +4,19 @@
       <span class="material-symbols-outlined text-3xl text-primary" aria-hidden="true"
         >manage_search</span
       >
-      Search Results
+      {{ 'pages.searchResults.title' | translate }}
     </h1>
     @if (hasQuery()) {
       <p class="mt-2 text-on-surface-variant text-sm">
         @if (loading()) {
-          <span>Searching for</span>
+          <span>{{ 'pages.searchResults.searchingFor' | translate }}</span>
         } @else {
-          <span>{{ totalCount() }} result{{ totalCount() === 1 ? '' : 's' }} for</span>
+          <span>{{
+            (totalCount() === 1
+              ? 'pages.searchResults.resultsForOne'
+              : 'pages.searchResults.resultsForOther'
+            ) | translate: { count: totalCount() }
+          }}</span>
         }
         <span
           class="font-mono text-primary bg-primary/10 px-2 py-0.5 rounded border border-primary/20 ml-1"
@@ -20,24 +25,28 @@
       </p>
     } @else {
       <p class="mt-2 text-on-surface-variant text-sm">
-        Type a query in the search bar to find vaults and connections.
+        {{ 'pages.searchResults.typeQueryPrompt' | translate }}
       </p>
     }
   </header>
 
   @if (loading()) {
-    <div class="text-on-surface-variant text-sm">Loading…</div>
+    <div class="text-on-surface-variant text-sm">
+      {{ 'pages.searchResults.loading' | translate }}
+    </div>
   } @else if (hasQuery() && totalCount() === 0) {
     <div
       class="glass-panel rounded-xl p-12 text-center border border-outline-variant/40 flex flex-col items-center"
     >
       <app-mascot state="thinking" [isSmall]="false" />
-      <h2 class="mt-4 text-lg font-semibold text-on-surface">No matches found</h2>
+      <h2 class="mt-4 text-lg font-semibold text-on-surface">
+        {{ 'pages.searchResults.noMatchesFound' | translate }}
+      </h2>
       <p class="mt-1 text-sm text-on-surface-variant">
-        Nothing matched
+        {{ 'pages.searchResults.noMatchesFor' | translate }}
         <span class="font-mono text-primary bg-primary/10 px-1.5 py-0.5 rounded"
           >"{{ query() }}"</span
-        >. Try a different keyword.
+        >. {{ 'pages.searchResults.tryDifferentKeyword' | translate }}
       </p>
     </div>
   } @else {
@@ -49,7 +58,7 @@
           <span class="material-symbols-outlined text-base text-primary" aria-hidden="true"
             >dashboard</span
           >
-          Vaults
+          {{ 'pages.searchResults.vaultsHeading' | translate }}
           <span
             class="ml-1 text-[10px] px-1.5 py-0.5 rounded bg-primary-container/20 text-primary border border-primary-container/30"
             >{{ vaultMatches().length }}</span
@@ -100,7 +109,7 @@
           <span class="material-symbols-outlined text-base text-tertiary" aria-hidden="true"
             >hub</span
           >
-          Connections
+          {{ 'pages.searchResults.connectionsHeading' | translate }}
           <span
             class="ml-1 text-[10px] px-1.5 py-0.5 rounded bg-tertiary/15 text-tertiary border border-tertiary/30"
             >{{ connectionMatches().length }}</span

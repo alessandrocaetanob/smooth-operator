@@ -2,15 +2,25 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { Mascot, MascotState } from '../../shared/mascot/mascot';
 import { ThemeToggle } from '../../shared/theme-toggle/theme-toggle';
+import { LanguageSwitcher } from '../../shared/language-switcher/language-switcher';
 import { AuthService } from '../../services/auth.service';
 import { Spinner } from '../../shared/spinner/spinner';
 import { RuntimeConfigService } from '../../core/config/runtime-config.service';
 
 @Component({
   selector: 'app-authentication',
-  imports: [ReactiveFormsModule, RouterLink, Mascot, ThemeToggle, Spinner],
+  imports: [
+    ReactiveFormsModule,
+    RouterLink,
+    Mascot,
+    ThemeToggle,
+    LanguageSwitcher,
+    Spinner,
+    TranslatePipe,
+  ],
   templateUrl: './authentication.html',
   styleUrl: './authentication.css',
 })
@@ -19,6 +29,7 @@ export class Authentication {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly runtimeConfig = inject(RuntimeConfigService);
+  private readonly translate = inject(TranslateService);
 
   readonly providers = this.auth.providers;
   readonly sso = computed(() => this.providers().sso);
@@ -97,8 +108,8 @@ export class Authentication {
         this.submitting.set(false);
         const msg =
           err instanceof HttpErrorResponse && err.status === 429
-            ? 'Too many sign-in attempts. Please wait a moment and try again.'
-            : (err?.error?.message ?? 'Sign-in failed.');
+            ? this.translate.instant('pages.auth.tooManyAttempts')
+            : (err?.error?.message ?? this.translate.instant('pages.auth.signInFailed'));
         this.errorMessage.set(msg);
       },
     });
@@ -122,8 +133,8 @@ export class Authentication {
         this.submitting.set(false);
         const msg =
           err instanceof HttpErrorResponse && err.status === 429
-            ? 'Too many sign-in attempts. Please wait a moment and try again.'
-            : (err?.error?.message ?? 'Verification failed.');
+            ? this.translate.instant('pages.auth.tooManyAttempts')
+            : (err?.error?.message ?? this.translate.instant('pages.auth.verificationFailed'));
         this.errorMessage.set(msg);
       },
     });

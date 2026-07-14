@@ -12,6 +12,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import Guacamole from 'guacamole-common-js';
 import { Recording, RecordingsService } from '../../services/recordings.service';
 
@@ -28,7 +29,7 @@ import { Recording, RecordingsService } from '../../services/recordings.service'
 @Component({
   selector: 'app-recording-player',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div
@@ -60,7 +61,11 @@ import { Recording, RecordingsService } from '../../services/recordings.service'
               {{ recording?.connectionName }}
             </h2>
             <p class="text-xs text-on-surface-variant truncate">
-              {{ recording?.startedAt | date: 'medium' }} · session {{ recording?.sessionId }}
+              {{ recording?.startedAt | date: 'medium' }} ·
+              {{
+                'pages.recordings.player.sessionLabel'
+                  | translate: { sessionId: recording?.sessionId }
+              }}
             </p>
           </div>
           <div class="flex items-center gap-1 shrink-0">
@@ -68,8 +73,18 @@ import { Recording, RecordingsService } from '../../services/recordings.service'
               type="button"
               class="btn-ghost-icon"
               (click)="toggleFullscreen()"
-              [attr.aria-label]="fullscreen() ? 'Exit fullscreen' : 'Fullscreen'"
-              [title]="fullscreen() ? 'Exit fullscreen' : 'Fullscreen'"
+              [attr.aria-label]="
+                (fullscreen()
+                  ? 'pages.recordings.player.exitFullscreen'
+                  : 'pages.recordings.player.fullscreen'
+                ) | translate
+              "
+              [title]="
+                (fullscreen()
+                  ? 'pages.recordings.player.exitFullscreen'
+                  : 'pages.recordings.player.fullscreen'
+                ) | translate
+              "
             >
               <span class="material-symbols-outlined">
                 {{ fullscreen() ? 'close_fullscreen' : 'open_in_full' }}
@@ -79,8 +94,8 @@ import { Recording, RecordingsService } from '../../services/recordings.service'
               type="button"
               class="btn-ghost-icon"
               (click)="close()"
-              aria-label="Close player"
-              title="Close (Esc)"
+              [attr.aria-label]="'pages.recordings.player.closePlayer' | translate"
+              [title]="'pages.recordings.player.closeTitle' | translate"
             >
               <span class="material-symbols-outlined">close</span>
             </button>
@@ -93,18 +108,20 @@ import { Recording, RecordingsService } from '../../services/recordings.service'
               <span class="material-symbols-outlined animate-spin text-base">
                 progress_activity
               </span>
-              Loading recording…
+              {{ 'pages.recordings.player.loading' | translate }}
             </div>
           }
           @if (error()) {
             <div class="feedback-banner feedback-error">
               <span class="material-symbols-outlined text-base">error</span>
               <div class="flex-1">
-                <p class="font-medium">In-browser playback failed</p>
+                <p class="font-medium">
+                  {{ 'pages.recordings.player.playbackFailedTitle' | translate }}
+                </p>
                 <p class="text-xs opacity-80 mt-1">{{ error() }}</p>
                 <button type="button" class="btn-secondary mt-3" (click)="downloadGuac()">
                   <span class="material-symbols-outlined text-base">download</span>
-                  Download raw .guac file
+                  {{ 'pages.recordings.player.downloadRaw' | translate }}
                 </button>
               </div>
             </div>
@@ -115,8 +132,7 @@ import { Recording, RecordingsService } from '../../services/recordings.service'
                 >progress_activity</span
               >
               <span>
-                Exporting video — playing the recording in the background so the canvas can be
-                captured. This takes the same time as the recording duration.
+                {{ 'pages.recordings.player.exporting' | translate }}
               </span>
             </div>
           }
@@ -141,7 +157,10 @@ import { Recording, RecordingsService } from '../../services/recordings.service'
               <span class="material-symbols-outlined text-base">
                 {{ playing() ? 'pause' : 'play_arrow' }}
               </span>
-              {{ playing() ? 'Pause' : 'Play' }}
+              {{
+                (playing() ? 'pages.recordings.player.pause' : 'pages.recordings.player.play')
+                  | translate
+              }}
             </button>
             <span class="text-xs text-on-surface-variant tabular-nums shrink-0">
               {{ positionLabel() }} / {{ durationLabel() }}
@@ -154,7 +173,7 @@ import { Recording, RecordingsService } from '../../services/recordings.service'
               [value]="position()"
               [disabled]="!ready() || exporting()"
               (input)="seek($any($event.target).valueAsNumber)"
-              aria-label="Seek"
+              [attr.aria-label]="'pages.recordings.player.seek' | translate"
             />
             <button
               type="button"
@@ -164,14 +183,14 @@ import { Recording, RecordingsService } from '../../services/recordings.service'
               [title]="exportFormatLabel()"
             >
               <span class="material-symbols-outlined text-base">movie</span>
-              Export {{ exportFormatLabel() }}
+              {{ 'pages.recordings.player.export' | translate: { format: exportFormatLabel() } }}
             </button>
             <button
               type="button"
               class="btn-ghost-icon"
               (click)="downloadGuac()"
-              aria-label="Download raw .guac file"
-              title="Download raw .guac"
+              [attr.aria-label]="'pages.recordings.player.downloadRaw' | translate"
+              [title]="'pages.recordings.player.downloadRawTitle' | translate"
             >
               <span class="material-symbols-outlined">download</span>
             </button>
@@ -183,6 +202,7 @@ import { Recording, RecordingsService } from '../../services/recordings.service'
 })
 export class RecordingPlayerComponent implements OnDestroy {
   private readonly recordings = inject(RecordingsService);
+  private readonly translate = inject(TranslateService);
 
   @Input({ required: true }) recording: Recording | null = null;
   @Output() readonly closed = new EventEmitter<void>();
@@ -281,19 +301,17 @@ export class RecordingPlayerComponent implements OnDestroy {
   exportVideo(): void {
     if (!this.session || !this.recording || this.exporting()) return;
     if (typeof MediaRecorder === 'undefined') {
-      this.error.set(
-        'This browser does not support video export. Download the .guac file instead.',
-      );
+      this.error.set(this.translate.instant('pages.recordings.player.errors.exportUnsupported'));
       return;
     }
     if (!this.displayEl) {
-      this.error.set('Recording display not ready yet — wait for load to finish, then try again.');
+      this.error.set(this.translate.instant('pages.recordings.player.errors.displayNotReady'));
       return;
     }
 
     const { width, height } = this.measureDisplay();
     if (width === 0 || height === 0) {
-      this.error.set('Recording has no visible frame yet — play it once before exporting.');
+      this.error.set(this.translate.instant('pages.recordings.player.errors.noVisibleFrame'));
       return;
     }
 
@@ -306,7 +324,7 @@ export class RecordingPlayerComponent implements OnDestroy {
     const ctx = composite.getContext('2d');
     if (!ctx) {
       this.exporting.set(false);
-      this.error.set('Failed to acquire 2D canvas context for export.');
+      this.error.set(this.translate.instant('pages.recordings.player.errors.canvasContextFailed'));
       return;
     }
     this.compositeCanvas = composite;
@@ -317,7 +335,11 @@ export class RecordingPlayerComponent implements OnDestroy {
       stream = composite.captureStream(30);
     } catch (err) {
       this.cleanupExport();
-      this.error.set('captureStream is not available: ' + (err as Error).message);
+      this.error.set(
+        this.translate.instant('pages.recordings.player.errors.captureStreamUnavailable', {
+          message: (err as Error).message,
+        }),
+      );
       return;
     }
 
@@ -359,7 +381,11 @@ export class RecordingPlayerComponent implements OnDestroy {
         recorder.start(250);
       } catch (err) {
         this.cleanupExport();
-        this.error.set('Failed to start recorder: ' + (err as Error).message);
+        this.error.set(
+          this.translate.instant('pages.recordings.player.errors.recorderStartFailed', {
+            message: (err as Error).message,
+          }),
+        );
         return;
       }
       this.session.play();
@@ -506,7 +532,10 @@ export class RecordingPlayerComponent implements OnDestroy {
     this.recordings.fetchStream(id).subscribe({
       next: (buffer) => this.initPlayer(buffer),
       error: (err) => {
-        this.error.set(this.toMessage(err) || 'Failed to fetch recording.');
+        this.error.set(
+          this.toMessage(err) ||
+            this.translate.instant('pages.recordings.player.errors.fetchFailed'),
+        );
         this.loading.set(false);
       },
     });
@@ -539,7 +568,9 @@ export class RecordingPlayerComponent implements OnDestroy {
         this.duration.set(session.getDuration());
       };
       session.onerror = (msg: string) => {
-        this.error.set(msg || 'Recording playback error.');
+        this.error.set(
+          msg || this.translate.instant('pages.recordings.player.errors.playbackError'),
+        );
         this.loading.set(false);
       };
       session.onprogress = (duration: number) => this.duration.set(duration);
@@ -556,7 +587,11 @@ export class RecordingPlayerComponent implements OnDestroy {
       // Kick the tunnel into reading (Guacamole's tunnel API).
       tunnel.connect('');
     } catch (err) {
-      this.error.set('Failed to initialise player: ' + (err as Error).message);
+      this.error.set(
+        this.translate.instant('pages.recordings.player.errors.initFailed', {
+          message: (err as Error).message,
+        }),
+      );
       this.loading.set(false);
     }
   }

@@ -1,8 +1,10 @@
 <div>
   <div class="mb-6">
-    <h2 class="text-lg font-semibold text-on-surface">Roles</h2>
+    <h2 class="text-lg font-semibold text-on-surface">
+      {{ 'pages.settingsRoles.title' | translate }}
+    </h2>
     <p class="text-sm text-on-surface-variant mt-1">
-      Smooth Operator ships with four fixed roles. Each user has exactly one role.
+      {{ 'pages.settingsRoles.subtitle' | translate }}
     </p>
   </div>
 
@@ -10,7 +12,7 @@
     @for (role of roles; track trackRole($index, role)) {
       <div class="glass-card rounded-lg p-5">
         <div class="flex items-center justify-between mb-3">
-          <h3 class="text-base font-semibold text-on-surface">{{ role.name }}</h3>
+          <h3 class="text-base font-semibold text-on-surface">{{ role.nameKey | translate }}</h3>
           <span
             class="px-2 py-1 text-[10px] font-bold uppercase tracking-widest rounded border"
             [class]="role.tone"
@@ -18,14 +20,14 @@
             {{ role.key }}
           </span>
         </div>
-        <p class="text-sm text-on-surface-variant mb-4">{{ role.summary }}</p>
+        <p class="text-sm text-on-surface-variant mb-4">{{ role.summaryKey | translate }}</p>
         <ul class="space-y-2">
-          @for (perm of role.permissions; track perm) {
+          @for (permKey of role.permissionKeys; track permKey) {
             <li class="flex items-start gap-2 text-sm text-on-surface">
               <span class="material-symbols-outlined text-tertiary text-base mt-0.5"
                 >check_circle</span
               >
-              <span>{{ perm }}</span>
+              <span>{{ permKey | translate }}</span>
             </li>
           }
         </ul>
@@ -34,8 +36,9 @@
   </div>
 
   <div class="mt-6 p-4 glass-card rounded-lg text-xs text-outline">
-    <strong class="text-on-surface-variant">Single-role policy:</strong>
-    Users hold one role at a time. Changing a role replaces the previous one. Permissions cannot be
-    customized in this version.
+    <strong class="text-on-surface-variant">{{
+      'pages.settingsRoles.singleRolePolicyLabel' | translate
+    }}</strong>
+    {{ 'pages.settingsRoles.singleRolePolicyBody' | translate }}
   </div>
 </div>

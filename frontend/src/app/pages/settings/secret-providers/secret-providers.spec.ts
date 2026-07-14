@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import type { WritableSignal } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideTranslateService, TranslateService } from '@ngx-translate/core';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { of, throwError } from 'rxjs';
 
@@ -29,8 +30,43 @@ describe('SecretProviders', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [SecretProviders],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideTranslateService()],
     }).compileComponents();
+
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', {
+      pages: {
+        settingsSecretProviders: {
+          errors: {
+            loadFailed: 'Failed to load secret providers.',
+            requiredFields: 'Name, Vault URI, Tenant ID, and Client ID are required.',
+            clientSecretRequired: 'Client Secret is required when creating a provider.',
+            saveFailed: 'Failed to save provider.',
+            createFailed: 'Failed to create provider.',
+            deleteFailed: 'Delete failed.',
+          },
+          toasts: {
+            updated: 'Secret provider updated.',
+            created: 'Secret provider created.',
+            testSuccess: '"{{name}}" connection successful.',
+            testFailed: '"{{name}}" connection failed.',
+            deleted: '"{{name}}" deleted.',
+          },
+          deleteDialog: {
+            title: 'Delete secret provider',
+            message:
+              'Delete "{{name}}"? Credentials linked to this provider will stop working. This cannot be undone.',
+            confirmLabel: 'Delete',
+          },
+          actions: {
+            testConnection: 'Test connection for {{name}}',
+            edit: 'Edit provider {{name}}',
+            delete: 'Delete provider {{name}}',
+          },
+        },
+      },
+    });
+    translate.use('en');
 
     svc = TestBed.inject(SecretProvidersService);
     vi.spyOn(svc, 'reload').mockReturnValue(of([]));

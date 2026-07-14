@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, Input, inject } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { ThemeService } from '../../services/theme.service';
 
 export type ThemeToggleVariant = 'nav' | 'floating';
@@ -6,6 +7,7 @@ export type ThemeToggleVariant = 'nav' | 'floating';
 @Component({
   selector: 'app-theme-toggle',
   standalone: true,
+  imports: [TranslatePipe],
   templateUrl: './theme-toggle.html',
   styleUrl: './theme-toggle.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

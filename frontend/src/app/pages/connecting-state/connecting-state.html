@@ -1,6 +1,7 @@
 <main
   class="min-h-screen w-full flex items-center justify-center p-8 relative bg-surface text-on-surface overflow-hidden"
 >
+  <app-language-switcher variant="floating" />
   <app-theme-toggle variant="floating" />
 
   <!-- Dot-matrix scan background -->
@@ -37,11 +38,13 @@
       <div class="flex items-start justify-between mb-6">
         <div>
           <h1 class="text-2xl font-semibold text-on-surface mb-1">
-            Connecting to
-            <span class="text-primary">{{ connection()?.name || 'remote host' }}</span>
+            {{ 'pages.connectingState.heading' | translate }}
+            <span class="text-primary">{{
+              connection()?.name || ('pages.connectingState.remoteHostFallback' | translate)
+            }}</span>
           </h1>
           <p class="font-mono text-xs text-on-surface-variant opacity-60">
-            ID: {{ connectionId() }}
+            {{ 'pages.connectingState.idLabel' | translate: { id: connectionId() } }}
           </p>
         </div>
         <div
@@ -71,7 +74,7 @@
             [class.text-error]="state() === 'error' || (state() === 'disconnected' && errorMsg())"
             [class.text-tertiary]="state() === 'connected'"
             [class.text-on-surface-variant]="state() === 'disconnected' && !errorMsg()"
-            >{{ statusLabel() }}</span
+            >{{ statusLabel() | translate }}</span
           >
         </div>
       </div>
@@ -82,20 +85,22 @@
         <div class="shrink-0 flex flex-col items-center gap-2 animate-float">
           <app-mascot [state]="mascotState()" [isSmall]="false"></app-mascot>
           @if (state() === 'connected') {
-            <span class="font-label-caps text-label-caps text-tertiary animate-fade-in"
-              >TUNNEL ESTABLISHED</span
-            >
+            <span class="font-label-caps text-label-caps text-tertiary animate-fade-in">{{
+              'pages.connectingState.mascotCaption.tunnelEstablished' | translate
+            }}</span>
           } @else if (state() === 'error' || (state() === 'disconnected' && errorMsg())) {
-            <span class="font-label-caps text-label-caps text-error animate-fade-in"
-              >CONNECTION FAILED</span
-            >
+            <span class="font-label-caps text-label-caps text-error animate-fade-in">{{
+              'pages.connectingState.mascotCaption.connectionFailed' | translate
+            }}</span>
           } @else if (state() === 'disconnected') {
-            <span class="font-label-caps text-label-caps text-on-surface-variant/60 animate-fade-in"
-              >DISCONNECTED</span
+            <span
+              class="font-label-caps text-label-caps text-on-surface-variant/60 animate-fade-in"
+              >{{ 'pages.connectingState.mascotCaption.disconnected' | translate }}</span
             >
           } @else {
-            <span class="font-label-caps text-label-caps text-on-surface-variant/60 animate-fade-in"
-              >PROCESSING…</span
+            <span
+              class="font-label-caps text-label-caps text-on-surface-variant/60 animate-fade-in"
+              >{{ 'pages.connectingState.mascotCaption.processing' | translate }}</span
             >
           }
         </div>
@@ -126,7 +131,7 @@
                 </div>
                 <span
                   class="font-mono text-[9px] font-semibold tracking-widest text-on-surface-variant/70"
-                  >{{ step.label }}</span
+                  >{{ step.label | translate }}</span
                 >
               </div>
             }
@@ -137,7 +142,7 @@
             <div class="flex justify-between items-center mb-1.5">
               <span
                 class="font-mono text-[10px] text-on-surface-variant/60 uppercase tracking-widest"
-                >Connection Progress</span
+                >{{ 'pages.connectingState.progressLabel' | translate }}</span
               >
               <span class="font-mono text-xs font-semibold text-primary">{{ progress() }}%</span>
             </div>
@@ -167,13 +172,15 @@
         @for (entry of logs(); track entry.timestamp + '-' + entry.message) {
           <div class="flex items-start text-on-surface-variant animate-fade-in">
             <span class="mr-3 shrink-0 font-bold" [class]="logColorClass(entry.level)">{{
-              logTag(entry.level)
+              logTag(entry.level) | translate
             }}</span>
             <span class="opacity-80">{{ entry.message }}</span>
           </div>
         }
         @if (logs().length === 0) {
-          <div class="text-on-surface-variant/60 italic">Awaiting connection events…</div>
+          <div class="text-on-surface-variant/60 italic">
+            {{ 'pages.connectingState.logsEmpty' | translate }}
+          </div>
         }
       </div>
 
@@ -191,7 +198,7 @@
         @if (state() === 'error') {
           <button class="btn-secondary" (click)="retry()">
             <span class="material-symbols-outlined text-base">refresh</span>
-            Retry
+            {{ 'pages.connectingState.retry' | translate }}
           </button>
         }
         <button
@@ -199,7 +206,7 @@
           (click)="cancel()"
         >
           <span class="material-symbols-outlined text-base">cancel</span>
-          Cancel
+          {{ 'common.actions.cancel' | translate }}
         </button>
       </div>
     </div>

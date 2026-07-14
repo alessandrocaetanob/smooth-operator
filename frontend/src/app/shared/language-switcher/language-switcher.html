@@ -1,0 +1,25 @@
+@if (variant === 'floating') {
+  <button
+    type="button"
+    (click)="toggle()"
+    class="language-switcher-floating fixed top-4 right-16 z-50 h-10 min-w-10 px-2 rounded-full glass-panel border border-white/10 flex items-center justify-center text-on-surface-variant hover:text-on-surface shadow-lg shadow-black/20 hover:shadow-primary/20 transition-all duration-200 hover:scale-105 active:scale-95 btn-interactive text-xs font-semibold tracking-widest"
+    [attr.aria-label]="'languageSwitcher.switchTo' | translate: { language: nextLanguageName() }"
+    [title]="'languageSwitcher.label' | translate"
+  >
+    {{ currentLabel() }}
+  </button>
+} @else {
+  <button
+    type="button"
+    (click)="toggle()"
+    [class]="
+      compact
+        ? 'compact-btn text-xs font-semibold tracking-widest'
+        : 'px-2 py-2 rounded-md text-on-surface-variant hover:text-on-surface hover:bg-on-surface/5 transition-colors btn-interactive text-xs font-semibold tracking-widest'
+    "
+    [attr.aria-label]="'languageSwitcher.switchTo' | translate: { language: nextLanguageName() }"
+    [title]="'languageSwitcher.label' | translate"
+  >
+    {{ currentLabel() }}
+  </button>
+}

@@ -1,0 +1,1740 @@
+{
+  "common": {
+    "actions": {
+      "save": "Save",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "confirm": "Confirm",
+      "close": "Close",
+      "edit": "Edit",
+      "create": "Create",
+      "search": "Search"
+    },
+    "validation": {
+      "required": "This field is required",
+      "invalidEmail": "Enter a valid email address"
+    },
+    "password": {
+      "show": "Show password",
+      "hide": "Hide password"
+    },
+    "help": "Help",
+    "privacy": "Privacy"
+  },
+  "themeToggle": {
+    "toggleTheme": "Toggle theme",
+    "switchToLight": "Switch to light mode",
+    "switchToDark": "Switch to dark mode"
+  },
+  "languageSwitcher": {
+    "label": "Language",
+    "switchTo": "Switch to {{language}}"
+  },
+  "nav": {
+    "topbar": {
+      "openMenu": "Open menu",
+      "closeMenu": "Close menu",
+      "goToDashboard": "Go to dashboard",
+      "brand": "Smooth Operator",
+      "searchPlaceholder": "Search vaults & connections...",
+      "searchAriaLabel": "Search vaults and connections",
+      "systemOptimal": "System: Optimal",
+      "systemOffline": "System: Offline",
+      "systemChecking": "System: Checking",
+      "apiReachable": "API and database reachable",
+      "backendUnreachable": "Backend unreachable",
+      "checkingStatus": "Checking system status...",
+      "account": "Account",
+      "profile": "Profile",
+      "settings": "Settings",
+      "signOut": "Sign out"
+    },
+    "sidebar": {
+      "primaryNavigation": "Primary navigation",
+      "closeNavigationMenu": "Close navigation menu",
+      "backToApp": "Back to app",
+      "groupPeopleAccess": "People & Access",
+      "users": "Users",
+      "groups": "Groups",
+      "roles": "Roles",
+      "groupInfrastructure": "Infrastructure",
+      "vaults": "Vaults",
+      "keyVault": "Key Vault",
+      "groupSecurity": "Security",
+      "sso": "SSO",
+      "sessions": "Sessions",
+      "retention": "Retention",
+      "recording": "Recording",
+      "groupSystem": "System",
+      "email": "Email",
+      "integrations": "Integrations",
+      "webhooks": "Webhooks",
+      "myAccess": "My Access",
+      "myVaults": "My Vaults",
+      "connections": "Connections",
+      "knownHosts": "Known Hosts",
+      "credentials": "Credentials",
+      "auditLogs": "Audit Logs",
+      "recordings": "Recordings",
+      "monitoring": "Monitoring",
+      "settings": "Settings",
+      "expandSidebar": "Expand sidebar",
+      "collapseSidebar": "Collapse sidebar",
+      "collapse": "Collapse",
+      "helpDocs": "Help & Documentation",
+      "help": "Help",
+      "signOut": "Sign out"
+    }
+  },
+  "sessionBar": {
+    "ariaLabel": "Minimized sessions",
+    "restore": "Restore: {{name}}",
+    "restoreAriaLabel": "Restore session {{name}}",
+    "terminate": "Terminate session",
+    "minimizedAriaLabel": "Minimized session {{name}}"
+  },
+  "confirmDialog": {
+    "countdown": "CONFIRM IN 3 SECONDS…"
+  },
+  "toast": {
+    "dismiss": "Dismiss notification"
+  },
+  "drawer": {
+    "close": "Close drawer"
+  },
+  "pages": {
+    "auth": {
+      "tagline": "Secure, clientless remote access for modern infrastructure.",
+      "connecting": "Connecting…",
+      "signInWithSso": "Sign in with {{provider}}",
+      "orContinueWithEmail": "OR CONTINUE WITH EMAIL",
+      "emailLabel": "Email Address",
+      "emailPlaceholder": "admin@company.com",
+      "emailRequired": "Email is required.",
+      "passwordLabel": "Password",
+      "forgotLink": "Forgot?",
+      "passwordRequired": "Password is required.",
+      "signIn": "Sign In",
+      "signingIn": "Signing in…",
+      "mfaTitle": "Two-factor authentication",
+      "mfaSubtitle": "Enter the 6-digit code from your authenticator app, or a recovery code.",
+      "mfaCodeLabel": "Verification code",
+      "mfaCodeError": "Enter a 6-digit code or XXXX-XXXX recovery code.",
+      "verify": "Verify",
+      "verifying": "Verifying…",
+      "backToSignIn": "← Back to sign in",
+      "systemStatusOptimal": "SYSTEM STATUS: OPTIMAL",
+      "tooManyAttempts": "Too many sign-in attempts. Please wait a moment and try again.",
+      "signInFailed": "Sign-in failed.",
+      "verificationFailed": "Verification failed."
+    },
+    "ssoFinalize": {
+      "errorTitle": "Sign-in failed",
+      "backToSignIn": "Back to sign-in",
+      "completingTitle": "Completing sign-in…",
+      "validatingSession": "Validating your single sign-on session.",
+      "authFailedFallback": "Authentication failed. Please try logging in again."
+    },
+    "firstAccess": {
+      "deploymentBadge": "System Deployment Initiated",
+      "title": "First Access: ROOT Configuration",
+      "subtitle": "Configure your initial root administrative account to manage system settings and SSO integration.",
+      "fullNameLabel": "Full Name",
+      "fullNamePlaceholder": "System Administrator",
+      "emailPlaceholder": "admin@domain.com",
+      "passwordLabel": "Master Password",
+      "passwordHint": "Minimum 12 characters.",
+      "confirmPasswordLabel": "Confirm Password",
+      "passwordMismatch": "Passwords do not match.",
+      "creating": "Creating…",
+      "createAccount": "Create Root Account",
+      "createAccountFailed": "Failed to create the root account."
+    },
+    "notFound": {
+      "errorCode": "Error 404",
+      "title": "Page not found",
+      "message": "The page you were looking for doesn't exist or has moved. The mascot looked everywhere.",
+      "backToVault": "Back to Vault"
+    },
+    "emptyState": {
+      "title": "Your Vault is Empty",
+      "description": "It looks like you haven't been assigned to any server teams yet. Contact your administrator to request access.",
+      "requestAccess": "Request Access"
+    },
+    "forgotPassword": {
+      "title": "Password Recovery",
+      "subtitle": "Enter your email and we'll send a reset link if your account exists.",
+      "smtpUnavailable": "Email delivery is not configured on this system. Contact your administrator to reset your password.",
+      "successMessage": "If an account with that email exists, a password reset link has been sent.",
+      "backToSignIn": "Back to sign in",
+      "emailLabel": "Email Address",
+      "emailPlaceholder": "admin@company.com",
+      "sending": "Sending…",
+      "submit": "Send Reset Link",
+      "unexpectedError": "An unexpected error occurred. Please try again."
+    },
+    "myAccess": {
+      "title": "My Access",
+      "subtitle": "Vaults you can access, either directly or through a group you belong to.",
+      "loadingAria": "Loading your access…",
+      "notSignedIn": "You are not signed in.",
+      "loadFailed": "Failed to load access.",
+      "stats": {
+        "total": {
+          "label": "Total",
+          "caption": "vaults you can access"
+        },
+        "direct": {
+          "label": "Direct",
+          "caption": "assigned to you personally"
+        },
+        "viaGroups": {
+          "label": "Via groups",
+          "caption": "groups granting vault access"
+        }
+      },
+      "allVaults": {
+        "heading": "All vaults",
+        "empty": "You don't have access to any vaults yet. Ask an administrator."
+      },
+      "byGroup": {
+        "heading": "By group",
+        "vaultCountOne": "{{count}} vault",
+        "vaultCountOther": "{{count}} vaults"
+      }
+    },
+    "connectingState": {
+      "heading": "Connecting to",
+      "remoteHostFallback": "remote host",
+      "idLabel": "ID: {{id}}",
+      "steps": {
+        "initiating": "INITIATING",
+        "connecting": "CONNECTING",
+        "authenticating": "AUTHENTICATING",
+        "ready": "READY"
+      },
+      "status": {
+        "initiating": "INITIATING",
+        "connecting": "CONNECTING",
+        "authenticating": "AUTHENTICATING",
+        "ready": "READY",
+        "error": "ERROR",
+        "disconnected": "DISCONNECTED",
+        "idle": "IDLE"
+      },
+      "mascotCaption": {
+        "tunnelEstablished": "TUNNEL ESTABLISHED",
+        "connectionFailed": "CONNECTION FAILED",
+        "disconnected": "DISCONNECTED",
+        "processing": "PROCESSING…"
+      },
+      "progressLabel": "Connection Progress",
+      "logsEmpty": "Awaiting connection events…",
+      "logTag": {
+        "ok": "[OK]",
+        "warn": "[WRN]",
+        "error": "[ERR]",
+        "info": "[..]"
+      },
+      "retry": "Retry"
+    },
+    "monitoring": {
+      "title": "Monitoring",
+      "subtitle": "Real-time system metrics and activity dashboards.",
+      "refreshNow": "Refresh now",
+      "refresh": "Refresh",
+      "loadError": "Unable to load monitoring metrics. Check your connection or try refreshing.",
+      "chartsLoading": "Charts loading…",
+      "chartsRenderError": "Failed to render charts.",
+      "autoRefresh": {
+        "off": "Off"
+      },
+      "sections": {
+        "activeSessions": "Active Sessions",
+        "authSecurity": "Auth & Security",
+        "auditEvents": "Audit Events"
+      },
+      "stats": {
+        "liveSessions": "Live Sessions",
+        "currentlyActive": "Currently active",
+        "started24h": "Started (24h)",
+        "ended24h": "Ended (24h)",
+        "loginAttempts24h": "Login Attempts (24h)",
+        "failedLogins24h": "Failed Logins (24h)",
+        "successRate24h": "Success Rate (24h)",
+        "totalEvents24h": "Total Events (24h)",
+        "failures24h": "Failures (24h)",
+        "authEvents24h": "Auth Events (24h)"
+      },
+      "charts": {
+        "connectionsOverTime": "Connections Over Time",
+        "connectionsOverTimeAriaLabel": "Connections started and ended over time",
+        "loginAttemptsOverTime": "Login Attempts Over Time",
+        "loginAttemptsOverTimeAriaLabel": "Login success and failure over time",
+        "outcomeBreakdown": "Outcome Breakdown",
+        "outcomeBreakdownAriaLabel": "Audit event outcome breakdown",
+        "topEventTypes": "Top 10 Event Types",
+        "topEventTypesAriaLabel": "Top audit event types by count",
+        "eventRateByType": "Event Rate by Type",
+        "eventRateByTypeAriaLabel": "Audit event rate by type over time",
+        "datasets": {
+          "success": "Success",
+          "failure": "Failure",
+          "started": "Started",
+          "ended": "Ended",
+          "count": "Count"
+        }
+      }
+    },
+    "recordings": {
+      "subtitle": {
+        "prefix": "Browse captured session recordings. Playback opens an in-browser viewer for the raw",
+        "suffix": "file."
+      },
+      "filters": {
+        "status": "Status",
+        "from": "From",
+        "to": "To",
+        "apply": "Apply",
+        "clear": "Clear"
+      },
+      "status": {
+        "all": "All",
+        "available": "Available",
+        "recording": "Recording",
+        "uploading": "Uploading",
+        "failed": "Failed",
+        "deleted": "Deleted"
+      },
+      "table": {
+        "connection": "Connection",
+        "user": "User",
+        "started": "Started",
+        "duration": "Duration",
+        "size": "Size",
+        "status": "Status",
+        "actions": "Actions",
+        "noVault": "(no vault)",
+        "keysBadge": "keys",
+        "keysBadgeTitle": "Includes captured keystrokes"
+      },
+      "actions": {
+        "play": "Play",
+        "playTitle": "Play in browser",
+        "download": "Download",
+        "downloadTitle": "Download .guac file"
+      },
+      "list": {
+        "loading": "Loading…",
+        "empty": "No recordings match these filters."
+      },
+      "pagination": {
+        "summary": "{{total}} total · page {{page}} of {{pageCount}}",
+        "previous": "Previous",
+        "next": "Next"
+      },
+      "confirmDelete": {
+        "title": "Delete recording",
+        "message": "Permanently delete the recording for \"{{connectionName}}\" started {{startedAt}}? This cannot be undone."
+      },
+      "toasts": {
+        "deleted": "Recording deleted."
+      },
+      "errors": {
+        "loadFailed": "Failed to load recordings.",
+        "deleteFailed": "Failed to delete recording."
+      },
+      "player": {
+        "exitFullscreen": "Exit fullscreen",
+        "fullscreen": "Fullscreen",
+        "closePlayer": "Close player",
+        "closeTitle": "Close (Esc)",
+        "sessionLabel": "session {{sessionId}}",
+        "loading": "Loading recording…",
+        "playbackFailedTitle": "In-browser playback failed",
+        "downloadRaw": "Download raw .guac file",
+        "downloadRawTitle": "Download raw .guac",
+        "exporting": "Exporting video — playing the recording in the background so the canvas can be captured. This takes the same time as the recording duration.",
+        "play": "Play",
+        "pause": "Pause",
+        "seek": "Seek",
+        "export": "Export {{format}}",
+        "errors": {
+          "exportUnsupported": "This browser does not support video export. Download the .guac file instead.",
+          "displayNotReady": "Recording display not ready yet — wait for load to finish, then try again.",
+          "noVisibleFrame": "Recording has no visible frame yet — play it once before exporting.",
+          "canvasContextFailed": "Failed to acquire 2D canvas context for export.",
+          "captureStreamUnavailable": "captureStream is not available: {{message}}",
+          "recorderStartFailed": "Failed to start recorder: {{message}}",
+          "fetchFailed": "Failed to fetch recording.",
+          "playbackError": "Recording playback error.",
+          "initFailed": "Failed to initialise player: {{message}}"
+        }
+      }
+    },
+    "activeSession": {
+      "header": {
+        "connectedTo": "Connected to",
+        "errorOn": "Error on",
+        "connectingTo": "Connecting to",
+        "terminalTheme": "Session terminal theme",
+        "minimize": "Minimize session (keep connection alive)",
+        "terminateButton": "Terminate"
+      },
+      "display": {
+        "remoteDesktopSession": "Remote desktop session",
+        "connectionLost": "Connection lost — redirecting…",
+        "reconnecting": "Reconnecting display…"
+      },
+      "toolbar": {
+        "expand": "Expand toolbar",
+        "collapse": "Collapse toolbar",
+        "screenshot": "Screenshot",
+        "takeScreenshot": "Take screenshot",
+        "ctrlAltDel": "Ctrl+Alt+Del",
+        "sendCtrlAltDel": "Send Ctrl+Alt+Del",
+        "keyCombo": "Key combo",
+        "sendKeyCombo": "Send key combo",
+        "clipboard": "Clipboard",
+        "clipboardSync": "Clipboard sync",
+        "hideKeyboard": "Hide keyboard",
+        "keyboard": "Keyboard",
+        "hideOnScreenKeyboard": "Hide on-screen keyboard",
+        "showOnScreenKeyboard": "Show on-screen keyboard",
+        "zoomIn": "Zoom in",
+        "zoomOut": "Zoom out",
+        "fitToScreen": "Fit to screen ({{percent}})",
+        "resetZoom": "Reset zoom to fit screen",
+        "fullscreen": "Fullscreen",
+        "toggleFullscreen": "Toggle fullscreen"
+      },
+      "keyCombo": {
+        "title": "Send Key Combo",
+        "keyLabel": "Key",
+        "sent": "Sent!",
+        "send": "Send"
+      },
+      "clipboard": {
+        "title": "Shared Clipboard",
+        "description": "Edit and push to host, or copy current host clipboard locally.",
+        "textareaAriaLabel": "Clipboard content",
+        "charsCount": "{{count}} chars",
+        "copyHostClipboard": "Copy host clipboard",
+        "pushed": "Pushed!",
+        "pushToHost": "Push to host"
+      },
+      "terminalTheme": {
+        "title": "Session Terminal Theme",
+        "description": "Applies on the next connect/reconnect for this browser session only.",
+        "colorScheme": "Color scheme",
+        "font": "Font",
+        "size": "Size (px)",
+        "saveForSession": "Save for session",
+        "schemes": {
+          "grayBlack": "Gray / Black",
+          "greenBlack": "Green / Black",
+          "whiteBlack": "White / Black",
+          "blackWhite": "Black / White",
+          "solarizedDark": "Solarized Dark",
+          "solarizedLight": "Solarized Light"
+        }
+      },
+      "mobileKeyboard": {
+        "remoteKeyboardInput": "Remote keyboard input"
+      }
+    },
+    "administration": {
+      "title": "Users",
+      "subtitle": "Manage users, roles and vault access.",
+      "refresh": "Refresh",
+      "inviteUser": "Invite user",
+      "searchUsersLabel": "Search users",
+      "searchPlaceholder": "Search users by name, email, or role…",
+      "clearSearch": "Clear search",
+      "invitationCreated": "Invitation created",
+      "emailSentAutomatically": "Email sent automatically. The link below is also available as a fallback.",
+      "shareLinkExpires": "Share this link with the user. It expires in 72 hours.",
+      "smtpError": "SMTP error: {{error}}",
+      "dismiss": "Dismiss",
+      "copy": "Copy",
+      "copied": "Copied!",
+      "copyFailed": "Copy failed",
+      "inviteHelpText": "The user will receive a secure link to set their own password. The account stays inactive until the link is redeemed.",
+      "fullNameOptional": "Full name (optional)",
+      "emailPlaceholder": "Email",
+      "role": "Role",
+      "sending": "Sending…",
+      "sendInvite": "Send invite",
+      "tableUser": "User",
+      "tableEmail": "Email",
+      "tableRole": "Role",
+      "tableVaultScope": "Vault Scope",
+      "tableStatus": "Status",
+      "tableActions": "Actions",
+      "changeRoleFor": "Change role for {{name}}",
+      "vaultCount": "{{count}} vault(s)",
+      "global": "Global",
+      "active": "Active",
+      "disabled": "Disabled",
+      "disableUser": "Disable",
+      "enableUser": "Enable",
+      "loading": "Loading…",
+      "noUsersMatchSearch": "No users match the search.",
+      "noUsersYet": "No users yet.",
+      "vaultAssignments": "Vault assignments",
+      "vaultAssignmentsDescription": "{{name}} ({{role}}) can access/manage only selected vaults.",
+      "noVaultsToAssign": "Create at least one vault to assign access.",
+      "saving": "Saving…",
+      "saveAssignments": "Save assignments",
+      "loadUsersFailed": "Failed to load users.",
+      "emailRequired": "Email is required.",
+      "inviteFailed": "Invite failed.",
+      "changeOwnershipTitle": "Change ownership",
+      "changeRoleTitle": "Change role",
+      "changeOwnershipMessage": "This will change {{name}}'s role from {{previous}} to {{role}}. Owner access is permanent and grants full control over this instance. Continue?",
+      "changeRoleMessage": "Change {{name}}'s role from {{previous}} to {{role}}?",
+      "changeRoleConfirmLabel": "Change role",
+      "roleUpdated": "Role updated for {{name}}.",
+      "updateRoleFailed": "Failed to update role.",
+      "vaultAssignmentsUpdated": "Vault assignments updated for {{name}}.",
+      "updateVaultAssignmentsFailed": "Failed to update vault assignments.",
+      "userEnabled": "{{name}} enabled.",
+      "userDisabled": "{{name}} disabled.",
+      "updateFailed": "Update failed.",
+      "cannotDeleteSelf": "You cannot delete your own account.",
+      "deleteUserTitle": "Delete user",
+      "deleteUserMessage": "Delete user {{email}}? This cannot be undone.",
+      "userDeleted": "User {{email}} deleted.",
+      "deleteFailed": "Delete failed."
+    },
+    "auditing": {
+      "title": "Audit Logs",
+      "subtitle": "Every authentication and resource change is recorded.",
+      "exportCsv": "Export CSV",
+      "filters": {
+        "userLabel": "User",
+        "userPlaceholder": "email or name",
+        "actionLabel": "Action",
+        "actionPlaceholder": "e.g. user.login",
+        "resourceTypeLabel": "Resource type",
+        "resourceTypePlaceholder": "e.g. connection",
+        "fromLabel": "From",
+        "toLabel": "To",
+        "outcomeLabel": "Outcome",
+        "allOutcomes": "All outcomes",
+        "outcomeSuccess": "Success",
+        "outcomeFailure": "Failure",
+        "reset": "Reset"
+      },
+      "table": {
+        "timestamp": "Timestamp",
+        "user": "User",
+        "action": "Action",
+        "resource": "Resource",
+        "ip": "IP",
+        "outcome": "Outcome",
+        "loading": "Loading…",
+        "empty": "No log entries match the current filters.",
+        "rowAriaLabel": "View details for {{action}} by {{actor}}",
+        "unknownUser": "unknown"
+      },
+      "pagination": {
+        "summary": "Page {{page}} of {{totalPages}} — {{totalItems}} entries",
+        "rows": "Rows:",
+        "rowsPerPage": "Rows per page",
+        "firstPage": "First page",
+        "prev": "Prev",
+        "next": "Next",
+        "lastPage": "Last page"
+      },
+      "detail": {
+        "title": "Audit Log Detail",
+        "closePanel": "Close detail panel",
+        "timestamp": "Timestamp",
+        "user": "User",
+        "ipAddress": "IP Address",
+        "resourceType": "Resource type",
+        "resourceId": "Resource ID",
+        "outcome": "Outcome",
+        "correlationId": "Correlation ID",
+        "userAgent": "User Agent",
+        "details": "Details",
+        "noDetails": "(no details)"
+      }
+    },
+    "connections": {
+      "title": "Connections Manager",
+      "subtitle": "Define remote sessions: protocols, targets, and credentials.",
+      "refresh": "Refresh",
+      "newConnection": "New Connection",
+      "searchPlaceholder": "Search connections, hosts, tags…",
+      "clearSearchAriaLabel": "Clear search",
+      "resultCount": "{{filtered}} of {{total}}",
+      "clearFilters": "Clear",
+      "errors": {
+        "loadFailed": "Failed to load.",
+        "saveFailed": "Save failed.",
+        "deleteFailed": "Delete failed.",
+        "validationRequired": "Name, host, protocol and vault are required.",
+        "hostNotFound": "Failed to locate created host"
+      },
+      "toasts": {
+        "created": "Connection created.",
+        "updated": "Connection updated.",
+        "deleted": "Connection \"{{name}}\" deleted."
+      },
+      "confirmDelete": {
+        "title": "Delete connection",
+        "message": "Delete connection \"{{name}}\"? This cannot be undone.",
+        "confirmLabel": "Delete"
+      },
+      "table": {
+        "connection": "Connection",
+        "target": "Target",
+        "vault": "Vault",
+        "credentials": "Credentials",
+        "tags": "Tags",
+        "actions": "Actions",
+        "none": "None",
+        "editAriaLabel": "Edit connection",
+        "deleteAriaLabel": "Delete connection",
+        "loading": "Loading connections…",
+        "noMatch": "No connections match your search.",
+        "clearFilters": "Clear filters",
+        "empty": "No connections yet.",
+        "emptyHint": "Click \"New Connection\" to add your first one."
+      },
+      "form": {
+        "editTitle": "Edit Connection",
+        "newTitle": "New Connection",
+        "editSubtitle": "Update connection settings below.",
+        "newSubtitle": "Fill in the details to create a new remote connection.",
+        "nameLabel": "Display Name",
+        "namePlaceholder": "e.g. Production DB Server",
+        "protocolLabel": "Protocol",
+        "targetHostLabel": "Target Host",
+        "targetHostTypeNew": "— Type a new address below —",
+        "newHostAddressPlaceholder": "Or enter new address (e.g., 10.0.0.5)",
+        "newHostAddressAriaLabel": "New host address",
+        "vaultGroupLabel": "Vault / Group",
+        "vaultGroupPlaceholder": "Select vault…",
+        "credentialsLabel": "Credentials",
+        "noCredential": "No credential",
+        "tagsLabel": "Tags",
+        "tagInputPlaceholder": "Add tag… (Enter or comma)",
+        "removeTagAriaLabel": "Remove tag {{tag}}",
+        "tagsHint": "Press Enter or comma to add. Backspace removes the last tag.",
+        "cancel": "Cancel",
+        "save": "Save Connection",
+        "saving": "Saving…",
+        "recording": {
+          "title": "Session recording",
+          "modeLabel": "Mode",
+          "inherit": "Inherit from vault",
+          "forceOn": "Always record this connection",
+          "forceOff": "Never record this connection",
+          "keysLabel": "Capture keystrokes",
+          "keysExclude": "Exclude keystrokes (recommended)",
+          "keysInclude": "Include keystrokes",
+          "hint": "Recording is configured globally and per-vault. Use this only when this connection needs to differ from its vault default."
+        },
+        "terminal": {
+          "title": "Terminal Appearance",
+          "colorScheme": "Color scheme",
+          "font": "Font",
+          "fontSize": "Size (px)",
+          "schemes": {
+            "grayBlack": "Gray / Black",
+            "greenBlack": "Green / Black",
+            "whiteBlack": "White / Black",
+            "blackWhite": "Black / White",
+            "solarizedDark": "Solarized Dark",
+            "solarizedLight": "Solarized Light"
+          }
+        },
+        "advanced": {
+          "title": "Advanced Settings (JSON)",
+          "ariaLabel": "Advanced settings (JSON)",
+          "examplesTitle": "Protocol examples"
+        }
+      }
+    },
+    "credentials": {
+      "title": "Credentials",
+      "subtitle": "Secrets stored encrypted at rest. Secret values are never returned.",
+      "refresh": "Refresh",
+      "newCredential": "New Credential",
+      "searchPlaceholder": "Search by name, username, or type…",
+      "clearSearch": "Clear search",
+      "countSummary": "{{filtered}} of {{total}}",
+      "loading": "Loading credentials…",
+      "noSearchResults": "No credentials match your search.",
+      "emptyTitle": "No credentials yet.",
+      "emptyHint": "Click \"{{button}}\" to add your first one.",
+      "copyPublicKey": "Copy public key",
+      "editAriaLabel": "Edit credential",
+      "deleteAriaLabel": "Delete credential",
+      "table": {
+        "name": "Name",
+        "username": "Username",
+        "type": "Type",
+        "actions": "Actions"
+      },
+      "badge": {
+        "password": "Password",
+        "sshKey": "SSH Key"
+      },
+      "drawer": {
+        "newTitle": "New Credential",
+        "newSubtitle": "Add a new set of authentication credentials.",
+        "editTitle": "Edit Credential",
+        "editSubtitle": "Update credential settings below."
+      },
+      "form": {
+        "nameLabel": "Display Name",
+        "namePlaceholder": "e.g. Production Admin",
+        "usernameLabel": "Username",
+        "usernamePlaceholder": "e.g. admin or root",
+        "typeLabel": "Type",
+        "typePassword": "Password",
+        "typePrivateKey": "Private key (SSH)",
+        "storageLabel": "Secret Storage",
+        "storageLocal": "Local",
+        "storageExternal": "Azure Key Vault",
+        "providerLabel": "Key Vault Provider",
+        "selectProvider": "— Select a provider —",
+        "noProviders": "No Key Vault providers configured. Add one in Settings → Key Vault.",
+        "vaultActionLabel": "Vault Action",
+        "pushToVault": "Push to Vault",
+        "linkExisting": "Link Existing",
+        "vaultSecretLabel": "Secret (will be stored in vault)",
+        "vaultSecretPlaceholderKey": "PEM private key to push to Azure Key Vault",
+        "vaultSecretPlaceholderPassword": "Secret to push to Azure Key Vault",
+        "vaultSecretHint": "The secret is sent directly to Key Vault and never stored in this app's database.",
+        "existingSecretLabel": "Existing Secret Name",
+        "loadingSecrets": "Loading secrets from vault…",
+        "selectSecret": "— Select a secret —",
+        "noSecretsFound": "No secrets found in this vault. Check provider connectivity in Settings → Key Vault.",
+        "versionLabel": "Version (optional)",
+        "versionPlaceholder": "Leave blank to always use latest",
+        "privateKeyLabel": "Private Key (PEM)",
+        "privateKeyPlaceholderStored": "Stored private key (hidden). Generate below to replace it.",
+        "privateKeyPlaceholderNew": "Paste PEM private key here",
+        "privateKeyLockedHint": "The stored private key is locked for safety. Generate a new key pair below to replace it.",
+        "generateHeading": "Generate SSH Key Pair",
+        "generateHint": "Private key fills the field above. Copy the public key onto the target host.",
+        "algorithmLabel": "Algorithm",
+        "algorithmRsa": "RSA 4096",
+        "algorithmEcdsa": "ECDSA P-256",
+        "generating": "Generating…",
+        "generate": "Generate",
+        "publicKeyLabel": "Public Key (OpenSSH)",
+        "copy": "Copy",
+        "noPublicKeyYet": "No public key yet. Generate a new key pair above to produce one.",
+        "secretLabel": "Secret / Password",
+        "secretPlaceholderExisting": "Leave blank to keep existing secret",
+        "secretPlaceholderNew": "Secret",
+        "saving": "Saving…",
+        "save": "Save Credential"
+      },
+      "confirmDelete": {
+        "title": "Delete credential",
+        "message": "Delete credential \"{{name}}\"? Connections that use it will lose authentication. This cannot be undone."
+      },
+      "toasts": {
+        "publicKeyCopied": "Public key copied to clipboard",
+        "rowPublicKeyCopied": "Public key for \"{{name}}\" copied to clipboard",
+        "deleted": "Credential \"{{name}}\" deleted.",
+        "updated": "Credential updated.",
+        "created": "Credential saved."
+      },
+      "errors": {
+        "loadFailed": "Failed to load.",
+        "generateSshFailed": "Failed to generate SSH key.",
+        "nameUsernameRequired": "Name and username are required.",
+        "secretRequired": "Secret is required when creating a credential.",
+        "selectProviderRequired": "Please select a secret provider.",
+        "vaultSecretRequired": "Secret value is required when pushing to vault.",
+        "selectSecretRequired": "Please select an existing secret to link.",
+        "deleteFailed": "Delete failed.",
+        "saveFailed": "Save failed."
+      }
+    },
+    "hosts": {
+      "title": "Known Hosts",
+      "subtitle": "Registered target servers and endpoints used by connections.",
+      "refresh": "Refresh",
+      "newHost": "New Host",
+      "searchPlaceholder": "Search by name or address…",
+      "clearSearch": "Clear search",
+      "countSummary": "{{filtered}} of {{total}}",
+      "columnName": "Name",
+      "columnAddress": "Address",
+      "columnActions": "Actions",
+      "editHostAriaLabel": "Edit host",
+      "deleteHostAriaLabel": "Delete host",
+      "loading": "Loading hosts…",
+      "noSearchResults": "No hosts match your search.",
+      "emptyTitle": "No known hosts yet.",
+      "emptyHint": "Hosts are added automatically when creating connections, or manually here.",
+      "editHostTitle": "Edit Host",
+      "newHostTitle": "New Host",
+      "editHostSubtitle": "Update host details below.",
+      "newHostSubtitle": "Register a new target server or endpoint.",
+      "displayNameLabel": "Display Name",
+      "displayNamePlaceholder": "e.g. Production Web Server",
+      "addressLabel": "Address",
+      "addressPlaceholder": "IP address or hostname (e.g. 10.0.0.5)",
+      "saving": "Saving…",
+      "saveHost": "Save Host",
+      "loadFailed": "Failed to load.",
+      "nameAddressRequired": "Name and address are required.",
+      "hostSaved": "Host saved.",
+      "hostUpdated": "Host updated.",
+      "saveFailed": "Save failed.",
+      "deleteFailed": "Delete failed.",
+      "hostDeleted": "Host \"{{name}}\" deleted.",
+      "deleteHostTitle": "Delete host",
+      "deleteHostMessage": "Delete host \"{{name}}\"? Connections using this host will break. This cannot be undone."
+    },
+    "invite": {
+      "subtitle": "Finish setting up your account",
+      "validating": "Validating invitation…",
+      "backToLogin": "Back to login",
+      "passwordResetRedirecting": "Password updated. Redirecting to login…",
+      "accountReadyRedirecting": "Account ready. Redirecting to login…",
+      "passwordResetLabel": "Password Reset",
+      "welcomeLabel": "Welcome",
+      "fullNameLabel": "Full name",
+      "passwordLabel": "Password",
+      "newPasswordLabel": "New Password",
+      "confirmPasswordLabel": "Confirm password",
+      "resetting": "Resetting…",
+      "creatingAccount": "Creating account…",
+      "resetPasswordAction": "Reset password",
+      "createAccountAction": "Create account",
+      "missingToken": "Missing invitation token.",
+      "invalidOrExpired": "This invitation is invalid or has expired.",
+      "passwordTooShort": "Password must be at least 8 characters.",
+      "passwordMismatch": "Passwords do not match.",
+      "setupFailed": "Failed to complete account setup."
+    },
+    "profile": {
+      "heading": "Profile",
+      "subtitle": "Manage your display name and avatar. Changes are stored on the server.",
+      "save": "Save changes",
+      "saving": "Saving…",
+      "saved": "Profile updated.",
+      "saveError": "Could not save profile.",
+      "avatar": {
+        "alt": "Avatar preview",
+        "chooseImage": "Choose image",
+        "discardPreview": "Discard preview",
+        "removeAvatar": "Remove avatar",
+        "hint": "PNG, JPEG, or WebP. Auto-downscaled to 512px, max 1 MB.",
+        "invalidType": "Avatar must be PNG, JPEG, or WebP.",
+        "tooLarge": "Avatar exceeds 1 MB after downscaling. Pick a simpler image.",
+        "readError": "Could not read that image.",
+        "removed": "Avatar removed.",
+        "removeError": "Could not remove avatar."
+      },
+      "name": {
+        "label": "Name",
+        "placeholder": "Your display name",
+        "required": "Name is required."
+      },
+      "email": {
+        "label": "Email",
+        "hint": "Email cannot be changed here."
+      },
+      "roles": {
+        "label": "Roles",
+        "none": "No roles assigned."
+      },
+      "mfa": {
+        "heading": "Two-factor authentication",
+        "subtitle": "Add a second verification step on every sign-in.",
+        "enabled": "Enabled",
+        "loading": "Loading…",
+        "notEnabled": "Two-factor authentication is not enabled. Protect your account with an authenticator app.",
+        "enable": "Enable two-factor authentication",
+        "settingUp": "Setting up…",
+        "setupInstructions": "Scan the QR code with your authenticator app (Google Authenticator, Authy, etc.), then enter the 6-digit code to confirm.",
+        "qrAlt": "TOTP QR code",
+        "cantScan": "Can't scan?",
+        "confirmationCodeLabel": "Confirmation code",
+        "verifyAndActivate": "Verify & activate",
+        "verifying": "Verifying…",
+        "saveCodesTitle": "Save your recovery codes",
+        "saveCodesBody": "These codes can be used to regain access if you lose your authenticator. Each code works once. Store them somewhere safe — you won't see them again.",
+        "savedCodesConfirm": "I've saved these codes",
+        "downloadTxt": "Download as .txt",
+        "recoveryCodesRemaining": "Recovery codes remaining:",
+        "disable": "Disable two-factor authentication",
+        "disablePrompt": "Enter your password to confirm disabling two-factor authentication.",
+        "passwordLabel": "Password",
+        "passwordPlaceholder": "Your current password",
+        "confirmDisable": "Confirm disable",
+        "disabling": "Disabling…",
+        "startError": "Could not start MFA enrollment.",
+        "invalidCode": "Invalid code. Try again.",
+        "disableError": "Could not disable MFA.",
+        "recoveryFile": {
+          "title": "Smooth Operator — MFA Recovery Codes",
+          "generated": "Generated: {{date}}",
+          "instructions": "Each code can be used once to sign in if you lose your authenticator.",
+          "storeSafely": "Store this file somewhere safe and delete it after printing."
+        }
+      },
+      "apiTokens": {
+        "heading": "API tokens",
+        "subtitle": "Long-lived bearer tokens for CLI, CI, and automation. Send as",
+        "saveTokenTitle": "Save this token now",
+        "saveTokenBody": "This is the only time the plaintext token is shown. Store it somewhere safe — you won't see it again.",
+        "copy": "Copy",
+        "savedTokenConfirm": "I've saved this token",
+        "tokenNameLabel": "Token name",
+        "tokenNamePlaceholder": "ci-bot, terraform, etc.",
+        "expiresLabel": "Expires (optional)",
+        "createToken": "Create token",
+        "creating": "Creating…",
+        "none": "No API tokens yet.",
+        "revoked": "Revoked",
+        "expired": "Expired",
+        "created": "Created {{date}}",
+        "lastUsed": "· Last used {{date}}",
+        "expires": "· Expires {{date}}",
+        "revoke": "Revoke",
+        "revoking": "Revoking…",
+        "createError": "Could not create token.",
+        "revokeError": "Could not revoke token."
+      }
+    },
+    "searchResults": {
+      "title": "Search Results",
+      "searchingFor": "Searching for",
+      "resultsForOne": "{{count}} result for",
+      "resultsForOther": "{{count}} results for",
+      "typeQueryPrompt": "Type a query in the search bar to find vaults and connections.",
+      "loading": "Loading…",
+      "noMatchesFound": "No matches found",
+      "noMatchesFor": "Nothing matched",
+      "tryDifferentKeyword": "Try a different keyword.",
+      "vaultsHeading": "Vaults",
+      "connectionsHeading": "Connections",
+      "vaultFallback": "Vault",
+      "connectionFallback": "Connection",
+      "userCountOne": "{{count}} user",
+      "userCountOther": "{{count}} users",
+      "groupCountOne": "{{count}} group",
+      "groupCountOther": "{{count}} groups"
+    },
+    "settingsEmail": {
+      "title": "Email (SMTP)",
+      "description": "Configure an SMTP relay (SendGrid, AWS SES, internal server, …) so the system can send invitation and password-reset emails. When unset, invitation links must be shared manually.",
+      "status": {
+        "configuredTitle": "SMTP relay configured",
+        "activeHint": "Active — the system will send emails.",
+        "disabledHint": "Configured but currently disabled.",
+        "notConfiguredTitle": "No SMTP relay configured",
+        "notConfiguredHint": "Invitation and password-reset links must be shared manually."
+      },
+      "serverConnection": {
+        "title": "Server connection",
+        "hostLabel": "Host",
+        "hostPlaceholder": "smtp.sendgrid.net",
+        "portLabel": "Port",
+        "useSslLabel": "Use SSL/TLS",
+        "useSslHint": "Recommended for port 465 (SMTPS) and most cloud relays"
+      },
+      "authentication": {
+        "title": "Authentication",
+        "usernameLabel": "Username",
+        "usernamePlaceholder": "apikey or SMTP user",
+        "passwordLabel": "Password",
+        "passwordKeepHint": "(leave blank to keep)",
+        "passwordPlaceholder": "SMTP password / API key",
+        "clearPasswordLabel": "Clear stored password"
+      },
+      "senderIdentity": {
+        "title": "Sender identity",
+        "fromAddressLabel": "From address",
+        "fromAddressPlaceholder": "no-reply@example.com",
+        "fromNameLabel": "From name",
+        "enabledLabel": "Relay enabled",
+        "enabledHint": "When disabled, emails are not sent even if SMTP is configured"
+      },
+      "actions": {
+        "save": "Save SMTP settings",
+        "saving": "Saving…"
+      },
+      "testEmail": {
+        "title": "Send test email",
+        "description": "Sends a test message using the currently saved settings.",
+        "recipientPlaceholder": "recipient@example.com",
+        "recipientAriaLabel": "Test email recipient",
+        "sendButton": "Send test",
+        "sending": "Sending…",
+        "saveFirstHint": "Save valid SMTP settings first to enable this."
+      },
+      "messages": {
+        "saved": "SMTP settings saved.",
+        "testSent": "Test email sent to {{to}}."
+      },
+      "errors": {
+        "loadFailed": "Failed to load SMTP settings.",
+        "saveFailed": "Failed to save SMTP settings.",
+        "recipientRequired": "Enter a recipient address.",
+        "testFailed": "Test failed."
+      }
+    },
+    "settingsGroups": {
+      "title": "Groups",
+      "subtitle": "Groups grant vault access to all of their members at once.",
+      "refresh": "Refresh",
+      "newGroup": {
+        "heading": "New Group",
+        "namePlaceholder": "Group name",
+        "create": "Create group",
+        "creating": "Creating…"
+      },
+      "table": {
+        "name": "Name",
+        "members": "Members",
+        "actions": "Actions",
+        "membersAction": "Members",
+        "renameAction": "Rename",
+        "loading": "Loading…",
+        "empty": "No groups yet. Create one above.",
+        "memberCountOne": "{{count}} member",
+        "memberCountOther": "{{count}} members",
+        "vaultCountOne": "{{count}} vault",
+        "vaultCountOther": "{{count}} vaults"
+      },
+      "membersModal": {
+        "title": "Members — {{name}}",
+        "description": "Select users that belong to this group.",
+        "selectedCount": "{{count}} selected",
+        "searchPlaceholder": "Search users…",
+        "available": "available",
+        "noUsers": "No users found.",
+        "save": "Save members",
+        "saving": "Saving…"
+      },
+      "errors": {
+        "loadFailed": "Failed to load groups.",
+        "nameRequired": "Group name is required.",
+        "createFailed": "Failed to create group.",
+        "renameFailed": "Failed to rename group.",
+        "deleteFailed": "Failed to delete group.",
+        "membersUpdateFailed": "Failed to update members."
+      },
+      "toasts": {
+        "created": "Group \"{{name}}\" created.",
+        "renamed": "Group renamed to \"{{name}}\".",
+        "deleted": "Group \"{{name}}\" deleted.",
+        "membersUpdated": "Members updated for \"{{name}}\"."
+      },
+      "confirmDelete": {
+        "title": "Delete group",
+        "message": "Delete group \"{{name}}\"? Users in this group will lose vault access granted via the group. This cannot be undone."
+      }
+    },
+    "settingsIntegrations": {
+      "title": "Observability Integrations",
+      "description": "Connect your own monitoring stack using the endpoints below.",
+      "startItWith": "The built-in observability stack (Grafana, Prometheus, Loki, Tempo) is optional — start it with",
+      "tabs": {
+        "prometheus": "Prometheus Metrics",
+        "otlp": "OpenTelemetry (OTLP)",
+        "loki": "Loki Logs",
+        "grafana": "Grafana Dashboards"
+      },
+      "common": {
+        "copy": "Copy",
+        "download": "Download",
+        "downloadTitle": "Download {{filename}}"
+      },
+      "prometheus": {
+        "endpointCardTitle": "Metrics endpoint",
+        "endpointDescriptionPrefix": "Prometheus-compatible metrics are exposed at",
+        "endpointDescriptionSuffix": "Scrape this endpoint with your Prometheus instance or any compatible scraper.",
+        "endpoints": {
+          "metricsScrape": "Metrics scrape endpoint"
+        },
+        "availableMetricsTitle": "Available metrics",
+        "scrapeConfigLabel": "prometheus.yml scrape config"
+      },
+      "otlp": {
+        "endpointsCardTitle": "OpenTelemetry endpoints",
+        "endpointsDescription": "The backend exports distributed traces via OTLP gRPC to Grafana Tempo. Connect your own OpenTelemetry Collector to the endpoint below to receive traces.",
+        "endpoints": {
+          "grpc": "OTLP gRPC endpoint",
+          "tempoQuery": "Tempo HTTP query endpoint"
+        },
+        "collectorConfigLabel": "OpenTelemetry Collector config (receivers)",
+        "serviceNameTitle": "Service name",
+        "serviceNameDescriptionPrefix": "The backend service is registered as",
+        "serviceNameDescriptionMid": "Filter traces by",
+        "serviceNameDescriptionSuffix": "in your tracing UI."
+      },
+      "loki": {
+        "endpointsCardTitle": "Loki endpoints",
+        "endpointsDescription": "Application logs are shipped to Loki in CLEF (Compact Log Event Format). Each log line carries structured properties you can filter with LogQL.",
+        "endpoints": {
+          "push": "Loki push endpoint",
+          "queryApi": "Loki query API"
+        },
+        "availableLabelsTitle": "Available labels",
+        "queriesTitle": "Example LogQL queries",
+        "queries": {
+          "allAuditEvents": "All audit events",
+          "failedLoginAttempts": "Failed login attempts",
+          "specificUserActivity": "Specific user activity",
+          "failureEventsOnly": "Failure events only"
+        }
+      },
+      "grafana": {
+        "cardTitle": "Grafana dashboard files",
+        "descriptionPrefix": "Download these pre-built Grafana dashboard JSON files to use with your own standalone Grafana server. Import each file via",
+        "descriptionSuffix": "in the Grafana UI. Requires Prometheus, Loki, and Tempo data sources configured with the endpoints from the other tabs.",
+        "dashboards": {
+          "activeSessions": {
+            "name": "Active Sessions",
+            "description": "Live and historical session counts, connection gauge, and session history over time."
+          },
+          "aspnetOverview": {
+            "name": "ASP.NET Core Overview",
+            "description": "HTTP request rate, error rate, response time percentiles, and total request volume."
+          },
+          "auditEvents": {
+            "name": "Audit Events",
+            "description": "Audit event totals, type distribution, outcome breakdown, and event rate timeseries."
+          },
+          "authSecurity": {
+            "name": "Auth & Security",
+            "description": "Login attempts, failure counts, success rate trends, and security monitoring panels."
+          }
+        }
+      }
+    },
+    "settingsRecording": {
+      "title": "Session recording storage",
+      "description": "Where the system writes captured session recordings. Vault- and connection-level \"record this session\" toggles are configured on each vault / connection; this page controls the destination backend (local volume, S3-compatible, or Azure Blob).",
+      "status": {
+        "configuredTitle": "Recording storage configured",
+        "backendPrefix": "Backend:",
+        "retentionUnlimited": "— retention unlimited.",
+        "retentionDays": "— retention {{days}} days.",
+        "notConfiguredTitle": "Using built-in local storage",
+        "notConfiguredHintPrefix": "Recordings are written to the",
+        "notConfiguredHintSuffix": "docker volume by default. Configure S3 or Azure below for durable off-host storage."
+      },
+      "messages": {
+        "saved": "Recording storage settings saved.",
+        "testSuccess": "Storage backend responded successfully."
+      },
+      "errors": {
+        "loadFailed": "Failed to load recording storage settings.",
+        "saveFailed": "Failed to save recording storage settings.",
+        "testFailed": "Storage test failed."
+      },
+      "storageBackend": {
+        "title": "Storage backend",
+        "backendLabel": "Backend",
+        "optionLocal": "Local volume — default, zero config",
+        "optionS3": "S3-compatible (AWS S3, MinIO, R2, Backblaze)",
+        "optionAzure": "Azure Blob Storage",
+        "hintPrefix": "Local is the simplest option — recordings stay on the",
+        "hintSuffix": "volume. Switch to S3 or Azure when you need durable off-host storage, replication, or lifecycle management."
+      },
+      "retentionPolicy": {
+        "title": "Retention policy",
+        "daysLabel": "Retention (days)",
+        "hintPrefix": "Recordings older than this are deleted by the daily sweep.",
+        "hintSuffix": "keeps recordings forever. Per-vault overrides take precedence over this default."
+      },
+      "localStorage": {
+        "title": "Local storage",
+        "pathLabel": "Path",
+        "hintPart1": "Must be writable by the backend process. In Docker the",
+        "hintPart2": "volume mounts at",
+        "hintPart3": "; on a bare-metal install point this at any directory the backend service can create files in. Use",
+        "hintPart4": "below to verify."
+      },
+      "s3": {
+        "title": "S3 configuration",
+        "bucketLabel": "Bucket",
+        "regionLabel": "Region",
+        "endpointLabel": "Endpoint",
+        "endpointHint": "(optional, for MinIO / R2)",
+        "pathPrefixLabel": "Path prefix",
+        "pathPrefixHint": "(optional)",
+        "accessKeyLabel": "Access key ID",
+        "secretLabel": "Secret access key",
+        "secretLeaveBlankHint": "(leave blank to keep)",
+        "secretPlaceholder": "secret",
+        "clearSecretLabel": "Clear stored secret",
+        "forcePathStyleLabel": "Force path-style addressing",
+        "forcePathStyleHint": "Required by MinIO and some self-hosted S3 servers"
+      },
+      "azure": {
+        "title": "Azure Blob configuration",
+        "accountNameLabel": "Storage account name",
+        "containerLabel": "Container",
+        "keyLabel": "Account key",
+        "keyLeaveBlankHint": "(leave blank to keep)",
+        "keyPlaceholder": "account key",
+        "clearKeyLabel": "Clear stored key",
+        "endpointLabel": "Blob endpoint",
+        "endpointHint": "(optional, for Azurite)",
+        "pathPrefixLabel": "Path prefix",
+        "pathPrefixHint": "(optional)"
+      },
+      "actions": {
+        "save": "Save recording settings",
+        "saving": "Saving…"
+      },
+      "testConnection": {
+        "title": "Test connection",
+        "description": "Verifies the backend can write a tiny probe file to the storage target using the currently saved settings. Run this after saving a new configuration to confirm credentials, network access, and permissions before relying on it for real sessions.",
+        "button": "Test connection",
+        "testing": "Testing…"
+      }
+    },
+    "settingsRetention": {
+      "heading": "Audit Log Retention",
+      "description": "Control how long audit log entries are kept in the database. A daily background job purges entries older than the configured retention window.",
+      "messages": {
+        "disabledForever": "Retention disabled — audit logs will be kept forever.",
+        "purgeScheduled": "Audit logs older than {{days}} day(s) will be purged daily."
+      },
+      "errors": {
+        "invalidRange": "Retention must be an integer between 0 (forever) and 3650 days.",
+        "loadFailed": "Failed to load system settings.",
+        "saveFailed": "Failed to save settings."
+      },
+      "presets": {
+        "forever": "Forever",
+        "days30": "30 days",
+        "days90": "90 days",
+        "months6": "6 months",
+        "year1": "1 year",
+        "years2": "2 years"
+      },
+      "window": {
+        "title": "Retention window",
+        "quickSelect": "Quick select",
+        "customDaysLabel": "Custom (days)",
+        "keptForever": "Kept forever",
+        "purgedAfterPrefix": "Purged after",
+        "dayUnit": "day(s)"
+      },
+      "compliance": {
+        "title": "Compliance reference",
+        "soc2": {
+          "label": "SOC 2",
+          "value": "365 days",
+          "desc": "Security event logs"
+        },
+        "iso27001": {
+          "label": "ISO 27001",
+          "value": "365 days",
+          "desc": "Access & change records"
+        },
+        "hipaa": {
+          "label": "HIPAA",
+          "value": "2,190 days",
+          "desc": "6 years of PHI access logs"
+        },
+        "footnotePrefix": "Set to",
+        "footnoteSuffix": "to keep logs forever — the safest option for compliance."
+      },
+      "actions": {
+        "saving": "Saving…",
+        "reset": "Reset"
+      }
+    },
+    "settingsRoles": {
+      "title": "Roles",
+      "subtitle": "Smooth Operator ships with four fixed roles. Each user has exactly one role.",
+      "singleRolePolicyLabel": "Single-role policy:",
+      "singleRolePolicyBody": "Users hold one role at a time. Changing a role replaces the previous one. Permissions cannot be customized in this version.",
+      "owner": {
+        "name": "Owner",
+        "summary": "Root account, created on first setup. Cannot be demoted by anyone other than themselves.",
+        "permissions": {
+          "fullAccess": "Full access to every resource and setting",
+          "manageAll": "Manage all users, groups, vaults, credentials, and connections",
+          "viewAudit": "View audit logs and email/system configuration",
+          "promoteDemote": "Promote and demote Admins"
+        }
+      },
+      "admin": {
+        "name": "Admin",
+        "summary": "Workspace administrators. Manage users, groups, vaults, and credentials, and audit activity.",
+        "permissions": {
+          "invite": "Invite users and assign roles (User, TeamAdmin, Admin)",
+          "manageGroups": "Create, rename and delete groups and vaults",
+          "manageCredentials": "Manage all credentials and connections",
+          "viewAudit": "View audit logs and email settings"
+        }
+      },
+      "teamAdmin": {
+        "name": "Team Admin",
+        "summary": "Manage connections inside vaults they have access to. Cannot create vaults or invite users.",
+        "permissions": {
+          "manageConnections": "Create, edit and delete connections in assigned vaults",
+          "useCredentials": "Use credentials available to those vaults",
+          "viewMembers": "View members and groups assigned to those vaults",
+          "noAdminAccess": "No access to user, group or vault administration"
+        }
+      },
+      "user": {
+        "name": "User",
+        "summary": "Standard user. Can launch and use connections in vaults assigned to them.",
+        "permissions": {
+          "launchSessions": "Launch sessions on connections in assigned vaults",
+          "viewProfile": "View their own profile and effective access",
+          "noManagement": "Cannot manage users, groups, vaults or credentials"
+        }
+      }
+    },
+    "settingsSecretProviders": {
+      "title": "Secret Providers",
+      "subtitle": "Connect Azure Key Vault instances. Owner/Admin only.",
+      "addProvider": "Add Provider",
+      "form": {
+        "editTitle": "Edit Provider",
+        "addTitle": "Add Azure Key Vault Provider",
+        "nameLabel": "Name",
+        "namePlaceholder": "Production KV",
+        "vaultUriLabel": "Vault URI",
+        "vaultUriPlaceholder": "https://my-vault.vault.azure.net/",
+        "tenantIdLabel": "Tenant ID",
+        "clientIdLabel": "Client ID",
+        "idPlaceholder": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+        "clientSecretLabel": "Client Secret",
+        "clientSecretHint": "(leave blank to keep existing)",
+        "saveChanges": "Save Changes",
+        "createProvider": "Create Provider",
+        "cancel": "Cancel"
+      },
+      "empty": {
+        "title": "No secret providers configured.",
+        "subtitle": "Add an Azure Key Vault provider to manage secrets externally."
+      },
+      "table": {
+        "name": "Name",
+        "type": "Type",
+        "vaultUri": "Vault URI",
+        "status": "Status",
+        "actions": "Actions",
+        "enabled": "Enabled",
+        "disabled": "Disabled"
+      },
+      "actions": {
+        "testConnection": "Test connection for {{name}}",
+        "edit": "Edit provider {{name}}",
+        "delete": "Delete provider {{name}}"
+      },
+      "errors": {
+        "loadFailed": "Failed to load secret providers.",
+        "requiredFields": "Name, Vault URI, Tenant ID, and Client ID are required.",
+        "clientSecretRequired": "Client Secret is required when creating a provider.",
+        "saveFailed": "Failed to save provider.",
+        "createFailed": "Failed to create provider.",
+        "deleteFailed": "Delete failed."
+      },
+      "toasts": {
+        "updated": "Secret provider updated.",
+        "created": "Secret provider created.",
+        "testSuccess": "\"{{name}}\" connection successful.",
+        "testFailed": "\"{{name}}\" connection failed.",
+        "deleted": "\"{{name}}\" deleted."
+      },
+      "deleteDialog": {
+        "title": "Delete secret provider",
+        "message": "Delete \"{{name}}\"? Credentials linked to this provider will stop working. This cannot be undone.",
+        "confirmLabel": "Delete"
+      }
+    },
+    "settingsSessions": {
+      "title": "Session timeouts",
+      "description": "Forcibly close remote sessions that have been idle too long or exceeded a hard lifetime cap. These limits apply to every Guacamole connection (RDP, SSH, VNC) regardless of vault.",
+      "idleCard": {
+        "header": "Idle timeout",
+        "quickSelect": "Quick select",
+        "customMinutesLabel": "Custom (minutes)",
+        "noTimeout": "No idle timeout",
+        "closesAfterPrefix": "Closes after",
+        "closesAfterSuffix": "min of inactivity"
+      },
+      "maxCard": {
+        "header": "Max session lifetime",
+        "quickSelect": "Quick select",
+        "customMinutesLabel": "Custom (minutes)",
+        "unlimited": "Unlimited",
+        "hardCapPrefix": "Hard cap at",
+        "hardCapSuffix": "min"
+      },
+      "presets": {
+        "disabled": "Disabled",
+        "min5": "5 min",
+        "min15": "15 min",
+        "min30": "30 min",
+        "hour1": "1 hour",
+        "hour4": "4 hours",
+        "hour8": "8 hours",
+        "hour12": "12 hours",
+        "hour24": "24 hours",
+        "unlimited": "Unlimited"
+      },
+      "guidance": {
+        "header": "Recommended settings",
+        "standardLabel": "Standard",
+        "standardDesc": "idle / max — typical office use",
+        "highSecurityLabel": "High security",
+        "highSecurityDesc": "shared workstations, kiosks",
+        "longRunningLabel": "Long-running",
+        "longRunningDesc": "build / migration jobs",
+        "footnotePrefix": "Set either field to",
+        "footnoteSuffix": "to disable that limit independently. Active connections that exceed a limit are audited as"
+      },
+      "actions": {
+        "saving": "Saving…",
+        "reset": "Reset"
+      },
+      "messages": {
+        "idleDisabled": "Idle timeout disabled.",
+        "idleWillClose": "Sessions idle for {{minutes}} min will be closed.",
+        "noHardCap": "No hard session lifetime cap.",
+        "maxWillCap": "Sessions capped at {{minutes}} min total.",
+        "loadFailed": "Failed to load session settings.",
+        "saveFailed": "Failed to save settings.",
+        "idleValidation": "Idle timeout must be an integer between 0 (disabled) and 10080 minutes.",
+        "maxValidation": "Max session must be an integer between 0 (unlimited) and 10080 minutes."
+      }
+    },
+    "settingsSso": {
+      "title": "Single Sign-On",
+      "subtitle": "Configure a single OIDC or SAML 2.0 identity provider. Local username/password login always stays available as a fallback.",
+      "status": {
+        "enabledBadge": "Enabled",
+        "disabledBadge": "Disabled",
+        "notConfigured": "Not configured"
+      },
+      "emptyState": {
+        "title": "No SSO provider configured",
+        "hint": "Choose a protocol below and fill in the IdP details."
+      },
+      "actions": {
+        "enable": "Enable",
+        "disable": "Disable",
+        "testConnection": "Test connection",
+        "testing": "Testing…",
+        "deleteConfirmQuestion": "Delete provider?",
+        "confirmDelete": "Confirm delete",
+        "deleting": "Deleting…",
+        "save": "Save SSO settings",
+        "saving": "Saving…"
+      },
+      "messages": {
+        "loadError": "Failed to load SSO settings.",
+        "saveSuccess": "SSO configuration saved.",
+        "saveError": "Failed to save SSO settings.",
+        "toggleOnSuccess": "SSO enabled.",
+        "toggleOffSuccess": "SSO disabled.",
+        "toggleError": "Failed to toggle SSO.",
+        "deleteSuccess": "SSO provider deleted.",
+        "deleteError": "Failed to delete SSO provider.",
+        "testError": "SSO test failed.",
+        "copyMetadataSuccess": "Metadata URL copied to clipboard.",
+        "copyCallbackSuccess": "Redirect URI copied to clipboard.",
+        "copyAcsSuccess": "ACS URL copied to clipboard.",
+        "copyError": "Could not copy to clipboard."
+      },
+      "common": {
+        "oidcTypeLabel": "OpenID Connect (OIDC)",
+        "samlTypeLabel": "SAML 2.0",
+        "registerTitle": "Register this app in your identity provider",
+        "leaveBlankToKeep": "(leave blank to keep)",
+        "copy": "Copy",
+        "redirectUriTerm": "Redirect URI",
+        "replyUrlTerm": "Reply URL"
+      },
+      "protocol": {
+        "cardTitle": "Protocol",
+        "label": "Protocol",
+        "switchHint": "Delete the current provider to switch protocols.",
+        "nameLabel": "Display name",
+        "namePlaceholder": "e.g. Corporate SSO",
+        "defaultNamePlaceholder": "Corporate SSO",
+        "nameHint": "Shown on the sign-in button (e.g. “Sign in with {{name}}”)."
+      },
+      "oidc": {
+        "cardTitle": "OIDC provider",
+        "registerHintPrefix": "When creating the app / client in your IdP (Entra ID, Okta, Keycloak, etc.), add the following as an allowed",
+        "registerHintSuffix": ":",
+        "copyRedirectUriAction": "Copy redirect URI",
+        "entraHintPrefix": "For",
+        "entraHintSuffix": ": App registrations → your app → Authentication → Add platform → Web → paste the URL above.",
+        "authorityLabel": "Authority (issuer)",
+        "authorityPlaceholder": "https://login.example.com/realms/my-realm",
+        "authorityHintPrefix": "The base URL of the IdP. Discovery is fetched from",
+        "clientIdLabel": "Client ID",
+        "clientSecretLabel": "Client secret",
+        "clientSecretPlaceholderRequired": "Required",
+        "scopesLabel": "Scopes",
+        "scopesPlaceholder": "openid profile email",
+        "subjectClaimLabel": "Subject claim",
+        "subjectClaimPlaceholder": "sub",
+        "emailClaimLabel": "Email claim",
+        "emailClaimPlaceholder": "email",
+        "nameClaimLabel": "Name claim",
+        "nameClaimPlaceholder": "name"
+      },
+      "saml": {
+        "cardTitle": "SAML 2.0 provider",
+        "registerHint": "When configuring the SP (service provider) in your IdP, use these URLs:",
+        "acsUrlLabel": "ACS URL (Assertion Consumer Service)",
+        "copyAcsUrlAction": "Copy ACS URL",
+        "spMetadataUrlLabel": "SP Metadata URL",
+        "copyMetadataUrlAction": "Copy metadata URL",
+        "autoImportHintPrefix": "Most IdPs can auto-import SP settings from the metadata URL. Use the ACS URL as the",
+        "autoImportHintSuffix": "when importing manually.",
+        "spEntityIdLabel": "SP entity ID",
+        "spEntityIdPlaceholder": "urn:smooth-operator",
+        "idpEntityIdLabel": "IdP entity ID",
+        "idpSsoUrlLabel": "IdP SSO URL",
+        "idpSsoUrlPlaceholder": "https://idp.example.com/saml/sso",
+        "idpCertLabel": "IdP signing certificate (PEM)",
+        "certPlaceholder": "-----BEGIN CERTIFICATE-----\n…\n-----END CERTIFICATE-----",
+        "spCertLabel": "SP signing certificate (PEM)",
+        "spKeyLabel": "SP private key (PEM)",
+        "spKeyPlaceholderStored": "•••••••• (already stored)",
+        "spKeyPlaceholderNew": "-----BEGIN PRIVATE KEY-----…",
+        "nameIdFormatLabel": "NameID format",
+        "attrEmailLabel": "Email attribute",
+        "attrEmailPlaceholder": "email",
+        "attrNameLabel": "Name attribute",
+        "attrNamePlaceholder": "name",
+        "requireSignedAssertions": "Require signed assertions",
+        "requireSignedResponses": "Require signed responses",
+        "metadataUrlSectionLabel": "SP metadata URL",
+        "metadataUrlHint": "Provide this URL to your IdP administrator to register the SP."
+      }
+    },
+    "settingsVaults": {
+      "title": "Vaults",
+      "subtitle": "Create and manage vaults that group connections together.",
+      "refresh": "Refresh",
+      "newVault": {
+        "heading": "New Vault",
+        "namePlaceholder": "Vault name",
+        "create": "Create vault",
+        "creating": "Creating…"
+      },
+      "table": {
+        "name": "Name",
+        "access": "Access",
+        "actions": "Actions",
+        "user": "user",
+        "users": "users",
+        "group": "group",
+        "groups": "groups",
+        "loading": "Loading…",
+        "empty": "No vaults yet. Create one above."
+      },
+      "actions": {
+        "assign": "Assign",
+        "rename": "Rename"
+      },
+      "recording": {
+        "onTooltip": "Sessions in this vault are being recorded",
+        "offTooltip": "Recording is off for this vault",
+        "enabledLabel": "Recording on",
+        "disabledLabel": "Recording"
+      },
+      "assignModal": {
+        "title": "Assign Access — {{name}}",
+        "subtitle": "Select users and groups that can access this vault.",
+        "usersHeading": "Users",
+        "groupsHeading": "Groups",
+        "selectedCount": "{{count}} selected",
+        "searchUsersPlaceholder": "Search users…",
+        "searchGroupsPlaceholder": "Search groups…",
+        "availableDivider": "available",
+        "noUsersFound": "No users found.",
+        "noGroupsFound": "No groups found.",
+        "save": "Save assignments",
+        "saving": "Saving…"
+      },
+      "recordingModal": {
+        "title": "Recording: {{name}}",
+        "subtitle": "Default for every connection in this vault. Each connection can override.",
+        "enableLabel": "Record sessions in this vault",
+        "enableDescription": "When on, every connection inside this vault is recorded by default. Individual connections can opt out.",
+        "includeKeysLabel": "Also capture keystrokes",
+        "includeKeysDescription": "Off by default. Captured keystrokes can include passwords typed at login prompts — only enable when required for compliance or forensics.",
+        "retentionLabel": "Retention override (days)",
+        "retentionPlaceholder": "Use global default",
+        "retentionHintPre": "Leave blank to inherit the global retention. Enter",
+        "retentionHintPost": "to keep recordings from this vault forever.",
+        "save": "Save",
+        "saving": "Saving…"
+      },
+      "confirmDelete": {
+        "title": "Delete vault",
+        "message": "Delete vault \"{{name}}\"? All connections inside will be unlinked. This cannot be undone."
+      },
+      "toasts": {
+        "created": "Vault \"{{name}}\" created.",
+        "renamed": "Vault renamed to \"{{name}}\".",
+        "deleted": "Vault \"{{name}}\" deleted.",
+        "recordingSaved": "Recording settings saved for \"{{name}}\".",
+        "assignmentsUpdated": "Assignments updated for \"{{name}}\"."
+      },
+      "errors": {
+        "loadFailed": "Failed to load vaults.",
+        "nameRequired": "Vault name is required.",
+        "createFailed": "Failed to create vault.",
+        "renameFailed": "Failed to rename vault.",
+        "deleteFailed": "Failed to delete vault.",
+        "loadAssignmentsFailed": "Failed to load assignments.",
+        "assignmentsSaveFailed": "Failed to save assignments.",
+        "recordingSaveFailed": "Failed to save recording settings."
+      }
+    },
+    "settingsWebhooks": {
+      "title": "Webhooks",
+      "description": "Register external endpoints to receive an HMAC-signed POST whenever a subscribed audit event occurs — feed a SIEM, post alerts, or trigger automation.",
+      "secret": {
+        "titleFor": "Signing secret for “{{name}}”",
+        "descriptionBefore": "Copy this now — it is shown only once and cannot be retrieved later. Your receiver uses it to verify the",
+        "descriptionAfter": "header.",
+        "copyLabel": "Copy signing secret",
+        "saved": "I've saved it"
+      },
+      "toolbar": {
+        "countOne": "{{count}} endpoint",
+        "countOther": "{{count}} endpoints",
+        "add": "Add endpoint"
+      },
+      "editor": {
+        "titleNew": "New endpoint",
+        "titleEdit": "Edit endpoint",
+        "nameLabel": "Name",
+        "namePlaceholder": "e.g. SIEM ingestion",
+        "urlLabel": "Payload URL",
+        "urlPlaceholder": "https://example.com/hooks/smooth-operator",
+        "urlHint": "Must be an absolute HTTPS URL.",
+        "eventsLabel": "Events to deliver",
+        "enabledToggle": "Endpoint enabled",
+        "save": "Save endpoint",
+        "saving": "Saving…"
+      },
+      "events": {
+        "all": "All events",
+        "users": "Users & authentication",
+        "connections": "Connections",
+        "credentials": "Credentials",
+        "sso": "Single sign-on",
+        "groups": "Groups",
+        "invitations": "Invitations",
+        "webhooks": "Webhooks",
+        "system": "System"
+      },
+      "list": {
+        "loading": "Loading webhooks…",
+        "emptyTitle": "No webhook endpoints",
+        "emptyHint": "Add an endpoint to start delivering audit events."
+      },
+      "card": {
+        "actionsFor": "Actions for {{name}}",
+        "copyUrlTitle": "Copy endpoint URL",
+        "copyUrlFor": "Copy URL for {{name}}",
+        "lastDelivery": "Last: {{date}}",
+        "neverDelivered": "Never delivered",
+        "httpCode": "HTTP {{code}}",
+        "failureOne": "{{count}} consecutive failure",
+        "failureOther": "{{count}} consecutive failures",
+        "sendTest": "Send test",
+        "working": "Working…",
+        "closeMenu": "Close menu",
+        "menu": {
+          "edit": "Edit endpoint",
+          "disable": "Disable",
+          "enable": "Enable",
+          "rotateSecret": "Rotate secret",
+          "delete": "Delete endpoint"
+        }
+      },
+      "status": {
+        "disabled": "Disabled",
+        "noDeliveries": "No deliveries yet",
+        "healthy": "Healthy",
+        "failing": "Failing ({{count}})"
+      },
+      "errors": {
+        "loadFailed": "Failed to load webhooks.",
+        "nameUrlRequired": "Name and URL are required.",
+        "saveFailed": "Failed to save webhook.",
+        "createFailed": "Failed to create webhook.",
+        "updateFailed": "Failed to update webhook.",
+        "testFailed": "Failed to queue test event.",
+        "deleteFailed": "Failed to delete webhook.",
+        "rotateFailed": "Failed to rotate secret.",
+        "copyFailed": "Could not copy to clipboard."
+      },
+      "messages": {
+        "updated": "Webhook endpoint updated.",
+        "created": "Webhook endpoint created.",
+        "disabled": "Webhook disabled.",
+        "enabled": "Webhook enabled.",
+        "testQueued": "Test event queued for \"{{name}}\". It will be delivered shortly.",
+        "deleted": "Webhook endpoint deleted.",
+        "rotated": "Signing secret rotated.",
+        "secretCopied": "Signing secret copied to clipboard.",
+        "urlCopied": "Endpoint URL copied to clipboard."
+      },
+      "confirmDelete": {
+        "title": "Delete webhook endpoint?",
+        "message": "\"{{name}}\" will be removed and stop receiving events. This cannot be undone."
+      },
+      "confirmRotate": {
+        "title": "Rotate signing secret?",
+        "message": "The current secret for \"{{name}}\" stops working immediately — update your receiver with the new secret right away.",
+        "confirmLabel": "Rotate secret"
+      }
+    },
+    "vault": {
+      "subtitle": "Select a connection to initiate a secure tunnel.",
+      "refresh": "Refresh",
+      "manage": "Manage",
+      "filterByVault": "Filter by vault",
+      "selectVaultLabel": "Select vault",
+      "allConnectionsWithCount": "All Connections ({{count}})",
+      "allConnections": "All Connections",
+      "loadingConnections": "Loading vault connections…",
+      "emptyTitle": "No connections here",
+      "emptyVaultMessage": "This vault is empty.",
+      "emptyAllMessage": "You don't have any connections yet.",
+      "createConnection": "Create Connection",
+      "connect": "Connect",
+      "downloadFile": "Download connection file",
+      "reachability": {
+        "up": "Host reachable",
+        "down": "Host unreachable",
+        "checking": "Checking…"
+      },
+      "lastConnected": {
+        "justNow": "just now",
+        "minutesAgo": "{{minutes}}m ago",
+        "hoursAgo": "{{hours}}h ago",
+        "daysAgo": "{{days}}d ago",
+        "monthsAgo": "{{months}}mo ago"
+      }
+    }
+  }
+}

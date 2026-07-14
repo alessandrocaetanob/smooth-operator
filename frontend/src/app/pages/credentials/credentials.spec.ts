@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideTranslateService, TranslateService } from '@ngx-translate/core';
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { signal } from '@angular/core';
 import { of, throwError } from 'rxjs';
@@ -55,6 +56,7 @@ describe('Credentials', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
+        provideTranslateService(),
         { provide: CredentialsService, useValue: svc },
         { provide: SecretProvidersService, useValue: providersSvc },
         { provide: AuthService, useValue: auth },
@@ -62,6 +64,43 @@ describe('Credentials', () => {
         { provide: ToastService, useValue: toast },
       ],
     }).compileComponents();
+
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', {
+      common: {
+        actions: {
+          delete: 'Delete',
+        },
+      },
+      pages: {
+        credentials: {
+          errors: {
+            loadFailed: 'Failed to load.',
+            generateSshFailed: 'Failed to generate SSH key.',
+            nameUsernameRequired: 'Name and username are required.',
+            secretRequired: 'Secret is required when creating a credential.',
+            selectProviderRequired: 'Please select a secret provider.',
+            vaultSecretRequired: 'Secret value is required when pushing to vault.',
+            selectSecretRequired: 'Please select an existing secret to link.',
+            deleteFailed: 'Delete failed.',
+            saveFailed: 'Save failed.',
+          },
+          toasts: {
+            publicKeyCopied: 'Public key copied to clipboard',
+            rowPublicKeyCopied: 'Public key for "{{name}}" copied to clipboard',
+            deleted: 'Credential "{{name}}" deleted.',
+            updated: 'Credential updated.',
+            created: 'Credential saved.',
+          },
+          confirmDelete: {
+            title: 'Delete credential',
+            message:
+              'Delete credential "{{name}}"? Connections that use it will lose authentication. This cannot be undone.',
+          },
+        },
+      },
+    });
+    translate.use('en');
 
     fixture = TestBed.createComponent(Credentials);
     component = fixture.componentInstance;

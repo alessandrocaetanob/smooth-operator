@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { ActivatedRoute } from '@angular/router';
+import { provideTranslateService } from '@ngx-translate/core';
 import { SideNavBar } from './side-nav-bar';
 import { of } from 'rxjs';
 
@@ -13,6 +14,7 @@ describe('SideNavBar', () => {
       imports: [SideNavBar],
       providers: [
         provideRouter([]),
+        provideTranslateService(),
         {
           provide: ActivatedRoute,
           useValue: {

@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgClass } from '@angular/common';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { forkJoin, Observable, of } from 'rxjs';
 import { switchMap, catchError } from 'rxjs/operators';
 import {
@@ -50,12 +51,36 @@ interface TermColorScheme {
 }
 
 const TERM_COLOR_SCHEMES: TermColorScheme[] = [
-  { value: 'gray-black', label: 'Gray / Black', preview: '#111' },
-  { value: 'green-black', label: 'Green / Black', preview: '#0d1a0d' },
-  { value: 'white-black', label: 'White / Black', preview: '#1a1a1a' },
-  { value: 'black-white', label: 'Black / White', preview: '#f5f5f5' },
-  { value: 'solarized-dark', label: 'Solarized Dark', preview: '#002b36' },
-  { value: 'solarized-light', label: 'Solarized Light', preview: '#fdf6e3' },
+  {
+    value: 'gray-black',
+    label: 'pages.connections.form.terminal.schemes.grayBlack',
+    preview: '#111',
+  },
+  {
+    value: 'green-black',
+    label: 'pages.connections.form.terminal.schemes.greenBlack',
+    preview: '#0d1a0d',
+  },
+  {
+    value: 'white-black',
+    label: 'pages.connections.form.terminal.schemes.whiteBlack',
+    preview: '#1a1a1a',
+  },
+  {
+    value: 'black-white',
+    label: 'pages.connections.form.terminal.schemes.blackWhite',
+    preview: '#f5f5f5',
+  },
+  {
+    value: 'solarized-dark',
+    label: 'pages.connections.form.terminal.schemes.solarizedDark',
+    preview: '#002b36',
+  },
+  {
+    value: 'solarized-light',
+    label: 'pages.connections.form.terminal.schemes.solarizedLight',
+    preview: '#fdf6e3',
+  },
 ];
 
 const TERM_FONT_NAMES = [
@@ -93,7 +118,7 @@ const TAG_PALETTES = [
 
 @Component({
   selector: 'app-connections',
-  imports: [FormsModule, NgClass, Mascot, Drawer, Spinner],
+  imports: [FormsModule, NgClass, Mascot, Drawer, Spinner, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './connections.html',
   styleUrl: './connections.css',
@@ -105,6 +130,7 @@ export class Connections implements OnInit {
   private readonly vaultsSvc = inject(VaultsService);
   private readonly confirmSvc = inject(ConfirmDialogService);
   private readonly toastSvc = inject(ToastService);
+  private readonly translate = inject(TranslateService);
 
   readonly connections = this.connectionsSvc.list;
   readonly hosts = this.hostsSvc.list;
@@ -210,7 +236,9 @@ export class Connections implements OnInit {
       next: () => this.loading.set(false),
       error: (err) => {
         this.loading.set(false);
-        this.errorMessage.set(this.toMessage(err) || 'Failed to load.');
+        this.errorMessage.set(
+          this.toMessage(err) || this.translate.instant('pages.connections.errors.loadFailed'),
+        );
       },
     });
   }
@@ -323,7 +351,7 @@ export class Connections implements OnInit {
       !f.protocol ||
       !f.connectionGroupId
     ) {
-      this.errorMessage.set('Name, host, protocol and vault are required.');
+      this.errorMessage.set(this.translate.instant('pages.connections.errors.validationRequired'));
       this.mascotState.set('error');
       return;
     }
@@ -341,7 +369,9 @@ export class Connections implements OnInit {
           switchMap(() => this.hostsSvc.reload()),
           switchMap((hosts) => {
             const created = hosts.find((h) => h.address === f.newHostAddress.trim());
-            if (!created) throw new Error('Failed to locate created host');
+            if (!created) {
+              throw new Error(this.translate.instant('pages.connections.errors.hostNotFound'));
+            }
             return of(created.id);
           }),
         );
@@ -383,14 +413,19 @@ export class Connections implements OnInit {
         next: () => {
           this.busy.set(false);
           this.mascotState.set('success');
-          this.toastSvc.success(f.id ? 'Connection updated.' : 'Connection created.');
+          this.toastSvc.success(
+            this.translate.instant(
+              f.id ? 'pages.connections.toasts.updated' : 'pages.connections.toasts.created',
+            ),
+          );
           setTimeout(() => this.closeDrawer(), 800);
           this.refresh();
         },
         error: (err: unknown) => {
           this.busy.set(false);
           this.mascotState.set('error');
-          const msg = this.toMessage(err) || 'Save failed.';
+          const msg =
+            this.toMessage(err) || this.translate.instant('pages.connections.errors.saveFailed');
           this.errorMessage.set(msg);
           this.toastSvc.error(msg);
         },
@@ -399,20 +434,25 @@ export class Connections implements OnInit {
 
   async remove(c: Connection): Promise<void> {
     const ok = await this.confirmSvc.ask({
-      title: 'Delete connection',
-      message: `Delete connection "${c.name}"? This cannot be undone.`,
-      confirmLabel: 'Delete',
+      title: this.translate.instant('pages.connections.confirmDelete.title'),
+      message: this.translate.instant('pages.connections.confirmDelete.message', {
+        name: c.name,
+      }),
+      confirmLabel: this.translate.instant('pages.connections.confirmDelete.confirmLabel'),
       tone: 'danger',
     });
     if (!ok) return;
     this.errorMessage.set(null);
     this.connectionsSvc.remove(c.id).subscribe({
       next: () => {
-        this.toastSvc.success(`Connection "${c.name}" deleted.`);
+        this.toastSvc.success(
+          this.translate.instant('pages.connections.toasts.deleted', { name: c.name }),
+        );
         this.refresh();
       },
       error: (err) => {
-        const msg = this.toMessage(err) || 'Delete failed.';
+        const msg =
+          this.toMessage(err) || this.translate.instant('pages.connections.errors.deleteFailed');
         this.errorMessage.set(msg);
         this.toastSvc.error(msg);
       },

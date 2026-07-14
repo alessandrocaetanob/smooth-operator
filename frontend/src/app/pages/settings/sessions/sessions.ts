@@ -1,15 +1,17 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { SystemSettingsService } from '../../../services/system-settings.service';
 
 @Component({
   selector: 'app-sessions-settings',
-  imports: [FormsModule],
+  imports: [FormsModule, TranslatePipe],
   templateUrl: './sessions.html',
   styleUrl: './sessions.css',
 })
 export class Sessions implements OnInit {
   private readonly system = inject(SystemSettingsService);
+  private readonly translate = inject(TranslateService);
 
   readonly loading = signal(false);
   readonly busy = signal(false);
@@ -22,24 +24,24 @@ export class Sessions implements OnInit {
   /** Pass-through so we don't clobber the retention setting when saving. */
   private auditLogRetentionDays = 0;
 
-  /** Common idle-timeout presets in minutes. 0 = disabled. */
+  /** Common idle-timeout presets in minutes. 0 = disabled. Labels are i18n keys. */
   readonly idlePresets = [
-    { minutes: 0, label: 'Disabled' },
-    { minutes: 5, label: '5 min' },
-    { minutes: 15, label: '15 min' },
-    { minutes: 30, label: '30 min' },
-    { minutes: 60, label: '1 hour' },
-    { minutes: 240, label: '4 hours' },
+    { minutes: 0, label: 'pages.settingsSessions.presets.disabled' },
+    { minutes: 5, label: 'pages.settingsSessions.presets.min5' },
+    { minutes: 15, label: 'pages.settingsSessions.presets.min15' },
+    { minutes: 30, label: 'pages.settingsSessions.presets.min30' },
+    { minutes: 60, label: 'pages.settingsSessions.presets.hour1' },
+    { minutes: 240, label: 'pages.settingsSessions.presets.hour4' },
   ];
 
-  /** Common max-session presets in minutes. 0 = unlimited. */
+  /** Common max-session presets in minutes. 0 = unlimited. Labels are i18n keys. */
   readonly maxPresets = [
-    { minutes: 0, label: 'Unlimited' },
-    { minutes: 60, label: '1 hour' },
-    { minutes: 240, label: '4 hours' },
-    { minutes: 480, label: '8 hours' },
-    { minutes: 720, label: '12 hours' },
-    { minutes: 1440, label: '24 hours' },
+    { minutes: 0, label: 'pages.settingsSessions.presets.unlimited' },
+    { minutes: 60, label: 'pages.settingsSessions.presets.hour1' },
+    { minutes: 240, label: 'pages.settingsSessions.presets.hour4' },
+    { minutes: 480, label: 'pages.settingsSessions.presets.hour8' },
+    { minutes: 720, label: 'pages.settingsSessions.presets.hour12' },
+    { minutes: 1440, label: 'pages.settingsSessions.presets.hour24' },
   ];
 
   selectIdlePreset(minutes: number): void {
@@ -65,7 +67,10 @@ export class Sessions implements OnInit {
       },
       error: (err) => {
         this.loading.set(false);
-        this.error.set(this.toMessage(err) || 'Failed to load session settings.');
+        this.error.set(
+          this.toMessage(err) ||
+            this.translate.instant('pages.settingsSessions.messages.loadFailed'),
+        );
       },
     });
   }
@@ -75,11 +80,11 @@ export class Sessions implements OnInit {
     const idle = this.idleTimeoutMinutes();
     const max = this.maxSessionMinutes();
     if (idle < 0 || idle > 10080 || !Number.isInteger(idle)) {
-      this.error.set('Idle timeout must be an integer between 0 (disabled) and 10080 minutes.');
+      this.error.set(this.translate.instant('pages.settingsSessions.messages.idleValidation'));
       return;
     }
     if (max < 0 || max > 10080 || !Number.isInteger(max)) {
-      this.error.set('Max session must be an integer between 0 (unlimited) and 10080 minutes.');
+      this.error.set(this.translate.instant('pages.settingsSessions.messages.maxValidation'));
       return;
     }
     this.busy.set(true);
@@ -98,17 +103,24 @@ export class Sessions implements OnInit {
           this.maxSessionMinutes.set(s.maxSessionMinutes);
           const idleMsg =
             s.idleTimeoutMinutes === 0
-              ? 'Idle timeout disabled.'
-              : `Sessions idle for ${s.idleTimeoutMinutes} min will be closed.`;
+              ? this.translate.instant('pages.settingsSessions.messages.idleDisabled')
+              : this.translate.instant('pages.settingsSessions.messages.idleWillClose', {
+                  minutes: s.idleTimeoutMinutes,
+                });
           const maxMsg =
             s.maxSessionMinutes === 0
-              ? 'No hard session lifetime cap.'
-              : `Sessions capped at ${s.maxSessionMinutes} min total.`;
+              ? this.translate.instant('pages.settingsSessions.messages.noHardCap')
+              : this.translate.instant('pages.settingsSessions.messages.maxWillCap', {
+                  minutes: s.maxSessionMinutes,
+                });
           this.message.set(`${idleMsg} ${maxMsg}`);
         },
         error: (err) => {
           this.busy.set(false);
-          this.error.set(this.toMessage(err) || 'Failed to save settings.');
+          this.error.set(
+            this.toMessage(err) ||
+              this.translate.instant('pages.settingsSessions.messages.saveFailed'),
+          );
         },
       });
   }

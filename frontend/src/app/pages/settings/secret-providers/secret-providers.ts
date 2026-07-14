@@ -1,5 +1,6 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   SecretProvider,
   SecretProvidersService,
@@ -31,13 +32,14 @@ const EMPTY_FORM: FormState = {
 
 @Component({
   selector: 'app-secret-providers',
-  imports: [FormsModule],
+  imports: [FormsModule, TranslatePipe],
   templateUrl: './secret-providers.html',
 })
 export class SecretProviders implements OnInit {
   private readonly svc = inject(SecretProvidersService);
   private readonly confirmSvc = inject(ConfirmDialogService);
   private readonly toastSvc = inject(ToastService);
+  private readonly translate = inject(TranslateService);
 
   readonly providers = this.svc.list;
   readonly loading = signal(false);
@@ -60,7 +62,10 @@ export class SecretProviders implements OnInit {
       next: () => this.loading.set(false),
       error: (err) => {
         this.loading.set(false);
-        this.errorMessage.set(this.toMessage(err) || 'Failed to load secret providers.');
+        this.errorMessage.set(
+          this.toMessage(err) ||
+            this.translate.instant('pages.settingsSecretProviders.errors.loadFailed'),
+        );
       },
     });
   }
@@ -99,11 +104,15 @@ export class SecretProviders implements OnInit {
     if (this.busy()) return;
     const f = this.form();
     if (!f.name.trim() || !f.vaultUri.trim() || !f.tenantId.trim() || !f.clientId.trim()) {
-      this.errorMessage.set('Name, Vault URI, Tenant ID, and Client ID are required.');
+      this.errorMessage.set(
+        this.translate.instant('pages.settingsSecretProviders.errors.requiredFields'),
+      );
       return;
     }
     if (!f.id && !f.clientSecret.trim()) {
-      this.errorMessage.set('Client Secret is required when creating a provider.');
+      this.errorMessage.set(
+        this.translate.instant('pages.settingsSecretProviders.errors.clientSecretRequired'),
+      );
       return;
     }
     this.busy.set(true);
@@ -120,13 +129,18 @@ export class SecretProviders implements OnInit {
       this.svc.update(f.id, payload).subscribe({
         next: () => {
           this.busy.set(false);
-          this.toastSvc.success('Secret provider updated.');
+          this.toastSvc.success(
+            this.translate.instant('pages.settingsSecretProviders.toasts.updated'),
+          );
           this.cancel();
           this.refresh();
         },
         error: (err) => {
           this.busy.set(false);
-          this.errorMessage.set(this.toMessage(err) || 'Failed to save provider.');
+          this.errorMessage.set(
+            this.toMessage(err) ||
+              this.translate.instant('pages.settingsSecretProviders.errors.saveFailed'),
+          );
         },
       });
     } else {
@@ -140,13 +154,18 @@ export class SecretProviders implements OnInit {
       this.svc.create(payload).subscribe({
         next: () => {
           this.busy.set(false);
-          this.toastSvc.success('Secret provider created.');
+          this.toastSvc.success(
+            this.translate.instant('pages.settingsSecretProviders.toasts.created'),
+          );
           this.cancel();
           this.refresh();
         },
         error: (err) => {
           this.busy.set(false);
-          this.errorMessage.set(this.toMessage(err) || 'Failed to create provider.');
+          this.errorMessage.set(
+            this.toMessage(err) ||
+              this.translate.instant('pages.settingsSecretProviders.errors.createFailed'),
+          );
         },
       });
     }
@@ -159,33 +178,57 @@ export class SecretProviders implements OnInit {
       next: (r) => {
         this.testBusy.set(null);
         if (r.success) {
-          this.toastSvc.success(`"${p.name}" connection successful.`);
+          this.toastSvc.success(
+            this.translate.instant('pages.settingsSecretProviders.toasts.testSuccess', {
+              name: p.name,
+            }),
+          );
         } else {
-          this.toastSvc.error(`"${p.name}" connection failed.`);
+          this.toastSvc.error(
+            this.translate.instant('pages.settingsSecretProviders.toasts.testFailed', {
+              name: p.name,
+            }),
+          );
         }
       },
       error: (err) => {
         this.testBusy.set(null);
-        this.toastSvc.error(this.toMessage(err) || `"${p.name}" connection failed.`);
+        this.toastSvc.error(
+          this.toMessage(err) ||
+            this.translate.instant('pages.settingsSecretProviders.toasts.testFailed', {
+              name: p.name,
+            }),
+        );
       },
     });
   }
 
   async remove(p: SecretProvider): Promise<void> {
     const ok = await this.confirmSvc.ask({
-      title: 'Delete secret provider',
-      message: `Delete "${p.name}"? Credentials linked to this provider will stop working. This cannot be undone.`,
-      confirmLabel: 'Delete',
+      title: this.translate.instant('pages.settingsSecretProviders.deleteDialog.title'),
+      message: this.translate.instant('pages.settingsSecretProviders.deleteDialog.message', {
+        name: p.name,
+      }),
+      confirmLabel: this.translate.instant(
+        'pages.settingsSecretProviders.deleteDialog.confirmLabel',
+      ),
       tone: 'danger',
     });
     if (!ok) return;
     this.svc.remove(p.id).subscribe({
       next: () => {
-        this.toastSvc.success(`"${p.name}" deleted.`);
+        this.toastSvc.success(
+          this.translate.instant('pages.settingsSecretProviders.toasts.deleted', {
+            name: p.name,
+          }),
+        );
         this.refresh();
       },
       error: (err) => {
-        this.toastSvc.error(this.toMessage(err) || 'Delete failed.');
+        this.toastSvc.error(
+          this.toMessage(err) ||
+            this.translate.instant('pages.settingsSecretProviders.errors.deleteFailed'),
+        );
       },
     });
   }

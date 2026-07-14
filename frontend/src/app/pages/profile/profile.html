@@ -4,10 +4,10 @@
       <span class="material-symbols-outlined text-3xl text-primary" aria-hidden="true"
         >account_circle</span
       >
-      Profile
+      {{ 'pages.profile.heading' | translate }}
     </h1>
     <p class="mt-2 text-sm text-on-surface-variant">
-      Manage your display name and avatar. Changes are stored on the server.
+      {{ 'pages.profile.subtitle' | translate }}
     </p>
   </header>
 
@@ -36,7 +36,11 @@
           class="relative w-32 h-32 rounded-full overflow-hidden border-2 border-primary/40 bg-primary-container/20 flex items-center justify-center shadow-lg"
         >
           @if (currentAvatar(); as src) {
-            <img [src]="src" alt="Avatar preview" class="w-full h-full object-cover" />
+            <img
+              [src]="src"
+              [attr.alt]="'pages.profile.avatar.alt' | translate"
+              class="w-full h-full object-cover"
+            />
           } @else {
             <span class="text-3xl font-bold text-primary">{{ initials() }}</span>
           }
@@ -45,7 +49,7 @@
           class="cursor-pointer inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-surface-container border border-outline-variant/50 hover:border-primary/60 transition-colors text-xs font-medium text-on-surface"
         >
           <span class="material-symbols-outlined text-base" aria-hidden="true">upload</span>
-          Choose image
+          {{ 'pages.profile.avatar.chooseImage' | translate }}
           <input
             type="file"
             accept="image/png,image/jpeg,image/webp"
@@ -59,7 +63,7 @@
             class="text-xs text-on-surface-variant hover:text-primary transition-colors"
             (click)="cancelPending()"
           >
-            Discard preview
+            {{ 'pages.profile.avatar.discardPreview' | translate }}
           </button>
         }
         @if (canRemove()) {
@@ -69,11 +73,11 @@
             (click)="removeAvatar()"
             [disabled]="removing()"
           >
-            Remove avatar
+            {{ 'pages.profile.avatar.removeAvatar' | translate }}
           </button>
         }
         <p class="text-[11px] text-on-surface-variant text-center max-w-[10rem]">
-          PNG, JPEG, or WebP. Auto-downscaled to 512px, max 1 MB.
+          {{ 'pages.profile.avatar.hint' | translate }}
         </p>
       </div>
 
@@ -82,7 +86,7 @@
           <label
             for="profile-name"
             class="block text-xs font-semibold uppercase tracking-wider text-on-surface-variant mb-1.5"
-            >Name</label
+            >{{ 'pages.profile.name.label' | translate }}</label
           >
           <input
             id="profile-name"
@@ -90,7 +94,7 @@
             type="text"
             [ngModel]="name()"
             (ngModelChange)="name.set($event)"
-            placeholder="Your display name"
+            [attr.placeholder]="'pages.profile.name.placeholder' | translate"
             maxlength="255"
           />
         </div>
@@ -99,7 +103,7 @@
           <label
             class="block text-xs font-semibold uppercase tracking-wider text-on-surface-variant mb-1.5"
             for="profile-email"
-            >Email</label
+            >{{ 'pages.profile.email.label' | translate }}</label
           >
           <input
             class="input-field w-full opacity-70 cursor-not-allowed"
@@ -108,14 +112,16 @@
             [value]="user()?.email ?? ''"
             readonly
           />
-          <p class="mt-1 text-[11px] text-on-surface-variant">Email cannot be changed here.</p>
+          <p class="mt-1 text-[11px] text-on-surface-variant">
+            {{ 'pages.profile.email.hint' | translate }}
+          </p>
         </div>
 
         <div>
           <p
             class="block text-xs font-semibold uppercase tracking-wider text-on-surface-variant mb-1.5"
           >
-            Roles
+            {{ 'pages.profile.roles.label' | translate }}
           </p>
           <div class="flex flex-wrap gap-1.5">
             @for (role of user()?.roles ?? []; track role) {
@@ -124,7 +130,9 @@
                 >{{ role }}</span
               >
             } @empty {
-              <span class="text-xs text-on-surface-variant">No roles assigned.</span>
+              <span class="text-xs text-on-surface-variant">{{
+                'pages.profile.roles.none' | translate
+              }}</span>
             }
           </div>
         </div>
@@ -137,7 +145,9 @@
             [disabled]="saving()"
           >
             <span class="material-symbols-outlined text-base" aria-hidden="true">save</span>
-            {{ saving() ? 'Saving…' : 'Save changes' }}
+            {{
+              saving() ? ('pages.profile.saving' | translate) : ('pages.profile.save' | translate)
+            }}
           </button>
         </div>
       </div>
@@ -156,10 +166,10 @@
         >
         <div>
           <h2 id="mfa-section-heading" class="text-base font-semibold text-on-surface">
-            Two-factor authentication
+            {{ 'pages.profile.mfa.heading' | translate }}
           </h2>
           <p class="text-xs text-on-surface-variant mt-0.5">
-            Add a second verification step on every sign-in.
+            {{ 'pages.profile.mfa.subtitle' | translate }}
           </p>
         </div>
       </div>
@@ -168,7 +178,7 @@
           class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-primary-container/30 border border-primary/30 text-primary"
         >
           <span class="material-symbols-outlined text-sm" aria-hidden="true">check_circle</span>
-          Enabled
+          {{ 'pages.profile.mfa.enabled' | translate }}
         </span>
       }
     </div>
@@ -184,11 +194,11 @@
     }
 
     @if (mfaStatus() === null) {
-      <p class="text-sm text-on-surface-variant">Loading…</p>
+      <p class="text-sm text-on-surface-variant">{{ 'pages.profile.mfa.loading' | translate }}</p>
     } @else if (!mfaStatus()!.isEnabled && mfaEnrollStep() === 'idle') {
       <!-- Not enabled, idle -->
       <p class="text-sm text-on-surface-variant mb-4">
-        Two-factor authentication is not enabled. Protect your account with an authenticator app.
+        {{ 'pages.profile.mfa.notEnabled' | translate }}
       </p>
       <button
         type="button"
@@ -197,19 +207,22 @@
         [disabled]="mfaEnrolling()"
       >
         <span class="material-symbols-outlined text-base" aria-hidden="true">add</span>
-        {{ mfaEnrolling() ? 'Setting up…' : 'Enable two-factor authentication' }}
+        {{
+          mfaEnrolling()
+            ? ('pages.profile.mfa.settingUp' | translate)
+            : ('pages.profile.mfa.enable' | translate)
+        }}
       </button>
     } @else if (mfaEnrollStep() === 'setup') {
       <!-- Enrollment: scan QR + confirm code -->
       <p class="text-sm text-on-surface-variant mb-4">
-        Scan the QR code with your authenticator app (Google Authenticator, Authy, etc.), then enter
-        the 6-digit code to confirm.
+        {{ 'pages.profile.mfa.setupInstructions' | translate }}
       </p>
       <div class="flex flex-col items-center gap-4 mb-4">
         @if (mfaQrDataUrl(); as qr) {
           <img
             [src]="qr"
-            alt="TOTP QR code"
+            [attr.alt]="'pages.profile.mfa.qrAlt' | translate"
             class="rounded-lg border border-outline-variant/40 bg-white p-2"
             width="200"
             height="200"
@@ -217,7 +230,7 @@
         }
         @if (mfaSecretBase32(); as secret) {
           <p class="text-xs text-on-surface-variant text-center">
-            Can't scan?
+            {{ 'pages.profile.mfa.cantScan' | translate }}
             <span class="font-mono text-on-surface select-all break-all">{{ secret }}</span>
           </p>
         }
@@ -227,7 +240,7 @@
           <label
             for="mfa-confirm-code"
             class="block text-xs font-semibold uppercase tracking-wider text-on-surface-variant mb-1.5"
-            >Confirmation code</label
+            >{{ 'pages.profile.mfa.confirmationCodeLabel' | translate }}</label
           >
           <input
             id="mfa-confirm-code"
@@ -248,14 +261,18 @@
             (click)="confirmMfaEnrollment()"
             [disabled]="mfaConfirming() || !mfaConfirmCode()"
           >
-            {{ mfaConfirming() ? 'Verifying…' : 'Verify & activate' }}
+            {{
+              mfaConfirming()
+                ? ('pages.profile.mfa.verifying' | translate)
+                : ('pages.profile.mfa.verifyAndActivate' | translate)
+            }}
           </button>
           <button
             type="button"
             class="px-4 py-2 rounded-md text-sm text-on-surface-variant hover:text-on-surface border border-outline-variant/50 hover:border-outline-variant transition-colors"
             (click)="cancelMfaEnrollment()"
           >
-            Cancel
+            {{ 'common.actions.cancel' | translate }}
           </button>
         </div>
       </div>
@@ -265,10 +282,11 @@
         class="rounded-lg border border-primary/30 bg-primary-container/10 p-4 mb-4"
         role="alert"
       >
-        <p class="text-sm font-semibold text-on-surface mb-1">Save your recovery codes</p>
+        <p class="text-sm font-semibold text-on-surface mb-1">
+          {{ 'pages.profile.mfa.saveCodesTitle' | translate }}
+        </p>
         <p class="text-xs text-on-surface-variant">
-          These codes can be used to regain access if you lose your authenticator. Each code works
-          once. Store them somewhere safe — you won't see them again.
+          {{ 'pages.profile.mfa.saveCodesBody' | translate }}
         </p>
       </div>
       <div class="grid grid-cols-2 gap-2 mb-4 font-mono text-sm">
@@ -286,7 +304,7 @@
           (click)="finishMfaEnrollment()"
         >
           <span class="material-symbols-outlined text-base" aria-hidden="true">check</span>
-          I've saved these codes
+          {{ 'pages.profile.mfa.savedCodesConfirm' | translate }}
         </button>
         <button
           type="button"
@@ -294,13 +312,13 @@
           (click)="downloadRecoveryCodes()"
         >
           <span class="material-symbols-outlined text-base" aria-hidden="true">download</span>
-          Download as .txt
+          {{ 'pages.profile.mfa.downloadTxt' | translate }}
         </button>
       </div>
     } @else if (mfaStatus()!.isEnabled && mfaDisableStep() === 'idle') {
       <!-- Enabled, idle -->
       <p class="text-sm text-on-surface-variant mb-2">
-        Recovery codes remaining:
+        {{ 'pages.profile.mfa.recoveryCodesRemaining' | translate }}
         <strong class="text-on-surface">{{ mfaStatus()!.recoveryCodesRemaining }} / 10</strong>
       </p>
       <button
@@ -309,26 +327,26 @@
         (click)="startMfaDisable()"
       >
         <span class="material-symbols-outlined text-base" aria-hidden="true">no_encryption</span>
-        Disable two-factor authentication
+        {{ 'pages.profile.mfa.disable' | translate }}
       </button>
     } @else if (mfaDisableStep() === 'confirm') {
       <!-- Disable confirmation -->
       <div class="max-w-xs space-y-3">
         <p class="text-sm text-on-surface-variant">
-          Enter your password to confirm disabling two-factor authentication.
+          {{ 'pages.profile.mfa.disablePrompt' | translate }}
         </p>
         <div>
           <label
             for="mfa-disable-password"
             class="block text-xs font-semibold uppercase tracking-wider text-on-surface-variant mb-1.5"
-            >Password</label
+            >{{ 'pages.profile.mfa.passwordLabel' | translate }}</label
           >
           <input
             id="mfa-disable-password"
             class="input-field w-full"
             type="password"
             autocomplete="current-password"
-            placeholder="Your current password"
+            [attr.placeholder]="'pages.profile.mfa.passwordPlaceholder' | translate"
             [ngModel]="mfaDisablePassword()"
             (ngModelChange)="mfaDisablePassword.set($event)"
           />
@@ -340,14 +358,18 @@
             (click)="confirmMfaDisable()"
             [disabled]="mfaDisabling() || !mfaDisablePassword()"
           >
-            {{ mfaDisabling() ? 'Disabling…' : 'Confirm disable' }}
+            {{
+              mfaDisabling()
+                ? ('pages.profile.mfa.disabling' | translate)
+                : ('pages.profile.mfa.confirmDisable' | translate)
+            }}
           </button>
           <button
             type="button"
             class="px-4 py-2 rounded-md text-sm text-on-surface-variant hover:text-on-surface border border-outline-variant/50 hover:border-outline-variant transition-colors"
             (click)="cancelMfaDisable()"
           >
-            Cancel
+            {{ 'common.actions.cancel' | translate }}
           </button>
         </div>
       </div>
@@ -362,9 +384,11 @@
     <div class="flex items-center gap-3 mb-4">
       <span class="material-symbols-outlined text-2xl text-primary" aria-hidden="true">key</span>
       <div>
-        <h2 id="api-tokens-heading" class="text-base font-semibold text-on-surface">API tokens</h2>
+        <h2 id="api-tokens-heading" class="text-base font-semibold text-on-surface">
+          {{ 'pages.profile.apiTokens.heading' | translate }}
+        </h2>
         <p class="text-xs text-on-surface-variant mt-0.5">
-          Long-lived bearer tokens for CLI, CI, and automation. Send as
+          {{ 'pages.profile.apiTokens.subtitle' | translate }}
           <code class="font-mono text-on-surface">Authorization: Bearer sop_…</code>
         </p>
       </div>
@@ -385,10 +409,11 @@
         class="rounded-lg border border-primary/30 bg-primary-container/10 p-4 mb-4"
         role="alert"
       >
-        <p class="text-sm font-semibold text-on-surface mb-1">Save this token now</p>
+        <p class="text-sm font-semibold text-on-surface mb-1">
+          {{ 'pages.profile.apiTokens.saveTokenTitle' | translate }}
+        </p>
         <p class="text-xs text-on-surface-variant mb-3">
-          This is the only time the plaintext token is shown. Store it somewhere safe — you won't
-          see it again.
+          {{ 'pages.profile.apiTokens.saveTokenBody' | translate }}
         </p>
         <div
           class="font-mono text-xs break-all bg-surface-container border border-outline-variant/40 rounded px-3 py-2 select-all mb-3 text-on-surface"
@@ -402,14 +427,14 @@
             (click)="copyNewToken()"
           >
             <span class="material-symbols-outlined text-base" aria-hidden="true">content_copy</span>
-            Copy
+            {{ 'pages.profile.apiTokens.copy' | translate }}
           </button>
           <button
             type="button"
             class="inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium border border-outline-variant/50 hover:border-primary/60 text-on-surface transition-colors"
             (click)="dismissNewToken()"
           >
-            I've saved this token
+            {{ 'pages.profile.apiTokens.savedTokenConfirm' | translate }}
           </button>
         </div>
       </div>
@@ -421,13 +446,13 @@
         <label
           for="new-token-name"
           class="block text-xs font-semibold uppercase tracking-wider text-on-surface-variant mb-1.5"
-          >Token name</label
+          >{{ 'pages.profile.apiTokens.tokenNameLabel' | translate }}</label
         >
         <input
           id="new-token-name"
           class="input-field w-full"
           type="text"
-          placeholder="ci-bot, terraform, etc."
+          [attr.placeholder]="'pages.profile.apiTokens.tokenNamePlaceholder' | translate"
           maxlength="100"
           [ngModel]="newTokenName()"
           (ngModelChange)="newTokenName.set($event)"
@@ -437,7 +462,7 @@
         <label
           for="new-token-expires"
           class="block text-xs font-semibold uppercase tracking-wider text-on-surface-variant mb-1.5"
-          >Expires (optional)</label
+          >{{ 'pages.profile.apiTokens.expiresLabel' | translate }}</label
         >
         <input
           id="new-token-expires"
@@ -454,13 +479,19 @@
         [disabled]="creatingToken() || !newTokenName().trim()"
       >
         <span class="material-symbols-outlined text-base" aria-hidden="true">add</span>
-        {{ creatingToken() ? 'Creating…' : 'Create token' }}
+        {{
+          creatingToken()
+            ? ('pages.profile.apiTokens.creating' | translate)
+            : ('pages.profile.apiTokens.createToken' | translate)
+        }}
       </button>
     </div>
 
     <!-- Token list -->
     @if (apiTokens().length === 0) {
-      <p class="text-sm text-on-surface-variant">No API tokens yet.</p>
+      <p class="text-sm text-on-surface-variant">
+        {{ 'pages.profile.apiTokens.none' | translate }}
+      </p>
     } @else {
       <ul class="divide-y divide-outline-variant/20 border border-outline-variant/30 rounded-lg">
         @for (t of apiTokens(); track t.id) {
@@ -472,23 +503,32 @@
                   <span
                     class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono uppercase bg-error-container/30 border border-error/30 text-error"
                   >
-                    Revoked
+                    {{ 'pages.profile.apiTokens.revoked' | translate }}
                   </span>
                 } @else if (t.expiresAt && t.expiresAt < currentIso()) {
                   <span
                     class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono uppercase bg-error-container/30 border border-error/30 text-error"
                   >
-                    Expired
+                    {{ 'pages.profile.apiTokens.expired' | translate }}
                   </span>
                 }
               </div>
               <p class="text-[11px] text-on-surface-variant mt-0.5">
-                Created {{ t.createdAt | date: 'mediumDate' }}
+                {{
+                  'pages.profile.apiTokens.created'
+                    | translate: { date: t.createdAt | date: 'mediumDate' }
+                }}
                 @if (t.lastUsedAt) {
-                  · Last used {{ t.lastUsedAt | date: 'mediumDate' }}
+                  {{
+                    'pages.profile.apiTokens.lastUsed'
+                      | translate: { date: t.lastUsedAt | date: 'mediumDate' }
+                  }}
                 }
                 @if (t.expiresAt) {
-                  · Expires {{ t.expiresAt | date: 'mediumDate' }}
+                  {{
+                    'pages.profile.apiTokens.expires'
+                      | translate: { date: t.expiresAt | date: 'mediumDate' }
+                  }}
                 }
               </p>
             </div>
@@ -499,7 +539,11 @@
                 (click)="revokeApiToken(t.id)"
                 [disabled]="revokingTokenId() === t.id"
               >
-                {{ revokingTokenId() === t.id ? 'Revoking…' : 'Revoke' }}
+                {{
+                  revokingTokenId() === t.id
+                    ? ('pages.profile.apiTokens.revoking' | translate)
+                    : ('pages.profile.apiTokens.revoke' | translate)
+                }}
               </button>
             }
           </li>

@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideTranslateService, TranslateService } from '@ngx-translate/core';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { signal } from '@angular/core';
 import { of, throwError } from 'rxjs';
@@ -50,10 +51,74 @@ describe('WebhooksSettings', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
+        provideTranslateService(),
         { provide: WebhooksService, useValue: svc },
         { provide: ConfirmDialogService, useValue: confirm },
       ],
     }).compileComponents();
+
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', {
+      common: {
+        actions: {
+          delete: 'Delete',
+        },
+      },
+      pages: {
+        settingsWebhooks: {
+          errors: {
+            loadFailed: 'Failed to load webhooks.',
+            nameUrlRequired: 'Name and URL are required.',
+            saveFailed: 'Failed to save webhook.',
+            createFailed: 'Failed to create webhook.',
+            updateFailed: 'Failed to update webhook.',
+            testFailed: 'Failed to queue test event.',
+            deleteFailed: 'Failed to delete webhook.',
+            rotateFailed: 'Failed to rotate secret.',
+            copyFailed: 'Could not copy to clipboard.',
+          },
+          messages: {
+            updated: 'Webhook endpoint updated.',
+            created: 'Webhook endpoint created.',
+            disabled: 'Webhook disabled.',
+            enabled: 'Webhook enabled.',
+            testQueued: 'Test event queued for "{{name}}". It will be delivered shortly.',
+            deleted: 'Webhook endpoint deleted.',
+            rotated: 'Signing secret rotated.',
+            secretCopied: 'Signing secret copied to clipboard.',
+            urlCopied: 'Endpoint URL copied to clipboard.',
+          },
+          confirmDelete: {
+            title: 'Delete webhook endpoint?',
+            message: '"{{name}}" will be removed and stop receiving events. This cannot be undone.',
+          },
+          confirmRotate: {
+            title: 'Rotate signing secret?',
+            message:
+              'The current secret for "{{name}}" stops working immediately — update your receiver with the new secret right away.',
+            confirmLabel: 'Rotate secret',
+          },
+          events: {
+            all: 'All events',
+            users: 'Users & authentication',
+            connections: 'Connections',
+            credentials: 'Credentials',
+            sso: 'Single sign-on',
+            groups: 'Groups',
+            invitations: 'Invitations',
+            webhooks: 'Webhooks',
+            system: 'System',
+          },
+          status: {
+            disabled: 'Disabled',
+            noDeliveries: 'No deliveries yet',
+            healthy: 'Healthy',
+            failing: 'Failing ({{count}})',
+          },
+        },
+      },
+    });
+    translate.use('en');
 
     fixture = TestBed.createComponent(WebhooksSettings);
     component = fixture.componentInstance;

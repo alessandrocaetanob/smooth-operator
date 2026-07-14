@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideTranslateService, TranslateService } from '@ngx-translate/core';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { signal } from '@angular/core';
 import { of, throwError } from 'rxjs';
@@ -56,12 +57,47 @@ describe('SettingsGroups', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
+        provideTranslateService(),
         { provide: GroupsService, useValue: groupsSvc },
         { provide: UsersService, useValue: usersSvc },
         { provide: ConfirmDialogService, useValue: confirm },
         { provide: ToastService, useValue: toast },
       ],
     }).compileComponents();
+
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', {
+      pages: {
+        settingsGroups: {
+          errors: {
+            loadFailed: 'Failed to load groups.',
+            nameRequired: 'Group name is required.',
+            createFailed: 'Failed to create group.',
+            renameFailed: 'Failed to rename group.',
+            deleteFailed: 'Failed to delete group.',
+            membersUpdateFailed: 'Failed to update members.',
+          },
+          toasts: {
+            created: 'Group "{{name}}" created.',
+            renamed: 'Group renamed to "{{name}}".',
+            deleted: 'Group "{{name}}" deleted.',
+            membersUpdated: 'Members updated for "{{name}}".',
+          },
+          confirmDelete: {
+            title: 'Delete group',
+            message:
+              'Delete group "{{name}}"? Users in this group will lose vault access granted via the group. This cannot be undone.',
+          },
+        },
+      },
+      common: {
+        actions: {
+          delete: 'Delete',
+        },
+      },
+    });
+    translate.use('en');
+
     fixture = TestBed.createComponent(SettingsGroups);
     component = fixture.componentInstance;
   });

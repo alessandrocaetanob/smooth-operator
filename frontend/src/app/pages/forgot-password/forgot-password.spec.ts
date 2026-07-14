@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
+import { provideTranslateService, TranslateService } from '@ngx-translate/core';
 
 import { ForgotPassword } from './forgot-password';
 
@@ -13,8 +14,23 @@ describe('ForgotPassword', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [ForgotPassword],
-      providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
+      providers: [
+        provideRouter([]),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideTranslateService(),
+      ],
     }).compileComponents();
+
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', {
+      pages: {
+        forgotPassword: {
+          unexpectedError: 'An unexpected error occurred. Please try again.',
+        },
+      },
+    });
+    translate.use('en');
 
     fixture = TestBed.createComponent(ForgotPassword);
     component = fixture.componentInstance;
