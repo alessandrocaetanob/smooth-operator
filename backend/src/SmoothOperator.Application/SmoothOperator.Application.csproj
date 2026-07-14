@@ -20,7 +20,7 @@
 
   <!-- CQRS / Validation / Mapping -->
   <ItemGroup>
-    <PackageReference Include="MediatR" Version="12.5.0" />
+    <PackageReference Include="MediatR" Version="14.2.0" />
     <PackageReference Include="FluentValidation" Version="11.11.0" />
     <PackageReference Include="Mapster" Version="10.0.0" />
     <PackageReference Include="Mapster.DependencyInjection" Version="10.0.0" />
