@@ -5,7 +5,7 @@
 ARG NGINX_VERSION=1.30.1
 
 # Stage 1: Build the Angular application
-FROM node:22-alpine AS build
+FROM node:26-alpine AS build
 
 WORKDIR /app
 
