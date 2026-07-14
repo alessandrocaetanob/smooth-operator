@@ -8,6 +8,20 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   test: {
     pool: 'forks',
+    deps: {
+      optimizer: {
+        // Keep guacamole-common-js out of Vite's dependency pre-bundling.
+        // It is only reached through a lazy route, so the optimizer discovers
+        // it MID-RUN, triggering an "optimized dependencies changed" reload
+        // that races with the vi.mock('guacamole-common-js') registration in
+        // guacamole.service.spec.ts — when the reload wins, the real module
+        // loads and 25 tests die with "client.connect is not a function"
+        // (flaky locally, near-deterministic on CircleCI's always-cold cache).
+        // Excluding it makes the module go through the inline transform, where
+        // mock interception does not depend on optimizer timing.
+        web: { exclude: ['guacamole-common-js'] },
+      },
+    },
     coverage: {
       provider: 'v8',
       enabled: !!process.env['CI'],

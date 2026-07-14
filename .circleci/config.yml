@@ -133,6 +133,90 @@ jobs:
           path: frontend/coverage
           destination: frontend-coverage
 
+  # Security gate (HYP-38): fail the build when any direct or transitive npm
+  # dependency has a known high/critical vulnerability. `npm audit` only needs
+  # the lockfile — no install step, so the job stays fast.
+  dependency-audit-node:
+    executor: node-lts
+    steps:
+      - checkout
+      - run:
+          name: npm audit (frontend) — fail on high/critical
+          working_directory: frontend
+          command: npm audit --audit-level=high
+      - run:
+          name: npm audit (docs) — fail on high/critical
+          working_directory: docs
+          command: npm audit --audit-level=high
+
+  # Security gate (HYP-38): fail the build when any NuGet package (including
+  # transitives) has a known High/Critical advisory. Moderate/Low are reported
+  # but do not fail the build.
+  dependency-audit-dotnet:
+    executor: dotnet
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - dotnet-nuget-v1-{{ checksum "smooth-operator.sln" }}
+            - dotnet-nuget-v1-
+      - run:
+          name: Restore dependencies
+          command: dotnet restore smooth-operator.sln
+      - run:
+          name: dotnet vulnerable-package check — fail on High/Critical
+          command: |
+            dotnet list smooth-operator.sln package --vulnerable --include-transitive | tee vulnerable-packages.txt
+            if grep -qiE '(High|Critical)[[:space:]]+https://' vulnerable-packages.txt; then
+              echo "" >&2
+              echo "High/Critical vulnerable NuGet packages detected — see report above." >&2
+              exit 1
+            fi
+      - store_artifacts:
+          path: vulnerable-packages.txt
+          destination: nuget-vulnerability-report
+
+  # Security gate (HYP-38): build the production images and scan them with
+  # Trivy. Fails on HIGH/CRITICAL findings that already have a fix upstream
+  # (--ignore-unfixed keeps unpatchable base-image CVEs from blocking CI).
+  # The docs image shares the frontend's node+nginx-unprivileged bases, so
+  # scanning the frontend image covers it.
+  trivy-image-scan:
+    executor: linux-vm
+    steps:
+      - checkout
+      - run:
+          name: Install Trivy
+          command: |
+            curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh \
+              | sudo sh -s -- -b /usr/local/bin
+            trivy --version
+      - run:
+          name: Build backend image (linux/amd64)
+          no_output_timeout: 30m
+          command: docker build -t smooth-operator-backend:ci ./backend
+      - run:
+          name: Build frontend image (linux/amd64)
+          no_output_timeout: 30m
+          command: docker build -t smooth-operator-frontend:ci ./frontend
+      - run:
+          name: Trivy scan — backend image (gate)
+          command: |
+            trivy image --severity HIGH,CRITICAL --ignore-unfixed \
+              --exit-code 1 smooth-operator-backend:ci
+      - run:
+          name: Trivy scan — frontend image (gate)
+          command: |
+            trivy image --severity HIGH,CRITICAL --ignore-unfixed \
+              --exit-code 1 smooth-operator-frontend:ci
+      - run:
+          name: Trivy scan — guacd base image (informational)
+          # Third-party image we don't build; report but never block on it.
+          command: |
+            GUACD_IMAGE=$(grep -oE 'guacamole/guacd:[0-9.]+' docker-compose.yml | head -1)
+            trivy image --severity HIGH,CRITICAL --ignore-unfixed \
+              --exit-code 0 "$GUACD_IMAGE"
+
   docs-build:
     executor: node-lts
     steps:
@@ -250,6 +334,9 @@ workflows:
       - backend-ci
       - frontend-ci
       - docs-build
+      - dependency-audit-node
+      - dependency-audit-dotnet
+      - trivy-image-scan
       - sonarcloud-scan:
           requires:
             - backend-ci

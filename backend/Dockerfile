@@ -49,10 +49,12 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine AS final
 WORKDIR /app
 EXPOSE 8080
 
+# apk upgrade first: base-image Alpine packages accumulate CVEs between
+# upstream rebuilds; the Trivy CI gate fails on fixable HIGH/CRITICAL findings.
 # icu-libs: full globalization (SSO, dates) instead of invariant mode.
 # tzdata: timezone database for correct timestamp handling.
 # busybox already provides wget for the HEALTHCHECK probe — no curl needed.
-RUN apk add --no-cache icu-libs tzdata
+RUN apk upgrade --no-cache && apk add --no-cache icu-libs tzdata
 
 COPY --from=publish /app/publish .
 
