@@ -68,10 +68,14 @@ ARG NGINX_VERSION
 # Switch to root temporarily for file setup
 USER root
 
+# apk upgrade first: the pinned nginx base image ships Alpine packages (curl,
+# openssl, libexpat, libxml2, c-ares, …) that accumulate CVEs between upstream
+# rebuilds — the Trivy CI gate fails on fixable HIGH/CRITICAL findings, and the
+# fixes land in the Alpine repos well before a new base-image tag does.
 # gettext provides envsubst, used by entrypoint.sh to render the API_URL into
 # the nginx upstream block at startup. The base alpine image already ships it,
 # but pin it explicitly so an upstream slim-down doesn't break the entrypoint.
-RUN apk add --no-cache gettext
+RUN apk upgrade --no-cache && apk add --no-cache gettext
 
 # Brotli dynamic modules — loaded via load_module in nginx-main.conf
 COPY --from=brotli-build \
