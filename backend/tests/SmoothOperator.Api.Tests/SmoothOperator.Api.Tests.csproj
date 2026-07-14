@@ -23,7 +23,7 @@
          < 3.50.2) pulled in via Microsoft.EntityFrameworkCore.Sqlite. The 2.1.x line has
          no patched release; the fix only exists in the 3.x line (bundles SQLite 3.50.2+). -->
     <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.3" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.8.1" />
     <PackageReference Include="Moq" Version="4.20.72" />
     <!-- Override the vulnerable System.Security.Cryptography.Xml 10.0.0 transitively
          pulled in via the backend's ITfoxtec.Identity.Saml2 dep (NU1903). The Web SDK
