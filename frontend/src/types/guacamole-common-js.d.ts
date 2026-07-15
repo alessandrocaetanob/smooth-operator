@@ -30,6 +30,13 @@ declare module 'guacamole-common-js' {
     class InputStream {
       onblob: ((data: string) => void) | null;
       onend: (() => void) | null;
+      /**
+       * Acknowledges receipt on this stream. guacd's object streams (SFTP /
+       * drive-redirect body streams) are ack-driven: after `body` arrives, the
+       * receiver MUST send an initial success ack or guacd never sends the
+       * first blob. Non-zero codes abort the stream.
+       */
+      sendAck(message: string, code: number): void;
     }
 
     class OutputStream {

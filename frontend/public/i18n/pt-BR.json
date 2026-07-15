@@ -430,7 +430,14 @@
         "description": "Navegue pelo drive remoto para enviar ou baixar arquivos.",
         "empty": "Esta pasta está vazia.",
         "download": "Baixar",
-        "upload": "Enviar"
+        "upload": "Enviar",
+        "refresh": "Atualizar",
+        "retry": "Tentar novamente",
+        "dropHint": "Solte os arquivos para enviá-los para esta pasta",
+        "transfers": "Transferências",
+        "clearCompleted": "Limpar concluídas",
+        "kindFolder": "Pasta",
+        "kindFile": "Arquivo"
       },
       "terminalTheme": {
         "title": "Tema do Terminal da Sessão",

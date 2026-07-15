@@ -650,6 +650,8 @@ export class GuacamoleSession {
         }
         this.fsObject.requestInputStream(path, (stream, mimetype) => {
           if (mimetype !== Guacamole.Object.STREAM_INDEX_MIMETYPE) {
+            // Abort the stream server-side; guacd is otherwise left waiting on it.
+            stream.sendAck('Not a directory', 0x0100);
             reject(new Error('Not a directory.'));
             return;
           }
@@ -669,6 +671,11 @@ export class GuacamoleSession {
               }
             });
           };
+          // Mandatory kick-off: guacd streams a requested body only after the
+          // receiver acks the new stream (its SFTP/drive listing loop is entirely
+          // ack-driven). StringReader acks every subsequent blob, but this first
+          // ack is the consumer's job — without it the listing never starts.
+          stream.sendAck('Ready', 0);
         });
       }),
       'Timed out waiting for the remote file listing. The server may not support file transfer for this connection.',
@@ -716,6 +723,9 @@ export class GuacamoleSession {
               resolve();
             });
           };
+          // Same mandatory kick-off as listDirectory: guacd sends the file's
+          // first blob only after this initial ack (BlobReader acks the rest).
+          stream.sendAck('Ready', 0);
         });
       }),
       'Timed out waiting for the file to download. The server may not support file transfer for this connection.',

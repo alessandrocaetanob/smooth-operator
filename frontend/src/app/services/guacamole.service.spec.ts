@@ -558,6 +558,11 @@ describe('GuacamoleSession', () => {
       return obj;
     }
 
+    /** Fake InputStream delivered to requestInputStream body callbacks. */
+    function makeFakeInputStream(): { sendAck: ReturnType<typeof vi.fn> } {
+      return { sendAck: vi.fn() };
+    }
+
     it('fileTransferAvailable/fileSystemName default to unavailable', () => {
       expect(session.fileTransferAvailable()).toBe(false);
       expect(session.fileSystemName()).toBeNull();
@@ -575,15 +580,19 @@ describe('GuacamoleSession', () => {
       });
 
       it('resolves entries sorted directories-first then alphabetically, stripping the path prefix', async () => {
+        const stream = makeFakeInputStream();
         attachFilesystem({
           requestInputStream: vi.fn(
             (_name: string, cb: (stream: unknown, mimetype: string) => void) => {
-              cb({}, STREAM_INDEX_MIMETYPE);
+              cb(stream, STREAM_INDEX_MIMETYPE);
             },
           ),
         });
 
         const promise = session.listDirectory(ROOT_STREAM);
+        // Regression: guacd streams the listing only after this initial ack —
+        // omitting it is exactly the "spinner forever" bug.
+        expect(stream.sendAck).toHaveBeenCalledWith('Ready', 0);
         const reader = stringReaderInstances[stringReaderInstances.length - 1];
         reader.ontext?.(
           JSON.stringify({
@@ -616,15 +625,18 @@ describe('GuacamoleSession', () => {
         ]);
       });
 
-      it('rejects when the requested stream is not a directory', async () => {
+      it('rejects when the requested stream is not a directory and aborts the stream', async () => {
+        const stream = makeFakeInputStream();
         attachFilesystem({
           requestInputStream: vi.fn(
             (_name: string, cb: (stream: unknown, mimetype: string) => void) => {
-              cb({}, 'text/plain');
+              cb(stream, 'text/plain');
             },
           ),
         });
         await expect(session.listDirectory('/a.txt')).rejects.toThrow('Not a directory');
+        // A non-zero ack tells guacd to abort the stream it opened for us.
+        expect(stream.sendAck).toHaveBeenCalledWith('Not a directory', 0x0100);
       });
 
       it('rejects with a timeout error when guacd never responds', async () => {
@@ -655,10 +667,11 @@ describe('GuacamoleSession', () => {
       });
 
       it('triggers a browser download once the blob stream ends', async () => {
+        const stream = makeFakeInputStream();
         attachFilesystem({
           requestInputStream: vi.fn(
             (_name: string, cb: (stream: unknown, mimetype: string) => void) => {
-              cb({}, 'text/plain');
+              cb(stream, 'text/plain');
             },
           ),
         });
@@ -669,6 +682,8 @@ describe('GuacamoleSession', () => {
         const revokeObjectUrl = vi.spyOn(URL, 'revokeObjectURL').mockReturnValue(undefined);
 
         const promise = session.downloadFile(entry);
+        // Regression: same initial ack requirement as the directory listing.
+        expect(stream.sendAck).toHaveBeenCalledWith('Ready', 0);
         const reader = blobReaderInstances[blobReaderInstances.length - 1];
         reader.onend?.();
         await promise;

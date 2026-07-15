@@ -88,6 +88,17 @@ const TERM_FONT_NAMES = [
   'Inconsolata',
 ];
 
+/** One row in the SFTP panel's transfer queue. */
+export interface FileTransferQueueItem {
+  id: number;
+  name: string;
+  direction: 'upload' | 'download';
+  /** 0–1 for uploads; null for downloads (total size unknown → indeterminate bar). */
+  progress: number | null;
+  status: 'active' | 'done' | 'error';
+  error?: string;
+}
+
 const COMBO_KEYS: KeyOption[] = [
   { label: 'Delete', keysym: Keysyms.Delete },
   { label: 'Backspace', keysym: Keysyms.Backspace },
@@ -192,14 +203,18 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
   readonly comboKey = signal<KeyOption>(COMBO_KEYS[0]);
   readonly clipboardDraft = signal('');
 
-  // ── File transfer (RDP drive redirect / SSH SFTP) ──────────────────────────
-  readonly showFileTransferModal = signal(false);
+  // ── SFTP panel (RDP drive redirect / SSH SFTP) ─────────────────────────────
+  readonly showSftpPanel = signal(false);
   readonly fileTransferPath = signal('/');
   readonly fileTransferEntries = signal<GuacFileEntry[]>([]);
   readonly fileTransferLoading = signal(false);
   readonly fileTransferError = signal<string | null>(null);
-  readonly fileTransferUploadBusy = signal(false);
-  readonly fileTransferUploadProgress = signal(0);
+  readonly sftpDragActive = signal(false);
+  readonly sftpQueue = signal<FileTransferQueueItem[]>([]);
+  readonly sftpQueueHasCompleted = computed(() =>
+    this.sftpQueue().some((t) => t.status !== 'active'),
+  );
+  private nextTransferId = 1;
 
   // ── Mobile keyboard ────────────────────────────────────────────────────────
   // Touch devices have no physical keyboard, and Guacamole.Keyboard only listens
@@ -238,6 +253,8 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
   );
   /** True once guacd has actually exposed a filesystem for this session — the paperclip gate. */
   readonly fileTransferAvailable = computed(() => this.session()?.fileTransferAvailable() ?? false);
+  /** Name guacd gave the filesystem — shown in the SFTP panel header. */
+  readonly fileSystemName = computed(() => this.session()?.fileSystemName() ?? null);
   readonly fileTransferBreadcrumbs = computed(() => {
     const segments = this.fileTransferPath().split('/').filter(Boolean);
     const crumbs: { label: string; path: string }[] = [{ label: '/', path: '/' }];
@@ -450,14 +467,16 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  // ── File transfer (RDP drive redirect / SSH SFTP) ──────────────────────────
-  openFileTransferModal(): void {
-    this.showFileTransferModal.set(true);
-    this.navigateFileTransfer('/');
+  // ── SFTP panel (RDP drive redirect / SSH SFTP) ─────────────────────────────
+  openSftpPanel(): void {
+    this.showSftpPanel.set(true);
+    // Resume where the user left off — the panel keeps its path across opens.
+    this.navigateFileTransfer(this.fileTransferPath());
   }
 
-  closeFileTransferModal(): void {
-    this.showFileTransferModal.set(false);
+  closeSftpPanel(): void {
+    this.showSftpPanel.set(false);
+    this.sftpDragActive.set(false);
   }
 
   navigateFileTransfer(path: string): void {
@@ -475,6 +494,10 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
       .finally(() => this.fileTransferLoading.set(false));
   }
 
+  refreshFileTransfer(): void {
+    this.navigateFileTransfer(this.fileTransferPath());
+  }
+
   openFileTransferEntry(entry: GuacFileEntry): void {
     if (entry.isDirectory) {
       this.navigateFileTransfer(entry.streamName);
@@ -486,29 +509,88 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
   downloadFileTransferEntry(entry: GuacFileEntry): void {
     const session = this.session();
     if (!session) return;
+    const id = this.enqueueTransfer(entry.displayName, 'download');
     session
       .downloadFile(entry)
-      .catch((err: unknown) => this.fileTransferError.set(this.describeFileTransferError(err)));
+      .then(() => this.updateTransfer(id, { status: 'done' }))
+      .catch((err: unknown) =>
+        this.updateTransfer(id, { status: 'error', error: this.describeFileTransferError(err) }),
+      );
   }
 
   onFileTransferInputChange(event: Event): void {
     const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
+    const files = Array.from(input.files ?? []);
     input.value = ''; // allow re-selecting the same file name
-    if (file) this.uploadFileTransferFile(file);
+    if (files.length > 0) this.uploadFileTransferFiles(files);
   }
 
-  private uploadFileTransferFile(file: File): void {
+  onSftpDragOver(event: DragEvent): void {
+    if (!this.canUploadFiles()) return;
+    event.preventDefault();
+    this.sftpDragActive.set(true);
+  }
+
+  onSftpDragLeave(): void {
+    this.sftpDragActive.set(false);
+  }
+
+  onSftpDrop(event: DragEvent): void {
+    event.preventDefault();
+    this.sftpDragActive.set(false);
+    if (!this.canUploadFiles()) return;
+    const files = Array.from(event.dataTransfer?.files ?? []);
+    if (files.length > 0) this.uploadFileTransferFiles(files);
+  }
+
+  clearCompletedTransfers(): void {
+    this.sftpQueue.update((queue) => queue.filter((t) => t.status === 'active'));
+  }
+
+  /**
+   * Uploads sequentially into the directory shown when the batch started (so
+   * navigating mid-upload doesn't scatter files), then refreshes the listing
+   * once if the user is still looking at that directory.
+   */
+  private uploadFileTransferFiles(files: File[]): void {
     const session = this.session();
     if (!session) return;
-    this.fileTransferUploadBusy.set(true);
-    this.fileTransferUploadProgress.set(0);
     const targetPath = this.fileTransferPath();
-    session
-      .uploadFile(targetPath, file, (fraction) => this.fileTransferUploadProgress.set(fraction))
-      .then(() => this.navigateFileTransfer(targetPath))
-      .catch((err: unknown) => this.fileTransferError.set(this.describeFileTransferError(err)))
-      .finally(() => this.fileTransferUploadBusy.set(false));
+    let chain = Promise.resolve();
+    for (const file of files) {
+      const id = this.enqueueTransfer(file.name, 'upload', 0);
+      chain = chain
+        .then(() =>
+          session.uploadFile(targetPath, file, (fraction) =>
+            this.updateTransfer(id, { progress: fraction }),
+          ),
+        )
+        .then(() => this.updateTransfer(id, { status: 'done', progress: 1 }))
+        .catch((err: unknown) =>
+          this.updateTransfer(id, { status: 'error', error: this.describeFileTransferError(err) }),
+        );
+    }
+    void chain.then(() => {
+      if (this.showSftpPanel() && this.fileTransferPath() === targetPath) {
+        this.navigateFileTransfer(targetPath);
+      }
+    });
+  }
+
+  private enqueueTransfer(
+    name: string,
+    direction: FileTransferQueueItem['direction'],
+    progress: number | null = null,
+  ): number {
+    const id = this.nextTransferId++;
+    this.sftpQueue.update((queue) =>
+      queue.concat({ id, name, direction, progress, status: 'active' }),
+    );
+    return id;
+  }
+
+  private updateTransfer(id: number, patch: Partial<FileTransferQueueItem>): void {
+    this.sftpQueue.update((queue) => queue.map((t) => (t.id === id ? { ...t, ...patch } : t)));
   }
 
   private describeFileTransferError(err: unknown): string {

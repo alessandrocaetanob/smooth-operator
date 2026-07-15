@@ -430,7 +430,14 @@
         "description": "Browse the remote drive to upload or download files.",
         "empty": "This folder is empty.",
         "download": "Download",
-        "upload": "Upload"
+        "upload": "Upload",
+        "refresh": "Refresh",
+        "retry": "Try again",
+        "dropHint": "Drop files to upload them to this folder",
+        "transfers": "Transfers",
+        "clearCompleted": "Clear completed",
+        "kindFolder": "Folder",
+        "kindFile": "File"
       },
       "terminalTheme": {
         "title": "Session Terminal Theme",
