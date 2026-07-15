@@ -797,6 +797,46 @@
       "deleteHostTitle": "Excluir host",
       "deleteHostMessage": "Excluir o host \"{{name}}\"? As conexões que usam este host deixarão de funcionar. Esta ação não pode ser desfeita."
     },
+    "onboarding": {
+      "ariaLabel": "Tour de integração",
+      "stepLabel": "Passo {{current}} de {{total}}",
+      "back": "Voltar",
+      "next": "Próximo",
+      "finish": "Concluir",
+      "skip": "Pular",
+      "checklist": {
+        "title": "Primeiros passos",
+        "progress": "{{done}}/{{total}} concluídos",
+        "hide": "Ocultar checklist"
+      },
+      "steps": {
+        "host": {
+          "title": "Adicione seu primeiro host",
+          "body": "Cadastre a máquina que você quer acessar remotamente.",
+          "cta": "Ir para Hosts"
+        },
+        "credential": {
+          "title": "Cadastre uma credencial",
+          "body": "Salve o usuário e a senha usados para acessar o host.",
+          "cta": "Ir para Credenciais"
+        },
+        "connection": {
+          "title": "Crie uma conexão",
+          "body": "Vincule um host e uma credencial em uma conexão pronta para uso.",
+          "cta": "Ir para Conexões"
+        },
+        "session": {
+          "title": "Abra sua primeira sessão",
+          "body": "Inicie uma conexão a partir do cofre para começar uma sessão remota.",
+          "cta": "Ir para o Cofre"
+        },
+        "invite": {
+          "title": "Convide sua equipe",
+          "body": "Traga colegas de equipe e atribua uma função a eles.",
+          "cta": "Ir para Usuários"
+        }
+      }
+    },
     "invite": {
       "subtitle": "Finalize a configuração da sua conta",
       "validating": "Validando convite…",

@@ -62,6 +62,7 @@ export class AuthService {
     () => new Set(this._user()?.roles.map((r) => r.toLowerCase()) ?? []),
   );
 
+  readonly isOwner = computed(() => this.hasRole('Owner'));
   readonly isOwnerOrAdmin = computed(() => this.hasAnyRole('Owner', 'Admin'));
   readonly isTeamAdmin = computed(() => this.hasRole('TeamAdmin'));
   readonly canManageUsers = computed(() => this.isOwnerOrAdmin());

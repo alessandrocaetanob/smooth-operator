@@ -17,9 +17,11 @@ import {
 } from '../../services/credentials.service';
 import { SecretProvider, SecretProvidersService } from '../../services/secret-providers.service';
 import { AuthService } from '../../services/auth.service';
+import { OnboardingTourService } from '../../services/onboarding-tour.service';
 import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { Drawer } from '../../shared/drawer/drawer';
+import { EmptyStateCard } from '../../shared/empty-state-card/empty-state-card';
 
 interface FormState {
   id: string | null;
@@ -51,7 +53,7 @@ const EMPTY_FORM: FormState = {
 
 @Component({
   selector: 'app-credentials',
-  imports: [FormsModule, Drawer, TranslatePipe],
+  imports: [FormsModule, Drawer, TranslatePipe, EmptyStateCard],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './credentials.html',
   styleUrl: './credentials.css',
@@ -60,6 +62,7 @@ export class Credentials implements OnInit {
   private readonly svc = inject(CredentialsService);
   private readonly providersSvc = inject(SecretProvidersService);
   private readonly auth = inject(AuthService);
+  private readonly tour = inject(OnboardingTourService);
   private readonly confirmSvc = inject(ConfirmDialogService);
   private readonly toastSvc = inject(ToastService);
   private readonly translate = inject(TranslateService);
@@ -394,6 +397,7 @@ export class Credentials implements OnInit {
         isUpdate ? 'pages.credentials.toasts.updated' : 'pages.credentials.toasts.created',
       ),
     );
+    if (!isUpdate) this.tour.completeStep('credential');
     this.cancel();
     this.refresh();
   }

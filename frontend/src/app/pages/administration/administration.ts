@@ -12,6 +12,7 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AppRole, AppUser, InviteResult, UsersService } from '../../services/users.service';
 import { AuthService } from '../../services/auth.service';
 import { VaultsService } from '../../services/vaults.service';
+import { OnboardingTourService } from '../../services/onboarding-tour.service';
 import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog.service';
 import { ToastService } from '../../shared/toast/toast.service';
 
@@ -26,6 +27,7 @@ export class Administration implements OnInit {
   private readonly usersSvc = inject(UsersService);
   private readonly auth = inject(AuthService);
   private readonly vaultsSvc = inject(VaultsService);
+  private readonly tour = inject(OnboardingTourService);
   private readonly confirmSvc = inject(ConfirmDialogService);
   private readonly toastSvc = inject(ToastService);
   private readonly translate = inject(TranslateService);
@@ -127,6 +129,7 @@ export class Administration implements OnInit {
         this.inviteName.set('');
         this.inviteEmail.set('');
         this.inviteRole.set('User');
+        this.tour.completeStep('invite');
         this.refresh();
       },
       error: (err) => {

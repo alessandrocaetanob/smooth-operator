@@ -22,6 +22,8 @@
     </div>
   </div>
 
+  <app-setup-progress-card></app-setup-progress-card>
+
   <section class="glass-card mb-5 rounded-2xl border border-outline-variant/20 p-3 sm:p-4">
     <div
       class="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-on-surface-variant"
@@ -90,21 +92,19 @@
     <div
       class="glass-card m-2 flex h-full max-h-[60vh] flex-col items-center justify-center rounded-2xl border-2 border-dashed border-outline-variant/30 px-6 py-12"
     >
-      <app-mascot [state]="'idle'"></app-mascot>
-      <h2 class="mb-2 mt-4 text-lg font-semibold text-on-surface">
-        {{ 'pages.vault.emptyTitle' | translate }}
-      </h2>
-      <p class="mb-6 max-w-sm text-center text-sm text-on-surface-variant">
-        {{
+      <app-empty-state-card
+        [heading]="'pages.vault.emptyTitle' | translate"
+        [body]="
           (selectedVaultId() ? 'pages.vault.emptyVaultMessage' : 'pages.vault.emptyAllMessage')
             | translate
-        }}
-      </p>
-      @if (canManageConnections()) {
-        <a routerLink="/connections" class="btn-primary">{{
-          'pages.vault.createConnection' | translate
-        }}</a>
-      }
+        "
+      >
+        @if (canManageConnections()) {
+          <a routerLink="/connections" class="btn-primary">{{
+            'pages.vault.createConnection' | translate
+          }}</a>
+        }
+      </app-empty-state-card>
     </div>
   } @else {
     <div

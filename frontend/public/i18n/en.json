@@ -797,6 +797,46 @@
       "deleteHostTitle": "Delete host",
       "deleteHostMessage": "Delete host \"{{name}}\"? Connections using this host will break. This cannot be undone."
     },
+    "onboarding": {
+      "ariaLabel": "Onboarding tour",
+      "stepLabel": "Step {{current}} of {{total}}",
+      "back": "Back",
+      "next": "Next",
+      "finish": "Finish",
+      "skip": "Skip",
+      "checklist": {
+        "title": "Getting started",
+        "progress": "{{done}}/{{total}} done",
+        "hide": "Hide checklist"
+      },
+      "steps": {
+        "host": {
+          "title": "Add your first host",
+          "body": "Register the machine you want to access remotely.",
+          "cta": "Go to Hosts"
+        },
+        "credential": {
+          "title": "Store a credential",
+          "body": "Save the username and secret used to log in to the host.",
+          "cta": "Go to Credentials"
+        },
+        "connection": {
+          "title": "Create a connection",
+          "body": "Link a host and a credential into a ready-to-use connection.",
+          "cta": "Go to Connections"
+        },
+        "session": {
+          "title": "Open your first session",
+          "body": "Launch a connection from the vault to start a remote session.",
+          "cta": "Go to Vault"
+        },
+        "invite": {
+          "title": "Invite your team",
+          "body": "Bring teammates in and assign them a role.",
+          "cta": "Go to Users"
+        }
+      }
+    },
     "invite": {
       "subtitle": "Finish setting up your account",
       "validating": "Validating invitation…",
