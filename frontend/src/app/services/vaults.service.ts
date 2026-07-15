@@ -16,6 +16,8 @@ export interface Vault {
   recordingIncludeKeys?: boolean;
   recordingRetentionDays?: number | null;
   fileTransferPolicy?: FileTransferPolicy;
+  /** Inactivity timeout (seconds) for file transfers; null = app default (20 s). */
+  fileTransferTimeoutSeconds?: number | null;
 }
 
 export interface SaveVaultPayload {
@@ -25,6 +27,7 @@ export interface SaveVaultPayload {
   recordingIncludeKeys?: boolean;
   recordingRetentionDays?: number | null;
   fileTransferPolicy?: FileTransferPolicy;
+  fileTransferTimeoutSeconds?: number | null;
 }
 
 export interface VaultAssignments {
@@ -83,6 +86,8 @@ export class VaultsService {
         'fileTransferPolicy',
         'FileTransferPolicy',
       ),
+      fileTransferTimeoutSeconds:
+        pick<number>(raw, 'fileTransferTimeoutSeconds', 'FileTransferTimeoutSeconds') ?? null,
     };
   }
 }

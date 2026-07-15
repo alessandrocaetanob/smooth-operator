@@ -646,10 +646,52 @@ describe('GuacamoleSession', () => {
         attachFilesystem({ requestInputStream: vi.fn() });
 
         const promise = session.listDirectory('/');
-        const assertion = expect(promise).rejects.toThrow(
-          'Timed out waiting for the remote file listing',
-        );
+        const assertion = expect(promise).rejects.toThrow('No data received for 20s');
         await vi.advanceTimersByTimeAsync(FILE_TRANSFER_TIMEOUT_MS);
+        await assertion;
+      });
+
+      it('is an INACTIVITY timeout: steady data flow re-arms it past the total duration', async () => {
+        vi.useFakeTimers();
+        const stream = makeFakeInputStream();
+        attachFilesystem({
+          requestInputStream: vi.fn(
+            (_name: string, cb: (stream: unknown, mimetype: string) => void) => {
+              cb(stream, STREAM_INDEX_MIMETYPE);
+            },
+          ),
+        });
+
+        const promise = session.listDirectory(ROOT_STREAM);
+        const reader = stringReaderInstances[stringReaderInstances.length - 1];
+        // Trickle data every 15s for 60s total — over 3× the 20s timeout, but
+        // never 20s of silence. The old fixed-race timeout failed exactly here.
+        for (let i = 0; i < 4; i++) {
+          await vi.advanceTimersByTimeAsync(15000);
+          reader.ontext?.(i === 0 ? '{"/a.txt":"text/plain"' : '');
+        }
+        reader.ontext?.('}');
+        reader.onend?.();
+
+        await expect(promise).resolves.toEqual([
+          {
+            streamName: '/a.txt',
+            displayName: 'a.txt',
+            mimetype: 'text/plain',
+            isDirectory: false,
+          },
+        ]);
+      });
+
+      it('honors a custom (vault-configured) timeout', async () => {
+        vi.useFakeTimers();
+        attachFilesystem({ requestInputStream: vi.fn() });
+
+        const promise = session.listDirectory('/', 60000);
+        const assertion = expect(promise).rejects.toThrow('No data received for 60s');
+        // Still pending at the default 20s mark…
+        await vi.advanceTimersByTimeAsync(20000);
+        await vi.advanceTimersByTimeAsync(40000);
         await assertion;
       });
     });
@@ -698,9 +740,7 @@ describe('GuacamoleSession', () => {
         attachFilesystem({ requestInputStream: vi.fn() });
 
         const promise = session.downloadFile(entry);
-        const assertion = expect(promise).rejects.toThrow(
-          'Timed out waiting for the file to download',
-        );
+        const assertion = expect(promise).rejects.toThrow('No data received for 20s');
         await vi.advanceTimersByTimeAsync(FILE_TRANSFER_TIMEOUT_MS);
         await assertion;
       });
@@ -756,15 +796,56 @@ describe('GuacamoleSession', () => {
         await expect(promise).rejects.toThrow('disk full');
       });
 
+      it('rejects immediately with the remote message when guacd acks an error (e.g. permission denied)', async () => {
+        // Regression: an upload into a folder the remote user cannot write to
+        // is refused by guacd via an error-status ack ("SFTP: Open failed",
+        // code 0x0303). Ignoring it (the old behavior) surfaced only as a
+        // meaningless timeout after 20 silent seconds.
+        attachFilesystem();
+        const file = new File(['x'], 'note.txt');
+        const promise = session.uploadFile('/denied', file);
+        const writer = blobWriterInstances[blobWriterInstances.length - 1];
+        writer.onack?.({
+          code: 0x0303,
+          message: 'SFTP: Open failed',
+          isError: () => true,
+        });
+        await expect(promise).rejects.toMatchObject({
+          name: 'FileTransferError',
+          code: 'remote',
+          message: 'SFTP: Open failed',
+          statusCode: 0x0303,
+        });
+        // The failed stream must be terminated (like the reference client does),
+        // or guacd's deferred close gets acked to whichever upload reuses the index.
+        expect(writer.sendEnd).toHaveBeenCalled();
+        // Trailing stale acks after settlement must not throw or double-reject.
+        writer.onack?.({ code: 0x0200, message: 'SFTP: Close failed', isError: () => true });
+      });
+
+      it('treats successful acks as activity, not errors', async () => {
+        vi.useFakeTimers();
+        attachFilesystem();
+        const file = new File(['x'], 'note.txt');
+        const promise = session.uploadFile('/docs', file);
+        const writer = blobWriterInstances[blobWriterInstances.length - 1];
+        // Successful chunk acks every 15s keep the 20s inactivity guard armed…
+        for (let i = 0; i < 4; i++) {
+          await vi.advanceTimersByTimeAsync(15000);
+          writer.onack?.({ code: 0, message: 'OK', isError: () => false });
+        }
+        // …and the upload still completes normally.
+        writer.oncomplete?.(file);
+        await expect(promise).resolves.toBeUndefined();
+      });
+
       it('rejects with a timeout error when guacd never acks', async () => {
         vi.useFakeTimers();
         attachFilesystem();
         const file = new File(['x'], 'note.txt');
 
         const promise = session.uploadFile('/docs', file);
-        const assertion = expect(promise).rejects.toThrow(
-          'Timed out waiting for the upload to complete',
-        );
+        const assertion = expect(promise).rejects.toThrow('No data received for 20s');
         await vi.advanceTimersByTimeAsync(FILE_TRANSFER_TIMEOUT_MS);
         await assertion;
       });

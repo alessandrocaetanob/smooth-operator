@@ -33,6 +33,8 @@ export interface Connection {
   fileTransferPolicyOverride?: FileTransferPolicy | null;
   /** Resolved policy (override, else vault default, else Disabled) — read-only, computed server-side. */
   effectiveFileTransferPolicy?: FileTransferPolicy;
+  /** Vault-configured inactivity timeout (seconds) for transfers; null = app default. Read-only. */
+  effectiveFileTransferTimeoutSeconds?: number | null;
 }
 
 export interface CreateConnectionPayload {
@@ -174,6 +176,12 @@ export class ConnectionsService {
         'effectiveFileTransferPolicy',
         'EffectiveFileTransferPolicy',
       ),
+      effectiveFileTransferTimeoutSeconds:
+        pick<number>(
+          raw,
+          'effectiveFileTransferTimeoutSeconds',
+          'EffectiveFileTransferTimeoutSeconds',
+        ) ?? null,
     };
   }
 }

@@ -25,6 +25,8 @@ declare module 'guacamole-common-js' {
     class Status {
       code: number;
       message: string;
+      /** True when the code denotes an error (any code above the 0x00FF success range). */
+      isError(): boolean;
     }
 
     class InputStream {

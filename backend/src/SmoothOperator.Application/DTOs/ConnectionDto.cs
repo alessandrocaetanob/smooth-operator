@@ -33,6 +33,9 @@ namespace SmoothOperator.Application.DTOs
         /// <summary>Resolved policy (override, else vault default, else Disabled) — read-only, computed server-side.</summary>
         public FileTransferPolicy EffectiveFileTransferPolicy { get; set; } = FileTransferPolicy.Disabled;
 
+        /// <summary>Vault-configured file-transfer inactivity timeout (seconds); null = app default. Read-only, resolved server-side.</summary>
+        public int? EffectiveFileTransferTimeoutSeconds { get; set; }
+
         // Navigation properties (optional for responses)
         public HostDto? Host { get; set; }
         public ConnectionGroupDto? ConnectionGroup { get; set; }
@@ -100,6 +103,10 @@ namespace SmoothOperator.Application.DTOs
 
         /// <summary>Default in-session file-transfer policy for connections in this vault.</summary>
         public FileTransferPolicy FileTransferPolicy { get; set; } = FileTransferPolicy.Disabled;
+
+        /// <summary>Inactivity timeout (seconds) for file-transfer operations; null = app default.</summary>
+        [Range(5, 600)]
+        public int? FileTransferTimeoutSeconds { get; set; }
     }
 
     public class CreateConnectionGroupDto
@@ -118,6 +125,10 @@ namespace SmoothOperator.Application.DTOs
 
         /// <summary>Default in-session file-transfer policy for connections in this vault.</summary>
         public FileTransferPolicy FileTransferPolicy { get; set; } = FileTransferPolicy.Disabled;
+
+        /// <summary>Inactivity timeout (seconds) for file-transfer operations; null = app default.</summary>
+        [Range(5, 600)]
+        public int? FileTransferTimeoutSeconds { get; set; }
     }
 
     public class CredentialDto

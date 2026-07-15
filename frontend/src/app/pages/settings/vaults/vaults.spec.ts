@@ -461,6 +461,54 @@ describe('SettingsVaults', () => {
       expect(component.fileTransferPolicyForm()).toBe('Disabled');
     });
 
+    it('openFileTransfer hydrates the timeout form ("" when unset)', () => {
+      component.openFileTransfer({ id: 'v1', name: 'prod' } as Vault);
+      expect(component.fileTransferTimeoutForm()).toBe('');
+
+      component.openFileTransfer({
+        id: 'v1',
+        name: 'prod',
+        fileTransferTimeoutSeconds: 45,
+      } as Vault);
+      expect(component.fileTransferTimeoutForm()).toBe('45');
+    });
+
+    it('saveFileTransfer sends the timeout, clamped to the 5-600 range', () => {
+      component.openFileTransfer(fileTransferVault);
+      component.fileTransferTimeoutForm.set('45');
+      component.saveFileTransfer();
+      expect(vaultsSvc.update).toHaveBeenCalledWith(
+        'v1',
+        expect.objectContaining({ fileTransferTimeoutSeconds: 45 }),
+      );
+
+      component.openFileTransfer(fileTransferVault);
+      component.fileTransferTimeoutForm.set('2');
+      component.saveFileTransfer();
+      expect(vaultsSvc.update).toHaveBeenLastCalledWith(
+        'v1',
+        expect.objectContaining({ fileTransferTimeoutSeconds: 5 }),
+      );
+
+      component.openFileTransfer(fileTransferVault);
+      component.fileTransferTimeoutForm.set('9999');
+      component.saveFileTransfer();
+      expect(vaultsSvc.update).toHaveBeenLastCalledWith(
+        'v1',
+        expect.objectContaining({ fileTransferTimeoutSeconds: 600 }),
+      );
+    });
+
+    it('saveFileTransfer sends null (app default) for an empty timeout', () => {
+      component.openFileTransfer(fileTransferVault);
+      component.fileTransferTimeoutForm.set('');
+      component.saveFileTransfer();
+      expect(vaultsSvc.update).toHaveBeenCalledWith(
+        'v1',
+        expect.objectContaining({ fileTransferTimeoutSeconds: null }),
+      );
+    });
+
     it('closeFileTransfer clears modal state and busy flag', () => {
       component.openFileTransfer(fileTransferVault);
       component.fileTransferBusy.set(true);

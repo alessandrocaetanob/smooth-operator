@@ -74,7 +74,7 @@ Click the trash icon. Active sessions using this connection are not forcibly ter
 
 SSH and RDP connections support in-session file transfer — SFTP for SSH, drive redirect for RDP. It is **disabled by default** and governed by a policy with four states: disabled, download-only, upload-only, or both.
 
-- Set the default policy for every connection in a vault from **Settings → Vaults**, using the file-transfer icon on the vault row.
+- Set the default policy for every connection in a vault from **Settings → Vaults**, using the file-transfer icon on the vault row. The same dialog also configures the **transfer inactivity timeout** (5–600 seconds, default 20): a transfer fails with a visible error when no data flows for that long — active transfers of any size are never cut off.
 - Override the policy for an individual connection in the connection's edit form, under **File transfer**. Leave it set to **Inherit from vault** to use the vault default.
 
 When the effective policy is anything other than disabled, a file-browser button appears in the active session's toolbar. It opens an SFTP-style side panel where you can browse the remote filesystem, download files, and upload files — via the upload button or by dragging and dropping them onto the panel. A transfer queue at the bottom of the panel tracks the progress of each upload and download. Upload and download controls are only shown when the policy allows that direction. Every completed transfer is recorded in the [audit log](./audit-logs) with the file name, size, direction, user, and connection, and can trigger a [webhook](./webhooks).

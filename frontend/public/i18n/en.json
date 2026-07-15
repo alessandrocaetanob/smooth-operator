@@ -437,7 +437,14 @@
         "transfers": "Transfers",
         "clearCompleted": "Clear completed",
         "kindFolder": "Folder",
-        "kindFile": "File"
+        "kindFile": "File",
+        "errors": {
+          "timeout": "No data received for {{seconds}} seconds — the transfer looks stalled. Check the connection to the remote server.",
+          "noFilesystem": "No remote file system is available in this session.",
+          "notDirectory": "This item is not a folder.",
+          "permissionDenied": "Permission denied by the remote server — your user cannot access this file or folder.",
+          "remote": "The remote server rejected the transfer: {{detail}}"
+        }
       },
       "terminalTheme": {
         "title": "Session Terminal Theme",
@@ -1665,7 +1672,10 @@
         "policyLabel": "Policy",
         "hint": "Governs SFTP for SSH and drive redirect for RDP. Disabled by default.",
         "save": "Save",
-        "saving": "Saving…"
+        "saving": "Saving…",
+        "timeoutLabel": "Transfer inactivity timeout (seconds)",
+        "timeoutPlaceholder": "Default (20)",
+        "timeoutHint": "A transfer fails when no data flows for this long. Leave empty for the default of 20 seconds. Range: 5–600."
       },
       "confirmDelete": {
         "title": "Delete vault",

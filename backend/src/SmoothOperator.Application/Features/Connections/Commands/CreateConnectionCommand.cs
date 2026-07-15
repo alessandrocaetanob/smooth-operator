@@ -74,6 +74,7 @@ namespace SmoothOperator.Application.Features.Connections.Commands
                 RecordingIncludeKeys = connection.RecordingIncludeKeys,
                 FileTransferPolicyOverride = connection.FileTransferPolicyOverride,
                 EffectiveFileTransferPolicy = FileTransferPolicyResolver.Resolve(connection),
+                EffectiveFileTransferTimeoutSeconds = connection.ConnectionGroup?.FileTransferTimeoutSeconds,
                 Tags = connection.Tags.Select(t => t.Tag).ToList()
             };
         }

@@ -47,6 +47,8 @@ export class SettingsVaults implements OnInit {
   // File-transfer configuration modal — one open at a time.
   readonly fileTransferModalVault = signal<Vault | null>(null);
   readonly fileTransferPolicyForm = signal<FileTransferPolicy>('Disabled');
+  /** Inactivity timeout in seconds as string ('' = app default of 20 s). */
+  readonly fileTransferTimeoutForm = signal('');
   readonly fileTransferBusy = signal(false);
   // Performance optimization: O(1) lookup sets for template bindings inside loops to prevent O(N*M) change detection cycles
   readonly selectedUserIdSet = computed(() => new Set(this.selectedUserIds()));
@@ -155,6 +157,7 @@ export class SettingsVaults implements OnInit {
         recordingIncludeKeys: vault.recordingIncludeKeys ?? false,
         recordingRetentionDays: vault.recordingRetentionDays ?? null,
         fileTransferPolicy: vault.fileTransferPolicy ?? 'Disabled',
+        fileTransferTimeoutSeconds: vault.fileTransferTimeoutSeconds ?? null,
       })
       .subscribe({
         next: () => {
@@ -253,8 +256,9 @@ export class SettingsVaults implements OnInit {
         recordingEnabled: this.recordingEnabledForm(),
         recordingIncludeKeys: this.recordingIncludeKeysForm(),
         recordingRetentionDays: this.recordingRetentionDaysForm(),
-        // Preserve the file-transfer policy — this modal doesn't expose it.
+        // Preserve the file-transfer config — this modal doesn't expose it.
         fileTransferPolicy: vault.fileTransferPolicy ?? 'Disabled',
+        fileTransferTimeoutSeconds: vault.fileTransferTimeoutSeconds ?? null,
       })
       .subscribe({
         next: () => {
@@ -281,6 +285,9 @@ export class SettingsVaults implements OnInit {
   openFileTransfer(vault: Vault): void {
     this.fileTransferModalVault.set(vault);
     this.fileTransferPolicyForm.set(vault.fileTransferPolicy ?? 'Disabled');
+    this.fileTransferTimeoutForm.set(
+      vault.fileTransferTimeoutSeconds != null ? String(vault.fileTransferTimeoutSeconds) : '',
+    );
   }
 
   closeFileTransfer(): void {
@@ -302,6 +309,7 @@ export class SettingsVaults implements OnInit {
         recordingIncludeKeys: vault.recordingIncludeKeys ?? false,
         recordingRetentionDays: vault.recordingRetentionDays ?? null,
         fileTransferPolicy: this.fileTransferPolicyForm(),
+        fileTransferTimeoutSeconds: this.parseTimeoutSeconds(this.fileTransferTimeoutForm()),
       })
       .subscribe({
         next: () => {
@@ -323,6 +331,13 @@ export class SettingsVaults implements OnInit {
           this.toastSvc.error(msg);
         },
       });
+  }
+
+  /** '' or non-numeric = null (app default); otherwise clamped to the backend's 5-600 s range. */
+  private parseTimeoutSeconds(value: string): number | null {
+    const parsed = Number(value.trim());
+    if (!value.trim() || !Number.isFinite(parsed)) return null;
+    return Math.min(600, Math.max(5, Math.round(parsed)));
   }
 
   toggleUser(id: string, checked: boolean): void {

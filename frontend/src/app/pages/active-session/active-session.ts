@@ -19,11 +19,14 @@ import { map } from 'rxjs/operators';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   GuacamoleSessionManagerService,
   GuacamoleSession,
   GuacFileEntry,
+  FileTransferError,
+  FILE_TRANSFER_TIMEOUT_MS,
+  GUAC_STATUS_FORBIDDEN,
   Keysyms,
   ZOOM_MIN,
   ZOOM_MAX,
@@ -147,6 +150,7 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly sessionManager = inject(GuacamoleSessionManagerService);
   private readonly connections = inject(ConnectionsService);
+  private readonly translate = inject(TranslateService);
 
   @ViewChild('display', { static: false }) displayRef?: ElementRef<HTMLDivElement>;
   @ViewChild('hiddenKbd', { static: false }) hiddenKbdRef?: ElementRef<HTMLInputElement>;
@@ -255,6 +259,11 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
   readonly fileTransferAvailable = computed(() => this.session()?.fileTransferAvailable() ?? false);
   /** Name guacd gave the filesystem — shown in the SFTP panel header. */
   readonly fileSystemName = computed(() => this.session()?.fileSystemName() ?? null);
+  /** Inactivity timeout for transfers: vault-configured value, else app default. */
+  readonly fileTransferTimeoutMs = computed(() => {
+    const seconds = this.connection()?.effectiveFileTransferTimeoutSeconds;
+    return seconds && seconds > 0 ? seconds * 1000 : FILE_TRANSFER_TIMEOUT_MS;
+  });
   readonly fileTransferBreadcrumbs = computed(() => {
     const segments = this.fileTransferPath().split('/').filter(Boolean);
     const crumbs: { label: string; path: string }[] = [{ label: '/', path: '/' }];
@@ -485,7 +494,7 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
     this.fileTransferLoading.set(true);
     this.fileTransferError.set(null);
     session
-      .listDirectory(path)
+      .listDirectory(path, this.fileTransferTimeoutMs())
       .then((entries) => {
         this.fileTransferPath.set(path);
         this.fileTransferEntries.set(entries);
@@ -511,7 +520,7 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
     if (!session) return;
     const id = this.enqueueTransfer(entry.displayName, 'download');
     session
-      .downloadFile(entry)
+      .downloadFile(entry, this.fileTransferTimeoutMs())
       .then(() => this.updateTransfer(id, { status: 'done' }))
       .catch((err: unknown) =>
         this.updateTransfer(id, { status: 'error', error: this.describeFileTransferError(err) }),
@@ -547,6 +556,10 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
     this.sftpQueue.update((queue) => queue.filter((t) => t.status === 'active'));
   }
 
+  /** Pause after a failed upload before starting the next one, letting guacd's
+   * trailing acks for the failed stream drain before its index can be reused. */
+  private static readonly UPLOAD_FAILURE_DRAIN_MS = 1000;
+
   /**
    * Uploads sequentially into the directory shown when the batch started (so
    * navigating mid-upload doesn't scatter files), then refreshes the listing
@@ -561,14 +574,18 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
       const id = this.enqueueTransfer(file.name, 'upload', 0);
       chain = chain
         .then(() =>
-          session.uploadFile(targetPath, file, (fraction) =>
-            this.updateTransfer(id, { progress: fraction }),
+          session.uploadFile(
+            targetPath,
+            file,
+            (fraction) => this.updateTransfer(id, { progress: fraction }),
+            this.fileTransferTimeoutMs(),
           ),
         )
         .then(() => this.updateTransfer(id, { status: 'done', progress: 1 }))
-        .catch((err: unknown) =>
-          this.updateTransfer(id, { status: 'error', error: this.describeFileTransferError(err) }),
-        );
+        .catch((err: unknown) => {
+          this.updateTransfer(id, { status: 'error', error: this.describeFileTransferError(err) });
+          return new Promise<void>((res) => setTimeout(res, ActiveSession.UPLOAD_FAILURE_DRAIN_MS));
+        });
     }
     void chain.then(() => {
       if (this.showSftpPanel() && this.fileTransferPath() === targetPath) {
@@ -593,7 +610,28 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
     this.sftpQueue.update((queue) => queue.map((t) => (t.id === id ? { ...t, ...patch } : t)));
   }
 
+  /** Maps a transfer failure to a translated, user-actionable message. */
   private describeFileTransferError(err: unknown): string {
+    const t = 'pages.activeSession.fileTransfer.errors';
+    if (err instanceof FileTransferError) {
+      switch (err.code) {
+        case 'timeout':
+          return this.translate.instant(`${t}.timeout`, {
+            seconds: Math.round(this.fileTransferTimeoutMs() / 1000),
+          });
+        case 'no_filesystem':
+          return this.translate.instant(`${t}.noFilesystem`);
+        case 'not_directory':
+          return this.translate.instant(`${t}.notDirectory`);
+        case 'remote':
+          if (err.statusCode === GUAC_STATUS_FORBIDDEN) {
+            return this.translate.instant(`${t}.permissionDenied`);
+          }
+          return this.translate.instant(`${t}.remote`, { detail: err.message });
+        case 'parse':
+          return this.translate.instant(`${t}.remote`, { detail: err.message });
+      }
+    }
     return err instanceof Error ? err.message : 'Unknown error';
   }
 

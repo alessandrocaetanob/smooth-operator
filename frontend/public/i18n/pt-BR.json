@@ -437,7 +437,14 @@
         "transfers": "Transferências",
         "clearCompleted": "Limpar concluídas",
         "kindFolder": "Pasta",
-        "kindFile": "Arquivo"
+        "kindFile": "Arquivo",
+        "errors": {
+          "timeout": "Nenhum dado recebido por {{seconds}} segundos — a transferência parece travada. Verifique a conexão com o servidor remoto.",
+          "noFilesystem": "Nenhum sistema de arquivos remoto está disponível nesta sessão.",
+          "notDirectory": "Este item não é uma pasta.",
+          "permissionDenied": "Permissão negada pelo servidor remoto — seu usuário não pode acessar este arquivo ou pasta.",
+          "remote": "O servidor remoto rejeitou a transferência: {{detail}}"
+        }
       },
       "terminalTheme": {
         "title": "Tema do Terminal da Sessão",
@@ -1665,7 +1672,10 @@
         "policyLabel": "Política",
         "hint": "Controla SFTP para SSH e drive redirect para RDP. Desativado por padrão.",
         "save": "Salvar",
-        "saving": "Salvando…"
+        "saving": "Salvando…",
+        "timeoutLabel": "Timeout de inatividade da transferência (segundos)",
+        "timeoutPlaceholder": "Padrão (20)",
+        "timeoutHint": "A transferência falha quando nenhum dado trafega por esse tempo. Deixe vazio para o padrão de 20 segundos. Intervalo: 5–600."
       },
       "confirmDelete": {
         "title": "Excluir cofre",

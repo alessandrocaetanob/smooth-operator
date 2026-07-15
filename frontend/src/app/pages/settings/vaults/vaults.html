@@ -579,6 +579,26 @@
             {{ 'pages.settingsVaults.fileTransferModal.hint' | translate }}
           </p>
         </div>
+
+        <div>
+          <label class="settings-label" for="fileTransferTimeout">{{
+            'pages.settingsVaults.fileTransferModal.timeoutLabel' | translate
+          }}</label>
+          <input
+            id="fileTransferTimeout"
+            type="number"
+            min="5"
+            max="600"
+            [ngModel]="fileTransferTimeoutForm()"
+            (ngModelChange)="fileTransferTimeoutForm.set($event)"
+            name="fileTransferTimeout"
+            class="w-full input-field"
+            [placeholder]="'pages.settingsVaults.fileTransferModal.timeoutPlaceholder' | translate"
+          />
+          <p class="text-xs text-on-surface-variant mt-1">
+            {{ 'pages.settingsVaults.fileTransferModal.timeoutHint' | translate }}
+          </p>
+        </div>
       </div>
 
       <div class="mt-5 flex justify-end gap-2">

@@ -121,4 +121,70 @@ public class ConnectionGroupsControllerIntegrationTests
         Assert.Contains(vaults, v => v.Id == vaultA);
         Assert.Contains(vaults, v => v.Id == vaultB);
     }
+
+    [Fact]
+    public async Task FileTransferTimeout_RoundTrips_Validates_AndFlowsToConnections()
+    {
+        var adminId = Guid.NewGuid();
+        var hostId = Guid.NewGuid();
+
+        await using var factory = new TestWebApplicationFactory(db =>
+        {
+            var admin = new User { Id = adminId, Email = "a@x", Name = "a", IsActive = true, CreatedAt = DateTime.UtcNow };
+            AttachRoles(db, admin, AppRoles.Admin);
+            db.Users.Add(admin);
+            db.Hosts.Add(new Host { Id = hostId, Name = "h", Address = "10.0.0.1" });
+        });
+
+        var client = AsUser(factory, adminId, AppRoles.Admin);
+
+        // Create with a timeout + policy
+        var createRes = await client.PostAsJsonAsync("/api/vaults", new CreateConnectionGroupDto
+        {
+            Name = "Timeout Vault",
+            FileTransferPolicy = Domain.Enums.FileTransferPolicy.Both,
+            FileTransferTimeoutSeconds = 45,
+        });
+        Assert.Equal(HttpStatusCode.Created, createRes.StatusCode);
+        var vault = await createRes.Content.ReadFromJsonAsync<ConnectionGroupDto>(TestJson.Options);
+        Assert.NotNull(vault);
+        Assert.Equal(45, vault.FileTransferTimeoutSeconds);
+
+        // GET round-trip
+        var listRes = await client.GetFromJsonAsync<List<ConnectionGroupDto>>("/api/vaults", TestJson.Options);
+        Assert.Equal(45, listRes!.Single(v => v.Id == vault.Id).FileTransferTimeoutSeconds);
+
+        // Out-of-range values are rejected by validation (Range 5-600)
+        var badRes = await client.PostAsJsonAsync("/api/vaults", new
+        {
+            name = "Bad Vault",
+            fileTransferTimeoutSeconds = 3,
+        });
+        Assert.Equal(HttpStatusCode.BadRequest, badRes.StatusCode);
+
+        // The vault's timeout surfaces as the effective value on its connections
+        var connRes = await client.PostAsJsonAsync("/api/connections", new CreateConnectionDto
+        {
+            Name = "ssh-conn",
+            Protocol = "ssh",
+            HostId = hostId,
+            ConnectionGroupId = vault.Id,
+        });
+        Assert.Equal(HttpStatusCode.Created, connRes.StatusCode);
+
+        var connections = await client.GetFromJsonAsync<List<ConnectionDto>>("/api/connections", TestJson.Options);
+        var conn = connections!.Single(c => c.Name == "ssh-conn");
+        Assert.Equal(45, conn.EffectiveFileTransferTimeoutSeconds);
+
+        // Clearing back to null (app default)
+        var clearRes = await client.PutAsJsonAsync($"/api/vaults/{vault.Id}", new CreateConnectionGroupDto
+        {
+            Name = "Timeout Vault",
+            FileTransferPolicy = Domain.Enums.FileTransferPolicy.Both,
+            FileTransferTimeoutSeconds = null,
+        });
+        Assert.Equal(HttpStatusCode.NoContent, clearRes.StatusCode);
+        var after = await client.GetFromJsonAsync<List<ConnectionGroupDto>>("/api/vaults", TestJson.Options);
+        Assert.Null(after!.Single(v => v.Id == vault.Id).FileTransferTimeoutSeconds);
+    }
 }
