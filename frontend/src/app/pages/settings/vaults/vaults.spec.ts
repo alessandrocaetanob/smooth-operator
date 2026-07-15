@@ -83,6 +83,7 @@ describe('SettingsVaults', () => {
             loadAssignmentsFailed: 'Failed to load assignments.',
             assignmentsSaveFailed: 'Failed to save assignments.',
             recordingSaveFailed: 'Failed to save recording settings.',
+            fileTransferSaveFailed: 'Failed to save file transfer settings.',
           },
           toasts: {
             created: 'Vault "{{name}}" created.',
@@ -90,6 +91,7 @@ describe('SettingsVaults', () => {
             deleted: 'Vault "{{name}}" deleted.',
             recordingSaved: 'Recording settings saved for "{{name}}".',
             assignmentsUpdated: 'Assignments updated for "{{name}}".',
+            fileTransferSaved: 'File transfer settings saved for "{{name}}".',
           },
           confirmDelete: {
             title: 'Delete vault',
@@ -438,6 +440,83 @@ describe('SettingsVaults', () => {
       component.saveRecording();
 
       expect(component.errorMessage()).toBe('Failed to save recording settings.');
+    });
+  });
+
+  describe('file transfer modal', () => {
+    const fileTransferVault: Vault = {
+      id: 'v1',
+      name: 'prod',
+      fileTransferPolicy: 'Both',
+    } as Vault;
+
+    it('openFileTransfer hydrates the form signal from the vault', () => {
+      component.openFileTransfer(fileTransferVault);
+      expect(component.fileTransferModalVault()).toBe(fileTransferVault);
+      expect(component.fileTransferPolicyForm()).toBe('Both');
+    });
+
+    it('openFileTransfer defaults an unset policy to Disabled', () => {
+      component.openFileTransfer({ id: 'v1', name: 'prod' } as Vault);
+      expect(component.fileTransferPolicyForm()).toBe('Disabled');
+    });
+
+    it('closeFileTransfer clears modal state and busy flag', () => {
+      component.openFileTransfer(fileTransferVault);
+      component.fileTransferBusy.set(true);
+      component.closeFileTransfer();
+      expect(component.fileTransferModalVault()).toBeNull();
+      expect(component.fileTransferBusy()).toBe(false);
+    });
+
+    it('saveFileTransfer no-ops without a modal', () => {
+      component.saveFileTransfer();
+      expect(vaultsSvc.update).not.toHaveBeenCalled();
+    });
+
+    it('saveFileTransfer no-ops when busy', () => {
+      component.openFileTransfer(fileTransferVault);
+      component.fileTransferBusy.set(true);
+      component.saveFileTransfer();
+      expect(vaultsSvc.update).not.toHaveBeenCalled();
+    });
+
+    it('saveFileTransfer persists the policy and closes on success', () => {
+      component.openFileTransfer(fileTransferVault);
+      component.fileTransferPolicyForm.set('DownloadOnly');
+
+      component.saveFileTransfer();
+
+      expect(vaultsSvc.update).toHaveBeenCalledWith(
+        'v1',
+        expect.objectContaining({
+          name: 'prod',
+          fileTransferPolicy: 'DownloadOnly',
+        }),
+      );
+      expect(toast.success).toHaveBeenCalled();
+      expect(component.fileTransferModalVault()).toBeNull();
+      expect(component.fileTransferBusy()).toBe(false);
+    });
+
+    it('saveFileTransfer surfaces server error', () => {
+      vaultsSvc.update.mockReturnValueOnce(throwError(() => ({ message: 'denied' })));
+      component.openFileTransfer(fileTransferVault);
+      component.saveFileTransfer();
+
+      expect(component.errorMessage()).toBe('denied');
+      expect(toast.error).toHaveBeenCalled();
+      // Modal stays open so the admin can retry.
+      expect(component.fileTransferModalVault()).toBe(fileTransferVault);
+      expect(component.fileTransferBusy()).toBe(false);
+    });
+
+    it('saveFileTransfer falls back to default error message', () => {
+      vaultsSvc.update.mockReturnValueOnce(throwError(() => ({})));
+      component.openFileTransfer(fileTransferVault);
+      component.saveFileTransfer();
+
+      expect(component.errorMessage()).toBe('Failed to save file transfer settings.');
     });
   });
 });

@@ -3,6 +3,9 @@ import { Injectable, inject, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
 import { pick, pickOr, RawRecord } from './json-utils';
 
+/** Governs in-session file transfer (SFTP for SSH, drive redirect for RDP). */
+export type FileTransferPolicy = 'Disabled' | 'DownloadOnly' | 'UploadOnly' | 'Both';
+
 export interface Vault {
   id: string;
   name: string;
@@ -12,6 +15,7 @@ export interface Vault {
   recordingEnabled?: boolean;
   recordingIncludeKeys?: boolean;
   recordingRetentionDays?: number | null;
+  fileTransferPolicy?: FileTransferPolicy;
 }
 
 export interface SaveVaultPayload {
@@ -20,6 +24,7 @@ export interface SaveVaultPayload {
   recordingEnabled?: boolean;
   recordingIncludeKeys?: boolean;
   recordingRetentionDays?: number | null;
+  fileTransferPolicy?: FileTransferPolicy;
 }
 
 export interface VaultAssignments {
@@ -72,6 +77,12 @@ export class VaultsService {
       recordingIncludeKeys: pickOr(raw, false, 'recordingIncludeKeys', 'RecordingIncludeKeys'),
       recordingRetentionDays:
         pick<number>(raw, 'recordingRetentionDays', 'RecordingRetentionDays') ?? null,
+      fileTransferPolicy: pickOr<FileTransferPolicy>(
+        raw,
+        'Disabled',
+        'fileTransferPolicy',
+        'FileTransferPolicy',
+      ),
     };
   }
 }

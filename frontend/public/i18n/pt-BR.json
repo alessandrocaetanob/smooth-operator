@@ -647,6 +647,16 @@
           "keysInclude": "Incluir teclas digitadas",
           "hint": "A gravação é configurada globalmente e por vault. Use esta opção apenas quando esta conexão precisar ser diferente do padrão do vault."
         },
+        "fileTransfer": {
+          "title": "Transferência de arquivos",
+          "modeLabel": "Política",
+          "inherit": "Herdar do vault",
+          "disabled": "Desabilitada",
+          "downloadOnly": "Somente download",
+          "uploadOnly": "Somente upload",
+          "both": "Upload e download",
+          "hint": "Controla SFTP para SSH e drive redirect para RDP. Use esta opção apenas quando esta conexão precisar ser diferente do padrão do vault."
+        },
         "terminal": {
           "title": "Aparência do Terminal",
           "colorScheme": "Esquema de cores",
@@ -1605,6 +1615,15 @@
         "enabledLabel": "Gravação ativada",
         "disabledLabel": "Gravação"
       },
+      "fileTransfer": {
+        "tooltip": "Política de transferência de arquivos para as conexões deste cofre",
+        "policyLabel": {
+          "Disabled": "Transferência desativada",
+          "DownloadOnly": "Somente download",
+          "UploadOnly": "Somente upload",
+          "Both": "Upload e download"
+        }
+      },
       "assignModal": {
         "title": "Atribuir Acesso — {{name}}",
         "subtitle": "Selecione os usuários e grupos que podem acessar este cofre.",
@@ -1633,6 +1652,14 @@
         "save": "Salvar",
         "saving": "Salvando…"
       },
+      "fileTransferModal": {
+        "title": "Transferência de arquivos: {{name}}",
+        "subtitle": "Padrão para todas as conexões deste cofre. Cada conexão pode substituir essa configuração.",
+        "policyLabel": "Política",
+        "hint": "Controla SFTP para SSH e drive redirect para RDP. Desativado por padrão.",
+        "save": "Salvar",
+        "saving": "Salvando…"
+      },
       "confirmDelete": {
         "title": "Excluir cofre",
         "message": "Excluir o cofre \"{{name}}\"? Todas as conexões dentro dele ficarão sem vínculo. Esta ação não pode ser desfeita."
@@ -1642,7 +1669,8 @@
         "renamed": "Cofre renomeado para \"{{name}}\".",
         "deleted": "Cofre \"{{name}}\" excluído.",
         "recordingSaved": "Configurações de gravação salvas para \"{{name}}\".",
-        "assignmentsUpdated": "Atribuições atualizadas para \"{{name}}\"."
+        "assignmentsUpdated": "Atribuições atualizadas para \"{{name}}\".",
+        "fileTransferSaved": "Configurações de transferência de arquivos salvas para \"{{name}}\"."
       },
       "errors": {
         "loadFailed": "Falha ao carregar os cofres.",
@@ -1652,7 +1680,8 @@
         "deleteFailed": "Falha ao excluir o cofre.",
         "loadAssignmentsFailed": "Falha ao carregar as atribuições.",
         "assignmentsSaveFailed": "Falha ao salvar as atribuições.",
-        "recordingSaveFailed": "Falha ao salvar as configurações de gravação."
+        "recordingSaveFailed": "Falha ao salvar as configurações de gravação.",
+        "fileTransferSaveFailed": "Falha ao salvar as configurações de transferência de arquivos."
       }
     },
     "settingsWebhooks": {

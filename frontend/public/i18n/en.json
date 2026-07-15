@@ -647,6 +647,16 @@
           "keysInclude": "Include keystrokes",
           "hint": "Recording is configured globally and per-vault. Use this only when this connection needs to differ from its vault default."
         },
+        "fileTransfer": {
+          "title": "File transfer",
+          "modeLabel": "Policy",
+          "inherit": "Inherit from vault",
+          "disabled": "Disabled",
+          "downloadOnly": "Download only",
+          "uploadOnly": "Upload only",
+          "both": "Upload and download",
+          "hint": "Governs SFTP for SSH and drive redirect for RDP. Use this only when this connection needs to differ from its vault default."
+        },
         "terminal": {
           "title": "Terminal Appearance",
           "colorScheme": "Color scheme",
@@ -1605,6 +1615,15 @@
         "enabledLabel": "Recording on",
         "disabledLabel": "Recording"
       },
+      "fileTransfer": {
+        "tooltip": "File transfer policy for connections in this vault",
+        "policyLabel": {
+          "Disabled": "File transfer off",
+          "DownloadOnly": "Download only",
+          "UploadOnly": "Upload only",
+          "Both": "Upload and download"
+        }
+      },
       "assignModal": {
         "title": "Assign Access — {{name}}",
         "subtitle": "Select users and groups that can access this vault.",
@@ -1633,6 +1652,14 @@
         "save": "Save",
         "saving": "Saving…"
       },
+      "fileTransferModal": {
+        "title": "File transfer: {{name}}",
+        "subtitle": "Default for every connection in this vault. Each connection can override.",
+        "policyLabel": "Policy",
+        "hint": "Governs SFTP for SSH and drive redirect for RDP. Disabled by default.",
+        "save": "Save",
+        "saving": "Saving…"
+      },
       "confirmDelete": {
         "title": "Delete vault",
         "message": "Delete vault \"{{name}}\"? All connections inside will be unlinked. This cannot be undone."
@@ -1642,7 +1669,8 @@
         "renamed": "Vault renamed to \"{{name}}\".",
         "deleted": "Vault \"{{name}}\" deleted.",
         "recordingSaved": "Recording settings saved for \"{{name}}\".",
-        "assignmentsUpdated": "Assignments updated for \"{{name}}\"."
+        "assignmentsUpdated": "Assignments updated for \"{{name}}\".",
+        "fileTransferSaved": "File transfer settings saved for \"{{name}}\"."
       },
       "errors": {
         "loadFailed": "Failed to load vaults.",
@@ -1652,7 +1680,8 @@
         "deleteFailed": "Failed to delete vault.",
         "loadAssignmentsFailed": "Failed to load assignments.",
         "assignmentsSaveFailed": "Failed to save assignments.",
-        "recordingSaveFailed": "Failed to save recording settings."
+        "recordingSaveFailed": "Failed to save recording settings.",
+        "fileTransferSaveFailed": "Failed to save file transfer settings."
       }
     },
     "settingsWebhooks": {

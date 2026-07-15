@@ -2,7 +2,7 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { Vault, VaultsService } from '../../../services/vaults.service';
+import { FileTransferPolicy, Vault, VaultsService } from '../../../services/vaults.service';
 import { AppUser, UsersService } from '../../../services/users.service';
 import { UserGroup, GroupsService } from '../../../services/groups.service';
 import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
@@ -43,6 +43,11 @@ export class SettingsVaults implements OnInit {
   readonly recordingIncludeKeysForm = signal(false);
   readonly recordingRetentionDaysForm = signal<number | null>(null);
   readonly recordingBusy = signal(false);
+
+  // File-transfer configuration modal — one open at a time.
+  readonly fileTransferModalVault = signal<Vault | null>(null);
+  readonly fileTransferPolicyForm = signal<FileTransferPolicy>('Disabled');
+  readonly fileTransferBusy = signal(false);
   // Performance optimization: O(1) lookup sets for template bindings inside loops to prevent O(N*M) change detection cycles
   readonly selectedUserIdSet = computed(() => new Set(this.selectedUserIds()));
   readonly selectedGroupIdSet = computed(() => new Set(this.selectedGroupIds()));
@@ -145,10 +150,11 @@ export class SettingsVaults implements OnInit {
     this.vaultsSvc
       .update(vault.id, {
         name,
-        // Preserve any existing recording config — the rename row doesn't expose those fields.
+        // Preserve any existing recording/file-transfer config — the rename row doesn't expose those fields.
         recordingEnabled: vault.recordingEnabled ?? false,
         recordingIncludeKeys: vault.recordingIncludeKeys ?? false,
         recordingRetentionDays: vault.recordingRetentionDays ?? null,
+        fileTransferPolicy: vault.fileTransferPolicy ?? 'Disabled',
       })
       .subscribe({
         next: () => {
@@ -247,6 +253,8 @@ export class SettingsVaults implements OnInit {
         recordingEnabled: this.recordingEnabledForm(),
         recordingIncludeKeys: this.recordingIncludeKeysForm(),
         recordingRetentionDays: this.recordingRetentionDaysForm(),
+        // Preserve the file-transfer policy — this modal doesn't expose it.
+        fileTransferPolicy: vault.fileTransferPolicy ?? 'Disabled',
       })
       .subscribe({
         next: () => {
@@ -264,6 +272,53 @@ export class SettingsVaults implements OnInit {
           const msg =
             this.toMessage(err) ||
             this.translate.instant('pages.settingsVaults.errors.recordingSaveFailed');
+          this.errorMessage.set(msg);
+          this.toastSvc.error(msg);
+        },
+      });
+  }
+
+  openFileTransfer(vault: Vault): void {
+    this.fileTransferModalVault.set(vault);
+    this.fileTransferPolicyForm.set(vault.fileTransferPolicy ?? 'Disabled');
+  }
+
+  closeFileTransfer(): void {
+    this.fileTransferModalVault.set(null);
+    this.fileTransferBusy.set(false);
+  }
+
+  saveFileTransfer(): void {
+    const vault = this.fileTransferModalVault();
+    if (!vault || this.fileTransferBusy()) return;
+    this.fileTransferBusy.set(true);
+    this.errorMessage.set(null);
+    this.vaultsSvc
+      .update(vault.id, {
+        name: vault.name,
+        parentGroupId: vault.parentGroupId ?? null,
+        // Preserve the recording config — this modal doesn't expose it.
+        recordingEnabled: vault.recordingEnabled ?? false,
+        recordingIncludeKeys: vault.recordingIncludeKeys ?? false,
+        recordingRetentionDays: vault.recordingRetentionDays ?? null,
+        fileTransferPolicy: this.fileTransferPolicyForm(),
+      })
+      .subscribe({
+        next: () => {
+          this.fileTransferBusy.set(false);
+          this.toastSvc.success(
+            this.translate.instant('pages.settingsVaults.toasts.fileTransferSaved', {
+              name: vault.name,
+            }),
+          );
+          this.closeFileTransfer();
+          this.refresh();
+        },
+        error: (err) => {
+          this.fileTransferBusy.set(false);
+          const msg =
+            this.toMessage(err) ||
+            this.translate.instant('pages.settingsVaults.errors.fileTransferSaveFailed');
           this.errorMessage.set(msg);
           this.toastSvc.error(msg);
         },
