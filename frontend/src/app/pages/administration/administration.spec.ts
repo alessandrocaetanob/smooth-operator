@@ -10,6 +10,7 @@ import { Administration } from './administration';
 import { AppRole, AppUser, UsersService } from '../../services/users.service';
 import { VaultsService } from '../../services/vaults.service';
 import { AuthService } from '../../services/auth.service';
+import { OnboardingTourService } from '../../services/onboarding-tour.service';
 import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog.service';
 import { ToastService } from '../../shared/toast/toast.service';
 
@@ -31,6 +32,7 @@ describe('Administration', () => {
     reload: ReturnType<typeof vi.fn>;
   };
   let auth: { currentUser: ReturnType<typeof signal<{ id: string } | null>> };
+  let tour: OnboardingTourService;
   let confirm: { ask: ReturnType<typeof vi.fn> };
   let toast: { success: ReturnType<typeof vi.fn>; error: ReturnType<typeof vi.fn> };
 
@@ -113,6 +115,7 @@ describe('Administration', () => {
 
     fixture = TestBed.createComponent(Administration);
     component = fixture.componentInstance;
+    tour = TestBed.inject(OnboardingTourService);
   });
 
   afterEach(() => {
@@ -177,12 +180,14 @@ describe('Administration', () => {
     });
 
     it('submitInvite() succeeds and sets result', () => {
+      const completeStep = vi.spyOn(tour, 'completeStep');
       component.inviteEmail.set('bob@x.com');
       component.inviteName.set('bob');
       component.submitInvite();
       expect(users.invite).toHaveBeenCalled();
       expect(component.inviteResult()?.inviteUrl).toBe('https://x/i');
       expect(component.showInvite()).toBe(false);
+      expect(completeStep).toHaveBeenCalledWith('invite');
     });
 
     it('submitInvite() omits empty name', () => {

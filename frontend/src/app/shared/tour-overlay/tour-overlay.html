@@ -1,0 +1,62 @@
+@if (step(); as s) {
+  <div
+    class="fixed bottom-6 right-6 z-40 w-[calc(100vw-3rem)] max-w-sm"
+    role="region"
+    aria-live="polite"
+    [attr.aria-label]="'pages.onboarding.ariaLabel' | translate"
+    @scaleIn
+  >
+    <div class="glass-panel rounded-2xl p-5 shadow-xl">
+      <div class="flex items-start gap-3">
+        <app-mascot [state]="s.mascotState" [isSmall]="true"></app-mascot>
+        <div class="min-w-0 flex-1">
+          <p class="mb-1 text-xs font-medium text-primary">
+            {{
+              'pages.onboarding.stepLabel' | translate: { current: stepNumber(), total: totalSteps }
+            }}
+          </p>
+          <h3 class="text-sm font-semibold text-on-surface">
+            {{ 'pages.onboarding.steps.' + s.id + '.title' | translate }}
+          </h3>
+          <p class="mt-1 text-xs text-on-surface-variant">
+            {{ 'pages.onboarding.steps.' + s.id + '.body' | translate }}
+          </p>
+        </div>
+        <button
+          type="button"
+          (click)="skip()"
+          class="btn-ghost shrink-0 !p-1.5"
+          [attr.aria-label]="'pages.onboarding.skip' | translate"
+        >
+          <span class="material-symbols-outlined text-base" aria-hidden="true">close</span>
+        </button>
+      </div>
+
+      <div class="my-4 flex items-center gap-1.5" aria-hidden="true">
+        @for (dot of dots(); track $index) {
+          <span
+            class="h-1.5 rounded-full transition-all"
+            [class]="dot ? 'w-4 bg-primary' : 'w-1.5 bg-outline-variant/40'"
+          ></span>
+        }
+      </div>
+
+      <div class="flex items-center justify-between gap-2">
+        <button
+          type="button"
+          (click)="back()"
+          [disabled]="isFirst()"
+          class="btn-ghost text-xs disabled:opacity-40"
+        >
+          {{ 'pages.onboarding.back' | translate }}
+        </button>
+        <a [routerLink]="s.route" class="btn-primary text-xs">
+          {{ 'pages.onboarding.steps.' + s.id + '.cta' | translate }}
+        </a>
+        <button type="button" (click)="next()" class="btn-ghost text-xs">
+          {{ (isLast() ? 'pages.onboarding.finish' : 'pages.onboarding.next') | translate }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

@@ -14,13 +14,24 @@ import { catchError, forkJoin, of } from 'rxjs';
 import { Connection, ConnectionsService } from '../../services/connections.service';
 import { AuthService } from '../../services/auth.service';
 import { VaultsService } from '../../services/vaults.service';
+import { OnboardingTourService } from '../../services/onboarding-tour.service';
 import { Mascot } from '../../shared/mascot/mascot';
+import { EmptyStateCard } from '../../shared/empty-state-card/empty-state-card';
+import { SetupProgressCard } from '../../shared/setup-progress-card/setup-progress-card';
 import { listStagger } from '../../shared/animations';
 
 @Component({
   selector: 'app-vault',
   standalone: true,
-  imports: [RouterLink, CommonModule, FormsModule, Mascot, TranslatePipe],
+  imports: [
+    RouterLink,
+    CommonModule,
+    FormsModule,
+    Mascot,
+    TranslatePipe,
+    EmptyStateCard,
+    SetupProgressCard,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './vault.html',
   styleUrl: './vault.css',
@@ -31,6 +42,7 @@ export class Vault implements OnInit {
   private readonly vaultsSvc = inject(VaultsService);
   private readonly router = inject(Router);
   private readonly auth = inject(AuthService);
+  private readonly tour = inject(OnboardingTourService);
   private readonly translate = inject(TranslateService);
 
   readonly list = this.connections.list;
@@ -155,6 +167,7 @@ export class Vault implements OnInit {
   }
 
   connect(id: string): void {
+    this.tour.completeStep('session');
     this.router.navigate(['/connecting', id]);
   }
 

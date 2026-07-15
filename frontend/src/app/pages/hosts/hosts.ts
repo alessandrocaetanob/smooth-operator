@@ -10,9 +10,11 @@ import { FormsModule } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { HostsService, AppHost, CreateHostPayload } from '../../services/hosts.service';
 import { AuthService } from '../../services/auth.service';
+import { OnboardingTourService } from '../../services/onboarding-tour.service';
 import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { Drawer } from '../../shared/drawer/drawer';
+import { EmptyStateCard } from '../../shared/empty-state-card/empty-state-card';
 
 interface FormState {
   id: string | null;
@@ -28,7 +30,7 @@ const EMPTY_FORM: FormState = {
 
 @Component({
   selector: 'app-hosts',
-  imports: [FormsModule, Drawer, TranslatePipe],
+  imports: [FormsModule, Drawer, TranslatePipe, EmptyStateCard],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './hosts.html',
   styleUrl: './hosts.css',
@@ -36,6 +38,7 @@ const EMPTY_FORM: FormState = {
 export class Hosts implements OnInit {
   private readonly svc = inject(HostsService);
   private readonly auth = inject(AuthService);
+  private readonly tour = inject(OnboardingTourService);
   private readonly confirmSvc = inject(ConfirmDialogService);
   private readonly toastSvc = inject(ToastService);
   private readonly translate = inject(TranslateService);
@@ -167,6 +170,7 @@ export class Hosts implements OnInit {
     this.toastSvc.success(
       this.translate.instant(isUpdate ? 'pages.hosts.hostUpdated' : 'pages.hosts.hostSaved'),
     );
+    if (!isUpdate) this.tour.completeStep('host');
     this.closeDrawer();
     this.refresh();
   }

@@ -18,6 +18,7 @@ import { CredentialsService, Credential } from '../../services/credentials.servi
 import { VaultsService, Vault } from '../../services/vaults.service';
 import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog.service';
 import { ToastService } from '../../shared/toast/toast.service';
+import { OnboardingTourService } from '../../services/onboarding-tour.service';
 
 interface ConnectionsStub {
   list: ReturnType<typeof signal<Connection[]>>;
@@ -56,6 +57,7 @@ describe('Connections', () => {
   let vaults: VaultsStub;
   let confirm: ConfirmStub;
   let toast: ToastStub;
+  let tour: OnboardingTourService;
 
   beforeEach(async () => {
     connections = {
@@ -127,6 +129,7 @@ describe('Connections', () => {
 
     fixture = TestBed.createComponent(Connections);
     component = fixture.componentInstance;
+    tour = TestBed.inject(OnboardingTourService);
   });
 
   function seedData() {
@@ -464,6 +467,7 @@ describe('Connections', () => {
     });
 
     it('creates a new connection with existing host', () => {
+      const completeStep = vi.spyOn(tour, 'completeStep');
       component.form.set({
         id: null,
         name: 'new-conn',
@@ -483,9 +487,11 @@ describe('Connections', () => {
       );
       expect(toast.success).toHaveBeenCalledWith('Connection created.');
       expect(component.mascotState()).toBe('success');
+      expect(completeStep).toHaveBeenCalledWith('connection');
     });
 
     it('updates an existing connection', () => {
+      const completeStep = vi.spyOn(tour, 'completeStep');
       component.form.set({
         id: 'c1',
         name: 'web-rdp',
@@ -505,6 +511,7 @@ describe('Connections', () => {
         expect.objectContaining({ name: 'web-rdp', tags: ['prod'] }),
       );
       expect(toast.success).toHaveBeenCalledWith('Connection updated.');
+      expect(completeStep).not.toHaveBeenCalled();
     });
 
     it('saves ssh with terminal appearance merged into settings', () => {

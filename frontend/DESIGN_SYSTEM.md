@@ -268,13 +268,15 @@ Wraps content in a `glass-card` panel with a consistent header. Props: `title?`,
 
 ```html
 <app-empty-state-card
-  icon="hub"
-  title="No connections"
-  message="Add your first connection to get started."
-/>
+  [mascotState]="'idle'"
+  [heading]="'No connections'"
+  [body]="'Add your first connection to get started.'"
+>
+  <button class="btn-primary">New Connection</button>
+</app-empty-state-card>
 ```
 
-Centered empty state with icon, title, and optional message. Display when a list has no items.
+Centered empty state with `app-mascot`, a heading, and an optional body message. Inputs: `mascotState?` (`MascotState`, default `'idle'`), `heading`, `body?`. Project a CTA button/link via `<ng-content>`. Display when a list has no items — reused across the Hosts, Credentials, Connections, and Vault empty states.
 
 ### `app-loading-skeleton`
 

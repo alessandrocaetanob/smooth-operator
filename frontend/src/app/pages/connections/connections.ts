@@ -19,11 +19,13 @@ import {
 import { HostsService, AppHost } from '../../services/hosts.service';
 import { CredentialsService, Credential } from '../../services/credentials.service';
 import { Vault, VaultsService } from '../../services/vaults.service';
+import { OnboardingTourService } from '../../services/onboarding-tour.service';
 import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { Mascot, MascotState } from '../../shared/mascot/mascot';
 import { Drawer } from '../../shared/drawer/drawer';
 import { Spinner } from '../../shared/spinner/spinner';
+import { EmptyStateCard } from '../../shared/empty-state-card/empty-state-card';
 
 interface SearchableConnection extends Connection {
   _searchIndex: string;
@@ -118,7 +120,7 @@ const TAG_PALETTES = [
 
 @Component({
   selector: 'app-connections',
-  imports: [FormsModule, NgClass, Mascot, Drawer, Spinner, TranslatePipe],
+  imports: [FormsModule, NgClass, Mascot, Drawer, Spinner, TranslatePipe, EmptyStateCard],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './connections.html',
   styleUrl: './connections.css',
@@ -128,6 +130,7 @@ export class Connections implements OnInit {
   private readonly hostsSvc = inject(HostsService);
   private readonly credentialsSvc = inject(CredentialsService);
   private readonly vaultsSvc = inject(VaultsService);
+  private readonly tour = inject(OnboardingTourService);
   private readonly confirmSvc = inject(ConfirmDialogService);
   private readonly toastSvc = inject(ToastService);
   private readonly translate = inject(TranslateService);
@@ -418,6 +421,7 @@ export class Connections implements OnInit {
               f.id ? 'pages.connections.toasts.updated' : 'pages.connections.toasts.created',
             ),
           );
+          if (!f.id) this.tour.completeStep('connection');
           setTimeout(() => this.closeDrawer(), 800);
           this.refresh();
         },

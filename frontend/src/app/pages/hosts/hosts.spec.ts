@@ -9,6 +9,7 @@ import { of, throwError } from 'rxjs';
 import { Hosts } from './hosts';
 import { HostsService, AppHost } from '../../services/hosts.service';
 import { AuthService } from '../../services/auth.service';
+import { OnboardingTourService } from '../../services/onboarding-tour.service';
 import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog.service';
 import { ToastService } from '../../shared/toast/toast.service';
 
@@ -22,7 +23,11 @@ describe('Hosts', () => {
     update: ReturnType<typeof vi.fn>;
     remove: ReturnType<typeof vi.fn>;
   };
-  let auth: { canManageConnections: ReturnType<typeof signal<boolean>> };
+  let auth: {
+    canManageConnections: ReturnType<typeof signal<boolean>>;
+    currentUser: ReturnType<typeof signal<{ id: string } | null>>;
+  };
+  let tour: OnboardingTourService;
   let confirm: { ask: ReturnType<typeof vi.fn> };
   let toast: { success: ReturnType<typeof vi.fn>; error: ReturnType<typeof vi.fn> };
 
@@ -34,7 +39,7 @@ describe('Hosts', () => {
       update: vi.fn(() => of(undefined)),
       remove: vi.fn(() => of(undefined)),
     };
-    auth = { canManageConnections: signal(true) };
+    auth = { canManageConnections: signal(true), currentUser: signal(null) };
     confirm = { ask: vi.fn() };
     toast = { success: vi.fn(), error: vi.fn() };
 
@@ -77,6 +82,7 @@ describe('Hosts', () => {
 
     fixture = TestBed.createComponent(Hosts);
     component = fixture.componentInstance;
+    tour = TestBed.inject(OnboardingTourService);
   });
 
   const h1: AppHost = { id: 'h1', name: 'web', address: '10.0.0.1' };
@@ -172,17 +178,21 @@ describe('Hosts', () => {
     });
 
     it('creates a new host', () => {
+      const completeStep = vi.spyOn(tour, 'completeStep');
       component.form.set({ id: null, name: 'web', address: '10.0.0.1' });
       component.save();
       expect(svc.create).toHaveBeenCalledWith({ name: 'web', address: '10.0.0.1' });
       expect(toast.success).toHaveBeenCalledWith('Host saved.');
+      expect(completeStep).toHaveBeenCalledWith('host');
     });
 
     it('updates an existing host', () => {
+      const completeStep = vi.spyOn(tour, 'completeStep');
       component.form.set({ id: 'h1', name: 'web', address: '10.0.0.1' });
       component.save();
       expect(svc.update).toHaveBeenCalledWith('h1', { name: 'web', address: '10.0.0.1' });
       expect(toast.success).toHaveBeenCalledWith('Host updated.');
+      expect(completeStep).not.toHaveBeenCalled();
     });
 
     it('surfaces error on create failure', () => {

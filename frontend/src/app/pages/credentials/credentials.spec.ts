@@ -10,12 +10,14 @@ import { Credentials } from './credentials';
 import { Credential, CredentialsService } from '../../services/credentials.service';
 import { SecretProvider, SecretProvidersService } from '../../services/secret-providers.service';
 import { AuthService } from '../../services/auth.service';
+import { OnboardingTourService } from '../../services/onboarding-tour.service';
 import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog.service';
 import { ToastService } from '../../shared/toast/toast.service';
 
 describe('Credentials', () => {
   let component: Credentials;
   let fixture: ComponentFixture<Credentials>;
+  let tour: OnboardingTourService;
   let svc: {
     list: ReturnType<typeof signal<Credential[]>>;
     reload: ReturnType<typeof vi.fn>;
@@ -29,7 +31,10 @@ describe('Credentials', () => {
     reload: ReturnType<typeof vi.fn>;
     listSecrets: ReturnType<typeof vi.fn>;
   };
-  let auth: { canManageCredentials: ReturnType<typeof signal<boolean>> };
+  let auth: {
+    canManageCredentials: ReturnType<typeof signal<boolean>>;
+    currentUser: ReturnType<typeof signal<{ id: string } | null>>;
+  };
   let confirm: { ask: ReturnType<typeof vi.fn> };
   let toast: { success: ReturnType<typeof vi.fn>; error: ReturnType<typeof vi.fn> };
 
@@ -47,7 +52,7 @@ describe('Credentials', () => {
       reload: vi.fn(() => of([] as SecretProvider[])),
       listSecrets: vi.fn(() => of(['secret-a', 'secret-b'])),
     };
-    auth = { canManageCredentials: signal(true) };
+    auth = { canManageCredentials: signal(true), currentUser: signal(null) };
     confirm = { ask: vi.fn() };
     toast = { success: vi.fn(), error: vi.fn() };
 
@@ -104,6 +109,7 @@ describe('Credentials', () => {
 
     fixture = TestBed.createComponent(Credentials);
     component = fixture.componentInstance;
+    tour = TestBed.inject(OnboardingTourService);
   });
 
   afterEach(() => vi.useRealTimers());
@@ -371,15 +377,18 @@ describe('Credentials', () => {
     });
 
     it('creates a new local credential and toasts', () => {
+      const completeStep = vi.spyOn(tour, 'completeStep');
       fillValid();
       component.save();
       expect(svc.create).toHaveBeenCalledWith(
         expect.objectContaining({ name: 'n', secret: 's', storageMode: 'Local' }),
       );
       expect(toast.success).toHaveBeenCalledWith('Credential saved.');
+      expect(completeStep).toHaveBeenCalledWith('credential');
     });
 
     it('updates an existing credential', () => {
+      const completeStep = vi.spyOn(tour, 'completeStep');
       fillValid();
       component.form.update((f) => ({ ...f, id: 'c1', secret: '' }));
       component.save();
@@ -388,6 +397,7 @@ describe('Credentials', () => {
         expect.objectContaining({ name: 'n', storageMode: 'Local' }),
       );
       expect(toast.success).toHaveBeenCalledWith('Credential updated.');
+      expect(completeStep).not.toHaveBeenCalled();
     });
 
     it('builds external push-to-vault create payload', () => {

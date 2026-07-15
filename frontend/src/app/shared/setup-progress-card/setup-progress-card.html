@@ -1,0 +1,50 @@
+@if (visible()) {
+  <div class="glass-card mb-4 rounded-2xl p-4">
+    <div class="mb-3 flex items-center justify-between">
+      <div>
+        <h3 class="text-sm font-semibold text-on-surface">
+          {{ 'pages.onboarding.checklist.title' | translate }}
+        </h3>
+        <p class="text-xs text-on-surface-variant">
+          {{
+            'pages.onboarding.checklist.progress'
+              | translate: { done: progress().done, total: progress().total }
+          }}
+        </p>
+      </div>
+      <button
+        type="button"
+        (click)="hide()"
+        class="btn-ghost !p-1.5"
+        [attr.aria-label]="'pages.onboarding.checklist.hide' | translate"
+      >
+        <span class="material-symbols-outlined text-base" aria-hidden="true">close</span>
+      </button>
+    </div>
+    <ul class="flex flex-col gap-1">
+      @for (step of steps; track step.id) {
+        <li>
+          <button
+            type="button"
+            (click)="resume(step.id)"
+            class="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm transition-colors hover:bg-surface-container-high"
+          >
+            <span
+              class="material-symbols-outlined text-lg"
+              [class]="isDone(step.id) ? 'text-primary' : 'text-on-surface-variant/50'"
+              aria-hidden="true"
+            >
+              {{ isDone(step.id) ? 'check_circle' : 'radio_button_unchecked' }}
+            </span>
+            <span
+              [class.line-through]="isDone(step.id)"
+              [class.text-on-surface-variant]="isDone(step.id)"
+            >
+              {{ 'pages.onboarding.steps.' + step.id + '.title' | translate }}
+            </span>
+          </button>
+        </li>
+      }
+    </ul>
+  </div>
+}

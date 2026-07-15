@@ -12,6 +12,7 @@ import { Vault } from './vault';
 import { Connection, ConnectionsService } from '../../services/connections.service';
 import { VaultsService, Vault as VaultEntity } from '../../services/vaults.service';
 import { AuthService } from '../../services/auth.service';
+import { OnboardingTourService } from '../../services/onboarding-tour.service';
 
 describe('Vault', () => {
   let component: Vault;
@@ -28,8 +29,13 @@ describe('Vault', () => {
     list: ReturnType<typeof signal<VaultEntity[]>>;
     reload: ReturnType<typeof vi.fn>;
   };
-  let auth: { canManageConnections: ReturnType<typeof signal<boolean>> };
+  let auth: {
+    canManageConnections: ReturnType<typeof signal<boolean>>;
+    currentUser: ReturnType<typeof signal<{ id: string } | null>>;
+    isOwner: ReturnType<typeof signal<boolean>>;
+  };
   let router: { navigate: ReturnType<typeof vi.fn> };
+  let tour: OnboardingTourService;
 
   beforeEach(async () => {
     connections = {
@@ -44,7 +50,11 @@ describe('Vault', () => {
       list: signal<VaultEntity[]>([]),
       reload: vi.fn(() => of([] as VaultEntity[])),
     };
-    auth = { canManageConnections: signal(true) };
+    auth = {
+      canManageConnections: signal(true),
+      currentUser: signal(null),
+      isOwner: signal(false),
+    };
     router = { navigate: vi.fn() };
 
     await TestBed.configureTestingModule({
@@ -79,6 +89,7 @@ describe('Vault', () => {
 
     fixture = TestBed.createComponent(Vault);
     component = fixture.componentInstance;
+    tour = TestBed.inject(OnboardingTourService);
   });
 
   function seed() {
@@ -250,6 +261,12 @@ describe('Vault', () => {
     it('navigates to /connecting/:id', () => {
       component.connect('c1');
       expect(router.navigate).toHaveBeenCalledWith(['/connecting', 'c1']);
+    });
+
+    it('marks the "session" onboarding step complete', () => {
+      const completeStep = vi.spyOn(tour, 'completeStep');
+      component.connect('c1');
+      expect(completeStep).toHaveBeenCalledWith('session');
     });
   });
 

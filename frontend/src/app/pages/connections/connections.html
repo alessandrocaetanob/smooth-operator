@@ -206,22 +206,32 @@
           } @empty {
             <tr>
               <td colspan="6" class="px-5 py-14 text-center">
-                <div class="flex flex-col items-center justify-center text-on-surface-variant/60">
-                  <span class="material-symbols-outlined text-4xl mb-3 opacity-40">hub</span>
-                  @if (loading()) {
+                @if (loading()) {
+                  <div class="flex flex-col items-center justify-center text-on-surface-variant/60">
+                    <span class="material-symbols-outlined text-4xl mb-3 opacity-40">hub</span>
                     <p>{{ 'pages.connections.table.loading' | translate }}</p>
-                  } @else if (isFiltered()) {
+                  </div>
+                } @else if (isFiltered()) {
+                  <div class="flex flex-col items-center justify-center text-on-surface-variant/60">
+                    <span class="material-symbols-outlined text-4xl mb-3 opacity-40">hub</span>
                     <p class="font-medium">{{ 'pages.connections.table.noMatch' | translate }}</p>
                     <button (click)="clearFilters()" class="btn-ghost mt-3 text-xs">
                       {{ 'pages.connections.table.clearFilters' | translate }}
                     </button>
-                  } @else {
-                    <p class="font-medium">{{ 'pages.connections.table.empty' | translate }}</p>
-                    <p class="text-xs mt-1">
-                      {{ 'pages.connections.table.emptyHint' | translate }}
-                    </p>
-                  }
-                </div>
+                  </div>
+                } @else {
+                  <app-empty-state-card
+                    [heading]="'pages.connections.table.empty' | translate"
+                    [body]="'pages.connections.table.emptyHint' | translate"
+                  >
+                    <button (click)="newConnection()" class="btn-primary">
+                      <span class="material-symbols-outlined text-base" aria-hidden="true"
+                        >add</span
+                      >
+                      {{ 'pages.connections.newConnection' | translate }}
+                    </button>
+                  </app-empty-state-card>
+                }
               </td>
             </tr>
           }
