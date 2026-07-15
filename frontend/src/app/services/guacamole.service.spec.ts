@@ -198,7 +198,12 @@ vi.mock('guacamole-common-js', () => {
   };
 });
 
-import { GuacamoleSession, GuacamoleSessionManagerService, Keysyms } from './guacamole.service';
+import {
+  FILE_TRANSFER_TIMEOUT_MS,
+  GuacamoleSession,
+  GuacamoleSessionManagerService,
+  Keysyms,
+} from './guacamole.service';
 
 describe('GuacamoleSession', () => {
   let httpTesting: HttpTestingController;
@@ -538,6 +543,10 @@ describe('GuacamoleSession', () => {
       client = clientInstances[0];
     });
 
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
     function attachFilesystem(overrides: Partial<FakeGuacObject> = {}): FakeGuacObject {
       const obj: FakeGuacObject = {
         index: 0,
@@ -567,9 +576,11 @@ describe('GuacamoleSession', () => {
 
       it('resolves entries sorted directories-first then alphabetically, stripping the path prefix', async () => {
         attachFilesystem({
-          requestInputStream: vi.fn((_name: string, cb: (stream: unknown, mimetype: string) => void) => {
-            cb({}, STREAM_INDEX_MIMETYPE);
-          }),
+          requestInputStream: vi.fn(
+            (_name: string, cb: (stream: unknown, mimetype: string) => void) => {
+              cb({}, STREAM_INDEX_MIMETYPE);
+            },
+          ),
         });
 
         const promise = session.listDirectory(ROOT_STREAM);
@@ -584,24 +595,60 @@ describe('GuacamoleSession', () => {
         reader.onend?.();
 
         await expect(promise).resolves.toEqual([
-          { streamName: '/sub', displayName: 'sub', mimetype: STREAM_INDEX_MIMETYPE, isDirectory: true },
-          { streamName: '/a.txt', displayName: 'a.txt', mimetype: 'text/plain', isDirectory: false },
-          { streamName: '/b.txt', displayName: 'b.txt', mimetype: 'text/plain', isDirectory: false },
+          {
+            streamName: '/sub',
+            displayName: 'sub',
+            mimetype: STREAM_INDEX_MIMETYPE,
+            isDirectory: true,
+          },
+          {
+            streamName: '/a.txt',
+            displayName: 'a.txt',
+            mimetype: 'text/plain',
+            isDirectory: false,
+          },
+          {
+            streamName: '/b.txt',
+            displayName: 'b.txt',
+            mimetype: 'text/plain',
+            isDirectory: false,
+          },
         ]);
       });
 
       it('rejects when the requested stream is not a directory', async () => {
         attachFilesystem({
-          requestInputStream: vi.fn((_name: string, cb: (stream: unknown, mimetype: string) => void) => {
-            cb({}, 'text/plain');
-          }),
+          requestInputStream: vi.fn(
+            (_name: string, cb: (stream: unknown, mimetype: string) => void) => {
+              cb({}, 'text/plain');
+            },
+          ),
         });
         await expect(session.listDirectory('/a.txt')).rejects.toThrow('Not a directory');
+      });
+
+      it('rejects with a timeout error when guacd never responds', async () => {
+        vi.useFakeTimers();
+        // No callback invocation at all — simulates an unresponsive guacd/remote
+        // (e.g. an SFTP subsystem that hangs on real operations after connecting).
+        attachFilesystem({ requestInputStream: vi.fn() });
+
+        const promise = session.listDirectory('/');
+        const assertion = expect(promise).rejects.toThrow(
+          'Timed out waiting for the remote file listing',
+        );
+        await vi.advanceTimersByTimeAsync(FILE_TRANSFER_TIMEOUT_MS);
+        await assertion;
       });
     });
 
     describe('downloadFile', () => {
-      const entry = { streamName: '/a.txt', displayName: 'a.txt', mimetype: 'text/plain', isDirectory: false };
+      const entry = {
+        streamName: '/a.txt',
+        displayName: 'a.txt',
+        mimetype: 'text/plain',
+        isDirectory: false,
+      };
 
       it('rejects when no filesystem is available', async () => {
         await expect(session.downloadFile(entry)).rejects.toThrow('No filesystem available');
@@ -609,9 +656,11 @@ describe('GuacamoleSession', () => {
 
       it('triggers a browser download once the blob stream ends', async () => {
         attachFilesystem({
-          requestInputStream: vi.fn((_name: string, cb: (stream: unknown, mimetype: string) => void) => {
-            cb({}, 'text/plain');
-          }),
+          requestInputStream: vi.fn(
+            (_name: string, cb: (stream: unknown, mimetype: string) => void) => {
+              cb({}, 'text/plain');
+            },
+          ),
         });
         const clickSpy = vi
           .spyOn(HTMLAnchorElement.prototype, 'click')
@@ -627,6 +676,18 @@ describe('GuacamoleSession', () => {
         expect(createObjectUrl).toHaveBeenCalled();
         expect(clickSpy).toHaveBeenCalled();
         expect(revokeObjectUrl).toHaveBeenCalledWith('blob:fake');
+      });
+
+      it('rejects with a timeout error when guacd never responds', async () => {
+        vi.useFakeTimers();
+        attachFilesystem({ requestInputStream: vi.fn() });
+
+        const promise = session.downloadFile(entry);
+        const assertion = expect(promise).rejects.toThrow(
+          'Timed out waiting for the file to download',
+        );
+        await vi.advanceTimersByTimeAsync(FILE_TRANSFER_TIMEOUT_MS);
+        await assertion;
       });
     });
 
@@ -655,7 +716,10 @@ describe('GuacamoleSession', () => {
         const obj = attachFilesystem();
         const file = new File(['x'], 'note.txt');
         void session.uploadFile(ROOT_STREAM, file);
-        expect(obj.createOutputStream).toHaveBeenCalledWith('application/octet-stream', '/note.txt');
+        expect(obj.createOutputStream).toHaveBeenCalledWith(
+          'application/octet-stream',
+          '/note.txt',
+        );
       });
 
       it('reports upload progress as a 0-1 fraction', () => {
@@ -675,6 +739,19 @@ describe('GuacamoleSession', () => {
         const writer = blobWriterInstances[blobWriterInstances.length - 1];
         writer.onerror?.(file, 0, new DOMException('disk full'));
         await expect(promise).rejects.toThrow('disk full');
+      });
+
+      it('rejects with a timeout error when guacd never acks', async () => {
+        vi.useFakeTimers();
+        attachFilesystem();
+        const file = new File(['x'], 'note.txt');
+
+        const promise = session.uploadFile('/docs', file);
+        const assertion = expect(promise).rejects.toThrow(
+          'Timed out waiting for the upload to complete',
+        );
+        await vi.advanceTimersByTimeAsync(FILE_TRANSFER_TIMEOUT_MS);
+        await assertion;
       });
     });
   });

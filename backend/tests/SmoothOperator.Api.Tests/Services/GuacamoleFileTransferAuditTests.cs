@@ -91,6 +91,9 @@ public sealed class GuacamoleFileTransferAuditTests : IDisposable
         return sb.Append(';').ToString();
     }
 
+    private static byte[] Payload(params string[] instructions)
+        => System.Text.Encoding.UTF8.GetBytes(string.Concat(instructions));
+
     private static GuacamoleProxyService.GuacSessionRequest BuildRequest(
         FileTransferPolicy policy, Guid userId, Guid connectionId, string sessionId = "sess-1") => new()
         {
@@ -169,23 +172,58 @@ public sealed class GuacamoleFileTransferAuditTests : IDisposable
     }
 
     [Fact]
-    public async Task Upload_PutBlobAck_WritesFileTransferredAuditWithUploadDirection()
+    public async Task Upload_SuccessfulAck_NeverFinalizesTransfer()
+    {
+        // Regression test: a real upload sends one `ack` per ~6KB blob chunk, so
+        // finalizing on the first successful ack (the old, buggy behavior) would
+        // audit only the first chunk's byte count for any file bigger than that.
+        // A successful ack must be pure flow control — no audit, no removal.
+        var req = BuildRequest(FileTransferPolicy.Both, Guid.NewGuid(), Guid.NewGuid());
+        req.PendingUploads[9] = new GuacamoleProxyService.PendingFileTransfer { Name = "notes.txt", Bytes = 12 };
+
+        _service.ObserveServerToClientFileTransfer(req, Instr("ack", "9", "OK", "0"));
+
+        await Task.Delay(100); // give any (unwanted) fire-and-forget write a chance to land
+        Assert.True(req.PendingUploads.ContainsKey(9));
+        using var db = NewDbContext();
+        Assert.Empty(await db.AuditLogs.AsNoTracking().ToListAsync());
+    }
+
+    [Fact]
+    public async Task Upload_MultipleChunks_FinalizesOnClientEndWithFullByteCount()
     {
         var userId = Guid.NewGuid();
         var connectionId = Guid.NewGuid();
         var req = BuildRequest(FileTransferPolicy.Both, userId, connectionId);
 
-        req.PendingUploads[9] = new GuacamoleProxyService.PendingFileTransfer { Name = "notes.txt", Bytes = 12 };
+        // Client opens the upload stream and sends two chunks, each acked by guacd —
+        // mirrors the real BlobWriter, which waits for an ack before sending the next
+        // chunk and only calls sendEnd() once every chunk has been acked successfully.
+        GuacamoleProxyService.ObserveClientToServerFileTransfer(
+            req, Payload(Instr("put", "0", "9", "text/plain", "big.txt")));
 
+        GuacamoleProxyService.ObserveClientToServerFileTransfer(req, Payload(Instr("blob", "9", "SGVsbG8="))); // "Hello" = 5 bytes
         _service.ObserveServerToClientFileTransfer(req, Instr("ack", "9", "OK", "0"));
 
+        GuacamoleProxyService.ObserveClientToServerFileTransfer(req, Payload(Instr("blob", "9", "V29ybGQ="))); // "World" = 5 bytes
+        _service.ObserveServerToClientFileTransfer(req, Instr("ack", "9", "OK", "0"));
+
+        GuacamoleProxyService.PendingFileTransfer? completed = null;
+        GuacamoleProxyService.ObserveClientToServerFileTransfer(
+            req, Payload(Instr("end", "9")), transfer => completed = transfer);
+
         Assert.False(req.PendingUploads.ContainsKey(9));
+        Assert.NotNull(completed);
+        Assert.Equal(10, completed!.Bytes);
+
+        await _service.WriteFileTransferAuditAsync(req, "upload", completed.Name, completed.Bytes, "success", null);
+
         var audit = await WaitForAuditLogAsync("session.file_transferred");
         Assert.Equal("success", audit.Outcome);
         using var doc = JsonDocument.Parse(audit.Details!);
         Assert.Equal("upload", doc.RootElement.GetProperty("direction").GetString());
-        Assert.Equal("notes.txt", doc.RootElement.GetProperty("fileName").GetString());
-        Assert.Equal(12, doc.RootElement.GetProperty("sizeBytes").GetInt64());
+        Assert.Equal("big.txt", doc.RootElement.GetProperty("fileName").GetString());
+        Assert.Equal(10, doc.RootElement.GetProperty("sizeBytes").GetInt64());
     }
 
     [Fact]

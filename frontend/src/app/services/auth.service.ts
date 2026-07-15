@@ -190,8 +190,7 @@ export class AuthService {
       hasPassword: (raw?.['hasPassword'] ?? raw?.['HasPassword'] ?? false) as boolean,
       ssoLinked: (raw?.['ssoLinked'] ?? raw?.['SsoLinked'] ?? false) as boolean,
       ssoProviderType: (raw?.['ssoProviderType'] ?? raw?.['SsoProviderType'] ?? null) as
-        | string
-        | null,
+        string | null,
       avatarUrl: (raw?.['avatarUrl'] ?? raw?.['AvatarUrl'] ?? null) as string | null,
       roles,
     };

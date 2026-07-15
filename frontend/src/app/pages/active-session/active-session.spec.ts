@@ -505,7 +505,9 @@ describe('ActiveSession', () => {
 
     describe('navigateFileTransfer', () => {
       let session: FakeSession;
-      const entries = [{ displayName: 'a.txt', streamName: '/a.txt', mimetype: 'text/plain', isDirectory: false }];
+      const entries = [
+        { displayName: 'a.txt', streamName: '/a.txt', mimetype: 'text/plain', isDirectory: false },
+      ];
 
       beforeEach(() => {
         session = makeFakeSession({ listDirectory: vi.fn(() => Promise.resolve(entries)) });

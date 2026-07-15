@@ -940,6 +940,13 @@ namespace SmoothOperator.Infrastructure.Services
             // timeout is configured the watchdog returns synchronously, so its task is
             // already complete and the relay would be torn down the instant it starts.
             await Task.WhenAny(receiveTask, sendTask);
+            // WhenAny discards whichever task didn't win the race, so an exception on the
+            // winner would otherwise vanish silently — the session would just close as if
+            // nothing happened, with no failureReason and nothing logged. Only inspect the
+            // one that's actually finished; the other keeps running until the WebSocket
+            // close below unwinds it, exactly as before.
+            ObserveRelayFault(receiveTask, onGuacError);
+            ObserveRelayFault(sendTask, onGuacError);
             // Cancel the watchdog promptly so its Task.Delay loop exits cleanly even
             // when the relay finished first.
             await watchdogCts.CancelAsync();
@@ -947,6 +954,18 @@ namespace SmoothOperator.Infrastructure.Services
             // finally block doesn't race the watchdog's DbContext use on shutdown.
             try { await watchdogTask; }
             catch (OperationCanceledException) { /* expected on cancellation */ }
+        }
+
+        // Surfaces a fault from a relay task that has already finished — logging it and
+        // reporting it as the session's close reason via `onGuacError` — instead of
+        // letting Task.WhenAny's discarded loser swallow it. A no-op for a task that's
+        // still running (the loser) or that finished without an exception.
+        private void ObserveRelayFault(Task relayTask, Action<string> onGuacError)
+        {
+            if (!relayTask.IsFaulted) return;
+            var ex = relayTask.Exception!.Flatten().InnerException ?? relayTask.Exception;
+            _logger.LogError(ex, "Guacamole relay loop faulted unexpectedly");
+            onGuacError($"Internal relay error: {ex.Message}");
         }
 
         /// <summary>
@@ -1527,7 +1546,7 @@ namespace SmoothOperator.Infrastructure.Services
             return false;
         }
 
-        private static async Task ProxyWebSocketToGuacd(GuacSessionRequest req, WebSocket webSocket, NetworkStream guacdStream, Action onActivity)
+        private async Task ProxyWebSocketToGuacd(GuacSessionRequest req, WebSocket webSocket, NetworkStream guacdStream, Action onActivity)
         {
             var buffer = new byte[16 * 1024];
             using var ms = new MemoryStream();
@@ -1549,7 +1568,8 @@ namespace SmoothOperator.Infrastructure.Services
                 // Only genuine user input resets the idle clock — keepalive
                 // traffic (sync/nop/ping) must not keep an idle session alive.
                 if (ContainsUserActivity(payload)) onActivity();
-                ObserveClientToServerFileTransfer(req, payload);
+                ObserveClientToServerFileTransfer(req, payload, transfer =>
+                    QueueFileTransferAudit(req, "upload", transfer.Name, transfer.Bytes));
             }
         }
 
@@ -1739,7 +1759,15 @@ namespace SmoothOperator.Infrastructure.Services
 
         // client -> guacd direction (ProxyWebSocketToGuacd). A single WS message may
         // carry several concatenated instructions, mirroring ContainsUserActivity's scan.
-        internal static void ObserveClientToServerFileTransfer(GuacSessionRequest req, byte[] payload)
+        // `onUploadCompleted` fires once per upload stream the client explicitly closes
+        // with `end` (the client only sends `end` after the writer has already received
+        // a successful ack for every blob it sent — see HandleAckInstruction) — this is
+        // the single point where a successful upload is finalized, so a large file that
+        // spans many blob/ack round-trips is audited with its full byte count exactly
+        // once, not truncated to the first chunk. `onUploadCompleted` stays optional so
+        // parser-only unit tests can call this without a live service instance.
+        internal static void ObserveClientToServerFileTransfer(
+            GuacSessionRequest req, byte[] payload, Action<PendingFileTransfer>? onUploadCompleted = null)
         {
             if (req.FileTransferPolicy == Domain.Enums.FileTransferPolicy.Disabled) return;
 
@@ -1762,6 +1790,14 @@ namespace SmoothOperator.Infrastructure.Services
                 else if (opcode.SequenceEqual("blob") && !req.PendingUploads.IsEmpty)
                 {
                     HandleUploadBlobInstruction(req, text, i);
+                }
+                else if (opcode.SequenceEqual("end") && !req.PendingUploads.IsEmpty)
+                {
+                    var streamIndex = ReadSingleStreamIndex(text, i);
+                    if (streamIndex >= 0 && req.PendingUploads.TryRemove(streamIndex, out var transfer))
+                    {
+                        onUploadCompleted?.Invoke(transfer);
+                    }
                 }
 
                 int semicolon = text.IndexOf(';', opStart + len);
@@ -1803,26 +1839,30 @@ namespace SmoothOperator.Infrastructure.Services
             }
         }
 
-        // `ack,stream,message,status;` — status "0" (or omitted) means success. Finalizes
-        // an upload (client was the blob sender, server acks completion/failure) or, if a
-        // non-zero status arrives for a stream we're still downloading, aborts it — the
-        // protocol allows a non-zero ack to implicitly terminate any open stream.
+        // `ack,stream,message,status;` — status "0" (or omitted) means success. A large
+        // upload sends one ack per ~6KB blob chunk, so a *successful* ack here is only
+        // flow control (it just gates the writer's next chunk, or precedes the client's
+        // own `end`) and must never finalize the transfer — that would audit only the
+        // first chunk's byte count. Completed uploads are finalized when the client's
+        // `end` instruction is observed instead (see ObserveClientToServerFileTransfer).
+        // A non-zero status, however, aborts whatever stream it names immediately — the
+        // protocol allows a failing ack to implicitly terminate any open stream, upload
+        // or download alike.
         private void HandleAckInstruction(GuacSessionRequest req, string raw)
         {
             var parsed = ParseInstruction(raw);
             if (parsed == null || parsed.Count < 2) return;
             if (!int.TryParse(parsed[1], out var streamIndex)) return;
             var status = parsed.Count >= 4 ? parsed[3] : "0";
-            var success = status == "0";
+            if (status == "0") return;
 
             if (req.PendingUploads.TryRemove(streamIndex, out var uploadTransfer))
             {
-                QueueFileTransferAudit(req, "upload", uploadTransfer.Name, uploadTransfer.Bytes,
-                    success ? "success" : "failure", success ? null : status);
+                QueueFileTransferAudit(req, "upload", uploadTransfer.Name, uploadTransfer.Bytes, "failure", status);
                 return;
             }
 
-            if (!success && req.PendingDownloads.TryRemove(streamIndex, out var downloadTransfer))
+            if (req.PendingDownloads.TryRemove(streamIndex, out var downloadTransfer))
             {
                 QueueFileTransferAudit(req, "download", downloadTransfer.Name, downloadTransfer.Bytes, "failure", status);
             }

@@ -52,6 +52,14 @@ export const ZOOM_MIN = 0.5;
 export const ZOOM_MAX = 3;
 export const ZOOM_STEP = 0.25;
 
+/**
+ * How long a file-transfer request (list/download/upload) waits for guacd before
+ * failing with a visible error. guacd applies no timeout of its own to the
+ * underlying SFTP/drive operations, so an unresponsive remote endpoint would
+ * otherwise hang the UI forever with no feedback.
+ */
+export const FILE_TRANSFER_TIMEOUT_MS = 20000;
+
 const PROGRESS_BY_STATE: Record<GuacState, number> = {
   idle: 0,
   'requesting-ticket': 15,
@@ -606,39 +614,65 @@ export class GuacamoleSession {
   // methods don't duplicate that check; the UI hides the buttons instead.
 
   /**
+   * Races `promise` against a timeout so a guacd/remote endpoint that accepts the
+   * filesystem object but never answers a specific operation (e.g. an SSH server
+   * whose sftp-server subsystem completes its handshake but then hangs on real
+   * requests — guacd applies no timeout of its own here) can't leave the UI
+   * spinning forever with no error. The loser is left to settle harmlessly later.
+   */
+  private withFileTransferTimeout<T>(promise: Promise<T>, timeoutMessage: string): Promise<T> {
+    return new Promise<T>((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error(timeoutMessage)), FILE_TRANSFER_TIMEOUT_MS);
+      promise.then(
+        (value) => {
+          clearTimeout(timer);
+          resolve(value);
+        },
+        (err: unknown) => {
+          clearTimeout(timer);
+          reject(err as Error);
+        },
+      );
+    });
+  }
+
+  /**
    * Lists the contents of `path` (use `Guacamole.Object.ROOT_STREAM` for the
    * top level). The listing's stream names are already full, absolute paths
    * from guacd — never reconstructed by joining parent + child here.
    */
   listDirectory(path: string): Promise<GuacFileEntry[]> {
-    return new Promise((resolve, reject) => {
-      if (!this.fsObject) {
-        reject(new Error('No filesystem available for this session.'));
-        return;
-      }
-      this.fsObject.requestInputStream(path, (stream, mimetype) => {
-        if (mimetype !== Guacamole.Object.STREAM_INDEX_MIMETYPE) {
-          reject(new Error('Not a directory.'));
+    return this.withFileTransferTimeout(
+      new Promise<GuacFileEntry[]>((resolve, reject) => {
+        if (!this.fsObject) {
+          reject(new Error('No filesystem available for this session.'));
           return;
         }
-        const reader = new Guacamole.StringReader(stream);
-        let buffer = '';
-        reader.ontext = (text) => {
-          buffer += text;
-        };
-        reader.onend = () => {
-          this.zone.run(() => {
-            try {
-              resolve(
-                this.parseDirectoryListing(path, JSON.parse(buffer) as Record<string, string>),
-              );
-            } catch {
-              reject(new Error('Failed to parse directory listing.'));
-            }
-          });
-        };
-      });
-    });
+        this.fsObject.requestInputStream(path, (stream, mimetype) => {
+          if (mimetype !== Guacamole.Object.STREAM_INDEX_MIMETYPE) {
+            reject(new Error('Not a directory.'));
+            return;
+          }
+          const reader = new Guacamole.StringReader(stream);
+          let buffer = '';
+          reader.ontext = (text) => {
+            buffer += text;
+          };
+          reader.onend = () => {
+            this.zone.run(() => {
+              try {
+                resolve(
+                  this.parseDirectoryListing(path, JSON.parse(buffer) as Record<string, string>),
+                );
+              } catch {
+                reject(new Error('Failed to parse directory listing.'));
+              }
+            });
+          };
+        });
+      }),
+      'Timed out waiting for the remote file listing. The server may not support file transfer for this connection.',
+    );
   }
 
   private parseDirectoryListing(path: string, listing: Record<string, string>): GuacFileEntry[] {
@@ -661,28 +695,31 @@ export class GuacamoleSession {
 
   /** Downloads `entry` to the browser's default download location. */
   downloadFile(entry: GuacFileEntry): Promise<void> {
-    return new Promise((resolve, reject) => {
-      if (!this.fsObject) {
-        reject(new Error('No filesystem available for this session.'));
-        return;
-      }
-      this.fsObject.requestInputStream(entry.streamName, (stream, mimetype) => {
-        const reader = new Guacamole.BlobReader(stream, mimetype);
-        reader.onend = () => {
-          this.zone.run(() => {
-            const url = URL.createObjectURL(reader.getBlob());
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = entry.displayName;
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-            URL.revokeObjectURL(url);
-            resolve();
-          });
-        };
-      });
-    });
+    return this.withFileTransferTimeout(
+      new Promise<void>((resolve, reject) => {
+        if (!this.fsObject) {
+          reject(new Error('No filesystem available for this session.'));
+          return;
+        }
+        this.fsObject.requestInputStream(entry.streamName, (stream, mimetype) => {
+          const reader = new Guacamole.BlobReader(stream, mimetype);
+          reader.onend = () => {
+            this.zone.run(() => {
+              const url = URL.createObjectURL(reader.getBlob());
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = entry.displayName;
+              document.body.appendChild(a);
+              a.click();
+              a.remove();
+              URL.revokeObjectURL(url);
+              resolve();
+            });
+          };
+        });
+      }),
+      'Timed out waiting for the file to download. The server may not support file transfer for this connection.',
+    );
   }
 
   /** Uploads `file` into `directoryPath`. `onProgress` receives a 0–1 fraction. */
@@ -691,29 +728,32 @@ export class GuacamoleSession {
     file: File,
     onProgress?: (fraction: number) => void,
   ): Promise<void> {
-    return new Promise((resolve, reject) => {
-      if (!this.fsObject) {
-        reject(new Error('No filesystem available for this session.'));
-        return;
-      }
-      const prefix = directoryPath.endsWith('/') ? directoryPath : `${directoryPath}/`;
-      const stream = this.fsObject.createOutputStream(
-        file.type || 'application/octet-stream',
-        prefix + file.name,
-      );
-      const writer = new Guacamole.BlobWriter(stream);
-      writer.onprogress = (blob, offset) => {
-        if (onProgress) this.zone.run(() => onProgress(Math.min(1, offset / blob.size)));
-      };
-      writer.onerror = (_blob, _offset, error) => {
-        this.zone.run(() => reject(new Error(error.message || 'Upload failed.')));
-      };
-      writer.oncomplete = () => {
-        writer.sendEnd();
-        this.zone.run(() => resolve());
-      };
-      writer.sendBlob(file);
-    });
+    return this.withFileTransferTimeout(
+      new Promise<void>((resolve, reject) => {
+        if (!this.fsObject) {
+          reject(new Error('No filesystem available for this session.'));
+          return;
+        }
+        const prefix = directoryPath.endsWith('/') ? directoryPath : `${directoryPath}/`;
+        const stream = this.fsObject.createOutputStream(
+          file.type || 'application/octet-stream',
+          prefix + file.name,
+        );
+        const writer = new Guacamole.BlobWriter(stream);
+        writer.onprogress = (blob, offset) => {
+          if (onProgress) this.zone.run(() => onProgress(Math.min(1, offset / blob.size)));
+        };
+        writer.onerror = (_blob, _offset, error) => {
+          this.zone.run(() => reject(new Error(error.message || 'Upload failed.')));
+        };
+        writer.oncomplete = () => {
+          writer.sendEnd();
+          this.zone.run(() => resolve());
+        };
+        writer.sendBlob(file);
+      }),
+      'Timed out waiting for the upload to complete. The server may not support file transfer for this connection.',
+    );
   }
 
   typeText(text: string): void {

@@ -55,11 +55,7 @@ export interface MonitoringChartData {
 }
 
 type ChartId =
-  | 'connectionsChart'
-  | 'loginChart'
-  | 'breakdownChart'
-  | 'topEventsChart'
-  | 'eventTimeseriesChart';
+  'connectionsChart' | 'loginChart' | 'breakdownChart' | 'topEventsChart' | 'eventTimeseriesChart';
 
 const CHART_COLORS = [
   { line: 'rgba(99, 102, 241, 0.9)', fill: 'rgba(99, 102, 241, 0.15)' },

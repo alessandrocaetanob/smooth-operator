@@ -119,4 +119,50 @@ public class GuacamoleFileTransferInstructionTests
         GuacamoleProxyService.ObserveClientToServerFileTransfer(req, []);
         Assert.Empty(req.PendingUploads);
     }
+
+    [Fact]
+    public void End_ForTrackedUploadStream_RemovesFromPendingAndInvokesCallback()
+    {
+        var req = BuildRequest(FileTransferPolicy.Both);
+        GuacamoleProxyService.ObserveClientToServerFileTransfer(
+            req, Payload(Instr("put", "0", "4", "text/plain", "big.txt")));
+        GuacamoleProxyService.ObserveClientToServerFileTransfer(req, Payload(Instr("blob", "4", "SGVsbG8=")));
+
+        GuacamoleProxyService.PendingFileTransfer? completed = null;
+        GuacamoleProxyService.ObserveClientToServerFileTransfer(
+            req, Payload(Instr("end", "4")), transfer => completed = transfer);
+
+        Assert.Empty(req.PendingUploads);
+        Assert.NotNull(completed);
+        Assert.Equal("big.txt", completed!.Name);
+        Assert.Equal(5, completed.Bytes);
+    }
+
+    [Fact]
+    public void End_ForUntrackedStream_NeverInvokesCallback()
+    {
+        // No `put` was ever observed for stream 9 — an `end` for ordinary display
+        // traffic (or a download stream, tracked separately in PendingDownloads)
+        // must never be mistaken for a completed upload.
+        var req = BuildRequest(FileTransferPolicy.Both);
+        var invoked = false;
+
+        GuacamoleProxyService.ObserveClientToServerFileTransfer(
+            req, Payload(Instr("end", "9")), _ => invoked = true);
+
+        Assert.False(invoked);
+    }
+
+    [Fact]
+    public void Disabled_NeverInvokesEndCallbackEvenIfPresent()
+    {
+        var req = BuildRequest(FileTransferPolicy.Disabled);
+        req.PendingUploads[4] = new GuacamoleProxyService.PendingFileTransfer { Name = "a.txt" };
+        var invoked = false;
+
+        GuacamoleProxyService.ObserveClientToServerFileTransfer(
+            req, Payload(Instr("end", "4")), _ => invoked = true);
+
+        Assert.False(invoked);
+    }
 }
