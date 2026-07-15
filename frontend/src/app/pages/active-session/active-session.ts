@@ -23,6 +23,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import {
   GuacamoleSessionManagerService,
   GuacamoleSession,
+  GuacFileEntry,
   Keysyms,
   ZOOM_MIN,
   ZOOM_MAX,
@@ -191,6 +192,15 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
   readonly comboKey = signal<KeyOption>(COMBO_KEYS[0]);
   readonly clipboardDraft = signal('');
 
+  // ── File transfer (RDP drive redirect / SSH SFTP) ──────────────────────────
+  readonly showFileTransferModal = signal(false);
+  readonly fileTransferPath = signal('/');
+  readonly fileTransferEntries = signal<GuacFileEntry[]>([]);
+  readonly fileTransferLoading = signal(false);
+  readonly fileTransferError = signal<string | null>(null);
+  readonly fileTransferUploadBusy = signal(false);
+  readonly fileTransferUploadProgress = signal(0);
+
   // ── Mobile keyboard ────────────────────────────────────────────────────────
   // Touch devices have no physical keyboard, and Guacamole.Keyboard only listens
   // for physical key events. A hidden input summons the phone's native soft
@@ -216,6 +226,28 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
   readonly isSshConnection = computed(
     () => (this.connection()?.protocol ?? '').toLowerCase() === 'ssh',
   );
+
+  readonly fileTransferPolicy = computed(
+    () => this.connection()?.effectiveFileTransferPolicy ?? 'Disabled',
+  );
+  readonly canDownloadFiles = computed(() =>
+    ['DownloadOnly', 'Both'].includes(this.fileTransferPolicy()),
+  );
+  readonly canUploadFiles = computed(() =>
+    ['UploadOnly', 'Both'].includes(this.fileTransferPolicy()),
+  );
+  /** True once guacd has actually exposed a filesystem for this session — the paperclip gate. */
+  readonly fileTransferAvailable = computed(() => this.session()?.fileTransferAvailable() ?? false);
+  readonly fileTransferBreadcrumbs = computed(() => {
+    const segments = this.fileTransferPath().split('/').filter(Boolean);
+    const crumbs: { label: string; path: string }[] = [{ label: '/', path: '/' }];
+    let acc = '';
+    for (const seg of segments) {
+      acc += `/${seg}`;
+      crumbs.push({ label: seg, path: acc });
+    }
+    return crumbs;
+  });
   readonly termColorScheme = signal('gray-black');
   readonly termFontName = signal('monospace');
   readonly termFontSize = signal(12);
@@ -416,6 +448,71 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
         /* intentional no-op */
       });
     }
+  }
+
+  // ── File transfer (RDP drive redirect / SSH SFTP) ──────────────────────────
+  openFileTransferModal(): void {
+    this.showFileTransferModal.set(true);
+    this.navigateFileTransfer('/');
+  }
+
+  closeFileTransferModal(): void {
+    this.showFileTransferModal.set(false);
+  }
+
+  navigateFileTransfer(path: string): void {
+    const session = this.session();
+    if (!session) return;
+    this.fileTransferLoading.set(true);
+    this.fileTransferError.set(null);
+    session
+      .listDirectory(path)
+      .then((entries) => {
+        this.fileTransferPath.set(path);
+        this.fileTransferEntries.set(entries);
+      })
+      .catch((err: unknown) => this.fileTransferError.set(this.describeFileTransferError(err)))
+      .finally(() => this.fileTransferLoading.set(false));
+  }
+
+  openFileTransferEntry(entry: GuacFileEntry): void {
+    if (entry.isDirectory) {
+      this.navigateFileTransfer(entry.streamName);
+    } else if (this.canDownloadFiles()) {
+      this.downloadFileTransferEntry(entry);
+    }
+  }
+
+  downloadFileTransferEntry(entry: GuacFileEntry): void {
+    const session = this.session();
+    if (!session) return;
+    session
+      .downloadFile(entry)
+      .catch((err: unknown) => this.fileTransferError.set(this.describeFileTransferError(err)));
+  }
+
+  onFileTransferInputChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = ''; // allow re-selecting the same file name
+    if (file) this.uploadFileTransferFile(file);
+  }
+
+  private uploadFileTransferFile(file: File): void {
+    const session = this.session();
+    if (!session) return;
+    this.fileTransferUploadBusy.set(true);
+    this.fileTransferUploadProgress.set(0);
+    const targetPath = this.fileTransferPath();
+    session
+      .uploadFile(targetPath, file, (fraction) => this.fileTransferUploadProgress.set(fraction))
+      .then(() => this.navigateFileTransfer(targetPath))
+      .catch((err: unknown) => this.fileTransferError.set(this.describeFileTransferError(err)))
+      .finally(() => this.fileTransferUploadBusy.set(false));
+  }
+
+  private describeFileTransferError(err: unknown): string {
+    return err instanceof Error ? err.message : 'Unknown error';
   }
 
   openTerminalThemeModal(): void {

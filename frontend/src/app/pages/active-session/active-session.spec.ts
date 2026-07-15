@@ -41,6 +41,15 @@ interface FakeSession {
   captureScreenshot: ReturnType<typeof vi.fn>;
   setZoom: ReturnType<typeof vi.fn>;
   getZoom: ReturnType<typeof vi.fn>;
+  fileTransferAvailable: () => boolean;
+  listDirectory: ReturnType<typeof vi.fn>;
+  downloadFile: ReturnType<typeof vi.fn>;
+  uploadFile: ReturnType<typeof vi.fn>;
+}
+
+/** Drains the microtask queue — enough ticks for a `.then().catch().finally()` chain. */
+function flushPromises(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, 0));
 }
 
 function makeFakeSession(overrides: Partial<FakeSession> = {}): FakeSession {
@@ -63,6 +72,10 @@ function makeFakeSession(overrides: Partial<FakeSession> = {}): FakeSession {
     captureScreenshot: vi.fn(() => 'data:image/png;base64,abc'),
     setZoom: vi.fn(),
     getZoom: vi.fn(() => 1),
+    fileTransferAvailable: () => false,
+    listDirectory: vi.fn(() => Promise.resolve([])),
+    downloadFile: vi.fn(() => Promise.resolve()),
+    uploadFile: vi.fn(() => Promise.resolve()),
     ...overrides,
   };
 }
@@ -423,6 +436,203 @@ describe('ActiveSession', () => {
     it('returns empty when no connection', () => {
       expect(component.protocol()).toBe('');
       expect(component.isSshConnection()).toBe(false);
+    });
+  });
+
+  describe('file transfer', () => {
+    function setConnectionPolicy(policy: Connection['effectiveFileTransferPolicy']): void {
+      connectionsSvc.listAsMap.set(
+        new Map<string, Connection>([
+          [
+            'c1',
+            {
+              id: 'c1',
+              name: 'x',
+              protocol: 'rdp',
+              hostId: '',
+              connectionGroupId: null,
+              credentialId: null,
+              settings: '{}',
+              tags: [],
+              host: null,
+              effectiveFileTransferPolicy: policy,
+            },
+          ],
+        ]),
+      );
+    }
+
+    describe('policy computed signals', () => {
+      it('defaults to Disabled with no connection loaded', () => {
+        expect(component.fileTransferPolicy()).toBe('Disabled');
+        expect(component.canDownloadFiles()).toBe(false);
+        expect(component.canUploadFiles()).toBe(false);
+      });
+
+      it('DownloadOnly allows download but not upload', () => {
+        setConnectionPolicy('DownloadOnly');
+        expect(component.canDownloadFiles()).toBe(true);
+        expect(component.canUploadFiles()).toBe(false);
+      });
+
+      it('UploadOnly allows upload but not download', () => {
+        setConnectionPolicy('UploadOnly');
+        expect(component.canDownloadFiles()).toBe(false);
+        expect(component.canUploadFiles()).toBe(true);
+      });
+
+      it('Both allows upload and download', () => {
+        setConnectionPolicy('Both');
+        expect(component.canDownloadFiles()).toBe(true);
+        expect(component.canUploadFiles()).toBe(true);
+      });
+    });
+
+    it('fileTransferAvailable proxies the session signal', () => {
+      const session = makeFakeSession({ fileTransferAvailable: () => true });
+      sessionsMap.set(new Map([['c1', session]]));
+      expect(component.fileTransferAvailable()).toBe(true);
+    });
+
+    it('fileTransferBreadcrumbs builds a crumb per path segment, root always first', () => {
+      component.fileTransferPath.set('/docs/reports');
+      expect(component.fileTransferBreadcrumbs()).toEqual([
+        { label: '/', path: '/' },
+        { label: 'docs', path: '/docs' },
+        { label: 'reports', path: '/docs/reports' },
+      ]);
+    });
+
+    describe('navigateFileTransfer', () => {
+      let session: FakeSession;
+      const entries = [{ displayName: 'a.txt', streamName: '/a.txt', mimetype: 'text/plain', isDirectory: false }];
+
+      beforeEach(() => {
+        session = makeFakeSession({ listDirectory: vi.fn(() => Promise.resolve(entries)) });
+        sessionsMap.set(new Map([['c1', session]]));
+      });
+
+      it('loads entries and updates the current path on success', async () => {
+        component.navigateFileTransfer('/docs');
+        expect(component.fileTransferLoading()).toBe(true);
+        await flushPromises();
+        expect(session.listDirectory).toHaveBeenCalledWith('/docs');
+        expect(component.fileTransferPath()).toBe('/docs');
+        expect(component.fileTransferEntries()).toEqual(entries);
+        expect(component.fileTransferLoading()).toBe(false);
+        expect(component.fileTransferError()).toBeNull();
+      });
+
+      it('surfaces a rejection as fileTransferError without moving the path', async () => {
+        session.listDirectory.mockReturnValueOnce(Promise.reject(new Error('not a directory')));
+        const before = component.fileTransferPath();
+        component.navigateFileTransfer('/broken');
+        await flushPromises();
+        expect(component.fileTransferError()).toBe('not a directory');
+        expect(component.fileTransferPath()).toBe(before);
+        expect(component.fileTransferLoading()).toBe(false);
+      });
+
+      it('no-ops when there is no active session', () => {
+        sessionsMap.set(new Map());
+        expect(() => component.navigateFileTransfer('/x')).not.toThrow();
+        expect(component.fileTransferLoading()).toBe(false);
+      });
+    });
+
+    describe('openFileTransferModal', () => {
+      it('opens the modal and navigates to root', () => {
+        const session = makeFakeSession();
+        sessionsMap.set(new Map([['c1', session]]));
+        component.openFileTransferModal();
+        expect(component.showFileTransferModal()).toBe(true);
+        expect(session.listDirectory).toHaveBeenCalledWith('/');
+      });
+
+      it('closeFileTransferModal hides it again', () => {
+        component.showFileTransferModal.set(true);
+        component.closeFileTransferModal();
+        expect(component.showFileTransferModal()).toBe(false);
+      });
+    });
+
+    describe('openFileTransferEntry', () => {
+      let session: FakeSession;
+      beforeEach(() => {
+        session = makeFakeSession();
+        sessionsMap.set(new Map([['c1', session]]));
+      });
+
+      it('navigates into directories', () => {
+        component.openFileTransferEntry({
+          displayName: 'sub',
+          streamName: '/sub',
+          mimetype: 'application/vnd.glyptodon.guacamole.stream-index+json',
+          isDirectory: true,
+        });
+        expect(session.listDirectory).toHaveBeenCalledWith('/sub');
+      });
+
+      it('downloads files when download is permitted', () => {
+        setConnectionPolicy('Both');
+        component.openFileTransferEntry({
+          displayName: 'a.txt',
+          streamName: '/a.txt',
+          mimetype: 'text/plain',
+          isDirectory: false,
+        });
+        expect(session.downloadFile).toHaveBeenCalled();
+      });
+
+      it('does not download files when policy forbids it', () => {
+        setConnectionPolicy('UploadOnly');
+        component.openFileTransferEntry({
+          displayName: 'a.txt',
+          streamName: '/a.txt',
+          mimetype: 'text/plain',
+          isDirectory: false,
+        });
+        expect(session.downloadFile).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('onFileTransferInputChange / upload', () => {
+      let session: FakeSession;
+      beforeEach(() => {
+        session = makeFakeSession();
+        sessionsMap.set(new Map([['c1', session]]));
+      });
+
+      it('uploads the selected file to the current path and reloads the listing', async () => {
+        component.fileTransferPath.set('/docs');
+        const file = new File(['x'], 'note.txt', { type: 'text/plain' });
+        const input = document.createElement('input');
+        input.type = 'file';
+        Object.defineProperty(input, 'files', { value: [file] });
+        component.onFileTransferInputChange({ target: input } as unknown as Event);
+        expect(component.fileTransferUploadBusy()).toBe(true);
+        await flushPromises();
+        expect(session.uploadFile).toHaveBeenCalledWith('/docs', file, expect.any(Function));
+        expect(component.fileTransferUploadBusy()).toBe(false);
+        expect(session.listDirectory).toHaveBeenCalledWith('/docs');
+      });
+
+      it('surfaces an upload error', async () => {
+        session.uploadFile.mockReturnValueOnce(Promise.reject(new Error('disk full')));
+        const file = new File(['x'], 'note.txt');
+        const input = document.createElement('input');
+        Object.defineProperty(input, 'files', { value: [file] });
+        component.onFileTransferInputChange({ target: input } as unknown as Event);
+        await flushPromises();
+        expect(component.fileTransferError()).toBe('disk full');
+      });
+
+      it('does nothing when no file was selected', () => {
+        const input = document.createElement('input');
+        Object.defineProperty(input, 'files', { value: [] });
+        component.onFileTransferInputChange({ target: input } as unknown as Event);
+        expect(session.uploadFile).not.toHaveBeenCalled();
+      });
     });
   });
 

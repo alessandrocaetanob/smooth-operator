@@ -4,18 +4,26 @@ import { firstValueFrom } from 'rxjs';
 import Guacamole from 'guacamole-common-js';
 
 export type GuacState =
-  | 'idle'
-  | 'requesting-ticket'
-  | 'connecting'
-  | 'waiting'
-  | 'connected'
-  | 'disconnected'
-  | 'error';
+  'idle' | 'requesting-ticket' | 'connecting' | 'waiting' | 'connected' | 'disconnected' | 'error';
 
 export interface GuacLogEntry {
   level: 'info' | 'ok' | 'warn' | 'error';
   message: string;
   timestamp: number;
+}
+
+/**
+ * One entry in a Guacamole filesystem directory listing. `streamName` is the
+ * full, absolute name guacd uses to address this entry directly in
+ * subsequent get/put requests — the server's JSON listing already returns
+ * full names (not bare filenames), so `displayName` is derived by stripping
+ * the current directory's prefix, never by joining paths ourselves.
+ */
+export interface GuacFileEntry {
+  displayName: string;
+  streamName: string;
+  mimetype: string;
+  isDirectory: boolean;
 }
 
 // Maps Guacamole.Client state codes (per the source) to our domain state.
@@ -120,6 +128,8 @@ export class GuacamoleSession {
   private lastSentSize: { w: number; h: number } | null = null;
   /** User zoom multiplier applied on top of the fit-to-screen scale. */
   private userZoom = 1;
+  /** The RDP drive / SSH SFTP filesystem object, set once guacd exposes one. */
+  private fsObject: Guacamole.Object | null = null;
 
   private readonly _state = signal<GuacState>('idle');
   private readonly _logs = signal<GuacLogEntry[]>([]);
@@ -128,6 +138,7 @@ export class GuacamoleSession {
   private readonly _hostClipboard = signal<string>('');
   private readonly _elapsedSeconds = signal(0);
   private readonly _connectedAt = signal<number | null>(null);
+  private readonly _fileSystemName = signal<string | null>(null);
 
   /** True when the session is minimized (display detached but WS alive). */
   readonly minimized = signal(false);
@@ -139,6 +150,10 @@ export class GuacamoleSession {
   readonly hostClipboard = this._hostClipboard.asReadonly();
   readonly elapsedSeconds = this._elapsedSeconds.asReadonly();
   readonly connectedAt = this._connectedAt.asReadonly();
+  /** Name guacd gave the filesystem (drive/SFTP), or null until it announces one. */
+  readonly fileSystemName = this._fileSystemName.asReadonly();
+  /** True once guacd has exposed a filesystem object — the paperclip button gate. */
+  readonly fileTransferAvailable = computed(() => this._fileSystemName() !== null);
   readonly progress = computed(() => PROGRESS_BY_STATE[this._state()] ?? 0);
   readonly isConnected = computed(() => this._state() === 'connected');
   readonly formattedElapsed = computed(() => {
@@ -172,6 +187,8 @@ export class GuacamoleSession {
     this._logs.set([]);
     this._displayName.set(null);
     this._hostClipboard.set('');
+    this._fileSystemName.set(null);
+    this.fsObject = null;
     this.minimized.set(false);
 
     this.setState('requesting-ticket');
@@ -287,6 +304,13 @@ export class GuacamoleSession {
           });
         }
       };
+    };
+    client.onfilesystem = (object, name) => {
+      this.zone.run(() => {
+        this.fsObject = object;
+        this._fileSystemName.set(name);
+        this.log('ok', `File transfer available: ${name}`);
+      });
     };
 
     this.setState('connecting');
@@ -472,6 +496,8 @@ export class GuacamoleSession {
     this.detachDisplay();
     this.client = null;
     this.tunnel = null;
+    this.fsObject = null;
+    this._fileSystemName.set(null);
     this.setState('disconnected');
   }
 
@@ -483,6 +509,8 @@ export class GuacamoleSession {
     this._hostClipboard.set('');
     this._elapsedSeconds.set(0);
     this._connectedAt.set(null);
+    this._fileSystemName.set(null);
+    this.fsObject = null;
     this.minimized.set(false);
   }
 
@@ -569,6 +597,123 @@ export class GuacamoleSession {
       /* clipboard stream may not be supported on every protocol */
     }
     this.typeText(text);
+  }
+
+  // ── File transfer (RDP drive redirect / SSH SFTP) ──────────────────────────
+  // Tunneled entirely through the existing Guacamole object protocol — no
+  // separate REST endpoint. guacd enforces the effective policy itself
+  // (disable-upload/disable-download or their sftp- equivalents), so these
+  // methods don't duplicate that check; the UI hides the buttons instead.
+
+  /**
+   * Lists the contents of `path` (use `Guacamole.Object.ROOT_STREAM` for the
+   * top level). The listing's stream names are already full, absolute paths
+   * from guacd — never reconstructed by joining parent + child here.
+   */
+  listDirectory(path: string): Promise<GuacFileEntry[]> {
+    return new Promise((resolve, reject) => {
+      if (!this.fsObject) {
+        reject(new Error('No filesystem available for this session.'));
+        return;
+      }
+      this.fsObject.requestInputStream(path, (stream, mimetype) => {
+        if (mimetype !== Guacamole.Object.STREAM_INDEX_MIMETYPE) {
+          reject(new Error('Not a directory.'));
+          return;
+        }
+        const reader = new Guacamole.StringReader(stream);
+        let buffer = '';
+        reader.ontext = (text) => {
+          buffer += text;
+        };
+        reader.onend = () => {
+          this.zone.run(() => {
+            try {
+              resolve(
+                this.parseDirectoryListing(path, JSON.parse(buffer) as Record<string, string>),
+              );
+            } catch {
+              reject(new Error('Failed to parse directory listing.'));
+            }
+          });
+        };
+      });
+    });
+  }
+
+  private parseDirectoryListing(path: string, listing: Record<string, string>): GuacFileEntry[] {
+    const prefix = path.endsWith('/') ? path : `${path}/`;
+    const entries = Object.entries(listing).map(([streamName, mimetype]) => ({
+      streamName,
+      displayName: streamName.startsWith(prefix) ? streamName.slice(prefix.length) : streamName,
+      mimetype,
+      isDirectory: mimetype === Guacamole.Object.STREAM_INDEX_MIMETYPE,
+    }));
+    entries.sort((a, b) =>
+      a.isDirectory === b.isDirectory
+        ? a.displayName.localeCompare(b.displayName)
+        : a.isDirectory
+          ? -1
+          : 1,
+    );
+    return entries;
+  }
+
+  /** Downloads `entry` to the browser's default download location. */
+  downloadFile(entry: GuacFileEntry): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (!this.fsObject) {
+        reject(new Error('No filesystem available for this session.'));
+        return;
+      }
+      this.fsObject.requestInputStream(entry.streamName, (stream, mimetype) => {
+        const reader = new Guacamole.BlobReader(stream, mimetype);
+        reader.onend = () => {
+          this.zone.run(() => {
+            const url = URL.createObjectURL(reader.getBlob());
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = entry.displayName;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+            resolve();
+          });
+        };
+      });
+    });
+  }
+
+  /** Uploads `file` into `directoryPath`. `onProgress` receives a 0–1 fraction. */
+  uploadFile(
+    directoryPath: string,
+    file: File,
+    onProgress?: (fraction: number) => void,
+  ): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (!this.fsObject) {
+        reject(new Error('No filesystem available for this session.'));
+        return;
+      }
+      const prefix = directoryPath.endsWith('/') ? directoryPath : `${directoryPath}/`;
+      const stream = this.fsObject.createOutputStream(
+        file.type || 'application/octet-stream',
+        prefix + file.name,
+      );
+      const writer = new Guacamole.BlobWriter(stream);
+      writer.onprogress = (blob, offset) => {
+        if (onProgress) this.zone.run(() => onProgress(Math.min(1, offset / blob.size)));
+      };
+      writer.onerror = (_blob, _offset, error) => {
+        this.zone.run(() => reject(new Error(error.message || 'Upload failed.')));
+      };
+      writer.oncomplete = () => {
+        writer.sendEnd();
+        this.zone.run(() => resolve());
+      };
+      writer.sendBlob(file);
+    });
   }
 
   typeText(text: string): void {

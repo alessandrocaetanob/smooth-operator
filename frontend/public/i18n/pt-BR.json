@@ -397,6 +397,8 @@
         "sendKeyCombo": "Enviar combinação de teclas",
         "clipboard": "Área de transferência",
         "clipboardSync": "Sincronizar área de transferência",
+        "fileTransfer": "Transferência de arquivos",
+        "openFileTransfer": "Abrir transferência de arquivos",
         "hideKeyboard": "Ocultar teclado",
         "keyboard": "Teclado",
         "hideOnScreenKeyboard": "Ocultar teclado na tela",
@@ -422,6 +424,13 @@
         "copyHostClipboard": "Copiar área de transferência do host",
         "pushed": "Enviado!",
         "pushToHost": "Enviar para o host"
+      },
+      "fileTransfer": {
+        "title": "Transferência de Arquivos",
+        "description": "Navegue pelo drive remoto para enviar ou baixar arquivos.",
+        "empty": "Esta pasta está vazia.",
+        "download": "Baixar",
+        "upload": "Enviar"
       },
       "terminalTheme": {
         "title": "Tema do Terminal da Sessão",

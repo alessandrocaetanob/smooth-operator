@@ -17,6 +17,7 @@ interface FakeClient {
   onerror: ((status: { message?: string; code?: number }) => void) | null;
   onname: ((name: string) => void) | null;
   onclipboard: ((stream: unknown, mimetype: string) => void) | null;
+  onfilesystem: ((object: FakeGuacObject, name: string) => void) | null;
   getDisplay: () => typeof fakeDisplay;
   sendKeyEvent: ReturnType<typeof vi.fn>;
   sendMouseState: ReturnType<typeof vi.fn>;
@@ -31,8 +32,42 @@ interface FakeTunnel {
   onerror: ((status: { message?: string }) => void) | null;
 }
 
+interface FakeGuacObject {
+  index: number;
+  requestInputStream: ReturnType<typeof vi.fn>;
+  createOutputStream: ReturnType<typeof vi.fn>;
+}
+
+interface FakeStringReader {
+  ontext: ((text: string) => void) | null;
+  onend: (() => void) | null;
+}
+
+interface FakeBlobReader {
+  onprogress: ((length: number) => void) | null;
+  onend: (() => void) | null;
+  getBlob: ReturnType<typeof vi.fn>;
+  getLength: ReturnType<typeof vi.fn>;
+}
+
+interface FakeBlobWriter {
+  sendBlob: ReturnType<typeof vi.fn>;
+  sendEnd: ReturnType<typeof vi.fn>;
+  onack: ((status: unknown) => void) | null;
+  onerror: ((blob: Blob, offset: number, error: DOMException) => void) | null;
+  onprogress: ((blob: Blob, offset: number) => void) | null;
+  oncomplete: ((blob: Blob) => void) | null;
+}
+
 const clientInstances: FakeClient[] = [];
 const tunnelInstances: FakeTunnel[] = [];
+const objectInstances: FakeGuacObject[] = [];
+const stringReaderInstances: FakeStringReader[] = [];
+const blobReaderInstances: FakeBlobReader[] = [];
+const blobWriterInstances: FakeBlobWriter[] = [];
+
+const ROOT_STREAM = '/';
+const STREAM_INDEX_MIMETYPE = 'application/vnd.glyptodon.guacamole.stream-index+json';
 
 class FakeClipboardStream {
   // marker class
@@ -51,6 +86,7 @@ vi.mock('guacamole-common-js', () => {
       onerror: null,
       onname: null,
       onclipboard: null,
+      onfilesystem: null,
       getDisplay: () => fakeDisplay,
       sendKeyEvent: vi.fn(),
       sendMouseState: vi.fn(),
@@ -92,17 +128,56 @@ vi.mock('guacamole-common-js', () => {
       onmousemove: null as null | ((s: unknown) => void),
     };
   };
-  function StringReaderCtor() {
-    return {
-      ontext: null as null | ((text: string) => void),
-      onend: null as null | (() => void),
-    };
+  function StringReaderCtor(): FakeStringReader {
+    const self: FakeStringReader = { ontext: null, onend: null };
+    stringReaderInstances.push(self);
+    return self;
   }
   function StringWriterCtor() {
     return {
       sendText: vi.fn(),
       sendEnd: vi.fn(),
     };
+  }
+  function ObjectCtor(_client: unknown, index: number): FakeGuacObject {
+    const self: FakeGuacObject = {
+      index,
+      requestInputStream: vi.fn(),
+      createOutputStream: vi.fn(),
+    };
+    objectInstances.push(self);
+    return self;
+  }
+  // NOTE: hardcoded literals, not the outer ROOT_STREAM/STREAM_INDEX_MIMETYPE consts —
+  // vi.mock factories are hoisted above later top-level const declarations, so reading
+  // their value here (as opposed to closing over a mutable array reference, which is
+  // fine) would silently capture `undefined`. Test bodies run after full module
+  // evaluation, so they may safely reference the outer consts, which hold the same
+  // literal values as these.
+  (ObjectCtor as unknown as { ROOT_STREAM: string }).ROOT_STREAM = '/';
+  (ObjectCtor as unknown as { STREAM_INDEX_MIMETYPE: string }).STREAM_INDEX_MIMETYPE =
+    'application/vnd.glyptodon.guacamole.stream-index+json';
+  function BlobReaderCtor(): FakeBlobReader {
+    const self: FakeBlobReader = {
+      onprogress: null,
+      onend: null,
+      getBlob: vi.fn(() => new Blob(['fake'])),
+      getLength: vi.fn(() => 4),
+    };
+    blobReaderInstances.push(self);
+    return self;
+  }
+  function BlobWriterCtor(): FakeBlobWriter {
+    const self: FakeBlobWriter = {
+      sendBlob: vi.fn(),
+      sendEnd: vi.fn(),
+      onack: null,
+      onerror: null,
+      onprogress: null,
+      oncomplete: null,
+    };
+    blobWriterInstances.push(self);
+    return self;
   }
 
   const Tunnel = { State: { OPEN: 1, UNSTABLE: 2, CLOSED: 3 } };
@@ -112,6 +187,9 @@ vi.mock('guacamole-common-js', () => {
       Client: ClientCtor,
       WebSocketTunnel: TunnelCtor,
       Tunnel,
+      Object: ObjectCtor,
+      BlobReader: BlobReaderCtor,
+      BlobWriter: BlobWriterCtor,
       Keyboard: KeyboardCtor,
       Mouse: MouseCtor,
       StringReader: StringReaderCtor,
@@ -130,6 +208,10 @@ describe('GuacamoleSession', () => {
   beforeEach(() => {
     clientInstances.length = 0;
     tunnelInstances.length = 0;
+    objectInstances.length = 0;
+    stringReaderInstances.length = 0;
+    blobReaderInstances.length = 0;
+    blobWriterInstances.length = 0;
     sessionStorage.clear();
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
@@ -443,6 +525,157 @@ describe('GuacamoleSession', () => {
       fakeDisplay.scale.mockClear();
       fakeDisplay.onresize?.();
       expect(fakeDisplay.scale).toHaveBeenCalled();
+    });
+  });
+
+  describe('file transfer (onfilesystem / listDirectory / downloadFile / uploadFile)', () => {
+    let client: FakeClient;
+
+    beforeEach(async () => {
+      const p = session.connect();
+      httpTesting.expectOne('/api/Guacamole/ticket/conn-1').flush({ ticket: 't' });
+      await p;
+      client = clientInstances[0];
+    });
+
+    function attachFilesystem(overrides: Partial<FakeGuacObject> = {}): FakeGuacObject {
+      const obj: FakeGuacObject = {
+        index: 0,
+        requestInputStream: vi.fn(),
+        createOutputStream: vi.fn(() => ({})),
+        ...overrides,
+      };
+      client.onfilesystem?.(obj, 'Smooth Operator');
+      return obj;
+    }
+
+    it('fileTransferAvailable/fileSystemName default to unavailable', () => {
+      expect(session.fileTransferAvailable()).toBe(false);
+      expect(session.fileSystemName()).toBeNull();
+    });
+
+    it('onfilesystem marks the filesystem available', () => {
+      attachFilesystem();
+      expect(session.fileTransferAvailable()).toBe(true);
+      expect(session.fileSystemName()).toBe('Smooth Operator');
+    });
+
+    describe('listDirectory', () => {
+      it('rejects when no filesystem is available', async () => {
+        await expect(session.listDirectory('/')).rejects.toThrow('No filesystem available');
+      });
+
+      it('resolves entries sorted directories-first then alphabetically, stripping the path prefix', async () => {
+        attachFilesystem({
+          requestInputStream: vi.fn((_name: string, cb: (stream: unknown, mimetype: string) => void) => {
+            cb({}, STREAM_INDEX_MIMETYPE);
+          }),
+        });
+
+        const promise = session.listDirectory(ROOT_STREAM);
+        const reader = stringReaderInstances[stringReaderInstances.length - 1];
+        reader.ontext?.(
+          JSON.stringify({
+            '/b.txt': 'text/plain',
+            '/a.txt': 'text/plain',
+            '/sub': STREAM_INDEX_MIMETYPE,
+          }),
+        );
+        reader.onend?.();
+
+        await expect(promise).resolves.toEqual([
+          { streamName: '/sub', displayName: 'sub', mimetype: STREAM_INDEX_MIMETYPE, isDirectory: true },
+          { streamName: '/a.txt', displayName: 'a.txt', mimetype: 'text/plain', isDirectory: false },
+          { streamName: '/b.txt', displayName: 'b.txt', mimetype: 'text/plain', isDirectory: false },
+        ]);
+      });
+
+      it('rejects when the requested stream is not a directory', async () => {
+        attachFilesystem({
+          requestInputStream: vi.fn((_name: string, cb: (stream: unknown, mimetype: string) => void) => {
+            cb({}, 'text/plain');
+          }),
+        });
+        await expect(session.listDirectory('/a.txt')).rejects.toThrow('Not a directory');
+      });
+    });
+
+    describe('downloadFile', () => {
+      const entry = { streamName: '/a.txt', displayName: 'a.txt', mimetype: 'text/plain', isDirectory: false };
+
+      it('rejects when no filesystem is available', async () => {
+        await expect(session.downloadFile(entry)).rejects.toThrow('No filesystem available');
+      });
+
+      it('triggers a browser download once the blob stream ends', async () => {
+        attachFilesystem({
+          requestInputStream: vi.fn((_name: string, cb: (stream: unknown, mimetype: string) => void) => {
+            cb({}, 'text/plain');
+          }),
+        });
+        const clickSpy = vi
+          .spyOn(HTMLAnchorElement.prototype, 'click')
+          .mockImplementation(() => undefined);
+        const createObjectUrl = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:fake');
+        const revokeObjectUrl = vi.spyOn(URL, 'revokeObjectURL').mockReturnValue(undefined);
+
+        const promise = session.downloadFile(entry);
+        const reader = blobReaderInstances[blobReaderInstances.length - 1];
+        reader.onend?.();
+        await promise;
+
+        expect(createObjectUrl).toHaveBeenCalled();
+        expect(clickSpy).toHaveBeenCalled();
+        expect(revokeObjectUrl).toHaveBeenCalledWith('blob:fake');
+      });
+    });
+
+    describe('uploadFile', () => {
+      it('rejects when no filesystem is available', async () => {
+        await expect(session.uploadFile('/', new File(['x'], 'a.txt'))).rejects.toThrow(
+          'No filesystem available',
+        );
+      });
+
+      it('creates the output stream at directory + filename and sends the blob', async () => {
+        const obj = attachFilesystem();
+        const file = new File(['x'], 'note.txt', { type: 'text/plain' });
+
+        const promise = session.uploadFile('/docs', file);
+        expect(obj.createOutputStream).toHaveBeenCalledWith('text/plain', '/docs/note.txt');
+
+        const writer = blobWriterInstances[blobWriterInstances.length - 1];
+        expect(writer.sendBlob).toHaveBeenCalledWith(file);
+        writer.oncomplete?.(file);
+        await promise;
+        expect(writer.sendEnd).toHaveBeenCalled();
+      });
+
+      it('does not double a trailing slash when the directory is root', () => {
+        const obj = attachFilesystem();
+        const file = new File(['x'], 'note.txt');
+        void session.uploadFile(ROOT_STREAM, file);
+        expect(obj.createOutputStream).toHaveBeenCalledWith('application/octet-stream', '/note.txt');
+      });
+
+      it('reports upload progress as a 0-1 fraction', () => {
+        attachFilesystem();
+        const file = new File(['x'], 'note.txt');
+        const onProgress = vi.fn();
+        void session.uploadFile('/docs', file, onProgress);
+        const writer = blobWriterInstances[blobWriterInstances.length - 1];
+        writer.onprogress?.(new Blob(['0123456789']), 5);
+        expect(onProgress).toHaveBeenCalledWith(0.5);
+      });
+
+      it('rejects when the writer reports an error', async () => {
+        attachFilesystem();
+        const file = new File(['x'], 'note.txt');
+        const promise = session.uploadFile('/docs', file);
+        const writer = blobWriterInstances[blobWriterInstances.length - 1];
+        writer.onerror?.(file, 0, new DOMException('disk full'));
+        await expect(promise).rejects.toThrow('disk full');
+      });
     });
   });
 

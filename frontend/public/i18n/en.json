@@ -397,6 +397,8 @@
         "sendKeyCombo": "Send key combo",
         "clipboard": "Clipboard",
         "clipboardSync": "Clipboard sync",
+        "fileTransfer": "File transfer",
+        "openFileTransfer": "Open file transfer",
         "hideKeyboard": "Hide keyboard",
         "keyboard": "Keyboard",
         "hideOnScreenKeyboard": "Hide on-screen keyboard",
@@ -422,6 +424,13 @@
         "copyHostClipboard": "Copy host clipboard",
         "pushed": "Pushed!",
         "pushToHost": "Push to host"
+      },
+      "fileTransfer": {
+        "title": "File Transfer",
+        "description": "Browse the remote drive to upload or download files.",
+        "empty": "This folder is empty.",
+        "download": "Download",
+        "upload": "Upload"
       },
       "terminalTheme": {
         "title": "Session Terminal Theme",

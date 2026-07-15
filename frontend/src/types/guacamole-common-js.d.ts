@@ -49,6 +49,46 @@ declare module 'guacamole-common-js' {
       sendEnd(): void;
     }
 
+    /** Assembles blob chunks received on an InputStream into a single Blob. */
+    class BlobReader {
+      constructor(stream: InputStream, mimetype: string);
+      getLength(): number;
+      getBlob(): Blob;
+      onprogress: ((length: number) => void) | null;
+      onend: (() => void) | null;
+    }
+
+    /** Chunks a Blob and writes it to an OutputStream. */
+    class BlobWriter {
+      constructor(stream: OutputStream);
+      sendBlob(blob: Blob): void;
+      sendEnd(): void;
+      onack: ((status: Status) => void) | null;
+      onerror: ((blob: Blob, offset: number, error: DOMException) => void) | null;
+      onprogress: ((blob: Blob, offset: number) => void) | null;
+      oncomplete: ((blob: Blob) => void) | null;
+    }
+
+    /**
+     * A named collection of input/output streams exposed by guacd — an RDP
+     * drive redirect or SSH SFTP session. `ROOT_STREAM` ("/") lists directory
+     * contents as JSON (mimetype `STREAM_INDEX_MIMETYPE`); any other stream
+     * name is a file.
+     */
+    class Object {
+      constructor(client: Client, index: number);
+      readonly index: number;
+      onbody: ((inputStream: InputStream, mimetype: string, name: string) => void) | null;
+      onundefine: (() => void) | null;
+      requestInputStream(
+        name: string,
+        bodyCallback?: (stream: InputStream, mimetype: string) => void,
+      ): void;
+      createOutputStream(mimetype: string, name: string): OutputStream;
+      static readonly ROOT_STREAM: string;
+      static readonly STREAM_INDEX_MIMETYPE: string;
+    }
+
     class Display {
       getElement(): HTMLDivElement;
       getWidth(): number;
@@ -97,6 +137,7 @@ declare module 'guacamole-common-js' {
       onerror: ((status: Status) => void) | null;
       onclipboard: ((stream: InputStream, mimetype: string) => void) | null;
       onname: ((name: string) => void) | null;
+      onfilesystem: ((object: Object, name: string) => void) | null;
     }
   }
 
