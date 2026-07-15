@@ -72,4 +72,9 @@ Click the trash icon. Active sessions using this connection are not forcibly ter
 
 ## File transfer
 
-Some connection types support file transfer. Click the paperclip icon on an active session to open the file transfer panel (available when the backend enables this feature).
+SSH and RDP connections support in-session file transfer — SFTP for SSH, drive redirect for RDP. It is **disabled by default** and governed by a policy with four states: disabled, download-only, upload-only, or both.
+
+- Set the default policy for every connection in a vault from **Settings → Vaults**, using the file-transfer icon on the vault row.
+- Override the policy for an individual connection in the connection's edit form, under **File transfer**. Leave it set to **Inherit from vault** to use the vault default.
+
+When the effective policy is anything other than disabled, a paperclip icon appears in the active session's toolbar. Click it to browse the remote filesystem, upload files, and download files — upload and download buttons are only shown when the policy allows that direction. Every completed transfer is recorded in the [audit log](./audit-logs) with the file name, size, direction, user, and connection, and can trigger a [webhook](./webhooks).
