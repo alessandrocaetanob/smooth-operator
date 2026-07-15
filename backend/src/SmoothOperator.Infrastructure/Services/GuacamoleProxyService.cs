@@ -2,6 +2,7 @@ using SmoothOperator.Application.Interfaces;
 using SmoothOperator.Application.Exceptions;
 using SmoothOperator.Application.Features.Connections;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Sockets;
@@ -36,6 +37,7 @@ namespace SmoothOperator.Infrastructure.Services
         private readonly IAppMetrics _metrics;
         private readonly ISecretProviderFactory _secretProviderFactory;
         private readonly RecordingOptions _recordingOptions;
+        private readonly FileTransferOptions _fileTransferOptions;
 
         private static readonly TimeSpan TicketTtl = TimeSpan.FromSeconds(30);
 
@@ -44,6 +46,7 @@ namespace SmoothOperator.Infrastructure.Services
             IOptions<GuacdOptions> guacdOptions,
             IServiceScopeFactory scopeFactory,
             IOptions<RecordingOptions> recordingOptions,
+            IOptions<FileTransferOptions> fileTransferOptions,
             GuacamoleProxyDependencies dependencies)
         {
             _logger = logger;
@@ -55,6 +58,7 @@ namespace SmoothOperator.Infrastructure.Services
             _metrics = dependencies.Metrics;
             _secretProviderFactory = dependencies.SecretProviderFactory;
             _recordingOptions = recordingOptions.Value;
+            _fileTransferOptions = fileTransferOptions.Value;
         }
 
         // ---- Ticket lifecycle (REST issue / WS consume) ------------------------------
@@ -237,7 +241,7 @@ namespace SmoothOperator.Infrastructure.Services
         /// timeouts. Class (not record) so the watchdog and the relay loop see the same
         /// mutable values.
         /// </summary>
-        private sealed class GuacSessionRequest
+        internal sealed class GuacSessionRequest
         {
             public required WebSocket WebSocket { get; init; }
             public required Connection Connection { get; init; }
@@ -263,6 +267,28 @@ namespace SmoothOperator.Infrastructure.Services
             /// </summary>
             public Guid? RecordingId { get; set; }
             public string? RecordingTempPath { get; set; }
+
+            /// <summary>Effective file-transfer policy resolved for this session (vault default + per-connection override).</summary>
+            public Domain.Enums.FileTransferPolicy FileTransferPolicy { get; set; } = Domain.Enums.FileTransferPolicy.Disabled;
+
+            /// <summary>Per-session RDP drive directory, set when RDP file transfer is enabled; removed when the session ends.</summary>
+            public string? FileTransferDriveDir { get; set; }
+
+            /// <summary>
+            /// Streams guacd allocated in response to a client <c>get</c> (download) request,
+            /// keyed by stream index. Written/read from both relay directions, hence concurrent.
+            /// </summary>
+            public ConcurrentDictionary<int, PendingFileTransfer> PendingDownloads { get; } = new();
+
+            /// <summary>Streams the client allocated via <c>put</c> (upload) requests, keyed by stream index.</summary>
+            public ConcurrentDictionary<int, PendingFileTransfer> PendingUploads { get; } = new();
+        }
+
+        /// <summary>Tracks an in-flight file-transfer stream until its terminating instruction arrives.</summary>
+        internal sealed class PendingFileTransfer
+        {
+            public required string Name { get; init; }
+            public long Bytes { get; set; }
         }
 
         private static Task<User?> LoadAuthorizedUserAsync(AppDbContext dbContext, Guid userId) =>
@@ -392,6 +418,7 @@ namespace SmoothOperator.Infrastructure.Services
                 // When yes: creates a Recording row, sets req.RecordingId/RecordingTempPath, and
                 // returns the recording-* params that guacd needs in its handshake.
                 var handshakeOverrides = await PrepareRecordingAsync(req);
+                handshakeOverrides = await PrepareFileTransferAsync(req, handshakeOverrides);
 
                 await PerformGuacamoleHandshakeAsync(
                     networkStream,
@@ -445,6 +472,11 @@ namespace SmoothOperator.Infrastructure.Services
                     // don't want session teardown / WebSocket close to wait on cloud I/O.
                     // The upload service owns its own scope and updates Recording.Status.
                     _ = Task.Run(() => TriggerRecordingUploadAsync(req.RecordingId.Value, req.RecordingTempPath));
+                }
+
+                if (!string.IsNullOrEmpty(req.FileTransferDriveDir))
+                {
+                    CleanupFileTransferDriveDir(req.FileTransferDriveDir, req.SessionId);
                 }
 
                 if (sessionMetricRecorded)
@@ -653,6 +685,161 @@ namespace SmoothOperator.Infrastructure.Services
             }
         }
 
+        // ---- File-transfer wiring (SFTP for SSH, drive redirect for RDP) ------------
+
+        /// <summary>
+        /// Outcome of the file-transfer handshake step: the resolved policy, the RDP
+        /// drive directory created (if any), and the merged Guacamole handshake overrides.
+        /// </summary>
+        internal sealed record FileTransferHandshakeResult(
+            Domain.Enums.FileTransferPolicy Policy,
+            string? DriveDir,
+            IDictionary<string, string>? SettingsOverrides);
+
+        /// <summary>
+        /// Resolves the connection's effective file-transfer policy and, when not
+        /// Disabled, merges the guacd params that enable it: <c>enable-sftp</c> for SSH
+        /// (guacd reuses the primary SSH connection's own credentials — no extra
+        /// directory needed), or <c>enable-drive</c>/<c>drive-path</c> for RDP (which
+        /// does need a directory, created per-session under <see cref="FileTransferOptions.DrivePath"/>
+        /// and removed when the session ends). VNC/telnet have no Guacamole file-transfer
+        /// support, so the policy is resolved but no params are sent.
+        /// </summary>
+        private async Task<IDictionary<string, string>?> PrepareFileTransferAsync(
+            GuacSessionRequest req, IDictionary<string, string>? overrides)
+        {
+            var result = await PrepareFileTransferCoreAsync(
+                req.Connection,
+                req.User.Id,
+                req.SessionId,
+                req.IpAddress,
+                overrides,
+                req.DbContext,
+                _fileTransferOptions,
+                _logger);
+
+            req.FileTransferPolicy = result.Policy;
+            req.FileTransferDriveDir = result.DriveDir;
+            return result.SettingsOverrides;
+        }
+
+        /// <summary>
+        /// Pure-input variant of <see cref="PrepareFileTransferAsync"/> with no WebSocket
+        /// dependency — used by unit tests so the policy → guacd-params decision tree can
+        /// be exercised without standing up the full session pipeline.
+        /// </summary>
+        internal static async Task<FileTransferHandshakeResult> PrepareFileTransferCoreAsync(
+            Connection connection,
+            Guid userId,
+            string sessionId,
+            string ipAddress,
+            IDictionary<string, string>? settingsOverrides,
+            AppDbContext db,
+            FileTransferOptions fileTransferOptions,
+            ILogger logger,
+            CancellationToken cancellationToken = default)
+        {
+            var policy = FileTransferPolicyResolver.Resolve(connection);
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(
+                    "File transfer evaluated for session {SessionId} (connection {ConnectionId}): vault={VaultPolicy}, override={Override}, effective={Policy}",
+                    sessionId,
+                    connection.Id,
+                    connection.ConnectionGroup?.FileTransferPolicy,
+                    connection.FileTransferPolicyOverride,
+                    policy);
+            }
+
+            if (policy == Domain.Enums.FileTransferPolicy.Disabled)
+                return new FileTransferHandshakeResult(policy, null, settingsOverrides);
+
+            var protocol = (connection.Protocol ?? "rdp").ToLowerInvariant();
+            var merged = settingsOverrides == null
+                ? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+                : new Dictionary<string, string>(settingsOverrides, StringComparer.OrdinalIgnoreCase);
+
+            if (protocol == "ssh")
+            {
+                merged["enable-sftp"] = "true";
+                merged["sftp-disable-upload"] = policy == Domain.Enums.FileTransferPolicy.DownloadOnly ? "true" : "false";
+                merged["sftp-disable-download"] = policy == Domain.Enums.FileTransferPolicy.UploadOnly ? "true" : "false";
+                return new FileTransferHandshakeResult(policy, null, merged);
+            }
+
+            if (protocol != "rdp")
+            {
+                // VNC/telnet: Guacamole has no file-transfer support for these protocols.
+                return new FileTransferHandshakeResult(policy, null, settingsOverrides);
+            }
+
+            var driveDir = Path.Combine(fileTransferOptions.DrivePath, sessionId);
+            try
+            {
+                Directory.CreateDirectory(driveDir);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex,
+                    "File transfer enabled but drive dir '{DriveDir}' is not writable; session will proceed WITHOUT file transfer. Recreate the file_transfer_temp volume to pick up the Dockerfile permissions.",
+                    driveDir);
+                await WriteFileTransferSkippedAuditCoreAsync(db, userId, connection.Id, sessionId, ipAddress, "drive_dir_unwritable", ex.Message, logger, cancellationToken);
+                return new FileTransferHandshakeResult(policy, null, settingsOverrides);
+            }
+
+            merged["enable-drive"] = "true";
+            merged["drive-path"] = driveDir;
+            merged["create-drive-path"] = "true";
+            merged["drive-name"] = "Smooth Operator";
+            merged["disable-upload"] = policy == Domain.Enums.FileTransferPolicy.DownloadOnly ? "true" : "false";
+            merged["disable-download"] = policy == Domain.Enums.FileTransferPolicy.UploadOnly ? "true" : "false";
+            return new FileTransferHandshakeResult(policy, driveDir, merged);
+        }
+
+        internal static async Task WriteFileTransferSkippedAuditCoreAsync(
+            AppDbContext db,
+            Guid userId,
+            Guid connectionId,
+            string sessionId,
+            string ipAddress,
+            string reason,
+            string detail,
+            ILogger logger,
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                db.AuditLogs.Add(new AuditLog
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = userId,
+                    Action = "file_transfer.skipped",
+                    ResourceType = ResourceTypeConnection,
+                    ResourceId = connectionId.ToString(),
+                    Details = JsonSerializer.Serialize(new { sessionId, reason, detail }),
+                    IpAddress = ipAddress,
+                    Outcome = "failure",
+                });
+                await db.SaveChangesAsync(cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Failed to write file_transfer.skipped audit log for session {SessionId}", sessionId);
+            }
+        }
+
+        private void CleanupFileTransferDriveDir(string driveDir, string sessionId)
+        {
+            try
+            {
+                if (Directory.Exists(driveDir)) Directory.Delete(driveDir, recursive: true);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to clean up file-transfer drive dir for session {SessionId}", sessionId);
+            }
+        }
+
         private async Task PerformGuacamoleHandshakeAsync(
             NetworkStream networkStream,
             GuacInstructionReader reader,
@@ -738,8 +925,8 @@ namespace SmoothOperator.Infrastructure.Services
         {
             // Bidirectional proxy with proper instruction framing on the guacd→ws side.
             using var watchdogCts = new CancellationTokenSource();
-            var receiveTask = ProxyGuacdToWebSocket(reader, req.WebSocket, onGuacError);
-            var sendTask = ProxyWebSocketToGuacd(req.WebSocket, networkStream, () =>
+            var receiveTask = ProxyGuacdToWebSocket(req, reader, req.WebSocket, onGuacError);
+            var sendTask = ProxyWebSocketToGuacd(req, req.WebSocket, networkStream, () =>
             {
                 req.LastActivityAt = DateTime.UtcNow;
                 // Traces genuine user input that resets the idle clock (Debug — off by default).
@@ -1249,7 +1436,7 @@ namespace SmoothOperator.Infrastructure.Services
             }
         }
 
-        private static async Task ProxyGuacdToWebSocket(GuacInstructionReader reader, WebSocket webSocket, Action<string> onGuacError)
+        private async Task ProxyGuacdToWebSocket(GuacSessionRequest req, GuacInstructionReader reader, WebSocket webSocket, Action<string> onGuacError)
         {
             var ct = CancellationToken.None;
             while (webSocket.State == WebSocketState.Open)
@@ -1262,6 +1449,7 @@ namespace SmoothOperator.Infrastructure.Services
                 // as the WS close reason if the session ends right after.
                 // Format: `5.error,LEN.MESSAGE,LEN.CODE;`
                 TryReportGuacError(raw, onGuacError);
+                ObserveServerToClientFileTransfer(req, raw);
 
                 var bytes = Encoding.UTF8.GetBytes(raw);
                 await webSocket.SendAsync(
@@ -1339,7 +1527,7 @@ namespace SmoothOperator.Infrastructure.Services
             return false;
         }
 
-        private static async Task ProxyWebSocketToGuacd(WebSocket webSocket, NetworkStream guacdStream, Action onActivity)
+        private static async Task ProxyWebSocketToGuacd(GuacSessionRequest req, WebSocket webSocket, NetworkStream guacdStream, Action onActivity)
         {
             var buffer = new byte[16 * 1024];
             using var ms = new MemoryStream();
@@ -1361,6 +1549,7 @@ namespace SmoothOperator.Infrastructure.Services
                 // Only genuine user input resets the idle clock — keepalive
                 // traffic (sync/nop/ping) must not keep an idle session alive.
                 if (ContainsUserActivity(payload)) onActivity();
+                ObserveClientToServerFileTransfer(req, payload);
             }
         }
 
@@ -1494,6 +1683,247 @@ namespace SmoothOperator.Infrastructure.Services
                 var code = parsed.Count >= 3 ? parsed[2] : "?";
                 onGuacError($"guacd: {msg} (code {code})");
             }
+        }
+
+        // ---- File-transfer stream observation & per-file audit -----------------------
+        //
+        // Guacamole tunnels file transfer through the SAME instruction stream as
+        // everything else (mouse/keys/screen updates): guacd exposes an RDP drive or
+        // SSH SFTP session as a `filesystem` object, and the browser reads/writes it
+        // with `get`/`put`/`body`/`blob`/`ack`/`end` — see
+        // https://guacamole.apache.org/doc/gug/protocol-reference.html. There is no
+        // separate REST endpoint for file transfer; this is the only place a completed
+        // transfer (and its name/size/direction) can be observed for the audit trail.
+        //
+        // `blob`/`end` also carry ordinary screen-update tile data, at high frequency,
+        // so these observers must stay cheap for the common (non-file) case: a literal
+        // prefix check, then — only on a match — a lean field extractor that never
+        // materializes the (potentially large, base64) payload unless the stream index
+        // is one we're actually tracking.
+
+        private const string DirectoryListingMimetype = "application/vnd.glyptodon.guacamole.stream-index+json";
+
+        // guacd -> client direction (ProxyGuacdToWebSocket).
+        internal void ObserveServerToClientFileTransfer(GuacSessionRequest req, string raw)
+        {
+            if (req.FileTransferPolicy == Domain.Enums.FileTransferPolicy.Disabled) return;
+
+            if (raw.StartsWith("4.body,", StringComparison.Ordinal))
+            {
+                HandleFileTransferBody(req, raw);
+            }
+            else if (raw.StartsWith("4.blob,", StringComparison.Ordinal))
+            {
+                if (req.PendingDownloads.IsEmpty) return;
+                if (!TryReadStreamAndDataField(raw, 0, out var streamIndex, out var dataStart, out var dataLen)) return;
+                if (req.PendingDownloads.TryGetValue(streamIndex, out var transfer))
+                {
+                    transfer.Bytes += DecodedBase64Length(raw.AsSpan(dataStart, dataLen));
+                }
+            }
+            else if (raw.StartsWith("3.end,", StringComparison.Ordinal))
+            {
+                if (req.PendingDownloads.IsEmpty) return;
+                var streamIndex = ReadSingleStreamIndex(raw, 0);
+                if (streamIndex >= 0 && req.PendingDownloads.TryRemove(streamIndex, out var transfer))
+                {
+                    QueueFileTransferAudit(req, "download", transfer.Name, transfer.Bytes);
+                }
+            }
+            else if (raw.StartsWith("3.ack,", StringComparison.Ordinal))
+            {
+                if (req.PendingUploads.IsEmpty && req.PendingDownloads.IsEmpty) return;
+                HandleAckInstruction(req, raw);
+            }
+        }
+
+        // client -> guacd direction (ProxyWebSocketToGuacd). A single WS message may
+        // carry several concatenated instructions, mirroring ContainsUserActivity's scan.
+        internal static void ObserveClientToServerFileTransfer(GuacSessionRequest req, byte[] payload)
+        {
+            if (req.FileTransferPolicy == Domain.Enums.FileTransferPolicy.Disabled) return;
+
+            var text = Encoding.UTF8.GetString(payload);
+            int i = 0;
+            while (i < text.Length)
+            {
+                int dot = text.IndexOf('.', i);
+                if (dot < 0) break;
+                if (!int.TryParse(text.AsSpan(i, dot - i), out var len) || len < 0) break;
+
+                int opStart = dot + 1;
+                if (opStart + len > text.Length) break;
+                var opcode = text.AsSpan(opStart, len);
+
+                if (opcode.SequenceEqual("put"))
+                {
+                    HandlePutInstruction(req, text, i);
+                }
+                else if (opcode.SequenceEqual("blob") && !req.PendingUploads.IsEmpty)
+                {
+                    HandleUploadBlobInstruction(req, text, i);
+                }
+
+                int semicolon = text.IndexOf(';', opStart + len);
+                if (semicolon < 0) break;
+                i = semicolon + 1;
+            }
+        }
+
+        // `body,object,stream,mimetype,name;` — guacd allocated a stream in response to
+        // a client `get`. Tracked as a pending download unless it's a directory listing
+        // (root "/" or subdirectory browsing — not an actual file transfer).
+        private static void HandleFileTransferBody(GuacSessionRequest req, string raw)
+        {
+            var parsed = ParseInstruction(raw);
+            if (parsed == null || parsed.Count < 5) return;
+            if (!int.TryParse(parsed[2], out var streamIndex)) return;
+            if (string.Equals(parsed[3], DirectoryListingMimetype, StringComparison.Ordinal)) return;
+            req.PendingDownloads[streamIndex] = new PendingFileTransfer { Name = parsed[4] };
+        }
+
+        // `put,object,stream,mimetype,name;` — client is opening an upload stream. Rare
+        // (once per uploaded file), so a full parse of the bounded instruction slice is fine.
+        private static void HandlePutInstruction(GuacSessionRequest req, string text, int startPos)
+        {
+            int semicolon = text.IndexOf(';', startPos);
+            if (semicolon < 0) return;
+            var parsed = ParseInstruction(text[startPos..(semicolon + 1)]);
+            if (parsed == null || parsed.Count < 5) return;
+            if (!int.TryParse(parsed[2], out var streamIndex)) return;
+            req.PendingUploads[streamIndex] = new PendingFileTransfer { Name = parsed[4] };
+        }
+
+        private static void HandleUploadBlobInstruction(GuacSessionRequest req, string text, int startPos)
+        {
+            if (!TryReadStreamAndDataField(text, startPos, out var streamIndex, out var dataStart, out var dataLen)) return;
+            if (req.PendingUploads.TryGetValue(streamIndex, out var transfer))
+            {
+                transfer.Bytes += DecodedBase64Length(text.AsSpan(dataStart, dataLen));
+            }
+        }
+
+        // `ack,stream,message,status;` — status "0" (or omitted) means success. Finalizes
+        // an upload (client was the blob sender, server acks completion/failure) or, if a
+        // non-zero status arrives for a stream we're still downloading, aborts it — the
+        // protocol allows a non-zero ack to implicitly terminate any open stream.
+        private void HandleAckInstruction(GuacSessionRequest req, string raw)
+        {
+            var parsed = ParseInstruction(raw);
+            if (parsed == null || parsed.Count < 2) return;
+            if (!int.TryParse(parsed[1], out var streamIndex)) return;
+            var status = parsed.Count >= 4 ? parsed[3] : "0";
+            var success = status == "0";
+
+            if (req.PendingUploads.TryRemove(streamIndex, out var uploadTransfer))
+            {
+                QueueFileTransferAudit(req, "upload", uploadTransfer.Name, uploadTransfer.Bytes,
+                    success ? "success" : "failure", success ? null : status);
+                return;
+            }
+
+            if (!success && req.PendingDownloads.TryRemove(streamIndex, out var downloadTransfer))
+            {
+                QueueFileTransferAudit(req, "download", downloadTransfer.Name, downloadTransfer.Bytes, "failure", status);
+            }
+        }
+
+        // Fire-and-forget: writes the audit log + enqueues matching webhooks on a fresh
+        // scope. Called from the hot relay loop, so it must never block it on a DB
+        // round-trip — mirrors the recording-upload fire-and-forget trigger.
+        private void QueueFileTransferAudit(
+            GuacSessionRequest req, string direction, string fileName, long sizeBytes,
+            string outcome = "success", string? failureCode = null)
+        {
+            _ = Task.Run(() => WriteFileTransferAuditAsync(req, direction, fileName, sizeBytes, outcome, failureCode));
+        }
+
+        internal async Task WriteFileTransferAuditAsync(
+            GuacSessionRequest req, string direction, string fileName, long sizeBytes, string outcome, string? failureCode)
+        {
+            try
+            {
+                using var scope = _scopeFactory.CreateScope();
+                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                var webhookEnqueuer = scope.ServiceProvider.GetRequiredService<IWebhookEnqueuer>();
+
+                var entry = new AuditLog
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = req.User.Id,
+                    Action = "session.file_transferred",
+                    ResourceType = ResourceTypeConnection,
+                    ResourceId = req.Connection.Id.ToString(),
+                    Details = JsonSerializer.Serialize(new
+                    {
+                        sessionId = req.SessionId,
+                        connectionId = req.Connection.Id,
+                        direction,
+                        fileName,
+                        sizeBytes,
+                        failureCode,
+                    }),
+                    IpAddress = req.IpAddress,
+                    Outcome = outcome,
+                };
+                db.AuditLogs.Add(entry);
+                await webhookEnqueuer.EnqueueAsync(entry);
+                await db.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to write session.file_transferred audit log for session {SessionId}", req.SessionId);
+            }
+        }
+
+        // Reads one `LEN.VALUE` field starting at `pos` (an index into raw), advances
+        // `pos` past the trailing separator (',' or ';'), and returns the value's
+        // start/length. The building block for the lean extractors below — avoids the
+        // List<string> allocation ParseInstruction incurs, which matters here because
+        // blob/end fire constantly for ordinary display updates too.
+        private static bool TryReadField(string raw, ref int pos, out int start, out int len)
+        {
+            start = 0; len = 0;
+            int dot = raw.IndexOf('.', pos);
+            if (dot < 0) return false;
+            if (!int.TryParse(raw.AsSpan(pos, dot - pos), out len) || len < 0) return false;
+            start = dot + 1;
+            if (start + len >= raw.Length) return false;
+            pos = start + len + 1;
+            return true;
+        }
+
+        // `blob,stream,data;` (or `put,object,stream,...` for the first two fields) —
+        // extracts the stream index and the data field's span without allocating a
+        // copy of the (potentially large) base64 payload.
+        private static bool TryReadStreamAndDataField(string raw, int startPos, out int streamIndex, out int dataStart, out int dataLen)
+        {
+            streamIndex = -1; dataStart = 0; dataLen = 0;
+            int pos = startPos;
+            if (!TryReadField(raw, ref pos, out _, out _)) return false; // opcode
+            if (!TryReadField(raw, ref pos, out var idxStart, out var idxLen)) return false;
+            if (!int.TryParse(raw.AsSpan(idxStart, idxLen), out streamIndex)) return false;
+            return TryReadField(raw, ref pos, out dataStart, out dataLen);
+        }
+
+        // `end,stream;` — extracts just the stream index.
+        private static int ReadSingleStreamIndex(string raw, int startPos)
+        {
+            int pos = startPos;
+            if (!TryReadField(raw, ref pos, out _, out _)) return -1; // opcode
+            if (!TryReadField(raw, ref pos, out var idxStart, out var idxLen)) return -1;
+            return int.TryParse(raw.AsSpan(idxStart, idxLen), out var idx) ? idx : -1;
+        }
+
+        // Guacamole blobs are standard-padded base64, each chunk independently decodable —
+        // so the decoded length can be computed from the padding without decoding at all.
+        private static long DecodedBase64Length(ReadOnlySpan<char> base64)
+        {
+            if (base64.IsEmpty) return 0;
+            var padding = 0;
+            if (base64[^1] == '=') padding++;
+            if (base64.Length > 1 && base64[^2] == '=') padding++;
+            return base64.Length / 4 * 3 - padding;
         }
     }
 }

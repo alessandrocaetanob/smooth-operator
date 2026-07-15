@@ -61,14 +61,15 @@ COPY --from=publish /app/publish .
 # Create runtime directories:
 #  - /data/protection-keys: data-protection keys, owned by the app user so the
 #    named volume (dp_keys) inherits correct ownership on first mount.
-#  - /var/recordings-temp + /var/recordings: world-writable so the named volumes
-#    (recordings_temp / recordings_data) let BOTH this container (app uid 1654)
-#    AND the guacd container (uid 1000) write to the shared mount. Paths are
-#    kept un-nested — a /var/recordings/temp nested inside /var/recordings would
-#    shadow the Dockerfile-created subdir and start the inner volume empty.
-RUN mkdir -p /data/protection-keys /var/recordings-temp /var/recordings \
+#  - /var/recordings-temp + /var/recordings + /var/file-transfer-temp: world-writable
+#    so the named volumes (recordings_temp / recordings_data / file_transfer_temp) let
+#    BOTH this container (app uid 1654) AND the guacd container (uid 1000) write to
+#    the shared mount. Paths are kept un-nested — a /var/recordings/temp nested inside
+#    /var/recordings would shadow the Dockerfile-created subdir and start the inner
+#    volume empty.
+RUN mkdir -p /data/protection-keys /var/recordings-temp /var/recordings /var/file-transfer-temp \
     && chown "$APP_UID:$APP_UID" /data/protection-keys \
-    && chmod 0777 /var/recordings-temp /var/recordings
+    && chmod 0777 /var/recordings-temp /var/recordings /var/file-transfer-temp
 
 # Run as the pre-created non-root user from the .NET base image (uid 1654)
 USER $APP_UID

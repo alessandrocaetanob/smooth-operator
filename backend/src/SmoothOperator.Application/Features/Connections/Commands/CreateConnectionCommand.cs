@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using MediatR;
 using SmoothOperator.Application.DTOs;
 using SmoothOperator.Application.Exceptions;
+using SmoothOperator.Application.Features.Connections;
 using SmoothOperator.Application.Interfaces;
 using SmoothOperator.Domain.Models;
 
@@ -47,6 +48,7 @@ namespace SmoothOperator.Application.Features.Connections.Commands
                 Settings = request.Dto.Settings,
                 RecordingOverride = request.Dto.RecordingOverride,
                 RecordingIncludeKeys = request.Dto.RecordingIncludeKeys,
+                FileTransferPolicyOverride = request.Dto.FileTransferPolicyOverride,
                 Tags = request.Dto.Tags
                     .Where(t => !string.IsNullOrWhiteSpace(t))
                     .Distinct(StringComparer.OrdinalIgnoreCase)
@@ -70,6 +72,8 @@ namespace SmoothOperator.Application.Features.Connections.Commands
                 Settings = connection.Settings,
                 RecordingOverride = connection.RecordingOverride,
                 RecordingIncludeKeys = connection.RecordingIncludeKeys,
+                FileTransferPolicyOverride = connection.FileTransferPolicyOverride,
+                EffectiveFileTransferPolicy = FileTransferPolicyResolver.Resolve(connection),
                 Tags = connection.Tags.Select(t => t.Tag).ToList()
             };
         }

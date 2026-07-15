@@ -27,6 +27,12 @@ namespace SmoothOperator.Application.DTOs
         public RecordingOverride RecordingOverride { get; set; } = RecordingOverride.Inherit;
         public bool? RecordingIncludeKeys { get; set; }
 
+        /// <summary><c>null</c> = inherit the parent vault's <see cref="FileTransferPolicy"/> default.</summary>
+        public FileTransferPolicy? FileTransferPolicyOverride { get; set; }
+
+        /// <summary>Resolved policy (override, else vault default, else Disabled) — read-only, computed server-side.</summary>
+        public FileTransferPolicy EffectiveFileTransferPolicy { get; set; } = FileTransferPolicy.Disabled;
+
         // Navigation properties (optional for responses)
         public HostDto? Host { get; set; }
         public ConnectionGroupDto? ConnectionGroup { get; set; }
@@ -55,6 +61,9 @@ namespace SmoothOperator.Application.DTOs
 
         public RecordingOverride RecordingOverride { get; set; } = RecordingOverride.Inherit;
         public bool? RecordingIncludeKeys { get; set; }
+
+        /// <summary><c>null</c> = inherit the parent vault's file-transfer policy default.</summary>
+        public FileTransferPolicy? FileTransferPolicyOverride { get; set; }
     }
 
     public class HostDto
@@ -88,6 +97,9 @@ namespace SmoothOperator.Application.DTOs
 
         [Range(0, 3650)]
         public int? RecordingRetentionDays { get; set; }
+
+        /// <summary>Default in-session file-transfer policy for connections in this vault.</summary>
+        public FileTransferPolicy FileTransferPolicy { get; set; } = FileTransferPolicy.Disabled;
     }
 
     public class CreateConnectionGroupDto
@@ -103,6 +115,9 @@ namespace SmoothOperator.Application.DTOs
 
         [Range(0, 3650)]
         public int? RecordingRetentionDays { get; set; }
+
+        /// <summary>Default in-session file-transfer policy for connections in this vault.</summary>
+        public FileTransferPolicy FileTransferPolicy { get; set; } = FileTransferPolicy.Disabled;
     }
 
     public class CredentialDto

@@ -47,6 +47,7 @@ namespace SmoothOperator.Application.Features.ConnectionGroups.Commands
                 RecordingEnabled = request.Dto.RecordingEnabled,
                 RecordingIncludeKeys = request.Dto.RecordingIncludeKeys,
                 RecordingRetentionDays = request.Dto.RecordingRetentionDays,
+                FileTransferPolicy = request.Dto.FileTransferPolicy,
             };
 
             _context.ConnectionGroups.Add(vault);
@@ -62,6 +63,7 @@ namespace SmoothOperator.Application.Features.ConnectionGroups.Commands
                 RecordingEnabled = vault.RecordingEnabled,
                 RecordingIncludeKeys = vault.RecordingIncludeKeys,
                 RecordingRetentionDays = vault.RecordingRetentionDays,
+                FileTransferPolicy = vault.FileTransferPolicy,
             };
         }
 

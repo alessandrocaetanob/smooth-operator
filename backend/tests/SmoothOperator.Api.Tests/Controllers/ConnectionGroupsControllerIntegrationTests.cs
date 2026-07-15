@@ -54,7 +54,7 @@ public class ConnectionGroupsControllerIntegrationTests
         var createReq = new CreateConnectionGroupDto { Name = "Core Vault" };
         var createRes = await client.PostAsJsonAsync("/api/vaults", createReq);
         Assert.Equal(HttpStatusCode.Created, createRes.StatusCode);
-        var createdVault = await createRes.Content.ReadFromJsonAsync<ConnectionGroupDto>();
+        var createdVault = await createRes.Content.ReadFromJsonAsync<ConnectionGroupDto>(TestJson.Options);
         Assert.NotNull(createdVault);
         Assert.Equal("Core Vault", createdVault.Name);
         var vaultId = createdVault.Id;
@@ -116,7 +116,7 @@ public class ConnectionGroupsControllerIntegrationTests
         var response = await client.GetAsync("/api/vaults");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        var vaults = await response.Content.ReadFromJsonAsync<List<ConnectionGroupDto>>();
+        var vaults = await response.Content.ReadFromJsonAsync<List<ConnectionGroupDto>>(TestJson.Options);
         Assert.NotNull(vaults);
         Assert.Contains(vaults, v => v.Id == vaultA);
         Assert.Contains(vaults, v => v.Id == vaultB);
