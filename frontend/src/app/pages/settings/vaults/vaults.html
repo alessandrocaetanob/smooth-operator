@@ -25,7 +25,11 @@
       {{ 'pages.settingsVaults.newVault.heading' | translate }}
     </h3>
     <div class="flex gap-2">
+      <label for="newVaultName" class="sr-only">{{
+        'pages.settingsVaults.newVault.namePlaceholder' | translate
+      }}</label>
       <input
+        id="newVaultName"
         type="text"
         [placeholder]="'pages.settingsVaults.newVault.namePlaceholder' | translate"
         [ngModel]="newVaultName()"
@@ -64,7 +68,11 @@
           <tr class="border-t border-white/5 hover:bg-white/5">
             <td class="px-4 py-3">
               @if (editingId() === vault.id) {
+                <label for="editVaultName" class="sr-only">{{
+                  'pages.settingsVaults.editNameLabel' | translate
+                }}</label>
                 <input
+                  id="editVaultName"
                   type="text"
                   [ngModel]="editingName()"
                   (ngModelChange)="editingName.set($event)"
@@ -226,7 +234,11 @@
               </span>
             }
           </div>
+          <label for="userAssignSearch" class="sr-only">{{
+            'pages.settingsVaults.assignModal.searchUsersPlaceholder' | translate
+          }}</label>
           <input
+            id="userAssignSearch"
             type="text"
             [placeholder]="'pages.settingsVaults.assignModal.searchUsersPlaceholder' | translate"
             [ngModel]="userAssignSearch()"
@@ -306,7 +318,11 @@
               </span>
             }
           </div>
+          <label for="groupAssignSearch" class="sr-only">{{
+            'pages.settingsVaults.assignModal.searchGroupsPlaceholder' | translate
+          }}</label>
           <input
+            id="groupAssignSearch"
             type="text"
             [placeholder]="'pages.settingsVaults.assignModal.searchGroupsPlaceholder' | translate"
             [ngModel]="groupAssignSearch()"

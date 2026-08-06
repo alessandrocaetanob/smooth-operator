@@ -39,7 +39,11 @@
         class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant/60 text-lg pointer-events-none"
         >search</span
       >
+      <label for="hostsSearch" class="sr-only">{{
+        'pages.hosts.searchPlaceholder' | translate
+      }}</label>
       <input
+        id="hostsSearch"
         type="text"
         [attr.placeholder]="'pages.hosts.searchPlaceholder' | translate"
         [ngModel]="searchQuery()"

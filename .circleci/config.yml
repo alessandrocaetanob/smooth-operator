@@ -255,6 +255,13 @@ jobs:
             echo 'export PATH="$PATH:/root/.dotnet/tools"' >> "$BASH_ENV"
       - run:
           name: Begin SonarCloud analysis
+          # The css:S8776 ("Missing scoping root") exclusion on frontend/src/styles.css
+          # is a parser false positive, not a suppressed defect: Sonar's CSS analyzer
+          # does not model Tailwind v4's `@utility` at-rule as a scoping root, so the
+          # `&:hover` / `&:active` nesting inside `@utility btn-interactive` reads as
+          # unscoped. Nesting `&` inside `@utility` is the documented Tailwind v4 way
+          # to give a custom utility its variants, and the block must keep them to stay
+          # `@apply`-able from the component layer.
           command: |
             dotnet sonarscanner begin \
               /k:"alessandrocaetanob_smooth-operator" \
@@ -266,7 +273,10 @@ jobs:
               /d:sonar.typescript.lcov.reportPaths="frontend/coverage/frontend/lcov.info" \
               /d:sonar.typescript.tsconfigPath="frontend/tsconfig.app.json" \
               /d:sonar.exclusions="**/node_modules/**,**/dist/**,**/bin/**,**/obj/**,**/*.spec.ts,**/coverage/**,**/.angular/**,**/environments/**,**/Migrations/**,load-tests/**,backend/benchmarks/**,frontend/scripts/**" \
-              /d:sonar.coverage.exclusions="**/Migrations/**,backend/benchmarks/**,load-tests/**,frontend/scripts/**,**/recording-player.component.ts"
+              /d:sonar.coverage.exclusions="**/Migrations/**,backend/benchmarks/**,load-tests/**,frontend/scripts/**,**/recording-player.component.ts" \
+              /d:sonar.issue.ignore.multicriteria="tw4utility" \
+              /d:sonar.issue.ignore.multicriteria.tw4utility.ruleKey="css:S8776" \
+              /d:sonar.issue.ignore.multicriteria.tw4utility.resourceKey="frontend/src/styles.css"
       - run:
           name: Build solution
           command: dotnet build smooth-operator.sln --configuration Release

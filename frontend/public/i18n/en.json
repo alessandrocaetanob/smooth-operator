@@ -475,6 +475,7 @@
       "searchPlaceholder": "Search users by name, email, or role…",
       "clearSearch": "Clear search",
       "invitationCreated": "Invitation created",
+      "inviteUrlLabel": "Invitation link",
       "emailSentAutomatically": "Email sent automatically. The link below is also available as a fallback.",
       "shareLinkExpires": "Share this link with the user. It expires in 72 hours.",
       "smtpError": "SMTP error: {{error}}",
@@ -1065,6 +1066,7 @@
       "title": "Groups",
       "subtitle": "Groups grant vault access to all of their members at once.",
       "refresh": "Refresh",
+      "editNameLabel": "Group name",
       "newGroup": {
         "heading": "New Group",
         "namePlaceholder": "Group name",
@@ -1602,6 +1604,7 @@
       "title": "Vaults",
       "subtitle": "Create and manage vaults that group connections together.",
       "refresh": "Refresh",
+      "editNameLabel": "Vault name",
       "newVault": {
         "heading": "New Vault",
         "namePlaceholder": "Vault name",

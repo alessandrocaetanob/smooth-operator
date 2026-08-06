@@ -87,7 +87,11 @@
         </button>
       </div>
       <div class="flex gap-2">
+        <label for="inviteUrl" class="sr-only">{{
+          'pages.administration.inviteUrlLabel' | translate
+        }}</label>
         <input
+          id="inviteUrl"
           type="text"
           readonly
           [value]="r.inviteUrl"

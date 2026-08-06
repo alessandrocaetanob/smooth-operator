@@ -25,7 +25,11 @@
       {{ 'pages.settingsGroups.newGroup.heading' | translate }}
     </h3>
     <div class="flex gap-2">
+      <label for="newGroupName" class="sr-only">{{
+        'pages.settingsGroups.newGroup.namePlaceholder' | translate
+      }}</label>
       <input
+        id="newGroupName"
         type="text"
         [placeholder]="'pages.settingsGroups.newGroup.namePlaceholder' | translate"
         [ngModel]="newGroupName()"
@@ -64,7 +68,11 @@
           <tr class="border-t border-white/5 hover:bg-white/5">
             <td class="px-4 py-3">
               @if (editingId() === group.id) {
+                <label for="editGroupName" class="sr-only">{{
+                  'pages.settingsGroups.editNameLabel' | translate
+                }}</label>
                 <input
+                  id="editGroupName"
                   type="text"
                   [ngModel]="editingName()"
                   (ngModelChange)="editingName.set($event)"
@@ -194,7 +202,11 @@
           }
         </div>
 
+        <label for="groupMemberSearch" class="sr-only">{{
+          'pages.settingsGroups.membersModal.searchPlaceholder' | translate
+        }}</label>
         <input
+          id="groupMemberSearch"
           type="text"
           [placeholder]="'pages.settingsGroups.membersModal.searchPlaceholder' | translate"
           [ngModel]="memberSearch()"

@@ -6,6 +6,5 @@ import { RouterOutlet } from '@angular/router';
   standalone: true,
   imports: [RouterOutlet],
   templateUrl: './settings.html',
-  styleUrl: './settings.css',
 })
 export class Settings {}

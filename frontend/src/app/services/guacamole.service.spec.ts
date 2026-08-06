@@ -3,200 +3,25 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
-// ── Mock guacamole-common-js so no real WebSocket / canvas wiring runs. ──
-const fakeDisplay = {
-  getElement: vi.fn(() => document.createElement('div')),
-  getWidth: vi.fn(() => 1024),
-  getHeight: vi.fn(() => 768),
-  scale: vi.fn(),
-  onresize: null as null | (() => void),
-};
+// The guacamole-common-js double lives in one shared module so the four specs that
+// mock this package cannot install competing factories — see the module for details.
+vi.mock(
+  'guacamole-common-js',
+  async () => (await import('../../testing/guacamole-common-js.mock')).guacamoleModuleMock,
+);
 
-interface FakeClient {
-  onstatechange: ((s: number) => void) | null;
-  onerror: ((status: { message?: string; code?: number }) => void) | null;
-  onname: ((name: string) => void) | null;
-  onclipboard: ((stream: unknown, mimetype: string) => void) | null;
-  onfilesystem: ((object: FakeGuacObject, name: string) => void) | null;
-  getDisplay: () => typeof fakeDisplay;
-  sendKeyEvent: ReturnType<typeof vi.fn>;
-  sendMouseState: ReturnType<typeof vi.fn>;
-  sendSize: ReturnType<typeof vi.fn>;
-  connect: ReturnType<typeof vi.fn>;
-  disconnect: ReturnType<typeof vi.fn>;
-  createClipboardStream: ReturnType<typeof vi.fn>;
-}
-
-interface FakeTunnel {
-  onstatechange: ((s: number) => void) | null;
-  onerror: ((status: { message?: string }) => void) | null;
-}
-
-interface FakeGuacObject {
-  index: number;
-  requestInputStream: ReturnType<typeof vi.fn>;
-  createOutputStream: ReturnType<typeof vi.fn>;
-}
-
-interface FakeStringReader {
-  ontext: ((text: string) => void) | null;
-  onend: (() => void) | null;
-}
-
-interface FakeBlobReader {
-  onprogress: ((length: number) => void) | null;
-  onend: (() => void) | null;
-  getBlob: ReturnType<typeof vi.fn>;
-  getLength: ReturnType<typeof vi.fn>;
-}
-
-interface FakeBlobWriter {
-  sendBlob: ReturnType<typeof vi.fn>;
-  sendEnd: ReturnType<typeof vi.fn>;
-  onack: ((status: unknown) => void) | null;
-  onerror: ((blob: Blob, offset: number, error: DOMException) => void) | null;
-  onprogress: ((blob: Blob, offset: number) => void) | null;
-  oncomplete: ((blob: Blob) => void) | null;
-}
-
-const clientInstances: FakeClient[] = [];
-const tunnelInstances: FakeTunnel[] = [];
-const objectInstances: FakeGuacObject[] = [];
-const stringReaderInstances: FakeStringReader[] = [];
-const blobReaderInstances: FakeBlobReader[] = [];
-const blobWriterInstances: FakeBlobWriter[] = [];
-
-const ROOT_STREAM = '/';
-const STREAM_INDEX_MIMETYPE = 'application/vnd.glyptodon.guacamole.stream-index+json';
-
-class FakeClipboardStream {
-  // marker class
-}
-
-vi.mock('guacamole-common-js', () => {
-  // Use plain factory functions that *return* the populated instance instead of
-  // mutating `this`. Under Node 22 + Vitest 4.x on CircleCI, `vi.fn(function(this){…})`
-  // mock wrappers occasionally swap out the constructed object so `this` mutations
-  // never reach the caller — every method then comes back as `undefined`
-  // ("client.connect is not a function"). JS `new` always honours an object
-  // return value from the constructor, so this pattern is environment-stable.
-  function ClientCtor(): FakeClient {
-    const self: FakeClient = {
-      onstatechange: null,
-      onerror: null,
-      onname: null,
-      onclipboard: null,
-      onfilesystem: null,
-      getDisplay: () => fakeDisplay,
-      sendKeyEvent: vi.fn(),
-      sendMouseState: vi.fn(),
-      sendSize: vi.fn(),
-      connect: vi.fn(),
-      disconnect: vi.fn(),
-      createClipboardStream: vi.fn(() => new FakeClipboardStream()),
-    };
-    clientInstances.push(self);
-    return self;
-  }
-  function TunnelCtor(): FakeTunnel {
-    const self: FakeTunnel = {
-      onstatechange: null,
-      onerror: null,
-    };
-    tunnelInstances.push(self);
-    return self;
-  }
-  function KeyboardCtor() {
-    return {
-      onkeydown: null as null | ((sym: number) => void),
-      onkeyup: null as null | ((sym: number) => void),
-      reset: vi.fn(),
-    };
-  }
-  function MouseCtor() {
-    return {
-      onmousedown: null as null | ((s: unknown) => void),
-      onmouseup: null as null | ((s: unknown) => void),
-      onmousemove: null as null | ((s: unknown) => void),
-    };
-  }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (MouseCtor as any).Touchscreen = function TouchscreenCtor() {
-    return {
-      onmousedown: null as null | ((s: unknown) => void),
-      onmouseup: null as null | ((s: unknown) => void),
-      onmousemove: null as null | ((s: unknown) => void),
-    };
-  };
-  function StringReaderCtor(): FakeStringReader {
-    const self: FakeStringReader = { ontext: null, onend: null };
-    stringReaderInstances.push(self);
-    return self;
-  }
-  function StringWriterCtor() {
-    return {
-      sendText: vi.fn(),
-      sendEnd: vi.fn(),
-    };
-  }
-  function ObjectCtor(_client: unknown, index: number): FakeGuacObject {
-    const self: FakeGuacObject = {
-      index,
-      requestInputStream: vi.fn(),
-      createOutputStream: vi.fn(),
-    };
-    objectInstances.push(self);
-    return self;
-  }
-  // NOTE: hardcoded literals, not the outer ROOT_STREAM/STREAM_INDEX_MIMETYPE consts —
-  // vi.mock factories are hoisted above later top-level const declarations, so reading
-  // their value here (as opposed to closing over a mutable array reference, which is
-  // fine) would silently capture `undefined`. Test bodies run after full module
-  // evaluation, so they may safely reference the outer consts, which hold the same
-  // literal values as these.
-  (ObjectCtor as unknown as { ROOT_STREAM: string }).ROOT_STREAM = '/';
-  (ObjectCtor as unknown as { STREAM_INDEX_MIMETYPE: string }).STREAM_INDEX_MIMETYPE =
-    'application/vnd.glyptodon.guacamole.stream-index+json';
-  function BlobReaderCtor(): FakeBlobReader {
-    const self: FakeBlobReader = {
-      onprogress: null,
-      onend: null,
-      getBlob: vi.fn(() => new Blob(['fake'])),
-      getLength: vi.fn(() => 4),
-    };
-    blobReaderInstances.push(self);
-    return self;
-  }
-  function BlobWriterCtor(): FakeBlobWriter {
-    const self: FakeBlobWriter = {
-      sendBlob: vi.fn(),
-      sendEnd: vi.fn(),
-      onack: null,
-      onerror: null,
-      onprogress: null,
-      oncomplete: null,
-    };
-    blobWriterInstances.push(self);
-    return self;
-  }
-
-  const Tunnel = { State: { OPEN: 1, UNSTABLE: 2, CLOSED: 3 } };
-
-  return {
-    default: {
-      Client: ClientCtor,
-      WebSocketTunnel: TunnelCtor,
-      Tunnel,
-      Object: ObjectCtor,
-      BlobReader: BlobReaderCtor,
-      BlobWriter: BlobWriterCtor,
-      Keyboard: KeyboardCtor,
-      Mouse: MouseCtor,
-      StringReader: StringReaderCtor,
-      StringWriter: StringWriterCtor,
-    },
-  };
-});
+import {
+  ROOT_STREAM,
+  STREAM_INDEX_MIMETYPE,
+  blobReaderInstances,
+  blobWriterInstances,
+  clientInstances,
+  fakeDisplay,
+  resetGuacamoleMockInstances,
+  stringReaderInstances,
+  tunnelInstances,
+} from '../../testing/guacamole-common-js.mock';
+import type { FakeClient, FakeGuacObject } from '../../testing/guacamole-common-js.mock';
 
 import {
   FILE_TRANSFER_TIMEOUT_MS,
@@ -211,12 +36,7 @@ describe('GuacamoleSession', () => {
   let manager: GuacamoleSessionManagerService;
 
   beforeEach(() => {
-    clientInstances.length = 0;
-    tunnelInstances.length = 0;
-    objectInstances.length = 0;
-    stringReaderInstances.length = 0;
-    blobReaderInstances.length = 0;
-    blobWriterInstances.length = 0;
+    resetGuacamoleMockInstances();
     sessionStorage.clear();
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
@@ -770,7 +590,10 @@ describe('GuacamoleSession', () => {
       it('does not double a trailing slash when the directory is root', () => {
         const obj = attachFilesystem();
         const file = new File(['x'], 'note.txt');
-        void session.uploadFile(ROOT_STREAM, file);
+        // Fire-and-forget: the assertion is synchronous, but the upload promise
+        // never settles here, so its 20s stall guard would later reject with no
+        // handler attached and fail the run as an unhandled rejection.
+        session.uploadFile(ROOT_STREAM, file).catch(() => undefined);
         expect(obj.createOutputStream).toHaveBeenCalledWith(
           'application/octet-stream',
           '/note.txt',
@@ -781,7 +604,8 @@ describe('GuacamoleSession', () => {
         attachFilesystem();
         const file = new File(['x'], 'note.txt');
         const onProgress = vi.fn();
-        void session.uploadFile('/docs', file, onProgress);
+        // Same as above — settle-less upload, so swallow the eventual stall rejection.
+        session.uploadFile('/docs', file, onProgress).catch(() => undefined);
         const writer = blobWriterInstances[blobWriterInstances.length - 1];
         writer.onprogress?.(new Blob(['0123456789']), 5);
         expect(onProgress).toHaveBeenCalledWith(0.5);
@@ -884,8 +708,7 @@ describe('GuacamoleSessionManagerService', () => {
   let manager: GuacamoleSessionManagerService;
 
   beforeEach(() => {
-    clientInstances.length = 0;
-    tunnelInstances.length = 0;
+    resetGuacamoleMockInstances();
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
       providers: [provideHttpClient(), provideHttpClientTesting()],
