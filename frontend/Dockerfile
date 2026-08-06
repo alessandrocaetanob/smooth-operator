@@ -2,7 +2,7 @@
 
 # Pinned nginx version — must match the FROM tags below so the compiled
 # brotli module is ABI-compatible with the runtime nginx binary.
-ARG NGINX_VERSION=1.30.1
+ARG NGINX_VERSION=1.31.3
 
 # Stage 1: Build the Angular application
 FROM node:22-alpine AS build
