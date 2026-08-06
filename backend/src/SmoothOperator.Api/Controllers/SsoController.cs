@@ -101,7 +101,7 @@ namespace SmoothOperator.Api.Controllers
             {
                 await _audit.WriteAsync(AuditLoginFailed, ResourceTypeSso, "",
                     new { stage = "callback", reason = "idp_error", error });
-                return Redirect(_urls.FinalizeErrorUrl(Request, error!));
+                return Redirect(_urls.FinalizeErrorUrl(Request, error));
             }
 
             try

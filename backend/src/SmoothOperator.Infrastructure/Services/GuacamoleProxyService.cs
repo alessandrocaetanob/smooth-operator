@@ -119,7 +119,7 @@ namespace SmoothOperator.Infrastructure.Services
             TicketPayload? payload;
             try
             {
-                payload = JsonSerializer.Deserialize<TicketPayload>((string)raw!);
+                payload = JsonSerializer.Deserialize<TicketPayload>(raw.ToString());
             }
             catch
             {
@@ -963,7 +963,7 @@ namespace SmoothOperator.Infrastructure.Services
         private void ObserveRelayFault(Task relayTask, Action<string> onGuacError)
         {
             if (!relayTask.IsFaulted) return;
-            var ex = relayTask.Exception!.Flatten().InnerException ?? relayTask.Exception;
+            var ex = relayTask.Exception.Flatten().InnerException ?? relayTask.Exception;
             _logger.LogError(ex, "Guacamole relay loop faulted unexpectedly");
             onGuacError($"Internal relay error: {ex.Message}");
         }

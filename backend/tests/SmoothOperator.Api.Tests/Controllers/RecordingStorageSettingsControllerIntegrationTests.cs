@@ -46,7 +46,7 @@ public class RecordingStorageSettingsControllerIntegrationTests
         // 1. Initial GET — nothing configured yet.
         var initial = await client.GetFromJsonAsync<RecordingStorageSettingsDto>("/api/settings/recording-storage", TestJson.Options);
         Assert.NotNull(initial);
-        Assert.False(initial!.Configured);
+        Assert.False(initial.Configured);
 
         // 2. PUT with S3 config including a secret key.
         var put = await client.PutAsJsonAsync("/api/settings/recording-storage", new UpdateRecordingStorageSettingsRequest
@@ -62,7 +62,7 @@ public class RecordingStorageSettingsControllerIntegrationTests
         Assert.Equal(HttpStatusCode.OK, put.StatusCode);
         var afterPut = await put.Content.ReadFromJsonAsync<RecordingStorageSettingsDto>(TestJson.Options);
         Assert.NotNull(afterPut);
-        Assert.True(afterPut!.Configured);
+        Assert.True(afterPut.Configured);
         Assert.Equal(RecordingStorageType.S3, afterPut.StorageType);
         Assert.True(afterPut.HasS3SecretAccessKey);
         Assert.Null(GetSecretField(afterPut)); // sanity: no secret leak on DTO
@@ -70,7 +70,7 @@ public class RecordingStorageSettingsControllerIntegrationTests
         // 3. Subsequent GET also reflects new state (cache evicted on PUT).
         var afterGet = await client.GetFromJsonAsync<RecordingStorageSettingsDto>("/api/settings/recording-storage", TestJson.Options);
         Assert.NotNull(afterGet);
-        Assert.Equal("my-bucket", afterGet!.S3Bucket);
+        Assert.Equal("my-bucket", afterGet.S3Bucket);
         Assert.True(afterGet.HasS3SecretAccessKey);
         Assert.Equal(30, afterGet.RetentionDays);
 
@@ -156,7 +156,7 @@ public class RecordingStorageSettingsControllerIntegrationTests
         var afterGet = await client.GetFromJsonAsync<RecordingStorageSettingsDto>(
             "/api/settings/recording-storage", TestJson.Options);
         Assert.NotNull(afterGet);
-        Assert.Equal(RecordingStorageType.AzureBlob, afterGet!.StorageType);
+        Assert.Equal(RecordingStorageType.AzureBlob, afterGet.StorageType);
         Assert.Equal("myaccount", afterGet.AzureAccountName);
         Assert.True(afterGet.HasAzureAccountKey);
         Assert.Equal(7, afterGet.RetentionDays);
@@ -200,7 +200,7 @@ public class RecordingStorageSettingsControllerIntegrationTests
         Assert.Equal(HttpStatusCode.OK, res.StatusCode);
         var body = await res.Content.ReadFromJsonAsync<RecordingStorageTestResult>(TestJson.Options);
         Assert.NotNull(body);
-        Assert.True(body!.Success);
+        Assert.True(body.Success);
         Assert.Null(body.Error);
     }
 
@@ -234,7 +234,7 @@ public class RecordingStorageSettingsControllerIntegrationTests
         Assert.Equal(HttpStatusCode.BadGateway, res.StatusCode);
         var body = await res.Content.ReadFromJsonAsync<RecordingStorageTestResult>(TestJson.Options);
         Assert.NotNull(body);
-        Assert.False(body!.Success);
+        Assert.False(body.Success);
         Assert.Equal("S3: bucket missing", body.Error);
     }
 

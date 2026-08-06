@@ -109,11 +109,11 @@ public class RecordingsControllerIntegrationTests
 
         var adminList = await adminClient.GetFromJsonAsync<RecordingsListDto>("/api/recordings", TestJson.Options);
         Assert.NotNull(adminList);
-        Assert.Equal(2, adminList!.Total);
+        Assert.Equal(2, adminList.Total);
 
         var userList = await userClient.GetFromJsonAsync<RecordingsListDto>("/api/recordings", TestJson.Options);
         Assert.NotNull(userList);
-        Assert.Equal(1, userList!.Total);
+        Assert.Equal(1, userList.Total);
         Assert.Equal(sharedConnectionId, userList.Items[0].ConnectionId);
     }
 
@@ -271,13 +271,13 @@ public class RecordingsControllerIntegrationTests
         var byConn = await client.GetFromJsonAsync<RecordingsListDto>(
             $"/api/recordings?connectionId={aId}", TestJson.Options);
         Assert.NotNull(byConn);
-        Assert.Equal(2, byConn!.Total);
+        Assert.Equal(2, byConn.Total);
 
         // filter by status
         var failed = await client.GetFromJsonAsync<RecordingsListDto>(
             "/api/recordings?status=Failed", TestJson.Options);
         Assert.NotNull(failed);
-        Assert.Equal(1, failed!.Total);
+        Assert.Equal(1, failed.Total);
         Assert.Equal(RecordingStatus.Failed, failed.Items[0].Status);
     }
 
@@ -369,7 +369,7 @@ public class RecordingsControllerIntegrationTests
             $"/api/recordings?userId={otherId}", TestJson.Options);
 
         Assert.NotNull(byUser);
-        Assert.Equal(1, byUser!.Total);
+        Assert.Equal(1, byUser.Total);
         Assert.Equal(otherId, byUser.Items[0].UserId);
     }
 
@@ -406,7 +406,7 @@ public class RecordingsControllerIntegrationTests
             $"/api/recordings?vaultId={vaultA}", TestJson.Options);
 
         Assert.NotNull(byVault);
-        Assert.Equal(1, byVault!.Total);
+        Assert.Equal(1, byVault.Total);
         Assert.Equal(vaultA, byVault.Items[0].VaultId);
     }
 
@@ -462,7 +462,7 @@ public class RecordingsControllerIntegrationTests
             TestJson.Options);
 
         Assert.NotNull(inWindow);
-        Assert.Equal(1, inWindow!.Total);
+        Assert.Equal(1, inWindow.Total);
         Assert.Equal("recent", inWindow.Items[0].SessionId);
     }
 
@@ -493,7 +493,7 @@ public class RecordingsControllerIntegrationTests
         var page1 = await client.GetFromJsonAsync<RecordingsListDto>(
             "/api/recordings?page=1&pageSize=2", TestJson.Options);
         Assert.NotNull(page1);
-        Assert.Equal(5, page1!.Total);
+        Assert.Equal(5, page1.Total);
         Assert.Equal(2, page1.Items.Count);
         Assert.Equal(1, page1.Page);
         Assert.Equal(2, page1.PageSize);
@@ -501,13 +501,13 @@ public class RecordingsControllerIntegrationTests
         var page2 = await client.GetFromJsonAsync<RecordingsListDto>(
             "/api/recordings?page=2&pageSize=2", TestJson.Options);
         Assert.NotNull(page2);
-        Assert.Equal(2, page2!.Items.Count);
+        Assert.Equal(2, page2.Items.Count);
         Assert.Equal(2, page2.Page);
 
         var page3 = await client.GetFromJsonAsync<RecordingsListDto>(
             "/api/recordings?page=3&pageSize=2", TestJson.Options);
         Assert.NotNull(page3);
-        Assert.Single(page3!.Items);
+        Assert.Single(page3.Items);
     }
 
     [Fact]

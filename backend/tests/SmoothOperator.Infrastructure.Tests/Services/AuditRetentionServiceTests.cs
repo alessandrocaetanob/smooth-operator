@@ -186,9 +186,9 @@ namespace SmoothOperator.Infrastructure.Tests.Services
             var method = typeof(AuditRetentionService).GetMethod(methodName, BindingFlags.Instance | BindingFlags.NonPublic);
             method.Should().NotBeNull();
 
-            var task = method!.Invoke(sut, new object[] { CancellationToken.None }) as Task;
+            var task = method.Invoke(sut, new object[] { CancellationToken.None }) as Task;
             task.Should().NotBeNull();
-            await task!;
+            await task;
         }
 
         private sealed class TestLogger<T> : ILogger<T>

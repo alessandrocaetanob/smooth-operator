@@ -134,7 +134,7 @@ public class GuacamoleFileTransferInstructionTests
 
         Assert.Empty(req.PendingUploads);
         Assert.NotNull(completed);
-        Assert.Equal("big.txt", completed!.Name);
+        Assert.Equal("big.txt", completed.Name);
         Assert.Equal(5, completed.Bytes);
     }
 

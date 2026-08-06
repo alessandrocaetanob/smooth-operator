@@ -85,7 +85,7 @@ public class MetricsControllerTests
         var summary = await client.GetFromJsonAsync<MetricsSummaryDto>("/api/metrics/summary");
 
         Assert.NotNull(summary);
-        Assert.Equal(3, summary!.LoginAttemptsTotal24h);
+        Assert.Equal(3, summary.LoginAttemptsTotal24h);
         Assert.Equal(2, summary.LoginFailures24h);
         Assert.InRange(summary.LoginSuccessRate24h, 33.0, 33.5);
         Assert.Equal(1, summary.ConnectionsStarted24h);
@@ -117,7 +117,7 @@ public class MetricsControllerTests
         Assert.NotNull(buckets);
 
         // 1h / 5min = 12 buckets (no extra trailing bucket from drift between two UtcNow calls)
-        Assert.InRange(buckets!.Count, 12, 13);
+        Assert.InRange(buckets.Count, 12, 13);
 
         var totals = buckets.Aggregate(
             new { Success = 0L, Failure = 0L },
@@ -152,7 +152,7 @@ public class MetricsControllerTests
             "/api/metrics/audit-events/top?hours=1&limit=10");
 
         Assert.NotNull(top);
-        Assert.Equal("user.login", top![0].Action);
+        Assert.Equal("user.login", top[0].Action);
         Assert.Equal(3, top[0].Count);
         Assert.Equal("connection.started", top[1].Action);
         Assert.Equal(1, top[1].Count);
@@ -178,7 +178,7 @@ public class MetricsControllerTests
             "/api/metrics/audit-events/breakdown?hours=1");
 
         Assert.NotNull(breakdown);
-        Assert.Equal(1, breakdown!.Success);
+        Assert.Equal(1, breakdown.Success);
         Assert.Equal(2, breakdown.Failure);
     }
 
@@ -201,7 +201,7 @@ public class MetricsControllerTests
             "/api/metrics/connections/timeseries?hours=1&bucketMinutes=5");
 
         Assert.NotNull(buckets);
-        Assert.NotEmpty(buckets!);
+        Assert.NotEmpty(buckets);
 
         var started = buckets.Sum(b => b.Values.TryGetValue("connection.started", out var c) ? c : 0);
         var ended = buckets.Sum(b => b.Values.TryGetValue("connection.ended", out var c) ? c : 0);
@@ -230,7 +230,7 @@ public class MetricsControllerTests
             "/api/metrics/audit-events/timeseries?hours=1&bucketMinutes=10");
 
         Assert.NotNull(buckets);
-        Assert.NotEmpty(buckets!);
+        Assert.NotEmpty(buckets);
 
         var nonZeroKeys = buckets
             .SelectMany(b => b.Values.Where(kv => kv.Value > 0).Select(kv => kv.Key))

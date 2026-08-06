@@ -112,7 +112,7 @@ public sealed class GuacamoleRecordingHandshakeTests : IDisposable
         Assert.NotNull(result.TempPath);
         Assert.Equal(Path.Combine(_tempDir, "session-id-42.guac"), result.TempPath);
         Assert.NotNull(result.SettingsOverrides);
-        Assert.Equal(_tempDir, result.SettingsOverrides!["recording-path"]);
+        Assert.Equal(_tempDir, result.SettingsOverrides["recording-path"]);
         Assert.Equal("session-id-42.guac", result.SettingsOverrides["recording-name"]);
         Assert.Equal("true", result.SettingsOverrides["create-recording-path"]);
         Assert.Equal("true", result.SettingsOverrides["recording-include-keys"]);
@@ -189,7 +189,7 @@ public sealed class GuacamoleRecordingHandshakeTests : IDisposable
             var audit = Assert.Single(await _db.AuditLogs.AsNoTracking().ToListAsync());
             Assert.Equal("recording.skipped", audit.Action);
             Assert.Equal("failure", audit.Outcome);
-            using var doc = JsonDocument.Parse(audit.Details!);
+            using var doc = JsonDocument.Parse(audit.Details);
             Assert.Equal("temp_dir_unwritable", doc.RootElement.GetProperty("reason").GetString());
         }
         finally
@@ -214,7 +214,7 @@ public sealed class GuacamoleRecordingHandshakeTests : IDisposable
         Assert.Equal("5.6.7.8", audit.IpAddress);
         Assert.Equal("failure", audit.Outcome);
 
-        using var doc = JsonDocument.Parse(audit.Details!);
+        using var doc = JsonDocument.Parse(audit.Details);
         Assert.Equal("sess-99", doc.RootElement.GetProperty("sessionId").GetString());
         Assert.Equal("test_reason", doc.RootElement.GetProperty("reason").GetString());
         Assert.Equal("test detail", doc.RootElement.GetProperty("detail").GetString());

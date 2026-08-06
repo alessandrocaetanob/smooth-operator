@@ -67,7 +67,7 @@ namespace SmoothOperator.Application.Features.Credentials.Commands
                     var secretProvider = _secretProviderFactory.Create(provider);
                     var secretName = credential.ExternalSecretName
                         ?? $"smoothoperator-{Sanitize(dto.Name)}-{Guid.NewGuid():N}";
-                    await secretProvider.SetSecretAsync(secretName, dto.Secret!, cancellationToken);
+                    await secretProvider.SetSecretAsync(secretName, dto.Secret, cancellationToken);
                     credential.ExternalSecretName = secretName;
                     credential.ExternalSecretVersion = null;
                     secretRotated = true;
@@ -93,7 +93,7 @@ namespace SmoothOperator.Application.Features.Credentials.Commands
 
                 if (!string.IsNullOrEmpty(dto.Secret))
                 {
-                    credential.EncryptedSecret = _encryptionService.Encrypt(dto.Secret!);
+                    credential.EncryptedSecret = _encryptionService.Encrypt(dto.Secret);
                     secretRotated = true;
                 }
             }

@@ -129,7 +129,7 @@ public class AccessControlServiceTests
         var profile = await svc.GetCurrentProfileAsync(PrincipalFor(user.Id));
 
         Assert.NotNull(profile);
-        Assert.Equal(user.Id, profile!.UserId);
+        Assert.Equal(user.Id, profile.UserId);
         Assert.Equal("alice@example.com", profile.Email);
         Assert.Contains(AppRoles.User, profile.Roles);
         Assert.Equal(3, profile.VaultIds.Count);

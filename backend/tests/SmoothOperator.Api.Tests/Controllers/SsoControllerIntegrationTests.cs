@@ -25,7 +25,7 @@ public class SsoControllerIntegrationTests
         Assert.Equal(HttpStatusCode.OK, res.StatusCode);
         var dto = await res.Content.ReadFromJsonAsync<SsoStatusDto>();
         Assert.NotNull(dto);
-        Assert.False(dto!.Enabled);
+        Assert.False(dto.Enabled);
         Assert.Null(dto.Type);
         Assert.Null(dto.Name);
     }

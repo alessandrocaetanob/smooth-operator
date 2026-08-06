@@ -62,7 +62,7 @@ public class SsoProviderServiceTests
 
         var dec = await svc.GetDecryptedOidcAsync();
         Assert.NotNull(dec);
-        Assert.Equal("super-secret", dec!.ClientSecret);
+        Assert.Equal("super-secret", dec.ClientSecret);
         Assert.Equal("https://idp.example.com", dec.Authority);
 
         // Asking for SAML on an OIDC provider returns null.

@@ -70,7 +70,7 @@ namespace SmoothOperator.Infrastructure.Services.Sso
                     {
                         Id = Guid.NewGuid(),
                         Email = email,
-                        Name = string.IsNullOrWhiteSpace(displayName) ? email : displayName!,
+                        Name = string.IsNullOrWhiteSpace(displayName) ? email : displayName,
                         ExternalId = externalId,
                         SsoProviderType = providerType,
                         IsActive = true,

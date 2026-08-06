@@ -236,7 +236,7 @@ public class UsersControllerIntegrationTests
 
         var vaultIds = await response.Content.ReadFromJsonAsync<List<Guid>>();
         Assert.NotNull(vaultIds);
-        Assert.Equal(2, vaultIds!.Count);
+        Assert.Equal(2, vaultIds.Count);
         Assert.Contains(vaultAId, vaultIds);
         Assert.Contains(vaultBId, vaultIds);
     }

@@ -66,7 +66,7 @@ public class SsoSettingsControllerIntegrationTests
         Assert.Equal(HttpStatusCode.OK, res.StatusCode);
         var dto = await res.Content.ReadFromJsonAsync<SsoProviderDto>();
         Assert.NotNull(dto);
-        Assert.Equal(string.Empty, dto!.Type);
+        Assert.Equal(string.Empty, dto.Type);
         Assert.False(dto.IsEnabled);
     }
 
@@ -93,11 +93,11 @@ public class SsoSettingsControllerIntegrationTests
         var get = await asOwner.GetAsync("/api/settings/sso");
         var dto = await get.Content.ReadFromJsonAsync<SsoProviderDto>();
         Assert.NotNull(dto);
-        Assert.Equal("Oidc", dto!.Type);
+        Assert.Equal("Oidc", dto.Type);
         Assert.Equal("Corporate", dto.Name);
         Assert.False(dto.IsEnabled);
         Assert.NotNull(dto.Oidc);
-        Assert.Equal("https://idp.example.com", dto.Oidc!.Authority); // trailing slash trimmed
+        Assert.Equal("https://idp.example.com", dto.Oidc.Authority); // trailing slash trimmed
         Assert.True(dto.Oidc.HasClientSecret);
         // Secret never returned to the client.
         var raw = await get.Content.ReadAsStringAsync();
@@ -234,10 +234,10 @@ public class SsoSettingsControllerIntegrationTests
         Assert.Equal(HttpStatusCode.OK, get.StatusCode);
         var dto = await get.Content.ReadFromJsonAsync<SsoProviderDto>();
         Assert.NotNull(dto);
-        Assert.Equal("Saml", dto!.Type);
+        Assert.Equal("Saml", dto.Type);
         Assert.Equal("Corporate SAML", dto.Name);
         Assert.NotNull(dto.Saml);
-        Assert.True(dto.Saml!.HasSpPrivateKey);
+        Assert.True(dto.Saml.HasSpPrivateKey);
 
         var raw = await get.Content.ReadAsStringAsync();
         Assert.DoesNotContain("SUPER_PRIVATE_KEY", raw);

@@ -65,7 +65,7 @@ namespace SmoothOperator.Application.Features.Credentials.Commands
             if (string.IsNullOrWhiteSpace(dto.Secret))
                 throw new BadRequestException("Secret is required for local credentials.");
 
-            credential.EncryptedSecret = _encryptionService.Encrypt(dto.Secret!);
+            credential.EncryptedSecret = _encryptionService.Encrypt(dto.Secret);
         }
 
         private async Task PersistAndAuditAsync(Credential credential, CancellationToken cancellationToken)
@@ -108,7 +108,7 @@ namespace SmoothOperator.Application.Features.Credentials.Commands
 
                 var secretProvider = _secretProviderFactory.Create(provider);
                 var secretName = $"smoothoperator-{SanitizeName(dto.Name)}-{Guid.NewGuid():N}";
-                await secretProvider.SetSecretAsync(secretName, dto.Secret!, cancellationToken);
+                await secretProvider.SetSecretAsync(secretName, dto.Secret, cancellationToken);
 
                 credential.ExternalSecretName = secretName;
                 credential.ExternalSecretVersion = null;
