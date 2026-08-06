@@ -9,6 +9,7 @@ import {
   effect,
   inject,
   signal,
+  ChangeDetectionStrategy,
 } from '@angular/core';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ConfirmDialogService } from './confirm-dialog.service';
@@ -20,6 +21,7 @@ import { Mascot } from '../mascot/mascot';
   standalone: true,
   imports: [Mascot, TranslatePipe],
   templateUrl: './confirm-dialog.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   animations: [fadeIn, scaleIn],
 })
 export class ConfirmDialog implements AfterViewInit, OnDestroy {

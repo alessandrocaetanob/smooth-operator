@@ -1,4 +1,4 @@
-import { Component, DOCUMENT, effect, inject } from '@angular/core';
+import { Component, DOCUMENT, effect, inject, ChangeDetectionStrategy } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { TopNavBar } from '../top-nav-bar/top-nav-bar';
 import { SideNavBar } from '../side-nav-bar/side-nav-bar';
@@ -15,6 +15,7 @@ import { routeFade } from '../animations';
   imports: [RouterOutlet, TopNavBar, SideNavBar, ConfirmDialog, ToastContainer, TourOverlay],
   templateUrl: './layout.html',
   styleUrl: './layout.css',
+  changeDetection: ChangeDetectionStrategy.Eager,
   animations: [routeFade],
 })
 export class Layout {

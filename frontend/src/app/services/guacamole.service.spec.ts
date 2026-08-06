@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
@@ -40,7 +40,7 @@ describe('GuacamoleSession', () => {
     sessionStorage.clear();
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideHttpClient(withXhr()), provideHttpClientTesting()],
     });
     httpTesting = TestBed.inject(HttpTestingController);
     manager = TestBed.inject(GuacamoleSessionManagerService);
@@ -711,7 +711,7 @@ describe('GuacamoleSessionManagerService', () => {
     resetGuacamoleMockInstances();
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideHttpClient(withXhr()), provideHttpClientTesting()],
     });
     httpTesting = TestBed.inject(HttpTestingController);
     manager = TestBed.inject(GuacamoleSessionManagerService);

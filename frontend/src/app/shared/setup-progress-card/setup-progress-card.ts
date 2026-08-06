@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
 import {
   OnboardingTourService,
@@ -10,6 +10,7 @@ import {
   selector: 'app-setup-progress-card',
   standalone: true,
   imports: [TranslatePipe],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './setup-progress-card.html',
 })
 export class SetupProgressCard {

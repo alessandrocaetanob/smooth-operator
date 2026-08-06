@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 
@@ -13,7 +13,7 @@ describe('HostsService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [HostsService, provideHttpClient(), provideHttpClientTesting()],
+      providers: [HostsService, provideHttpClient(withXhr()), provideHttpClientTesting()],
     });
     service = TestBed.inject(HostsService);
     http = TestBed.inject(HttpTestingController);

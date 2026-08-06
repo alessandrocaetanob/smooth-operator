@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideTranslateService, TranslateService } from '@ngx-translate/core';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
@@ -68,7 +68,7 @@ describe('RecordingsPage', () => {
     await TestBed.configureTestingModule({
       imports: [RecordingsPage],
       providers: [
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
         provideTranslateService(),
         { provide: RecordingsService, useValue: recordings },

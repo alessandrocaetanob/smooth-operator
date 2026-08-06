@@ -1,5 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  computed,
+  inject,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -18,6 +25,7 @@ import { AuthService } from '../../services/auth.service';
   selector: 'app-recordings-page',
   standalone: true,
   imports: [CommonModule, FormsModule, RecordingPlayerComponent, TranslatePipe],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './recordings.html',
 })
 export class RecordingsPage implements OnInit {

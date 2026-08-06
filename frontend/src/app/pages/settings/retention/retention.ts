@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { SystemSettingsService } from '../../../services/system-settings.service';
@@ -7,6 +7,7 @@ import { SystemSettingsService } from '../../../services/system-settings.service
   selector: 'app-retention-settings',
   imports: [FormsModule, TranslatePipe],
   templateUrl: './retention.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './retention.css',
 })
 export class Retention implements OnInit {

@@ -1,4 +1,13 @@
-import { Component, DestroyRef, NgZone, OnInit, computed, inject, signal } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  NgZone,
+  OnInit,
+  computed,
+  inject,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { NgClass } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 
@@ -20,6 +29,7 @@ const HEALTH_POLL_MS = 30_000;
   standalone: true,
   imports: [RouterLink, Mascot, ThemeToggle, LanguageSwitcher, NgClass, TranslatePipe],
   templateUrl: './top-nav-bar.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './top-nav-bar.css',
 })
 export class TopNavBar implements OnInit {

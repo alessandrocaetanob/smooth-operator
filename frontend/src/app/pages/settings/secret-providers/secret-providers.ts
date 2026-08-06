@@ -1,4 +1,11 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  inject,
+  signal,
+  computed,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
@@ -33,6 +40,7 @@ const EMPTY_FORM: FormState = {
 @Component({
   selector: 'app-secret-providers',
   imports: [FormsModule, TranslatePipe],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './secret-providers.html',
 })
 export class SecretProviders implements OnInit {

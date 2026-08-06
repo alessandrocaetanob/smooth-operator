@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideTranslateService, TranslateService } from '@ngx-translate/core';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
@@ -86,7 +86,7 @@ describe('SearchResults', () => {
     await TestBed.configureTestingModule({
       imports: [SearchResults],
       providers: [
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
         provideTranslateService(),
         { provide: ActivatedRoute, useValue: { queryParamMap } },

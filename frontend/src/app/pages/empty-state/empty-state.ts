@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
 import { Mascot } from '../../shared/mascot/mascot';
 
@@ -6,6 +6,7 @@ import { Mascot } from '../../shared/mascot/mascot';
   selector: 'app-empty-state',
   imports: [Mascot, TranslatePipe],
   templateUrl: './empty-state.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './empty-state.css',
 })
 export class EmptyState {}

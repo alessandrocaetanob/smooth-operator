@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { Mascot } from '../mascot/mascot';
@@ -10,6 +10,7 @@ import { fadeIn, scaleIn } from '../animations';
   standalone: true,
   imports: [RouterLink, TranslatePipe, Mascot],
   templateUrl: './tour-overlay.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   animations: [fadeIn, scaleIn],
 })
 export class TourOverlay {

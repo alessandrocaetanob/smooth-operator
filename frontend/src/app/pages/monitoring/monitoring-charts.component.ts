@@ -9,6 +9,7 @@ import {
   inject,
   Injector,
   runInInjectionContext,
+  ChangeDetectionStrategy,
 } from '@angular/core';
 import {
   Chart,
@@ -72,6 +73,7 @@ const GRID_COLOR = 'rgba(156, 163, 175, 0.1)';
   standalone: true,
   imports: [TranslatePipe],
   templateUrl: './monitoring-charts.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './monitoring-charts.component.css',
 })
 export class MonitoringChartsComponent implements AfterViewInit, OnDestroy {

@@ -1,8 +1,9 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
   selector: 'app-form-field',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './form-field.html',
 })
 export class FormField {

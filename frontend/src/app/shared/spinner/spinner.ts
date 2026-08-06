@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 export type SpinnerSize = 'sm' | 'md' | 'lg';
@@ -10,6 +10,7 @@ export type SpinnerColor = 'primary' | 'white' | 'error';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './spinner.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './spinner.css',
 })
 export class Spinner {

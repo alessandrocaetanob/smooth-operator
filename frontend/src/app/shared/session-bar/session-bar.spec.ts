@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Router } from '@angular/router';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
@@ -37,7 +37,7 @@ describe('SessionBar', () => {
     TestBed.configureTestingModule({
       imports: [SessionBar],
       providers: [
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
         { provide: GuacamoleSessionManagerService, useValue: manager },
         { provide: ConnectionsService, useValue: connections },

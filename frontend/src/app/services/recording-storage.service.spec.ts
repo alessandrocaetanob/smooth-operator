@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 
@@ -14,7 +14,11 @@ describe('RecordingStorageService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [RecordingStorageService, provideHttpClient(), provideHttpClientTesting()],
+      providers: [
+        RecordingStorageService,
+        provideHttpClient(withXhr()),
+        provideHttpClientTesting(),
+      ],
     });
     service = TestBed.inject(RecordingStorageService);
     http = TestBed.inject(HttpTestingController);

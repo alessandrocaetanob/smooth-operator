@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import {
   FormBuilder,
   ReactiveFormsModule,
@@ -17,6 +17,7 @@ import { Spinner } from '../../shared/spinner/spinner';
   selector: 'app-first-access',
   imports: [ReactiveFormsModule, ThemeToggle, LanguageSwitcher, Spinner, TranslatePipe],
   templateUrl: './first-access.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './first-access.css',
 })
 export class FirstAccess {

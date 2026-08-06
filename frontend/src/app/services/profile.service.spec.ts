@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
@@ -28,7 +28,7 @@ describe('ProfileService', () => {
     TestBed.configureTestingModule({
       providers: [
         ProfileService,
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
         { provide: AuthService, useValue: mockAuthService },
       ],

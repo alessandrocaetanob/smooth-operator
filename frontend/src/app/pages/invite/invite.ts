@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -8,6 +8,7 @@ import { InvitePreview, InvitesService } from '../../services/invites.service';
   selector: 'app-invite',
   imports: [FormsModule, RouterLink, TranslatePipe],
   templateUrl: './invite.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './invite.css',
 })
 export class Invite implements OnInit {

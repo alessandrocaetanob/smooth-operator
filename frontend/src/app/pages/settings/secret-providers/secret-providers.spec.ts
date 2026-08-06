@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import type { WritableSignal } from '@angular/core';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideTranslateService, TranslateService } from '@ngx-translate/core';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
@@ -30,7 +30,11 @@ describe('SecretProviders', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [SecretProviders],
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideTranslateService()],
+      providers: [
+        provideHttpClient(withXhr()),
+        provideHttpClientTesting(),
+        provideTranslateService(),
+      ],
     }).compileComponents();
 
     const translate = TestBed.inject(TranslateService);

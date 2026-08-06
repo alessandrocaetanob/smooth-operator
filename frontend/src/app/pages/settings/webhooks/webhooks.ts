@@ -1,4 +1,11 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  computed,
+  inject,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -22,6 +29,7 @@ type StatusTone = 'ok' | 'bad' | 'idle';
   selector: 'app-webhooks-settings',
   imports: [FormsModule, DatePipe, TranslatePipe],
   templateUrl: './webhooks.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './webhooks.css',
 })
 export class WebhooksSettings implements OnInit {
