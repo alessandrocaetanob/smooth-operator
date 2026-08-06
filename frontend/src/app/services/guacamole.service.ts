@@ -4,18 +4,26 @@ import { firstValueFrom } from 'rxjs';
 import Guacamole from 'guacamole-common-js';
 
 export type GuacState =
-  | 'idle'
-  | 'requesting-ticket'
-  | 'connecting'
-  | 'waiting'
-  | 'connected'
-  | 'disconnected'
-  | 'error';
+  'idle' | 'requesting-ticket' | 'connecting' | 'waiting' | 'connected' | 'disconnected' | 'error';
 
 export interface GuacLogEntry {
   level: 'info' | 'ok' | 'warn' | 'error';
   message: string;
   timestamp: number;
+}
+
+/**
+ * One entry in a Guacamole filesystem directory listing. `streamName` is the
+ * full, absolute name guacd uses to address this entry directly in
+ * subsequent get/put requests — the server's JSON listing already returns
+ * full names (not bare filenames), so `displayName` is derived by stripping
+ * the current directory's prefix, never by joining paths ourselves.
+ */
+export interface GuacFileEntry {
+  displayName: string;
+  streamName: string;
+  mimetype: string;
+  isDirectory: boolean;
 }
 
 // Maps Guacamole.Client state codes (per the source) to our domain state.
@@ -43,6 +51,35 @@ export const NARROW_VIEWPORT_PX = 768;
 export const ZOOM_MIN = 0.5;
 export const ZOOM_MAX = 3;
 export const ZOOM_STEP = 0.25;
+
+/**
+ * Default INACTIVITY timeout for file-transfer operations (list/download/upload):
+ * the operation fails with a visible error when no data flows for this long — it
+ * is not a cap on total duration, so large transfers that keep moving bytes never
+ * trip it. guacd applies no timeout of its own to the underlying SFTP/drive
+ * operations, so a stalled remote endpoint would otherwise hang the UI forever.
+ * Overridable per vault (ConnectionGroup.FileTransferTimeoutSeconds).
+ */
+export const FILE_TRANSFER_TIMEOUT_MS = 20000;
+
+/** Machine-readable reasons a file-transfer operation can fail — the UI maps these to translated messages. */
+export type FileTransferErrorCode =
+  'timeout' | 'no_filesystem' | 'not_directory' | 'remote' | 'parse';
+
+/** Guacamole protocol status code guacd uses for permission-denied (CLIENT_FORBIDDEN). */
+export const GUAC_STATUS_FORBIDDEN = 0x0303;
+
+export class FileTransferError extends Error {
+  constructor(
+    readonly code: FileTransferErrorCode,
+    message: string,
+    /** Guacamole protocol status code accompanying `remote` errors (e.g. 0x0303 = forbidden). */
+    readonly statusCode?: number,
+  ) {
+    super(message);
+    this.name = 'FileTransferError';
+  }
+}
 
 const PROGRESS_BY_STATE: Record<GuacState, number> = {
   idle: 0,
@@ -120,6 +157,8 @@ export class GuacamoleSession {
   private lastSentSize: { w: number; h: number } | null = null;
   /** User zoom multiplier applied on top of the fit-to-screen scale. */
   private userZoom = 1;
+  /** The RDP drive / SSH SFTP filesystem object, set once guacd exposes one. */
+  private fsObject: Guacamole.Object | null = null;
 
   private readonly _state = signal<GuacState>('idle');
   private readonly _logs = signal<GuacLogEntry[]>([]);
@@ -128,6 +167,7 @@ export class GuacamoleSession {
   private readonly _hostClipboard = signal<string>('');
   private readonly _elapsedSeconds = signal(0);
   private readonly _connectedAt = signal<number | null>(null);
+  private readonly _fileSystemName = signal<string | null>(null);
 
   /** True when the session is minimized (display detached but WS alive). */
   readonly minimized = signal(false);
@@ -139,6 +179,10 @@ export class GuacamoleSession {
   readonly hostClipboard = this._hostClipboard.asReadonly();
   readonly elapsedSeconds = this._elapsedSeconds.asReadonly();
   readonly connectedAt = this._connectedAt.asReadonly();
+  /** Name guacd gave the filesystem (drive/SFTP), or null until it announces one. */
+  readonly fileSystemName = this._fileSystemName.asReadonly();
+  /** True once guacd has exposed a filesystem object — the paperclip button gate. */
+  readonly fileTransferAvailable = computed(() => this._fileSystemName() !== null);
   readonly progress = computed(() => PROGRESS_BY_STATE[this._state()] ?? 0);
   readonly isConnected = computed(() => this._state() === 'connected');
   readonly formattedElapsed = computed(() => {
@@ -172,6 +216,8 @@ export class GuacamoleSession {
     this._logs.set([]);
     this._displayName.set(null);
     this._hostClipboard.set('');
+    this._fileSystemName.set(null);
+    this.fsObject = null;
     this.minimized.set(false);
 
     this.setState('requesting-ticket');
@@ -287,6 +333,13 @@ export class GuacamoleSession {
           });
         }
       };
+    };
+    client.onfilesystem = (object, name) => {
+      this.zone.run(() => {
+        this.fsObject = object;
+        this._fileSystemName.set(name);
+        this.log('ok', `File transfer available: ${name}`);
+      });
     };
 
     this.setState('connecting');
@@ -472,6 +525,8 @@ export class GuacamoleSession {
     this.detachDisplay();
     this.client = null;
     this.tunnel = null;
+    this.fsObject = null;
+    this._fileSystemName.set(null);
     this.setState('disconnected');
   }
 
@@ -483,6 +538,8 @@ export class GuacamoleSession {
     this._hostClipboard.set('');
     this._elapsedSeconds.set(0);
     this._connectedAt.set(null);
+    this._fileSystemName.set(null);
+    this.fsObject = null;
     this.minimized.set(false);
   }
 
@@ -569,6 +626,222 @@ export class GuacamoleSession {
       /* clipboard stream may not be supported on every protocol */
     }
     this.typeText(text);
+  }
+
+  // ── File transfer (RDP drive redirect / SSH SFTP) ──────────────────────────
+  // Tunneled entirely through the existing Guacamole object protocol — no
+  // separate REST endpoint. guacd enforces the effective policy itself
+  // (disable-upload/disable-download or their sftp- equivalents), so these
+  // methods don't duplicate that check; the UI hides the buttons instead.
+
+  /**
+   * Inactivity watchdog for a file-transfer promise executor: rejects with a
+   * `timeout` FileTransferError when `touch()` hasn't been called for
+   * `timeoutMs`. Deliberately NOT a total-duration cap — every data event
+   * (listing text, download blob, upload ack) re-arms it, so a large transfer
+   * that keeps moving bytes never trips it; only a genuine stall does.
+   */
+  private createStallGuard(
+    timeoutMs: number,
+    reject: (err: FileTransferError) => void,
+  ): { touch: () => void; clear: () => void } {
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const arm = () => {
+      timer = setTimeout(() => {
+        this.zone.run(() =>
+          reject(
+            new FileTransferError(
+              'timeout',
+              `No data received for ${Math.round(timeoutMs / 1000)}s — transfer looks stalled.`,
+            ),
+          ),
+        );
+      }, timeoutMs);
+    };
+    const clear = () => {
+      if (timer !== null) clearTimeout(timer);
+      timer = null;
+    };
+    arm();
+    return {
+      touch: () => {
+        clear();
+        arm();
+      },
+      clear,
+    };
+  }
+
+  /**
+   * Lists the contents of `path` (use `Guacamole.Object.ROOT_STREAM` for the
+   * top level). The listing's stream names are already full, absolute paths
+   * from guacd — never reconstructed by joining parent + child here.
+   */
+  listDirectory(
+    path: string,
+    timeoutMs: number = FILE_TRANSFER_TIMEOUT_MS,
+  ): Promise<GuacFileEntry[]> {
+    return new Promise<GuacFileEntry[]>((resolve, reject) => {
+      if (!this.fsObject) {
+        reject(new FileTransferError('no_filesystem', 'No filesystem available for this session.'));
+        return;
+      }
+      const guard = this.createStallGuard(timeoutMs, reject);
+      this.fsObject.requestInputStream(path, (stream, mimetype) => {
+        guard.touch();
+        if (mimetype !== Guacamole.Object.STREAM_INDEX_MIMETYPE) {
+          guard.clear();
+          // Abort the stream server-side; guacd is otherwise left waiting on it.
+          stream.sendAck('Not a directory', 0x0100);
+          reject(new FileTransferError('not_directory', 'Not a directory.'));
+          return;
+        }
+        const reader = new Guacamole.StringReader(stream);
+        let buffer = '';
+        reader.ontext = (text) => {
+          guard.touch();
+          buffer += text;
+        };
+        reader.onend = () => {
+          guard.clear();
+          this.zone.run(() => {
+            try {
+              resolve(
+                this.parseDirectoryListing(path, JSON.parse(buffer) as Record<string, string>),
+              );
+            } catch {
+              reject(new FileTransferError('parse', 'Failed to parse directory listing.'));
+            }
+          });
+        };
+        // Mandatory kick-off: guacd streams a requested body only after the
+        // receiver acks the new stream (its SFTP/drive listing loop is entirely
+        // ack-driven). StringReader acks every subsequent blob, but this first
+        // ack is the consumer's job — without it the listing never starts.
+        stream.sendAck('Ready', 0);
+      });
+    });
+  }
+
+  private parseDirectoryListing(path: string, listing: Record<string, string>): GuacFileEntry[] {
+    const prefix = path.endsWith('/') ? path : `${path}/`;
+    const entries = Object.entries(listing).map(([streamName, mimetype]) => ({
+      streamName,
+      displayName: streamName.startsWith(prefix) ? streamName.slice(prefix.length) : streamName,
+      mimetype,
+      isDirectory: mimetype === Guacamole.Object.STREAM_INDEX_MIMETYPE,
+    }));
+    entries.sort((a, b) =>
+      a.isDirectory === b.isDirectory
+        ? a.displayName.localeCompare(b.displayName)
+        : a.isDirectory
+          ? -1
+          : 1,
+    );
+    return entries;
+  }
+
+  /** Downloads `entry` to the browser's default download location. */
+  downloadFile(entry: GuacFileEntry, timeoutMs: number = FILE_TRANSFER_TIMEOUT_MS): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      if (!this.fsObject) {
+        reject(new FileTransferError('no_filesystem', 'No filesystem available for this session.'));
+        return;
+      }
+      const guard = this.createStallGuard(timeoutMs, reject);
+      this.fsObject.requestInputStream(entry.streamName, (stream, mimetype) => {
+        guard.touch();
+        const reader = new Guacamole.BlobReader(stream, mimetype);
+        reader.onprogress = () => guard.touch();
+        reader.onend = () => {
+          guard.clear();
+          this.zone.run(() => {
+            const url = URL.createObjectURL(reader.getBlob());
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = entry.displayName;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+            resolve();
+          });
+        };
+        // Same mandatory kick-off as listDirectory: guacd sends the file's
+        // first blob only after this initial ack (BlobReader acks the rest).
+        stream.sendAck('Ready', 0);
+      });
+    });
+  }
+
+  /** Uploads `file` into `directoryPath`. `onProgress` receives a 0–1 fraction. */
+  uploadFile(
+    directoryPath: string,
+    file: File,
+    onProgress?: (fraction: number) => void,
+    timeoutMs: number = FILE_TRANSFER_TIMEOUT_MS,
+  ): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      if (!this.fsObject) {
+        reject(new FileTransferError('no_filesystem', 'No filesystem available for this session.'));
+        return;
+      }
+      const guard = this.createStallGuard(timeoutMs, reject);
+      const prefix = directoryPath.endsWith('/') ? directoryPath : `${directoryPath}/`;
+      const stream = this.fsObject.createOutputStream(
+        file.type || 'application/octet-stream',
+        prefix + file.name,
+      );
+      const writer = new Guacamole.BlobWriter(stream);
+      let settled = false;
+      // guacd acks every chunk — and, crucially, reports failures (permission
+      // denied, disk full, …) as an error-status ack, e.g. "SFTP: Open failed"
+      // with code 0x0303. BlobWriter stops sending on its own then, but without
+      // this handler the failure would surface as nothing but a stall/timeout.
+      writer.onack = (status) => {
+        if (settled) return; // late acks after resolution are meaningless here
+        if (status.isError()) {
+          settled = true;
+          guard.clear();
+          // Terminate the failed stream properly (like the reference Guacamole
+          // client does): without this `end`, guacd only closes its side when a
+          // LATER upload reuses the stream index — and acks that close failure
+          // to the new, innocent transfer.
+          writer.sendEnd();
+          this.zone.run(() =>
+            reject(
+              new FileTransferError(
+                'remote',
+                status.message || 'The remote server rejected the transfer.',
+                status.code,
+              ),
+            ),
+          );
+        } else {
+          guard.touch();
+        }
+      };
+      writer.onprogress = (blob, offset) => {
+        guard.touch();
+        if (onProgress) this.zone.run(() => onProgress(Math.min(1, offset / blob.size)));
+      };
+      writer.onerror = (_blob, _offset, error) => {
+        if (settled) return;
+        settled = true;
+        guard.clear();
+        this.zone.run(() =>
+          reject(new FileTransferError('remote', error.message || 'Upload failed.')),
+        );
+      };
+      writer.oncomplete = () => {
+        if (settled) return;
+        settled = true;
+        guard.clear();
+        writer.sendEnd();
+        this.zone.run(() => resolve());
+      };
+      writer.sendBlob(file);
+    });
   }
 
   typeText(text: string): void {

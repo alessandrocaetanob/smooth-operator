@@ -14,6 +14,9 @@ export type ConnectionProtocol = 'rdp' | 'ssh' | 'vnc';
 /** Per-connection override of the parent vault's recording flag. */
 export type RecordingOverride = 'Inherit' | 'ForceOn' | 'ForceOff';
 
+/** Governs in-session file transfer (SFTP for SSH, drive redirect for RDP). */
+export type FileTransferPolicy = 'Disabled' | 'DownloadOnly' | 'UploadOnly' | 'Both';
+
 export interface Connection {
   id: string;
   name: string;
@@ -26,6 +29,12 @@ export interface Connection {
   host?: ConnectionHostRef | null;
   recordingOverride?: RecordingOverride;
   recordingIncludeKeys?: boolean | null;
+  /** `null` = inherit the parent vault's file-transfer policy default. */
+  fileTransferPolicyOverride?: FileTransferPolicy | null;
+  /** Resolved policy (override, else vault default, else Disabled) — read-only, computed server-side. */
+  effectiveFileTransferPolicy?: FileTransferPolicy;
+  /** Vault-configured inactivity timeout (seconds) for transfers; null = app default. Read-only. */
+  effectiveFileTransferTimeoutSeconds?: number | null;
 }
 
 export interface CreateConnectionPayload {
@@ -38,6 +47,7 @@ export interface CreateConnectionPayload {
   tags?: string[];
   recordingOverride?: RecordingOverride;
   recordingIncludeKeys?: boolean | null;
+  fileTransferPolicyOverride?: FileTransferPolicy | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -157,6 +167,21 @@ export class ConnectionsService {
       ),
       recordingIncludeKeys:
         pick<boolean>(raw, 'recordingIncludeKeys', 'RecordingIncludeKeys') ?? null,
+      fileTransferPolicyOverride:
+        pick<FileTransferPolicy>(raw, 'fileTransferPolicyOverride', 'FileTransferPolicyOverride') ??
+        null,
+      effectiveFileTransferPolicy: pickOr<FileTransferPolicy>(
+        raw,
+        'Disabled',
+        'effectiveFileTransferPolicy',
+        'EffectiveFileTransferPolicy',
+      ),
+      effectiveFileTransferTimeoutSeconds:
+        pick<number>(
+          raw,
+          'effectiveFileTransferTimeoutSeconds',
+          'EffectiveFileTransferTimeoutSeconds',
+        ) ?? null,
     };
   }
 }

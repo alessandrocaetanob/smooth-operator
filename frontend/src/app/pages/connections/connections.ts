@@ -15,6 +15,7 @@ import {
   Connection,
   ConnectionsService,
   CreateConnectionPayload,
+  FileTransferPolicy,
 } from '../../services/connections.service';
 import { HostsService, AppHost } from '../../services/hosts.service';
 import { CredentialsService, Credential } from '../../services/credentials.service';
@@ -44,6 +45,8 @@ interface FormState {
   recordingOverride: 'Inherit' | 'ForceOn' | 'ForceOff';
   // 'inherit' | 'true' | 'false' — rendered as a select; mapped to nullable bool on save
   recordingIncludeKeys: 'inherit' | 'true' | 'false';
+  // 'Inherit' maps to a null override (defers to the vault's default) on save
+  fileTransferPolicyOverride: FileTransferPolicy | 'Inherit';
 }
 
 interface TermColorScheme {
@@ -106,6 +109,7 @@ const EMPTY_FORM: FormState = {
   tags: [],
   recordingOverride: 'Inherit',
   recordingIncludeKeys: 'inherit',
+  fileTransferPolicyOverride: 'Inherit',
 };
 
 /** Simple deterministic color bucket for tag chips */
@@ -277,6 +281,9 @@ export class Connections implements OnInit {
       tags: [...(c.tags ?? [])],
       recordingOverride: c.recordingOverride ?? 'Inherit',
       recordingIncludeKeys: Connections.includeKeysToFormValue(c.recordingIncludeKeys),
+      fileTransferPolicyOverride: Connections.fileTransferOverrideToFormValue(
+        c.fileTransferPolicyOverride,
+      ),
     });
     this.showDrawer.set(true);
   }
@@ -402,6 +409,9 @@ export class Connections implements OnInit {
             tags: f.tags,
             recordingOverride: f.recordingOverride,
             recordingIncludeKeys: Connections.includeKeysFromFormValue(f.recordingIncludeKeys),
+            fileTransferPolicyOverride: Connections.fileTransferOverrideFromFormValue(
+              f.fileTransferPolicyOverride,
+            ),
           };
 
           return f.id
@@ -518,5 +528,17 @@ export class Connections implements OnInit {
     if (value === 'true') return true;
     if (value === 'false') return false;
     return null;
+  }
+
+  private static fileTransferOverrideToFormValue(
+    value: FileTransferPolicy | null | undefined,
+  ): FileTransferPolicy | 'Inherit' {
+    return value ?? 'Inherit';
+  }
+
+  private static fileTransferOverrideFromFormValue(
+    value: FileTransferPolicy | 'Inherit',
+  ): FileTransferPolicy | null {
+    return value === 'Inherit' ? null : value;
   }
 }

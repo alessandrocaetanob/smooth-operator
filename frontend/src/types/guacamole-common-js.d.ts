@@ -25,11 +25,20 @@ declare module 'guacamole-common-js' {
     class Status {
       code: number;
       message: string;
+      /** True when the code denotes an error (any code above the 0x00FF success range). */
+      isError(): boolean;
     }
 
     class InputStream {
       onblob: ((data: string) => void) | null;
       onend: (() => void) | null;
+      /**
+       * Acknowledges receipt on this stream. guacd's object streams (SFTP /
+       * drive-redirect body streams) are ack-driven: after `body` arrives, the
+       * receiver MUST send an initial success ack or guacd never sends the
+       * first blob. Non-zero codes abort the stream.
+       */
+      sendAck(message: string, code: number): void;
     }
 
     class OutputStream {
@@ -47,6 +56,46 @@ declare module 'guacamole-common-js' {
       constructor(stream: OutputStream);
       sendText(text: string): void;
       sendEnd(): void;
+    }
+
+    /** Assembles blob chunks received on an InputStream into a single Blob. */
+    class BlobReader {
+      constructor(stream: InputStream, mimetype: string);
+      getLength(): number;
+      getBlob(): Blob;
+      onprogress: ((length: number) => void) | null;
+      onend: (() => void) | null;
+    }
+
+    /** Chunks a Blob and writes it to an OutputStream. */
+    class BlobWriter {
+      constructor(stream: OutputStream);
+      sendBlob(blob: Blob): void;
+      sendEnd(): void;
+      onack: ((status: Status) => void) | null;
+      onerror: ((blob: Blob, offset: number, error: DOMException) => void) | null;
+      onprogress: ((blob: Blob, offset: number) => void) | null;
+      oncomplete: ((blob: Blob) => void) | null;
+    }
+
+    /**
+     * A named collection of input/output streams exposed by guacd — an RDP
+     * drive redirect or SSH SFTP session. `ROOT_STREAM` ("/") lists directory
+     * contents as JSON (mimetype `STREAM_INDEX_MIMETYPE`); any other stream
+     * name is a file.
+     */
+    class Object {
+      constructor(client: Client, index: number);
+      readonly index: number;
+      onbody: ((inputStream: InputStream, mimetype: string, name: string) => void) | null;
+      onundefine: (() => void) | null;
+      requestInputStream(
+        name: string,
+        bodyCallback?: (stream: InputStream, mimetype: string) => void,
+      ): void;
+      createOutputStream(mimetype: string, name: string): OutputStream;
+      static readonly ROOT_STREAM: string;
+      static readonly STREAM_INDEX_MIMETYPE: string;
     }
 
     class Display {
@@ -97,6 +146,7 @@ declare module 'guacamole-common-js' {
       onerror: ((status: Status) => void) | null;
       onclipboard: ((stream: InputStream, mimetype: string) => void) | null;
       onname: ((name: string) => void) | null;
+      onfilesystem: ((object: Object, name: string) => void) | null;
     }
   }
 

@@ -135,6 +135,23 @@
                     }}
                   </button>
                   <button
+                    (click)="openFileTransfer(vault)"
+                    class="px-2 py-1 text-xs rounded"
+                    [class.text-tertiary]="vault.fileTransferPolicy !== 'Disabled'"
+                    [class.text-on-surface-variant]="vault.fileTransferPolicy === 'Disabled'"
+                    [class.hover:bg-tertiary]="vault.fileTransferPolicy !== 'Disabled'"
+                    [class.hover:bg-on-surface]="vault.fileTransferPolicy === 'Disabled'"
+                    [title]="'pages.settingsVaults.fileTransfer.tooltip' | translate"
+                  >
+                    <span class="material-symbols-outlined text-base align-middle"
+                      >attach_file</span
+                    >
+                    {{
+                      'pages.settingsVaults.fileTransfer.policyLabel.' +
+                        (vault.fileTransferPolicy ?? 'Disabled') | translate
+                    }}
+                  </button>
+                  <button
                     (click)="startEdit(vault)"
                     class="px-2 py-1 text-xs text-primary hover:bg-primary/10 rounded"
                   >
@@ -492,6 +509,112 @@
             recordingBusy()
               ? ('pages.settingsVaults.recordingModal.saving' | translate)
               : ('pages.settingsVaults.recordingModal.save' | translate)
+          }}
+        </button>
+      </div>
+    </dialog>
+  </div>
+}
+
+@if (fileTransferModalVault(); as vault) {
+  <div
+    class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 md:pl-[calc(1rem+var(--sidebar-width))]"
+    tabindex="-1"
+    (click)="closeFileTransfer()"
+    (keydown.escape)="closeFileTransfer()"
+  >
+    <dialog
+      open
+      class="glass-card rounded-lg w-full max-w-md p-5"
+      aria-modal="true"
+      aria-labelledby="file-transfer-modal-title"
+      tabindex="-1"
+      (click)="$event.stopPropagation()"
+      (keydown)="$event.stopPropagation()"
+    >
+      <div class="flex items-center justify-between mb-3">
+        <div>
+          <h3 id="file-transfer-modal-title" class="text-base font-semibold text-on-surface">
+            {{ 'pages.settingsVaults.fileTransferModal.title' | translate: { name: vault.name } }}
+          </h3>
+          <p class="text-xs text-on-surface-variant mt-0.5">
+            {{ 'pages.settingsVaults.fileTransferModal.subtitle' | translate }}
+          </p>
+        </div>
+        <button
+          (click)="closeFileTransfer()"
+          class="btn-ghost-icon"
+          [attr.aria-label]="'common.actions.close' | translate"
+        >
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label class="settings-label" for="fileTransferPolicy">{{
+            'pages.settingsVaults.fileTransferModal.policyLabel' | translate
+          }}</label>
+          <select
+            id="fileTransferPolicy"
+            [ngModel]="fileTransferPolicyForm()"
+            (ngModelChange)="fileTransferPolicyForm.set($event)"
+            name="fileTransferPolicy"
+            class="w-full select-field"
+          >
+            <option value="Disabled">
+              {{ 'pages.settingsVaults.fileTransfer.policyLabel.Disabled' | translate }}
+            </option>
+            <option value="DownloadOnly">
+              {{ 'pages.settingsVaults.fileTransfer.policyLabel.DownloadOnly' | translate }}
+            </option>
+            <option value="UploadOnly">
+              {{ 'pages.settingsVaults.fileTransfer.policyLabel.UploadOnly' | translate }}
+            </option>
+            <option value="Both">
+              {{ 'pages.settingsVaults.fileTransfer.policyLabel.Both' | translate }}
+            </option>
+          </select>
+          <p class="text-xs text-on-surface-variant mt-1">
+            {{ 'pages.settingsVaults.fileTransferModal.hint' | translate }}
+          </p>
+        </div>
+
+        <div>
+          <label class="settings-label" for="fileTransferTimeout">{{
+            'pages.settingsVaults.fileTransferModal.timeoutLabel' | translate
+          }}</label>
+          <input
+            id="fileTransferTimeout"
+            type="number"
+            min="5"
+            max="600"
+            [ngModel]="fileTransferTimeoutForm()"
+            (ngModelChange)="fileTransferTimeoutForm.set($event)"
+            name="fileTransferTimeout"
+            class="w-full input-field"
+            [placeholder]="'pages.settingsVaults.fileTransferModal.timeoutPlaceholder' | translate"
+          />
+          <p class="text-xs text-on-surface-variant mt-1">
+            {{ 'pages.settingsVaults.fileTransferModal.timeoutHint' | translate }}
+          </p>
+        </div>
+      </div>
+
+      <div class="mt-5 flex justify-end gap-2">
+        <button type="button" (click)="closeFileTransfer()" class="btn-ghost">
+          {{ 'common.actions.cancel' | translate }}
+        </button>
+        <button
+          type="button"
+          (click)="saveFileTransfer()"
+          [disabled]="fileTransferBusy()"
+          class="btn-primary"
+        >
+          {{
+            fileTransferBusy()
+              ? ('pages.settingsVaults.fileTransferModal.saving' | translate)
+              : ('pages.settingsVaults.fileTransferModal.save' | translate)
           }}
         </button>
       </div>

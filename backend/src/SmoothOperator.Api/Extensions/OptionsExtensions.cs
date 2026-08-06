@@ -58,6 +58,10 @@ public static class OptionsExtensions
         services.AddOptions<RecordingOptions>()
             .BindConfiguration(RecordingOptions.SectionName);
 
+        // File-transfer drive path — no validation since defaults are valid and the feature ships off-by-default.
+        services.AddOptions<FileTransferOptions>()
+            .BindConfiguration(FileTransferOptions.SectionName);
+
         return services;
     }
 }

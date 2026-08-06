@@ -278,15 +278,16 @@ The "1.0" cut: 2FA, automation tokens, compliance-grade session enforcement, and
 - ✅ **Public docs site** — Docusaurus deployed via Cloudflare Pages; in-app help links resolve to the public domain
 - ✅ **Production deploy pipeline** — multi-arch Docker images, runtime `API_URL`, Komodo TOML
 
-### v1.0.x — fast-follow (~4 weeks after 1.0)
+### v1.0.x — fast-follow
 
-| Version    | Headline                                     | Notes                                                                                                                                                                                         |
-| ---------- | -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **v1.0.1** | **Webhooks** for audit events                | HMAC-signed `Features/Webhooks/` hooked into `AuditService`. Trivial once PATs landed — same auth-token mental model.                                                                         |
-| **v1.0.2** | **Session recording + playback**             | `GuacamoleProxyService` passes `recording-path` + `create-recording-path` to guacd; playback page reuses `Guacamole.SessionRecording` from `guacamole-common-js`. The defining vault feature. |
-| **v1.0.3** | **In-session file transfer**                 | SFTP for SSH + drive redirect for RDP via Guacamole filesystem instructions. New file-tree component.                                                                                         |
-| **v1.0.4** | **Backup & restore**                         | Encrypted bundle (DB dump + Data Protection keys + system settings) plus `dotnet smooth-operator backup/restore` CLI surface.                                                                 |
-| **v1.0.5** | **First-run onboarding tour + empty states** | Extend the existing `empty-state.ts` pattern to every list page; 4-step popover after `SetupCommand` succeeds.                                                                                |
+| Version    | Status     | Headline                                     | Notes                                                                                                                                                                                         |
+| ---------- | ---------- | -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **v1.0.1** | ✅ shipped | **Webhooks** for audit events                | HMAC-signed `Features/Webhooks/` hooked into `AuditService`. Trivial once PATs landed — same auth-token mental model.                                                                         |
+| **v1.0.2** | ✅ shipped | **Session recording + playback**             | `GuacamoleProxyService` passes `recording-path` + `create-recording-path` to guacd; playback page reuses `Guacamole.SessionRecording` from `guacamole-common-js`. The defining vault feature. |
+| **v1.0.3** | ✅ shipped | **In-session file transfer**                 | SFTP for SSH + drive redirect for RDP, gated by a `FileTransferPolicy` (vault default + per-connection override, disabled by default). Every transfer audits `session.file_transferred`.      |
+| **v1.0.4** | ⬜ next    | **Backup & restore**                         | Encrypted bundle (DB dump + Data Protection keys + system settings) plus `dotnet smooth-operator backup/restore` CLI surface.                                                                 |
+| **v1.0.5** | ✅ shipped | **First-run onboarding tour + empty states** | Extended the existing `empty-state.ts` pattern to every list page; guided popover tour after `SetupCommand` succeeds.                                                                         |
+| —          | ✅ shipped | **i18n** (pt-BR + en)                        | Pulled forward from v1.1+. `@ngx-translate/core` with `public/i18n/{en,pt-BR}.json` at full key parity and a runtime language switcher.                                                       |
 
 ### v1.1+ — explicitly deferred
 
@@ -294,7 +295,6 @@ The "1.0" cut: 2FA, automation tokens, compliance-grade session enforcement, and
 - **JIT access workflow** — high design cost; revisit when a customer pulls.
 - **SCIM 2.0 provisioning** — only when an enterprise SSO customer asks.
 - **Terraform provider / `smopctl` CLI** — waits for stable API; PATs prep the ground.
-- **i18n** — premature without a non-English customer.
 
 ### Already-deferred performance items
 

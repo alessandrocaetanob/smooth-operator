@@ -33,6 +33,7 @@ public class GuacamoleProxyServiceTests
     private readonly Mock<IServiceProvider> _serviceProviderMock = new();
     private readonly IOptions<GuacdOptions> _options = Options.Create(new GuacdOptions { Host = "localhost", Port = 4822 });
     private readonly IOptions<RecordingOptions> _recordingOptions = Options.Create(new RecordingOptions());
+    private readonly IOptions<FileTransferOptions> _fileTransferOptions = Options.Create(new FileTransferOptions());
     private readonly GuacamoleProxyService _service;
 
     public GuacamoleProxyServiceTests()
@@ -52,6 +53,7 @@ public class GuacamoleProxyServiceTests
             _options,
             _scopeFactoryMock.Object,
             _recordingOptions,
+            _fileTransferOptions,
             BuildDependencies());
     }
 
@@ -291,6 +293,7 @@ public class GuacamoleProxyServiceTests
             Options.Create(new GuacdOptions { Host = "invalid.invalid", Port = 4822 }),
             _scopeFactoryMock.Object,
             _recordingOptions,
+            _fileTransferOptions,
             BuildDependencies());
 
         using var scope = _scopeFactoryMock.Object.CreateScope();
@@ -503,6 +506,7 @@ public class GuacamoleProxyServiceTests
             Options.Create(new GuacdOptions { Host = "127.0.0.1", Port = guacdPort }),
             _scopeFactoryMock.Object,
             _recordingOptions,
+            _fileTransferOptions,
             BuildDependencies());
 
         using var scope = _scopeFactoryMock.Object.CreateScope();
@@ -561,6 +565,7 @@ public class GuacamoleProxyServiceInternalTests
     private readonly Mock<IServiceScopeFactory> _scopeFactoryMock = new();
     private readonly IOptions<GuacdOptions> _options = Options.Create(new GuacdOptions { Host = "localhost", Port = 4822 });
     private readonly IOptions<RecordingOptions> _recordingOptions = Options.Create(new RecordingOptions());
+    private readonly IOptions<FileTransferOptions> _fileTransferOptions = Options.Create(new FileTransferOptions());
     private readonly GuacamoleProxyService _service;
     private readonly AppDbContext _dbContext;
 
@@ -580,6 +585,7 @@ public class GuacamoleProxyServiceInternalTests
             _options,
             _scopeFactoryMock.Object,
             _recordingOptions,
+            _fileTransferOptions,
             BuildDependencies());
     }
 

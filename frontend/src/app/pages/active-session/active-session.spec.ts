@@ -8,7 +8,11 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { ElementRef, signal } from '@angular/core';
 
 import { ActiveSession } from './active-session';
-import { GuacamoleSessionManagerService, Keysyms } from '../../services/guacamole.service';
+import {
+  FileTransferError,
+  GuacamoleSessionManagerService,
+  Keysyms,
+} from '../../services/guacamole.service';
 import { ConnectionsService, Connection } from '../../services/connections.service';
 
 vi.mock('guacamole-common-js', () => ({
@@ -41,6 +45,16 @@ interface FakeSession {
   captureScreenshot: ReturnType<typeof vi.fn>;
   setZoom: ReturnType<typeof vi.fn>;
   getZoom: ReturnType<typeof vi.fn>;
+  fileTransferAvailable: () => boolean;
+  fileSystemName: () => string | null;
+  listDirectory: ReturnType<typeof vi.fn>;
+  downloadFile: ReturnType<typeof vi.fn>;
+  uploadFile: ReturnType<typeof vi.fn>;
+}
+
+/** Drains the microtask queue — enough ticks for a `.then().catch().finally()` chain. */
+function flushPromises(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, 0));
 }
 
 function makeFakeSession(overrides: Partial<FakeSession> = {}): FakeSession {
@@ -63,6 +77,11 @@ function makeFakeSession(overrides: Partial<FakeSession> = {}): FakeSession {
     captureScreenshot: vi.fn(() => 'data:image/png;base64,abc'),
     setZoom: vi.fn(),
     getZoom: vi.fn(() => 1),
+    fileTransferAvailable: () => false,
+    fileSystemName: () => null,
+    listDirectory: vi.fn(() => Promise.resolve([])),
+    downloadFile: vi.fn(() => Promise.resolve()),
+    uploadFile: vi.fn(() => Promise.resolve()),
     ...overrides,
   };
 }
@@ -423,6 +442,476 @@ describe('ActiveSession', () => {
     it('returns empty when no connection', () => {
       expect(component.protocol()).toBe('');
       expect(component.isSshConnection()).toBe(false);
+    });
+  });
+
+  describe('file transfer', () => {
+    function setConnectionPolicy(policy: Connection['effectiveFileTransferPolicy']): void {
+      connectionsSvc.listAsMap.set(
+        new Map<string, Connection>([
+          [
+            'c1',
+            {
+              id: 'c1',
+              name: 'x',
+              protocol: 'rdp',
+              hostId: '',
+              connectionGroupId: null,
+              credentialId: null,
+              settings: '{}',
+              tags: [],
+              host: null,
+              effectiveFileTransferPolicy: policy,
+            },
+          ],
+        ]),
+      );
+    }
+
+    describe('policy computed signals', () => {
+      it('defaults to Disabled with no connection loaded', () => {
+        expect(component.fileTransferPolicy()).toBe('Disabled');
+        expect(component.canDownloadFiles()).toBe(false);
+        expect(component.canUploadFiles()).toBe(false);
+      });
+
+      it('DownloadOnly allows download but not upload', () => {
+        setConnectionPolicy('DownloadOnly');
+        expect(component.canDownloadFiles()).toBe(true);
+        expect(component.canUploadFiles()).toBe(false);
+      });
+
+      it('UploadOnly allows upload but not download', () => {
+        setConnectionPolicy('UploadOnly');
+        expect(component.canDownloadFiles()).toBe(false);
+        expect(component.canUploadFiles()).toBe(true);
+      });
+
+      it('Both allows upload and download', () => {
+        setConnectionPolicy('Both');
+        expect(component.canDownloadFiles()).toBe(true);
+        expect(component.canUploadFiles()).toBe(true);
+      });
+    });
+
+    it('fileTransferAvailable proxies the session signal', () => {
+      const session = makeFakeSession({ fileTransferAvailable: () => true });
+      sessionsMap.set(new Map([['c1', session]]));
+      expect(component.fileTransferAvailable()).toBe(true);
+    });
+
+    it('fileTransferBreadcrumbs builds a crumb per path segment, root always first', () => {
+      component.fileTransferPath.set('/docs/reports');
+      expect(component.fileTransferBreadcrumbs()).toEqual([
+        { label: '/', path: '/' },
+        { label: 'docs', path: '/docs' },
+        { label: 'reports', path: '/docs/reports' },
+      ]);
+    });
+
+    describe('navigateFileTransfer', () => {
+      let session: FakeSession;
+      const entries = [
+        { displayName: 'a.txt', streamName: '/a.txt', mimetype: 'text/plain', isDirectory: false },
+      ];
+
+      beforeEach(() => {
+        session = makeFakeSession({ listDirectory: vi.fn(() => Promise.resolve(entries)) });
+        sessionsMap.set(new Map([['c1', session]]));
+      });
+
+      it('loads entries and updates the current path on success', async () => {
+        component.navigateFileTransfer('/docs');
+        expect(component.fileTransferLoading()).toBe(true);
+        await flushPromises();
+        expect(session.listDirectory).toHaveBeenCalledWith('/docs', 20000);
+        expect(component.fileTransferPath()).toBe('/docs');
+        expect(component.fileTransferEntries()).toEqual(entries);
+        expect(component.fileTransferLoading()).toBe(false);
+        expect(component.fileTransferError()).toBeNull();
+      });
+
+      it('surfaces a rejection as fileTransferError without moving the path', async () => {
+        session.listDirectory.mockReturnValueOnce(Promise.reject(new Error('not a directory')));
+        const before = component.fileTransferPath();
+        component.navigateFileTransfer('/broken');
+        await flushPromises();
+        expect(component.fileTransferError()).toBe('not a directory');
+        expect(component.fileTransferPath()).toBe(before);
+        expect(component.fileTransferLoading()).toBe(false);
+      });
+
+      it('no-ops when there is no active session', () => {
+        sessionsMap.set(new Map());
+        expect(() => component.navigateFileTransfer('/x')).not.toThrow();
+        expect(component.fileTransferLoading()).toBe(false);
+      });
+    });
+
+    describe('openSftpPanel', () => {
+      it('opens the panel and lists the current path (root by default)', () => {
+        const session = makeFakeSession();
+        sessionsMap.set(new Map([['c1', session]]));
+        component.openSftpPanel();
+        expect(component.showSftpPanel()).toBe(true);
+        expect(session.listDirectory).toHaveBeenCalledWith('/', 20000);
+      });
+
+      it('re-opens at the previously browsed path', () => {
+        const session = makeFakeSession();
+        sessionsMap.set(new Map([['c1', session]]));
+        component.fileTransferPath.set('/docs');
+        component.openSftpPanel();
+        expect(session.listDirectory).toHaveBeenCalledWith('/docs', 20000);
+      });
+
+      it('closeSftpPanel hides it again and clears the drag state', () => {
+        component.showSftpPanel.set(true);
+        component.sftpDragActive.set(true);
+        component.closeSftpPanel();
+        expect(component.showSftpPanel()).toBe(false);
+        expect(component.sftpDragActive()).toBe(false);
+      });
+
+      it('refreshFileTransfer re-lists the current path', () => {
+        const session = makeFakeSession();
+        sessionsMap.set(new Map([['c1', session]]));
+        component.fileTransferPath.set('/etc');
+        component.refreshFileTransfer();
+        expect(session.listDirectory).toHaveBeenCalledWith('/etc', 20000);
+      });
+    });
+
+    describe('openFileTransferEntry', () => {
+      let session: FakeSession;
+      beforeEach(() => {
+        session = makeFakeSession();
+        sessionsMap.set(new Map([['c1', session]]));
+      });
+
+      it('navigates into directories', () => {
+        component.openFileTransferEntry({
+          displayName: 'sub',
+          streamName: '/sub',
+          mimetype: 'application/vnd.glyptodon.guacamole.stream-index+json',
+          isDirectory: true,
+        });
+        expect(session.listDirectory).toHaveBeenCalledWith('/sub', 20000);
+      });
+
+      it('downloads files when download is permitted', () => {
+        setConnectionPolicy('Both');
+        component.openFileTransferEntry({
+          displayName: 'a.txt',
+          streamName: '/a.txt',
+          mimetype: 'text/plain',
+          isDirectory: false,
+        });
+        expect(session.downloadFile).toHaveBeenCalled();
+      });
+
+      it('does not download files when policy forbids it', () => {
+        setConnectionPolicy('UploadOnly');
+        component.openFileTransferEntry({
+          displayName: 'a.txt',
+          streamName: '/a.txt',
+          mimetype: 'text/plain',
+          isDirectory: false,
+        });
+        expect(session.downloadFile).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('onFileTransferInputChange / upload queue', () => {
+      let session: FakeSession;
+      beforeEach(() => {
+        session = makeFakeSession();
+        sessionsMap.set(new Map([['c1', session]]));
+      });
+
+      function changeEventWith(files: File[]): Event {
+        const input = document.createElement('input');
+        input.type = 'file';
+        Object.defineProperty(input, 'files', { value: files });
+        return { target: input } as unknown as Event;
+      }
+
+      it('uploads the selected file to the current path, tracks it in the queue, and reloads the listing', async () => {
+        component.showSftpPanel.set(true);
+        component.fileTransferPath.set('/docs');
+        const file = new File(['x'], 'note.txt', { type: 'text/plain' });
+        component.onFileTransferInputChange(changeEventWith([file]));
+
+        const queued = component.sftpQueue();
+        expect(queued).toHaveLength(1);
+        expect(queued[0]).toMatchObject({
+          name: 'note.txt',
+          direction: 'upload',
+          status: 'active',
+        });
+
+        await flushPromises();
+        expect(session.uploadFile).toHaveBeenCalledWith('/docs', file, expect.any(Function), 20000);
+        expect(component.sftpQueue()[0].status).toBe('done');
+        expect(session.listDirectory).toHaveBeenCalledWith('/docs', 20000);
+      });
+
+      it('uploads multiple files sequentially and refreshes the listing once', async () => {
+        component.showSftpPanel.set(true);
+        component.fileTransferPath.set('/docs');
+        const a = new File(['a'], 'a.txt');
+        const b = new File(['b'], 'b.txt');
+        component.onFileTransferInputChange(changeEventWith([a, b]));
+
+        expect(component.sftpQueue().map((t) => t.name)).toEqual(['a.txt', 'b.txt']);
+        await flushPromises();
+        expect(session.uploadFile).toHaveBeenNthCalledWith(
+          1,
+          '/docs',
+          a,
+          expect.any(Function),
+          20000,
+        );
+        expect(session.uploadFile).toHaveBeenNthCalledWith(
+          2,
+          '/docs',
+          b,
+          expect.any(Function),
+          20000,
+        );
+        expect(component.sftpQueue().every((t) => t.status === 'done')).toBe(true);
+        expect(session.listDirectory).toHaveBeenCalledTimes(1);
+      });
+
+      it('marks a failed upload as error on its queue item without blocking the rest', async () => {
+        // After a failure the batch waits ~1s (stale-ack drain window) before
+        // the next file, so this test drives time with fake timers.
+        vi.useFakeTimers();
+        component.showSftpPanel.set(true);
+        session.uploadFile.mockReturnValueOnce(Promise.reject(new Error('disk full')));
+        const bad = new File(['x'], 'bad.txt');
+        const good = new File(['y'], 'good.txt');
+        component.onFileTransferInputChange(changeEventWith([bad, good]));
+        await vi.advanceTimersByTimeAsync(1100);
+
+        const [first, second] = component.sftpQueue();
+        expect(first).toMatchObject({ name: 'bad.txt', status: 'error', error: 'disk full' });
+        expect(second).toMatchObject({ name: 'good.txt', status: 'done' });
+      });
+
+      it('reports per-file progress through the queue item', async () => {
+        component.showSftpPanel.set(true);
+        let capturedOnProgress: ((fraction: number) => void) | undefined;
+        session.uploadFile.mockImplementationOnce(
+          (_path: string, _file: File, onProgress: (fraction: number) => void) => {
+            capturedOnProgress = onProgress;
+            return new Promise(() => {
+              /* never settles — keeps the item active */
+            });
+          },
+        );
+        component.onFileTransferInputChange(changeEventWith([new File(['x'], 'big.bin')]));
+        await flushPromises();
+        capturedOnProgress?.(0.5);
+        expect(component.sftpQueue()[0].progress).toBe(0.5);
+      });
+
+      it('does nothing when no file was selected', () => {
+        component.onFileTransferInputChange(changeEventWith([]));
+        expect(session.uploadFile).not.toHaveBeenCalled();
+        expect(component.sftpQueue()).toHaveLength(0);
+      });
+
+      it('clearCompletedTransfers keeps only active items', async () => {
+        component.showSftpPanel.set(true);
+        component.onFileTransferInputChange(changeEventWith([new File(['x'], 'done.txt')]));
+        await flushPromises();
+        session.uploadFile.mockReturnValueOnce(
+          new Promise(() => {
+            /* never settles */
+          }),
+        );
+        component.onFileTransferInputChange(changeEventWith([new File(['y'], 'active.txt')]));
+        await flushPromises();
+
+        component.clearCompletedTransfers();
+        expect(component.sftpQueue().map((t) => t.name)).toEqual(['active.txt']);
+      });
+    });
+
+    describe('drag-and-drop upload', () => {
+      let session: FakeSession;
+      beforeEach(() => {
+        session = makeFakeSession();
+        sessionsMap.set(new Map([['c1', session]]));
+      });
+
+      function dragEventWith(files: File[]): DragEvent {
+        return {
+          preventDefault: vi.fn(),
+          dataTransfer: { files },
+        } as unknown as DragEvent;
+      }
+
+      it('activates the drop highlight only when upload is permitted', () => {
+        setConnectionPolicy('DownloadOnly');
+        component.onSftpDragOver(dragEventWith([]));
+        expect(component.sftpDragActive()).toBe(false);
+
+        setConnectionPolicy('Both');
+        component.onSftpDragOver(dragEventWith([]));
+        expect(component.sftpDragActive()).toBe(true);
+
+        component.onSftpDragLeave();
+        expect(component.sftpDragActive()).toBe(false);
+      });
+
+      it('uploads dropped files when permitted', async () => {
+        setConnectionPolicy('Both');
+        const file = new File(['x'], 'drop.txt');
+        component.onSftpDrop(dragEventWith([file]));
+        await flushPromises();
+        expect(session.uploadFile).toHaveBeenCalledWith('/', file, expect.any(Function), 20000);
+      });
+
+      it('ignores dropped files when the policy forbids uploads', () => {
+        setConnectionPolicy('DownloadOnly');
+        component.onSftpDrop(dragEventWith([new File(['x'], 'drop.txt')]));
+        expect(session.uploadFile).not.toHaveBeenCalled();
+        expect(component.sftpDragActive()).toBe(false);
+      });
+    });
+
+    describe('error mapping (describeFileTransferError)', () => {
+      // provideTranslateService has no translations loaded, so translate.instant
+      // returns the key itself — assertions match on the i18n key.
+      it('maps a forbidden remote ack to the permission-denied message', async () => {
+        const session = makeFakeSession({
+          listDirectory: vi.fn(() =>
+            Promise.reject(new FileTransferError('remote', 'SFTP: Open failed', 0x0303)),
+          ),
+        });
+        sessionsMap.set(new Map([['c1', session]]));
+        component.navigateFileTransfer('/denied');
+        await flushPromises();
+        expect(component.fileTransferError()).toBe(
+          'pages.activeSession.fileTransfer.errors.permissionDenied',
+        );
+      });
+
+      it('maps a stall timeout to the timeout message', async () => {
+        const session = makeFakeSession({
+          listDirectory: vi.fn(() =>
+            Promise.reject(new FileTransferError('timeout', 'No data received for 20s')),
+          ),
+        });
+        sessionsMap.set(new Map([['c1', session]]));
+        component.navigateFileTransfer('/');
+        await flushPromises();
+        expect(component.fileTransferError()).toBe(
+          'pages.activeSession.fileTransfer.errors.timeout',
+        );
+      });
+
+      it('maps other remote errors to the remote message and queue items keep the mapped text', async () => {
+        const session = makeFakeSession({
+          uploadFile: vi.fn(() =>
+            Promise.reject(new FileTransferError('remote', 'SFTP: Write failed', 0x0200)),
+          ),
+        });
+        sessionsMap.set(new Map([['c1', session]]));
+        setConnectionPolicy('Both');
+        const input = document.createElement('input');
+        input.type = 'file';
+        Object.defineProperty(input, 'files', { value: [new File(['x'], 'x.txt')] });
+        component.onFileTransferInputChange({ target: input } as unknown as Event);
+        await flushPromises();
+        expect(component.sftpQueue()[0]).toMatchObject({
+          status: 'error',
+          error: 'pages.activeSession.fileTransfer.errors.remote',
+        });
+      });
+
+      it('passes plain Error messages through unchanged', async () => {
+        const session = makeFakeSession({
+          listDirectory: vi.fn(() => Promise.reject(new Error('boom'))),
+        });
+        sessionsMap.set(new Map([['c1', session]]));
+        component.navigateFileTransfer('/');
+        await flushPromises();
+        expect(component.fileTransferError()).toBe('boom');
+      });
+    });
+
+    describe('vault-configured timeout', () => {
+      it('passes the vault-configured timeout (in ms) to session calls', () => {
+        const session = makeFakeSession();
+        sessionsMap.set(new Map([['c1', session]]));
+        connectionsSvc.listAsMap.set(
+          new Map<string, Connection>([
+            [
+              'c1',
+              {
+                id: 'c1',
+                name: 'c',
+                protocol: 'ssh',
+                hostId: 'h1',
+                settings: '{}',
+                tags: [],
+                effectiveFileTransferPolicy: 'Both',
+                effectiveFileTransferTimeoutSeconds: 90,
+              } as Connection,
+            ],
+          ]),
+        );
+        component.navigateFileTransfer('/');
+        expect(session.listDirectory).toHaveBeenCalledWith('/', 90000);
+      });
+
+      it('falls back to the 20s default when the vault sets none', () => {
+        const session = makeFakeSession();
+        sessionsMap.set(new Map([['c1', session]]));
+        component.navigateFileTransfer('/');
+        expect(session.listDirectory).toHaveBeenCalledWith('/', 20000);
+      });
+    });
+
+    describe('download queue', () => {
+      it('tracks a download as indeterminate and marks it done on completion', async () => {
+        const session = makeFakeSession();
+        sessionsMap.set(new Map([['c1', session]]));
+        setConnectionPolicy('Both');
+        component.downloadFileTransferEntry({
+          displayName: 'a.txt',
+          streamName: '/a.txt',
+          mimetype: 'text/plain',
+          isDirectory: false,
+        });
+
+        expect(component.sftpQueue()[0]).toMatchObject({
+          name: 'a.txt',
+          direction: 'download',
+          progress: null,
+          status: 'active',
+        });
+        await flushPromises();
+        expect(component.sftpQueue()[0].status).toBe('done');
+      });
+
+      it('marks a failed download as error on its queue item', async () => {
+        const session = makeFakeSession({
+          downloadFile: vi.fn(() => Promise.reject(new Error('timeout'))),
+        });
+        sessionsMap.set(new Map([['c1', session]]));
+        component.downloadFileTransferEntry({
+          displayName: 'a.txt',
+          streamName: '/a.txt',
+          mimetype: 'text/plain',
+          isDirectory: false,
+        });
+        await flushPromises();
+        expect(component.sftpQueue()[0]).toMatchObject({ status: 'error', error: 'timeout' });
+      });
     });
   });
 

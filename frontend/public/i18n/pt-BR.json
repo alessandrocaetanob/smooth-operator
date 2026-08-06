@@ -397,6 +397,8 @@
         "sendKeyCombo": "Enviar combinação de teclas",
         "clipboard": "Área de transferência",
         "clipboardSync": "Sincronizar área de transferência",
+        "fileTransfer": "Transferência de arquivos",
+        "openFileTransfer": "Abrir transferência de arquivos",
         "hideKeyboard": "Ocultar teclado",
         "keyboard": "Teclado",
         "hideOnScreenKeyboard": "Ocultar teclado na tela",
@@ -422,6 +424,27 @@
         "copyHostClipboard": "Copiar área de transferência do host",
         "pushed": "Enviado!",
         "pushToHost": "Enviar para o host"
+      },
+      "fileTransfer": {
+        "title": "Transferência de Arquivos",
+        "description": "Navegue pelo drive remoto para enviar ou baixar arquivos.",
+        "empty": "Esta pasta está vazia.",
+        "download": "Baixar",
+        "upload": "Enviar",
+        "refresh": "Atualizar",
+        "retry": "Tentar novamente",
+        "dropHint": "Solte os arquivos para enviá-los para esta pasta",
+        "transfers": "Transferências",
+        "clearCompleted": "Limpar concluídas",
+        "kindFolder": "Pasta",
+        "kindFile": "Arquivo",
+        "errors": {
+          "timeout": "Nenhum dado recebido por {{seconds}} segundos — a transferência parece travada. Verifique a conexão com o servidor remoto.",
+          "noFilesystem": "Nenhum sistema de arquivos remoto está disponível nesta sessão.",
+          "notDirectory": "Este item não é uma pasta.",
+          "permissionDenied": "Permissão negada pelo servidor remoto — seu usuário não pode acessar este arquivo ou pasta.",
+          "remote": "O servidor remoto rejeitou a transferência: {{detail}}"
+        }
       },
       "terminalTheme": {
         "title": "Tema do Terminal da Sessão",
@@ -637,6 +660,16 @@
           "keysExclude": "Excluir teclas digitadas (recomendado)",
           "keysInclude": "Incluir teclas digitadas",
           "hint": "A gravação é configurada globalmente e por vault. Use esta opção apenas quando esta conexão precisar ser diferente do padrão do vault."
+        },
+        "fileTransfer": {
+          "title": "Transferência de arquivos",
+          "modeLabel": "Política",
+          "inherit": "Herdar do vault",
+          "disabled": "Desabilitada",
+          "downloadOnly": "Somente download",
+          "uploadOnly": "Somente upload",
+          "both": "Upload e download",
+          "hint": "Controla SFTP para SSH e drive redirect para RDP. Use esta opção apenas quando esta conexão precisar ser diferente do padrão do vault."
         },
         "terminal": {
           "title": "Aparência do Terminal",
@@ -1596,6 +1629,15 @@
         "enabledLabel": "Gravação ativada",
         "disabledLabel": "Gravação"
       },
+      "fileTransfer": {
+        "tooltip": "Política de transferência de arquivos para as conexões deste cofre",
+        "policyLabel": {
+          "Disabled": "Transferência desativada",
+          "DownloadOnly": "Somente download",
+          "UploadOnly": "Somente upload",
+          "Both": "Upload e download"
+        }
+      },
       "assignModal": {
         "title": "Atribuir Acesso — {{name}}",
         "subtitle": "Selecione os usuários e grupos que podem acessar este cofre.",
@@ -1624,6 +1666,17 @@
         "save": "Salvar",
         "saving": "Salvando…"
       },
+      "fileTransferModal": {
+        "title": "Transferência de arquivos: {{name}}",
+        "subtitle": "Padrão para todas as conexões deste cofre. Cada conexão pode substituir essa configuração.",
+        "policyLabel": "Política",
+        "hint": "Controla SFTP para SSH e drive redirect para RDP. Desativado por padrão.",
+        "save": "Salvar",
+        "saving": "Salvando…",
+        "timeoutLabel": "Timeout de inatividade da transferência (segundos)",
+        "timeoutPlaceholder": "Padrão (20)",
+        "timeoutHint": "A transferência falha quando nenhum dado trafega por esse tempo. Deixe vazio para o padrão de 20 segundos. Intervalo: 5–600."
+      },
       "confirmDelete": {
         "title": "Excluir cofre",
         "message": "Excluir o cofre \"{{name}}\"? Todas as conexões dentro dele ficarão sem vínculo. Esta ação não pode ser desfeita."
@@ -1633,7 +1686,8 @@
         "renamed": "Cofre renomeado para \"{{name}}\".",
         "deleted": "Cofre \"{{name}}\" excluído.",
         "recordingSaved": "Configurações de gravação salvas para \"{{name}}\".",
-        "assignmentsUpdated": "Atribuições atualizadas para \"{{name}}\"."
+        "assignmentsUpdated": "Atribuições atualizadas para \"{{name}}\".",
+        "fileTransferSaved": "Configurações de transferência de arquivos salvas para \"{{name}}\"."
       },
       "errors": {
         "loadFailed": "Falha ao carregar os cofres.",
@@ -1643,7 +1697,8 @@
         "deleteFailed": "Falha ao excluir o cofre.",
         "loadAssignmentsFailed": "Falha ao carregar as atribuições.",
         "assignmentsSaveFailed": "Falha ao salvar as atribuições.",
-        "recordingSaveFailed": "Falha ao salvar as configurações de gravação."
+        "recordingSaveFailed": "Falha ao salvar as configurações de gravação.",
+        "fileTransferSaveFailed": "Falha ao salvar as configurações de transferência de arquivos."
       }
     },
     "settingsWebhooks": {

@@ -42,6 +42,8 @@ namespace SmoothOperator.Application.Features.ConnectionGroups.Queries
                     RecordingEnabled = v.RecordingEnabled,
                     RecordingIncludeKeys = v.RecordingIncludeKeys,
                     RecordingRetentionDays = v.RecordingRetentionDays,
+                    FileTransferPolicy = v.FileTransferPolicy,
+                    FileTransferTimeoutSeconds = v.FileTransferTimeoutSeconds,
                 })
                 .ToListAsync(cancellationToken);
         }

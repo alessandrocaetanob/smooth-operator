@@ -19,10 +19,14 @@ import { map } from 'rxjs/operators';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   GuacamoleSessionManagerService,
   GuacamoleSession,
+  GuacFileEntry,
+  FileTransferError,
+  FILE_TRANSFER_TIMEOUT_MS,
+  GUAC_STATUS_FORBIDDEN,
   Keysyms,
   ZOOM_MIN,
   ZOOM_MAX,
@@ -87,6 +91,17 @@ const TERM_FONT_NAMES = [
   'Inconsolata',
 ];
 
+/** One row in the SFTP panel's transfer queue. */
+export interface FileTransferQueueItem {
+  id: number;
+  name: string;
+  direction: 'upload' | 'download';
+  /** 0–1 for uploads; null for downloads (total size unknown → indeterminate bar). */
+  progress: number | null;
+  status: 'active' | 'done' | 'error';
+  error?: string;
+}
+
 const COMBO_KEYS: KeyOption[] = [
   { label: 'Delete', keysym: Keysyms.Delete },
   { label: 'Backspace', keysym: Keysyms.Backspace },
@@ -135,6 +150,7 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly sessionManager = inject(GuacamoleSessionManagerService);
   private readonly connections = inject(ConnectionsService);
+  private readonly translate = inject(TranslateService);
 
   @ViewChild('display', { static: false }) displayRef?: ElementRef<HTMLDivElement>;
   @ViewChild('hiddenKbd', { static: false }) hiddenKbdRef?: ElementRef<HTMLInputElement>;
@@ -191,6 +207,19 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
   readonly comboKey = signal<KeyOption>(COMBO_KEYS[0]);
   readonly clipboardDraft = signal('');
 
+  // ── SFTP panel (RDP drive redirect / SSH SFTP) ─────────────────────────────
+  readonly showSftpPanel = signal(false);
+  readonly fileTransferPath = signal('/');
+  readonly fileTransferEntries = signal<GuacFileEntry[]>([]);
+  readonly fileTransferLoading = signal(false);
+  readonly fileTransferError = signal<string | null>(null);
+  readonly sftpDragActive = signal(false);
+  readonly sftpQueue = signal<FileTransferQueueItem[]>([]);
+  readonly sftpQueueHasCompleted = computed(() =>
+    this.sftpQueue().some((t) => t.status !== 'active'),
+  );
+  private nextTransferId = 1;
+
   // ── Mobile keyboard ────────────────────────────────────────────────────────
   // Touch devices have no physical keyboard, and Guacamole.Keyboard only listens
   // for physical key events. A hidden input summons the phone's native soft
@@ -216,6 +245,35 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
   readonly isSshConnection = computed(
     () => (this.connection()?.protocol ?? '').toLowerCase() === 'ssh',
   );
+
+  readonly fileTransferPolicy = computed(
+    () => this.connection()?.effectiveFileTransferPolicy ?? 'Disabled',
+  );
+  readonly canDownloadFiles = computed(() =>
+    ['DownloadOnly', 'Both'].includes(this.fileTransferPolicy()),
+  );
+  readonly canUploadFiles = computed(() =>
+    ['UploadOnly', 'Both'].includes(this.fileTransferPolicy()),
+  );
+  /** True once guacd has actually exposed a filesystem for this session — the paperclip gate. */
+  readonly fileTransferAvailable = computed(() => this.session()?.fileTransferAvailable() ?? false);
+  /** Name guacd gave the filesystem — shown in the SFTP panel header. */
+  readonly fileSystemName = computed(() => this.session()?.fileSystemName() ?? null);
+  /** Inactivity timeout for transfers: vault-configured value, else app default. */
+  readonly fileTransferTimeoutMs = computed(() => {
+    const seconds = this.connection()?.effectiveFileTransferTimeoutSeconds;
+    return seconds && seconds > 0 ? seconds * 1000 : FILE_TRANSFER_TIMEOUT_MS;
+  });
+  readonly fileTransferBreadcrumbs = computed(() => {
+    const segments = this.fileTransferPath().split('/').filter(Boolean);
+    const crumbs: { label: string; path: string }[] = [{ label: '/', path: '/' }];
+    let acc = '';
+    for (const seg of segments) {
+      acc += `/${seg}`;
+      crumbs.push({ label: seg, path: acc });
+    }
+    return crumbs;
+  });
   readonly termColorScheme = signal('gray-black');
   readonly termFontName = signal('monospace');
   readonly termFontSize = signal(12);
@@ -416,6 +474,165 @@ export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {
         /* intentional no-op */
       });
     }
+  }
+
+  // ── SFTP panel (RDP drive redirect / SSH SFTP) ─────────────────────────────
+  openSftpPanel(): void {
+    this.showSftpPanel.set(true);
+    // Resume where the user left off — the panel keeps its path across opens.
+    this.navigateFileTransfer(this.fileTransferPath());
+  }
+
+  closeSftpPanel(): void {
+    this.showSftpPanel.set(false);
+    this.sftpDragActive.set(false);
+  }
+
+  navigateFileTransfer(path: string): void {
+    const session = this.session();
+    if (!session) return;
+    this.fileTransferLoading.set(true);
+    this.fileTransferError.set(null);
+    session
+      .listDirectory(path, this.fileTransferTimeoutMs())
+      .then((entries) => {
+        this.fileTransferPath.set(path);
+        this.fileTransferEntries.set(entries);
+      })
+      .catch((err: unknown) => this.fileTransferError.set(this.describeFileTransferError(err)))
+      .finally(() => this.fileTransferLoading.set(false));
+  }
+
+  refreshFileTransfer(): void {
+    this.navigateFileTransfer(this.fileTransferPath());
+  }
+
+  openFileTransferEntry(entry: GuacFileEntry): void {
+    if (entry.isDirectory) {
+      this.navigateFileTransfer(entry.streamName);
+    } else if (this.canDownloadFiles()) {
+      this.downloadFileTransferEntry(entry);
+    }
+  }
+
+  downloadFileTransferEntry(entry: GuacFileEntry): void {
+    const session = this.session();
+    if (!session) return;
+    const id = this.enqueueTransfer(entry.displayName, 'download');
+    session
+      .downloadFile(entry, this.fileTransferTimeoutMs())
+      .then(() => this.updateTransfer(id, { status: 'done' }))
+      .catch((err: unknown) =>
+        this.updateTransfer(id, { status: 'error', error: this.describeFileTransferError(err) }),
+      );
+  }
+
+  onFileTransferInputChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const files = Array.from(input.files ?? []);
+    input.value = ''; // allow re-selecting the same file name
+    if (files.length > 0) this.uploadFileTransferFiles(files);
+  }
+
+  onSftpDragOver(event: DragEvent): void {
+    if (!this.canUploadFiles()) return;
+    event.preventDefault();
+    this.sftpDragActive.set(true);
+  }
+
+  onSftpDragLeave(): void {
+    this.sftpDragActive.set(false);
+  }
+
+  onSftpDrop(event: DragEvent): void {
+    event.preventDefault();
+    this.sftpDragActive.set(false);
+    if (!this.canUploadFiles()) return;
+    const files = Array.from(event.dataTransfer?.files ?? []);
+    if (files.length > 0) this.uploadFileTransferFiles(files);
+  }
+
+  clearCompletedTransfers(): void {
+    this.sftpQueue.update((queue) => queue.filter((t) => t.status === 'active'));
+  }
+
+  /** Pause after a failed upload before starting the next one, letting guacd's
+   * trailing acks for the failed stream drain before its index can be reused. */
+  private static readonly UPLOAD_FAILURE_DRAIN_MS = 1000;
+
+  /**
+   * Uploads sequentially into the directory shown when the batch started (so
+   * navigating mid-upload doesn't scatter files), then refreshes the listing
+   * once if the user is still looking at that directory.
+   */
+  private uploadFileTransferFiles(files: File[]): void {
+    const session = this.session();
+    if (!session) return;
+    const targetPath = this.fileTransferPath();
+    let chain = Promise.resolve();
+    for (const file of files) {
+      const id = this.enqueueTransfer(file.name, 'upload', 0);
+      chain = chain
+        .then(() =>
+          session.uploadFile(
+            targetPath,
+            file,
+            (fraction) => this.updateTransfer(id, { progress: fraction }),
+            this.fileTransferTimeoutMs(),
+          ),
+        )
+        .then(() => this.updateTransfer(id, { status: 'done', progress: 1 }))
+        .catch((err: unknown) => {
+          this.updateTransfer(id, { status: 'error', error: this.describeFileTransferError(err) });
+          return new Promise<void>((res) => setTimeout(res, ActiveSession.UPLOAD_FAILURE_DRAIN_MS));
+        });
+    }
+    void chain.then(() => {
+      if (this.showSftpPanel() && this.fileTransferPath() === targetPath) {
+        this.navigateFileTransfer(targetPath);
+      }
+    });
+  }
+
+  private enqueueTransfer(
+    name: string,
+    direction: FileTransferQueueItem['direction'],
+    progress: number | null = null,
+  ): number {
+    const id = this.nextTransferId++;
+    this.sftpQueue.update((queue) =>
+      queue.concat({ id, name, direction, progress, status: 'active' }),
+    );
+    return id;
+  }
+
+  private updateTransfer(id: number, patch: Partial<FileTransferQueueItem>): void {
+    this.sftpQueue.update((queue) => queue.map((t) => (t.id === id ? { ...t, ...patch } : t)));
+  }
+
+  /** Maps a transfer failure to a translated, user-actionable message. */
+  private describeFileTransferError(err: unknown): string {
+    const t = 'pages.activeSession.fileTransfer.errors';
+    if (err instanceof FileTransferError) {
+      switch (err.code) {
+        case 'timeout':
+          return this.translate.instant(`${t}.timeout`, {
+            seconds: Math.round(this.fileTransferTimeoutMs() / 1000),
+          });
+        case 'no_filesystem':
+          return this.translate.instant(`${t}.noFilesystem`);
+        case 'not_directory':
+          return this.translate.instant(`${t}.notDirectory`);
+        case 'remote':
+          if (err.statusCode === GUAC_STATUS_FORBIDDEN) {
+            return this.translate.instant(`${t}.permissionDenied`);
+          }
+          return this.translate.instant(`${t}.remote`, { detail: err.message });
+        case 'parse':
+          return this.translate.instant(`${t}.remote`, { detail: err.message });
+      }
+    }
+    return err instanceof Error ? err.message : 'Unknown error';
   }
 
   openTerminalThemeModal(): void {

@@ -38,5 +38,11 @@ namespace SmoothOperator.Domain.Models
 
         /// <summary>Per-connection include-keystrokes override; <c>null</c> = inherit from vault.</summary>
         public bool? RecordingIncludeKeys { get; set; }
+
+        /// <summary>
+        /// Per-connection override of the parent vault's file-transfer policy.
+        /// <c>null</c> (default) defers to <see cref="ConnectionGroup.FileTransferPolicy"/>.
+        /// </summary>
+        public FileTransferPolicy? FileTransferPolicyOverride { get; set; }
     }
 }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using SmoothOperator.Domain.Enums;
 
 namespace SmoothOperator.Domain.Models
 {
@@ -24,5 +25,16 @@ namespace SmoothOperator.Domain.Models
 
         /// <summary>Optional per-vault retention. <c>null</c> defers to <c>RecordingStorageSettings.RetentionDays</c>.</summary>
         public int? RecordingRetentionDays { get; set; }
+
+        /// <summary>Default in-session file-transfer policy for connections in this vault. Individual connections can override via <c>Connection.FileTransferPolicyOverride</c>.</summary>
+        public FileTransferPolicy FileTransferPolicy { get; set; } = FileTransferPolicy.Disabled;
+
+        /// <summary>
+        /// Inactivity timeout, in seconds, for in-session file-transfer operations
+        /// (directory listing, upload, download) on connections in this vault. The
+        /// client aborts an operation with a visible error when no data flows for
+        /// this long. Null uses the application default.
+        /// </summary>
+        public int? FileTransferTimeoutSeconds { get; set; }
     }
 }

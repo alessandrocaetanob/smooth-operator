@@ -397,6 +397,8 @@
         "sendKeyCombo": "Send key combo",
         "clipboard": "Clipboard",
         "clipboardSync": "Clipboard sync",
+        "fileTransfer": "File transfer",
+        "openFileTransfer": "Open file transfer",
         "hideKeyboard": "Hide keyboard",
         "keyboard": "Keyboard",
         "hideOnScreenKeyboard": "Hide on-screen keyboard",
@@ -422,6 +424,27 @@
         "copyHostClipboard": "Copy host clipboard",
         "pushed": "Pushed!",
         "pushToHost": "Push to host"
+      },
+      "fileTransfer": {
+        "title": "File Transfer",
+        "description": "Browse the remote drive to upload or download files.",
+        "empty": "This folder is empty.",
+        "download": "Download",
+        "upload": "Upload",
+        "refresh": "Refresh",
+        "retry": "Try again",
+        "dropHint": "Drop files to upload them to this folder",
+        "transfers": "Transfers",
+        "clearCompleted": "Clear completed",
+        "kindFolder": "Folder",
+        "kindFile": "File",
+        "errors": {
+          "timeout": "No data received for {{seconds}} seconds — the transfer looks stalled. Check the connection to the remote server.",
+          "noFilesystem": "No remote file system is available in this session.",
+          "notDirectory": "This item is not a folder.",
+          "permissionDenied": "Permission denied by the remote server — your user cannot access this file or folder.",
+          "remote": "The remote server rejected the transfer: {{detail}}"
+        }
       },
       "terminalTheme": {
         "title": "Session Terminal Theme",
@@ -637,6 +660,16 @@
           "keysExclude": "Exclude keystrokes (recommended)",
           "keysInclude": "Include keystrokes",
           "hint": "Recording is configured globally and per-vault. Use this only when this connection needs to differ from its vault default."
+        },
+        "fileTransfer": {
+          "title": "File transfer",
+          "modeLabel": "Policy",
+          "inherit": "Inherit from vault",
+          "disabled": "Disabled",
+          "downloadOnly": "Download only",
+          "uploadOnly": "Upload only",
+          "both": "Upload and download",
+          "hint": "Governs SFTP for SSH and drive redirect for RDP. Use this only when this connection needs to differ from its vault default."
         },
         "terminal": {
           "title": "Terminal Appearance",
@@ -1596,6 +1629,15 @@
         "enabledLabel": "Recording on",
         "disabledLabel": "Recording"
       },
+      "fileTransfer": {
+        "tooltip": "File transfer policy for connections in this vault",
+        "policyLabel": {
+          "Disabled": "File transfer off",
+          "DownloadOnly": "Download only",
+          "UploadOnly": "Upload only",
+          "Both": "Upload and download"
+        }
+      },
       "assignModal": {
         "title": "Assign Access — {{name}}",
         "subtitle": "Select users and groups that can access this vault.",
@@ -1624,6 +1666,17 @@
         "save": "Save",
         "saving": "Saving…"
       },
+      "fileTransferModal": {
+        "title": "File transfer: {{name}}",
+        "subtitle": "Default for every connection in this vault. Each connection can override.",
+        "policyLabel": "Policy",
+        "hint": "Governs SFTP for SSH and drive redirect for RDP. Disabled by default.",
+        "save": "Save",
+        "saving": "Saving…",
+        "timeoutLabel": "Transfer inactivity timeout (seconds)",
+        "timeoutPlaceholder": "Default (20)",
+        "timeoutHint": "A transfer fails when no data flows for this long. Leave empty for the default of 20 seconds. Range: 5–600."
+      },
       "confirmDelete": {
         "title": "Delete vault",
         "message": "Delete vault \"{{name}}\"? All connections inside will be unlinked. This cannot be undone."
@@ -1633,7 +1686,8 @@
         "renamed": "Vault renamed to \"{{name}}\".",
         "deleted": "Vault \"{{name}}\" deleted.",
         "recordingSaved": "Recording settings saved for \"{{name}}\".",
-        "assignmentsUpdated": "Assignments updated for \"{{name}}\"."
+        "assignmentsUpdated": "Assignments updated for \"{{name}}\".",
+        "fileTransferSaved": "File transfer settings saved for \"{{name}}\"."
       },
       "errors": {
         "loadFailed": "Failed to load vaults.",
@@ -1643,7 +1697,8 @@
         "deleteFailed": "Failed to delete vault.",
         "loadAssignmentsFailed": "Failed to load assignments.",
         "assignmentsSaveFailed": "Failed to save assignments.",
-        "recordingSaveFailed": "Failed to save recording settings."
+        "recordingSaveFailed": "Failed to save recording settings.",
+        "fileTransferSaveFailed": "Failed to save file transfer settings."
       }
     },
     "settingsWebhooks": {

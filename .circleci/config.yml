@@ -94,7 +94,11 @@ jobs:
       - run:
           name: Check formatting
           working_directory: frontend
-          command: npx --ignore-scripts prettier@3.8.3 --check "src/**/*.{ts,html,css,scss,json}"
+          # Uses the prettier installed by `npm ci` above, so the version is
+          # single-sourced from package-lock.json. A hard-pinned `prettier@X`
+          # here would silently drift from the lockfile and reject formatting
+          # that a contributor's local `npx prettier --write .` produced.
+          command: npm run format:check
       - run:
           name: Lint
           working_directory: frontend

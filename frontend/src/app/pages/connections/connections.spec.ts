@@ -63,8 +63,8 @@ describe('Connections', () => {
     connections = {
       list: signal<Connection[]>([]),
       reload: vi.fn(() => of([] as Connection[])),
-      create: vi.fn(
-        (_p: CreateConnectionPayload): Observable<Connection> => of({} as unknown as Connection),
+      create: vi.fn((_p: CreateConnectionPayload): Observable<Connection> =>
+        of({} as unknown as Connection),
       ),
       update: vi.fn((_id: string, _p: CreateConnectionPayload) => of(undefined)),
       remove: vi.fn((_id: string) => of(undefined)),
@@ -296,6 +296,37 @@ describe('Connections', () => {
       expect(component.termFontSize()).toBe(12);
     });
 
+    it('hydrates fileTransferPolicyOverride from the connection', () => {
+      component.edit({
+        id: 'c5',
+        name: 'ft-conn',
+        protocol: 'ssh',
+        hostId: 'h1',
+        connectionGroupId: 'v1',
+        credentialId: null,
+        settings: '{}',
+        tags: [],
+        host: null,
+        fileTransferPolicyOverride: 'UploadOnly',
+      });
+      expect(component.form().fileTransferPolicyOverride).toBe('UploadOnly');
+    });
+
+    it('defaults fileTransferPolicyOverride to Inherit when unset', () => {
+      component.edit({
+        id: 'c6',
+        name: 'ft-conn-2',
+        protocol: 'ssh',
+        hostId: 'h1',
+        connectionGroupId: 'v1',
+        credentialId: null,
+        settings: '{}',
+        tags: [],
+        host: null,
+      });
+      expect(component.form().fileTransferPolicyOverride).toBe('Inherit');
+    });
+
     it('handles invalid JSON settings gracefully', () => {
       component.edit({
         id: 'c4',
@@ -480,6 +511,7 @@ describe('Connections', () => {
         tags: [],
         recordingOverride: 'Inherit',
         recordingIncludeKeys: 'inherit',
+        fileTransferPolicyOverride: 'Inherit',
       });
       component.save();
       expect(connections.create).toHaveBeenCalledWith(
@@ -488,6 +520,48 @@ describe('Connections', () => {
       expect(toast.success).toHaveBeenCalledWith('Connection created.');
       expect(component.mascotState()).toBe('success');
       expect(completeStep).toHaveBeenCalledWith('connection');
+    });
+
+    it('maps fileTransferPolicyOverride Inherit to null on save', () => {
+      component.form.set({
+        id: null,
+        name: 'new-conn',
+        protocol: 'rdp',
+        hostId: 'h1',
+        connectionGroupId: 'v1',
+        credentialId: 'cred1',
+        settings: '',
+        newHostAddress: '',
+        tags: [],
+        recordingOverride: 'Inherit',
+        recordingIncludeKeys: 'inherit',
+        fileTransferPolicyOverride: 'Inherit',
+      });
+      component.save();
+      expect(connections.create).toHaveBeenCalledWith(
+        expect.objectContaining({ fileTransferPolicyOverride: null }),
+      );
+    });
+
+    it('passes a concrete fileTransferPolicyOverride through unchanged on save', () => {
+      component.form.set({
+        id: null,
+        name: 'new-conn',
+        protocol: 'rdp',
+        hostId: 'h1',
+        connectionGroupId: 'v1',
+        credentialId: 'cred1',
+        settings: '',
+        newHostAddress: '',
+        tags: [],
+        recordingOverride: 'Inherit',
+        recordingIncludeKeys: 'inherit',
+        fileTransferPolicyOverride: 'Both',
+      });
+      component.save();
+      expect(connections.create).toHaveBeenCalledWith(
+        expect.objectContaining({ fileTransferPolicyOverride: 'Both' }),
+      );
     });
 
     it('updates an existing connection', () => {
@@ -504,6 +578,7 @@ describe('Connections', () => {
         tags: ['prod'],
         recordingOverride: 'Inherit',
         recordingIncludeKeys: 'inherit',
+        fileTransferPolicyOverride: 'Inherit',
       });
       component.save();
       expect(connections.update).toHaveBeenCalledWith(
@@ -533,6 +608,7 @@ describe('Connections', () => {
         tags: [],
         recordingOverride: 'Inherit',
         recordingIncludeKeys: 'inherit',
+        fileTransferPolicyOverride: 'Inherit',
       });
       component.termColorScheme.set('solarized-dark');
       component.termFontName.set('Consolas');
@@ -563,6 +639,7 @@ describe('Connections', () => {
         tags: [],
         recordingOverride: 'Inherit',
         recordingIncludeKeys: 'inherit',
+        fileTransferPolicyOverride: 'Inherit',
       });
       component.save();
 
@@ -585,6 +662,7 @@ describe('Connections', () => {
         tags: [],
         recordingOverride: 'Inherit',
         recordingIncludeKeys: 'inherit',
+        fileTransferPolicyOverride: 'Inherit',
       });
       component.save();
 
@@ -609,6 +687,7 @@ describe('Connections', () => {
         tags: [],
         recordingOverride: 'Inherit',
         recordingIncludeKeys: 'inherit',
+        fileTransferPolicyOverride: 'Inherit',
       });
       component.save();
       expect(component.errorMessage()).toBe('duplicate name');
@@ -630,6 +709,7 @@ describe('Connections', () => {
         tags: [],
         recordingOverride: 'Inherit',
         recordingIncludeKeys: 'inherit',
+        fileTransferPolicyOverride: 'Inherit',
       });
       component.save();
       expect(component.errorMessage()).toBe('Save failed.');

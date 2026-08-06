@@ -54,6 +54,7 @@ namespace SmoothOperator.Application.Features.Connections.Commands
             connection.Settings = request.Dto.Settings;
             connection.RecordingOverride = request.Dto.RecordingOverride;
             connection.RecordingIncludeKeys = request.Dto.RecordingIncludeKeys;
+            connection.FileTransferPolicyOverride = request.Dto.FileTransferPolicyOverride;
 
             _context.ConnectionTags.RemoveRange(connection.Tags);
             connection.Tags = request.Dto.Tags

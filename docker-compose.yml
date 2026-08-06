@@ -41,12 +41,16 @@ services:
       # shadowed by the outer one — that would defeat the Dockerfile permission setup.
       - Recording__LocalPath=/var/recordings-temp
       - Recording__DefaultStoragePath=/var/recordings
+      # RDP drive-redirect base path (shared with guacd) — see FileTransferOptions.
+      - FileTransfer__DrivePath=/var/file-transfer-temp
     volumes:
       - dp_keys:/data/protection-keys
       # In-progress .guac files written by guacd, read+uploaded by the backend after session-end.
       - recordings_temp:/var/recordings-temp
       # Default destination for the Local storage backend (admins can switch to S3/Azure in settings).
       - recordings_data:/var/recordings
+      # Per-session RDP drive-redirect directories (created/removed by GuacamoleProxyService).
+      - file_transfer_temp:/var/file-transfer-temp
     depends_on:
       postgres:
         condition: service_healthy
@@ -160,6 +164,9 @@ services:
       # Shared with the backend so the backend can ship the .guac files written
       # here to S3/Azure/local-permanent after the session ends.
       - recordings_temp:/var/recordings-temp
+      # Shared with the backend: per-session directories the backend creates and
+      # points RDP's `drive-path` at, redirected into the remote desktop as a drive.
+      - file_transfer_temp:/var/file-transfer-temp
     networks:
       - smooth-operator-net
     deploy:
@@ -282,6 +289,7 @@ volumes:
   dp_keys:
   recordings_temp:
   recordings_data:
+  file_transfer_temp:
 
 networks:
   smooth-operator-net:

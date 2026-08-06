@@ -55,6 +55,8 @@ namespace SmoothOperator.Application.Features.ConnectionGroups.Commands
             vault.RecordingEnabled = request.Dto.RecordingEnabled;
             vault.RecordingIncludeKeys = request.Dto.RecordingIncludeKeys;
             vault.RecordingRetentionDays = request.Dto.RecordingRetentionDays;
+            vault.FileTransferPolicy = request.Dto.FileTransferPolicy;
+            vault.FileTransferTimeoutSeconds = request.Dto.FileTransferTimeoutSeconds;
 
             await _context.SaveChangesAsync(cancellationToken);
             await _audit.WriteAsync("vault.updated", "ConnectionGroup", request.Id.ToString(),

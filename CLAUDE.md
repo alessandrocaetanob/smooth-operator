@@ -56,6 +56,7 @@ npm test                    # Vitest watch mode
 npx ng test --watch=false   # single run (CI) — do NOT use `npm test -- --run`, ng test ignores --run
 npm run lint                # ESLint via angular-eslint
 npx prettier --write .  # format; MUST run before committing any TS/HTML/CSS/JSON change
+npm run format:check        # exactly what CI enforces (same binary as the lockfile)
 ```
 
 ### Docker (full stack)
@@ -137,7 +138,7 @@ The Obsidian vault `H:\Obsidian\SmoothOperator` is the **canonical** knowledge b
 
 ## Known Gotchas
 
-- **Prettier is CI-enforced** — always run `npx prettier --write .` in `frontend/` before committing any TypeScript, HTML, CSS, SCSS, or JSON change.
+- **Prettier is CI-enforced** — always run `npx prettier --write .` in `frontend/` before committing any TypeScript, HTML, CSS, SCSS, or JSON change. CI runs the same binary via `npm run format:check`, so the version is single-sourced from `package-lock.json`; `prettier` is pinned exactly (no caret) in `frontend/package.json`. Never hard-pin a different version in `.circleci/config.yml` — the two silently drift and CI then rejects formatting your local run produced. Bumping prettier may require a repo-wide reformat in the same commit.
 - **`OidcFlowService`** — always null-check `disco.Issuer` before calling `.TrimEnd('/')` in `ValidateIdTokenAsync`; omitting the check produces a CS8602 warning and a potential `NullReferenceException`.
 - **Serilog `DiagnosticContext.Set`** — rejects null values and throws (CS8604 warning path). Guard every `diag.Set("Key", possiblyNullValue)` call in `Program.cs`'s Serilog enrichment lambda.
 - **IdentityModel version pinning** — `Microsoft.IdentityModel.*` packages are pinned to `8.18.0` in `SmoothOperator.Infrastructure.csproj` to prevent a `MissingMethodException` caused by a version split between JwtBearer and ITfoxtec.Identity.Saml2. Do not bump these independently.

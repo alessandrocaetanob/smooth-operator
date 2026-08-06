@@ -54,6 +54,9 @@ namespace SmoothOperator.Application.Features.Connections.Queries
             Settings = c.Settings,
             RecordingOverride = c.RecordingOverride,
             RecordingIncludeKeys = c.RecordingIncludeKeys,
+            FileTransferPolicyOverride = c.FileTransferPolicyOverride,
+            EffectiveFileTransferPolicy = FileTransferPolicyResolver.Resolve(c),
+            EffectiveFileTransferTimeoutSeconds = c.ConnectionGroup == null ? null : c.ConnectionGroup.FileTransferTimeoutSeconds,
             Tags = c.Tags.Select(t => t.Tag).ToList(),
             Host = c.Host == null ? null : new HostDto
             {
@@ -68,6 +71,8 @@ namespace SmoothOperator.Application.Features.Connections.Queries
                 RecordingEnabled = c.ConnectionGroup.RecordingEnabled,
                 RecordingIncludeKeys = c.ConnectionGroup.RecordingIncludeKeys,
                 RecordingRetentionDays = c.ConnectionGroup.RecordingRetentionDays,
+                FileTransferPolicy = c.ConnectionGroup.FileTransferPolicy,
+                FileTransferTimeoutSeconds = c.ConnectionGroup.FileTransferTimeoutSeconds,
             }
         };
     }
