@@ -155,7 +155,7 @@ public class UserGroupsControllerIntegrationTests
 
         var vaults = await response.Content.ReadFromJsonAsync<List<UserGroupVaultDto>>();
         Assert.NotNull(vaults);
-        Assert.Equal(2, vaults!.Count);
+        Assert.Equal(2, vaults.Count);
         Assert.Contains(vaults, v => v.Id == vaultAId);
         Assert.Contains(vaults, v => v.Id == vaultBId);
     }

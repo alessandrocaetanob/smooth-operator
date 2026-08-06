@@ -121,7 +121,7 @@ public static class PipelineExtensions
                     durationMs = e.Value.Duration.TotalMilliseconds,
                 }),
         };
-        return context.Response.WriteAsync(JsonSerializer.Serialize(payload));
+        return context.Response.WriteAsync(JsonSerializer.Serialize(payload), context.RequestAborted);
     }
 
     private static bool HasValidMetricsBearerToken(HttpContext context, string? expectedToken)

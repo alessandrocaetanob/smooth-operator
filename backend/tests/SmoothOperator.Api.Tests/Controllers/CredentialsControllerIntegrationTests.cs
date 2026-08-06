@@ -174,7 +174,7 @@ public class CredentialsControllerIntegrationTests
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var persisted = await db.Credentials.FindAsync(created.Id);
         Assert.NotNull(persisted);
-        Assert.Equal(SecretStorageMode.External, persisted!.StorageMode);
+        Assert.Equal(SecretStorageMode.External, persisted.StorageMode);
         Assert.Equal(string.Empty, persisted.EncryptedSecret);
         Assert.Equal(providerId, persisted.SecretProviderId);
         Assert.False(string.IsNullOrWhiteSpace(persisted.ExternalSecretName));

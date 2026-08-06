@@ -44,7 +44,7 @@ public class InvitesControllerIntegrationTests
 
         var dto = await response.Content.ReadFromJsonAsync<SmoothOperator.Application.DTOs.InvitePreviewDto>();
         Assert.NotNull(dto);
-        Assert.Equal("invitee@x", dto!.Email);
+        Assert.Equal("invitee@x", dto.Email);
         Assert.Equal("Invitee User", dto.Name);
         Assert.Equal(InviteService.TypeUserInvite, dto.Type);
     }

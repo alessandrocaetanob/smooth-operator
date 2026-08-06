@@ -73,7 +73,7 @@ namespace SmoothOperator.Infrastructure.Services.Recording
                     && r.Connection != null
                     && r.Connection.ConnectionGroup != null
                     && (r.Connection.ConnectionGroup.RecordingRetentionDays ?? defaultRetention) > 0
-                    && r.EndedAt!.Value.AddDays(
+                    && r.EndedAt.Value.AddDays(
                         r.Connection.ConnectionGroup.RecordingRetentionDays ?? defaultRetention) < now)
                 .Include(r => r.Connection!).ThenInclude(c => c.ConnectionGroup)
                 .ToListAsync(ct);

@@ -49,7 +49,7 @@ namespace SmoothOperator.Api.Middleware
             context.Response.ContentType = "application/json";
 
             var body = JsonSerializer.Serialize(new { message });
-            await context.Response.WriteAsync(body);
+            await context.Response.WriteAsync(body, context.RequestAborted);
         }
     }
 }

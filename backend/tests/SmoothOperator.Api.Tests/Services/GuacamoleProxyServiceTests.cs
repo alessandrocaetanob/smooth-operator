@@ -453,7 +453,7 @@ public class GuacamoleProxyServiceTests
         // Assert
         var log = await dbContext.AuditLogs.FirstOrDefaultAsync(l => l.Action == "connection.host_unreachable");
         Assert.NotNull(log);
-        Assert.Contains($"\"port\":{expectedPort}", log!.Details);
+        Assert.Contains($"\"port\":{expectedPort}", log.Details);
     }
 
     [Fact]
@@ -749,7 +749,7 @@ public class GuacamoleProxyServiceInternalTests
 
         var log = await _dbContext.AuditLogs.FirstOrDefaultAsync(l => l.Action == "secret.fetched" && l.Outcome == "failure");
         Assert.NotNull(log);
-        Assert.Contains("403", log!.Details);
+        Assert.Contains("403", log.Details);
     }
 
     [Fact]
@@ -818,7 +818,7 @@ public class GuacamoleProxyServiceInternalTests
         Assert.Contains("Vault unreachable", ex.Message);
         var log = await _dbContext.AuditLogs.FirstOrDefaultAsync(l => l.Action == "secret.fetched" && l.Outcome == "failure");
         Assert.NotNull(log);
-        Assert.Contains("vault_unreachable", log!.Details);
+        Assert.Contains("vault_unreachable", log.Details);
     }
 
     [Fact]
@@ -868,7 +868,7 @@ public class GuacamoleProxyServiceInternalTests
         // Act
         var task1 = (Task<List<string>>)readAsync!.Invoke(reader, new object[] { CancellationToken.None })!;
         var result1 = await task1;
-        var task2 = (Task<List<string>>)readAsync!.Invoke(reader, new object[] { CancellationToken.None })!;
+        var task2 = (Task<List<string>>)readAsync.Invoke(reader, new object[] { CancellationToken.None })!;
         var result2 = await task2;
 
         // Assert

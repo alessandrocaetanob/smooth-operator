@@ -205,7 +205,7 @@ public class AuthControllerIntegrationTests
         Assert.Equal(HttpStatusCode.OK, res.StatusCode);
         var info = await res.Content.ReadFromJsonAsync<UserInfo>();
         Assert.NotNull(info);
-        Assert.Equal("me@test.com", info!.Email);
+        Assert.Equal("me@test.com", info.Email);
         Assert.Contains(AppRoles.Admin, info.Roles);
         Assert.Contains(AppRoles.User, info.Roles);
     }

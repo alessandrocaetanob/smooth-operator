@@ -106,7 +106,7 @@ public class ApiTokensFlowTests
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var token = db.ApiTokens.Single(t => t.Id == id);
         Assert.NotNull(token.ExpiresAt);
-        Assert.Equal(DateTimeKind.Utc, token.ExpiresAt!.Value.Kind);
+        Assert.Equal(DateTimeKind.Utc, token.ExpiresAt.Value.Kind);
     }
 
     [Fact]

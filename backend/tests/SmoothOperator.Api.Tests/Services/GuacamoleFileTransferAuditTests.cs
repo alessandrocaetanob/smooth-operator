@@ -148,7 +148,7 @@ public sealed class GuacamoleFileTransferAuditTests : IDisposable
         Assert.Equal(userId, audit.UserId);
         Assert.Equal(connectionId.ToString(), audit.ResourceId);
         Assert.Equal("success", audit.Outcome);
-        using var doc = JsonDocument.Parse(audit.Details!);
+        using var doc = JsonDocument.Parse(audit.Details);
         Assert.Equal("download", doc.RootElement.GetProperty("direction").GetString());
         Assert.Equal("report.pdf", doc.RootElement.GetProperty("fileName").GetString());
         Assert.Equal(10, doc.RootElement.GetProperty("sizeBytes").GetInt64());
@@ -214,13 +214,13 @@ public sealed class GuacamoleFileTransferAuditTests : IDisposable
 
         Assert.False(req.PendingUploads.ContainsKey(9));
         Assert.NotNull(completed);
-        Assert.Equal(10, completed!.Bytes);
+        Assert.Equal(10, completed.Bytes);
 
         await _service.WriteFileTransferAuditAsync(req, "upload", completed.Name, completed.Bytes, "success", null);
 
         var audit = await WaitForAuditLogAsync("session.file_transferred");
         Assert.Equal("success", audit.Outcome);
-        using var doc = JsonDocument.Parse(audit.Details!);
+        using var doc = JsonDocument.Parse(audit.Details);
         Assert.Equal("upload", doc.RootElement.GetProperty("direction").GetString());
         Assert.Equal("big.txt", doc.RootElement.GetProperty("fileName").GetString());
         Assert.Equal(10, doc.RootElement.GetProperty("sizeBytes").GetInt64());
@@ -236,7 +236,7 @@ public sealed class GuacamoleFileTransferAuditTests : IDisposable
 
         var audit = await WaitForAuditLogAsync("session.file_transferred");
         Assert.Equal("failure", audit.Outcome);
-        using var doc = JsonDocument.Parse(audit.Details!);
+        using var doc = JsonDocument.Parse(audit.Details);
         Assert.Equal("515", doc.RootElement.GetProperty("failureCode").GetString());
     }
 

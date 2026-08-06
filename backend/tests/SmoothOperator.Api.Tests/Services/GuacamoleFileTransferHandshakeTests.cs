@@ -177,7 +177,7 @@ public sealed class GuacamoleFileTransferHandshakeTests : IDisposable
             var audit = Assert.Single(await _db.AuditLogs.AsNoTracking().ToListAsync());
             Assert.Equal("file_transfer.skipped", audit.Action);
             Assert.Equal("failure", audit.Outcome);
-            using var doc = JsonDocument.Parse(audit.Details!);
+            using var doc = JsonDocument.Parse(audit.Details);
             Assert.Equal("drive_dir_unwritable", doc.RootElement.GetProperty("reason").GetString());
         }
         finally
