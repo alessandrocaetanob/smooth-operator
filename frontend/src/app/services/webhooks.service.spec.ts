@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 
@@ -11,7 +11,7 @@ describe('WebhooksService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [WebhooksService, provideHttpClient(), provideHttpClientTesting()],
+      providers: [WebhooksService, provideHttpClient(withXhr()), provideHttpClientTesting()],
     });
     service = TestBed.inject(WebhooksService);
     http = TestBed.inject(HttpTestingController);

@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslatePipe } from '@ngx-translate/core';
 
@@ -23,6 +23,7 @@ interface GrafanaDashboard {
   selector: 'app-integrations',
   imports: [CommonModule, TranslatePipe],
   templateUrl: './integrations.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './integrations.css',
 })
 export class Integrations {

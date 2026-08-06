@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, ChangeDetectionStrategy } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
@@ -12,6 +12,7 @@ import { RuntimeConfigService } from '../../core/config/runtime-config.service';
   standalone: true,
   imports: [RouterLink, RouterLinkActive, TranslatePipe],
   templateUrl: './side-nav-bar.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './side-nav-bar.css',
 })
 export class SideNavBar {

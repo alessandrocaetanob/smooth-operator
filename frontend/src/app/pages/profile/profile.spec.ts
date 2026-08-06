@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideTranslateService, TranslateService } from '@ngx-translate/core';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
@@ -48,7 +48,7 @@ describe('Profile', () => {
     await TestBed.configureTestingModule({
       imports: [Profile],
       providers: [
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
         provideTranslateService(),
         { provide: ProfileService, useValue: profileSvc },

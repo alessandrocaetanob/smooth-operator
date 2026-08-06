@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 
@@ -15,7 +15,7 @@ describe('SystemSettingsService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [SystemSettingsService, provideHttpClient(), provideHttpClientTesting()],
+      providers: [SystemSettingsService, provideHttpClient(withXhr()), provideHttpClientTesting()],
     });
     service = TestBed.inject(SystemSettingsService);
     http = TestBed.inject(HttpTestingController);

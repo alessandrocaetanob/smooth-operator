@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
@@ -12,6 +12,7 @@ import {
   selector: 'app-recording-settings',
   imports: [FormsModule, TranslatePipe],
   templateUrl: './recording.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './recording.css',
 })
 export class RecordingSettingsPage implements OnInit {

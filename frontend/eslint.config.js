@@ -35,6 +35,14 @@ module.exports = defineConfig([
           style: 'kebab-case',
         },
       ],
+      // Angular 22 flipped the default change detection strategy to OnPush. The
+      // official `ng update` migration preserved existing runtime behavior by
+      // marking pre-v22 components `ChangeDetectionStrategy.Eager`, and this rule
+      // (new in angular-eslint 22's tsRecommended preset) then flags every one of
+      // those opt-outs. Converting components to OnPush is a behavioral change
+      // that needs per-component review and re-testing, so it is deliberately
+      // tracked as follow-up work rather than bundled into the version bump.
+      '@angular-eslint/prefer-on-push-component-change-detection': 'off',
     },
   },
   {

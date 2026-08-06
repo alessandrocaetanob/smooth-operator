@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -22,6 +22,7 @@ import { RuntimeConfigService } from '../../core/config/runtime-config.service';
     TranslatePipe,
   ],
   templateUrl: './authentication.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './authentication.css',
 })
 export class Authentication {

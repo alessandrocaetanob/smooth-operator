@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideTranslateService, TranslateService } from '@ngx-translate/core';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
@@ -20,7 +20,7 @@ describe('SsoFinalize', () => {
     TestBed.configureTestingModule({
       imports: [SsoFinalize],
       providers: [
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
         provideTranslateService(),
         { provide: AuthService, useValue: auth },

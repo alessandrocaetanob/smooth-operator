@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
@@ -11,6 +11,7 @@ import { Spinner } from '../../shared/spinner/spinner';
   selector: 'app-forgot-password',
   imports: [ReactiveFormsModule, RouterLink, ThemeToggle, LanguageSwitcher, Spinner, TranslatePipe],
   templateUrl: './forgot-password.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './forgot-password.css',
 })
 export class ForgotPassword implements OnInit {

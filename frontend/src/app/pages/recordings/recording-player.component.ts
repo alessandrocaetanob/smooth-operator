@@ -61,10 +61,10 @@ import { Recording, RecordingsService } from '../../services/recordings.service'
               {{ recording?.connectionName }}
             </h2>
             <p class="text-xs text-on-surface-variant truncate">
-              {{ recording?.startedAt | date: 'medium' }} ·
+              {{ $safeNavigationMigration(recording?.startedAt) | date: 'medium' }} ·
               {{
                 'pages.recordings.player.sessionLabel'
-                  | translate: { sessionId: recording?.sessionId }
+                  | translate: { sessionId: $safeNavigationMigration(recording?.sessionId) }
               }}
             </p>
           </div>

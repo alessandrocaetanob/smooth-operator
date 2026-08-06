@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { GuacamoleSessionManagerService, GuacamoleSession } from '../../services/guacamole.service';
@@ -9,6 +9,7 @@ import { ConnectionsService } from '../../services/connections.service';
   standalone: true,
   imports: [TranslatePipe],
   templateUrl: './session-bar.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './session-bar.css',
 })
 export class SessionBar {

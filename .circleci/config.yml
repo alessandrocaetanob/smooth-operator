@@ -11,7 +11,9 @@ executors:
     resource_class: medium
   node-lts:
     docker:
-      - image: cimg/node:22.12
+      # Angular 22 requires node ^22.22.3 || ^24.15.0 || >=26.0.0 — 22.12 is
+      # below the v22 floor and makes the Angular CLI refuse to run.
+      - image: cimg/node:22.23
     resource_class: medium
   # machine executor for multi-arch buildx — needs a real Linux VM (not a
   # remote Docker host) so QEMU emulation for arm64 builds works reliably.

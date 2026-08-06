@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 
@@ -11,7 +11,7 @@ describe('ApiTokensService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [ApiTokensService, provideHttpClient(), provideHttpClientTesting()],
+      providers: [ApiTokensService, provideHttpClient(withXhr()), provideHttpClientTesting()],
     });
     service = TestBed.inject(ApiTokensService);
     http = TestBed.inject(HttpTestingController);

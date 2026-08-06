@@ -24,7 +24,7 @@
           } @else {
             {{
               'pages.settingsRecording.status.retentionDays'
-                | translate: { days: current()?.retentionDays }
+                | translate: { days: $safeNavigationMigration(current()?.retentionDays) }
             }}
           }
         </p>

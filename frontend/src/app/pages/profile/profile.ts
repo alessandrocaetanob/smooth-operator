@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -20,6 +20,7 @@ const TARGET_DIMENSION = 512;
   standalone: true,
   imports: [FormsModule, DatePipe, TranslatePipe],
   templateUrl: './profile.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './profile.css',
 })
 export class Profile {

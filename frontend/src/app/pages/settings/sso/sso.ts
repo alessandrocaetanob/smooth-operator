@@ -1,4 +1,11 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  computed,
+  inject,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { switchMap } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { JsonPipe } from '@angular/common';
@@ -17,6 +24,7 @@ import { AuthService } from '../../../services/auth.service';
   selector: 'app-sso-settings',
   imports: [FormsModule, JsonPipe, TranslatePipe],
   templateUrl: './sso.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './sso.css',
 })
 export class SsoSettings implements OnInit {

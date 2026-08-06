@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 
@@ -11,7 +11,7 @@ describe('InvitesService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [InvitesService, provideHttpClient(), provideHttpClientTesting()],
+      providers: [InvitesService, provideHttpClient(withXhr()), provideHttpClientTesting()],
     });
     service = TestBed.inject(InvitesService);
     http = TestBed.inject(HttpTestingController);

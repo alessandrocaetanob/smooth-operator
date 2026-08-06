@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { signal } from '@angular/core';
@@ -67,7 +67,7 @@ describe('Administration', () => {
     await TestBed.configureTestingModule({
       imports: [Administration],
       providers: [
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
         provideTranslateService(),
         { provide: UsersService, useValue: users },

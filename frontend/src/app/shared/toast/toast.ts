@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
 import { Toast, ToastService } from './toast.service';
 import { toastEnter } from '../animations';
@@ -8,6 +8,7 @@ import { toastEnter } from '../animations';
   standalone: true,
   imports: [TranslatePipe],
   templateUrl: './toast.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   animations: [toastEnter],
 })
 export class ToastContainer {

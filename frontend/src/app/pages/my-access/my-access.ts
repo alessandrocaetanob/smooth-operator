@@ -1,4 +1,11 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  computed,
+  inject,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { UsersService, EffectiveVaults } from '../../services/users.service';
 import { AuthService } from '../../services/auth.service';
@@ -8,6 +15,7 @@ import { Mascot } from '../../shared/mascot/mascot';
   selector: 'app-my-access',
   standalone: true,
   imports: [Mascot, TranslatePipe],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './my-access.html',
 })
 export class MyAccess implements OnInit {

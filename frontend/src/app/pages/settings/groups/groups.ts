@@ -1,4 +1,11 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  computed,
+  inject,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -11,6 +18,7 @@ import { ToastService } from '../../../shared/toast/toast.service';
   selector: 'app-settings-groups',
   standalone: true,
   imports: [FormsModule, TranslatePipe],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './groups.html',
 })
 export class SettingsGroups implements OnInit {

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../services/auth.service';
@@ -7,6 +7,7 @@ import { Spinner } from '../../shared/spinner/spinner';
 @Component({
   selector: 'app-sso-finalize',
   imports: [Spinner, RouterLink, TranslatePipe],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './sso-finalize.html',
 })
 export class SsoFinalize implements OnInit {

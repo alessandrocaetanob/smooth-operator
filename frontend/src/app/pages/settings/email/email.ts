@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { SmtpSettings, SmtpSettingsService } from '../../../services/smtp-settings.service';
@@ -8,6 +8,7 @@ import { AuthService } from '../../../services/auth.service';
   selector: 'app-email-settings',
   imports: [FormsModule, TranslatePipe],
   templateUrl: './email.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './email.css',
 })
 export class Email implements OnInit {

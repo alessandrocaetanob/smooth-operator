@@ -1,4 +1,13 @@
-import { Component, DestroyRef, OnDestroy, OnInit, computed, effect, inject } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  OnDestroy,
+  OnInit,
+  computed,
+  effect,
+  inject,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { map } from 'rxjs/operators';
@@ -27,6 +36,7 @@ const STEP_ORDER: Step[] = [
   selector: 'app-connecting-state',
   imports: [CommonModule, Mascot, ThemeToggle, LanguageSwitcher, TranslatePipe],
   templateUrl: './connecting-state.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './connecting-state.css',
 })
 export class ConnectingState implements OnInit, OnDestroy {

@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { SmtpSettingsService, UpdateSmtpSettingsRequest } from './smtp-settings.service';
@@ -10,7 +10,7 @@ describe('SmtpSettingsService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [SmtpSettingsService, provideHttpClient(), provideHttpClientTesting()],
+      providers: [SmtpSettingsService, provideHttpClient(withXhr()), provideHttpClientTesting()],
     });
 
     service = TestBed.inject(SmtpSettingsService);

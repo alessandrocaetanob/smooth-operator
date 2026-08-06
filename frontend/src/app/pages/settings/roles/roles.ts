@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
 
 interface RoleDescriptor {
@@ -13,6 +13,7 @@ interface RoleDescriptor {
   selector: 'app-settings-roles',
   standalone: true,
   imports: [TranslatePipe],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './roles.html',
 })
 export class SettingsRoles {

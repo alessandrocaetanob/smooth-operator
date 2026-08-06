@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 
@@ -11,7 +11,7 @@ describe('MfaService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [MfaService, provideHttpClient(), provideHttpClientTesting()],
+      providers: [MfaService, provideHttpClient(withXhr()), provideHttpClientTesting()],
     });
     service = TestBed.inject(MfaService);
     http = TestBed.inject(HttpTestingController);

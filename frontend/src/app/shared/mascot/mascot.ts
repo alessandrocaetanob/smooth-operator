@@ -1,4 +1,13 @@
-import { Component, DestroyRef, ElementRef, Input, OnInit, inject, signal } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  ElementRef,
+  Input,
+  OnInit,
+  inject,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 export type MascotState =
@@ -20,6 +29,7 @@ export type MascotState =
   standalone: true,
   imports: [CommonModule],
   templateUrl: './mascot.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './mascot.css',
 })
 export class Mascot implements OnInit {

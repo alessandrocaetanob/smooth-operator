@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Router } from '@angular/router';
 import { provideAnimations } from '@angular/platform-browser/animations';
@@ -60,7 +60,7 @@ describe('Vault', () => {
     await TestBed.configureTestingModule({
       imports: [Vault],
       providers: [
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
         provideAnimations(),
         provideTranslateService(),

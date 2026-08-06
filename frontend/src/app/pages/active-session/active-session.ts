@@ -12,6 +12,7 @@ import {
   inject,
   runInInjectionContext,
   signal,
+  ChangeDetectionStrategy,
 } from '@angular/core';
 
 import { ActivatedRoute, Router } from '@angular/router';
@@ -143,6 +144,7 @@ const COMBO_KEYS: KeyOption[] = [
     TranslatePipe,
   ],
   templateUrl: './active-session.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './active-session.css',
 })
 export class ActiveSession implements OnInit, AfterViewInit, OnDestroy {

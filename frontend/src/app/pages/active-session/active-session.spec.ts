@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideTranslateService } from '@ngx-translate/core';
 import { BehaviorSubject, of } from 'rxjs';
@@ -118,7 +118,7 @@ describe('ActiveSession', () => {
     await TestBed.configureTestingModule({
       imports: [ActiveSession],
       providers: [
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
         provideTranslateService(),
         { provide: GuacamoleSessionManagerService, useValue: manager },
