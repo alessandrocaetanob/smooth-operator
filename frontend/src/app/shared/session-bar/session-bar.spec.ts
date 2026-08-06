@@ -9,17 +9,12 @@ import { SessionBar } from './session-bar';
 import { GuacamoleSession, GuacamoleSessionManagerService } from '../../services/guacamole.service';
 import { Connection, ConnectionsService } from '../../services/connections.service';
 
-vi.mock('guacamole-common-js', () => ({
-  default: {
-    Client: vi.fn(),
-    WebSocketTunnel: vi.fn(),
-    Tunnel: { State: { OPEN: 1, UNSTABLE: 2, CLOSED: 3 } },
-    Keyboard: vi.fn(),
-    Mouse: vi.fn(),
-    StringReader: vi.fn(),
-    StringWriter: vi.fn(),
-  },
-}));
+// Shared with the other guacamole specs — see the module for why a per-file
+// factory here used to break guacamole.service.spec.ts.
+vi.mock(
+  'guacamole-common-js',
+  async () => (await import('../../../testing/guacamole-common-js.mock')).guacamoleModuleMock,
+);
 
 describe('SessionBar', () => {
   let component: SessionBar;
