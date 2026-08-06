@@ -475,6 +475,7 @@
       "searchPlaceholder": "Pesquisar usuários por nome, email ou papel…",
       "clearSearch": "Limpar pesquisa",
       "invitationCreated": "Convite criado",
+      "inviteUrlLabel": "Link do convite",
       "emailSentAutomatically": "Email enviado automaticamente. O link abaixo também está disponível como alternativa.",
       "shareLinkExpires": "Compartilhe este link com o usuário. Ele expira em 72 horas.",
       "smtpError": "Erro de SMTP: {{error}}",
@@ -1065,6 +1066,7 @@
       "title": "Grupos",
       "subtitle": "Os grupos concedem acesso a vaults para todos os seus membros de uma vez.",
       "refresh": "Atualizar",
+      "editNameLabel": "Nome do grupo",
       "newGroup": {
         "heading": "Novo Grupo",
         "namePlaceholder": "Nome do grupo",
@@ -1602,6 +1604,7 @@
       "title": "Cofres",
       "subtitle": "Crie e gerencie cofres que agrupam conexões.",
       "refresh": "Atualizar",
+      "editNameLabel": "Nome do cofre",
       "newVault": {
         "heading": "Novo Cofre",
         "namePlaceholder": "Nome do cofre",

@@ -130,7 +130,10 @@
 
 .settings-nav .nav-link {
   text-transform: none !important;
-  letter-spacing: 0.01em !important;
+  /* No !important here: `.nav-link` sets no letter-spacing of its own, so this
+     value already applies, and forcing it would block the user text-spacing
+     adjustments WCAG 1.4.12 requires. */
+  letter-spacing: 0.01em;
   font-size: 0.875rem !important;
   font-weight: 500;
   padding: 0.75rem 1rem;
@@ -154,6 +157,9 @@
   height: 1px;
   background: rgb(var(--color-outline-variant) / 0.25);
   margin: 6px 4px 8px;
+  /* <hr> carries a default border that would render a second line under the
+     1px background, and the element is a direct child of the nav <ul>. */
+  border: none;
   list-style: none;
 }
 
