@@ -12,6 +12,7 @@ public static class AuthCookieExtensions
     public static void SetAuthCookie(this HttpResponse response, string token)
     {
         var expiry = GetTokenExpiry(token);
+#pragma warning disable S2092 // Secure is set dynamically from Request.IsHttps; hardcoding true drops the cookie over plain-HTTP local dev
         response.Cookies.Append(CookieName, token, new CookieOptions
         {
             HttpOnly = true,
@@ -20,10 +21,12 @@ public static class AuthCookieExtensions
             Path = "/api/",
             Expires = expiry,
         });
+#pragma warning restore S2092
     }
 
     public static void ClearAuthCookie(this HttpResponse response)
     {
+#pragma warning disable S2092 // Secure is set dynamically from Request.IsHttps; hardcoding true drops the cookie over plain-HTTP local dev
         response.Cookies.Delete(CookieName, new CookieOptions
         {
             HttpOnly = true,
@@ -31,6 +34,7 @@ public static class AuthCookieExtensions
             SameSite = SameSiteMode.Strict,
             Path = "/api/",
         });
+#pragma warning restore S2092
     }
 
     private static DateTimeOffset? GetTokenExpiry(string token)

@@ -57,9 +57,11 @@ public static class RateLimitingExtensions
         {
             options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
             options.KnownProxies.Clear();
+#pragma warning disable S1313 // Deliberate RFC1918 private ranges: the trusted-proxy allowlist for the nginx sidecar, not environment-specific addresses
             options.KnownIPNetworks.Add(new IPNetwork(IPAddress.Parse("10.0.0.0"), 8));
             options.KnownIPNetworks.Add(new IPNetwork(IPAddress.Parse("172.16.0.0"), 12));
             options.KnownIPNetworks.Add(new IPNetwork(IPAddress.Parse("192.168.0.0"), 16));
+#pragma warning restore S1313
         });
         return services;
     }
