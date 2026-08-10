@@ -75,7 +75,7 @@
     <!-- Session recording storage backends (v1.0.2) -->
     <PackageReference Include="Azure.Storage.Blobs" Version="12.29.1" />
     <!-- AWSSDK.S3 4.0.23+ pulls AWSSDK.Core >= 4.0.0.32, which patches GHSA-9cvc-h2w8-phrp -->
-    <PackageReference Include="AWSSDK.S3" Version="4.0.101.7" />
+    <PackageReference Include="AWSSDK.S3" Version="4.0.102" />
   </ItemGroup>
 
 </Project>
