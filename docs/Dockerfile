@@ -9,7 +9,7 @@ COPY . .
 RUN npm run build
 
 # Serve stage — unprivileged nginx (runs as non-root on port 8080)
-FROM nginxinc/nginx-unprivileged:1.31.3-alpine
+FROM nginxinc/nginx-unprivileged:1.31.4-alpine
 # apk upgrade: pull Alpine security fixes that land between base-image rebuilds
 # (same rationale as the frontend image, which the Trivy CI gate scans).
 USER root
